@@ -103,7 +103,7 @@ public class ServiceLocatorTest {
      Assert.assertEquals(interi.getClassLoader(), component);
      
      Thread.currentThread().setContextClassLoader(apiLoader);
-     List<Class<? extends Runnable>> list = new ServiceLocator(apiLoader).getImplementations(Runnable.class, apiLoader);
+     Collection<Class<? extends Runnable>> list = new ServiceLocator(apiLoader).getImplementationsTypes(Runnable.class, apiLoader);
      for (Class<? extends Runnable> r : list) {
        r.newInstance().run();
      }

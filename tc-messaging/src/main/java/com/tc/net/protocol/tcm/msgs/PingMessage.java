@@ -19,6 +19,7 @@
 package com.tc.net.protocol.tcm.msgs;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -43,7 +44,7 @@ public class PingMessage extends DSOMessageBase {
     super(sessionID, monitor, out, channel, type);
   }
 
-  public PingMessage(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBuffer[] data) {
+  public PingMessage(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBufferInputStream data) {
     super(sessionID, monitor, channel, header, data);
   }
 

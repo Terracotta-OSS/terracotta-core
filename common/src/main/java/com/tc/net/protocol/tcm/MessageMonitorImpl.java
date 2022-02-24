@@ -18,6 +18,7 @@
  */
 package com.tc.net.protocol.tcm;
 
+import com.tc.net.protocol.TCNetworkMessage;
 import org.slf4j.Logger;
 
 import com.tc.properties.TCProperties;
@@ -69,12 +70,12 @@ public class MessageMonitorImpl implements MessageMonitor {
   }
 
   @Override
-  public void newIncomingMessage(TCMessage message) {
+  public void newIncomingMessage(TCAction message) {
     getOrCreateMessageCounter(message.getMessageType()).newIncomingMessage(message);
   }
 
   @Override
-  public void newOutgoingMessage(TCMessage message) {
+  public void newOutgoingMessage(TCAction message) {
     getOrCreateMessageCounter(message.getMessageType()).newOutgoingMessage(message);
   }
 
@@ -122,14 +123,14 @@ public class MessageMonitorImpl implements MessageMonitor {
       this.name = name;
     }
 
-    private synchronized void newIncomingMessage(TCMessage message) {
+    private synchronized void newIncomingMessage(TCAction message) {
       incomingCount.incrementAndGet();
-      incomingData.addAndGet(message.getTotalLength());
+      incomingData.addAndGet(message.getMessageLength());
     }
 
-    private synchronized void newOutgoingMessage(TCMessage message) {
+    private synchronized void newOutgoingMessage(TCAction message) {
       outgoingCount.incrementAndGet();
-      outgoingData.addAndGet(message.getTotalLength());
+      outgoingData.addAndGet(message.getMessageLength());
     }
 
     public String toString(int nameWidth) {

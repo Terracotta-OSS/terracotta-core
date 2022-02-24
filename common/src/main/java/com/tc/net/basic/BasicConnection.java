@@ -112,7 +112,7 @@ public class BasicConnection implements TCConnection {
             while (sent < totalLen) {
               sent += buffer.sendFromBuffer();
             }
-            message.wasSent();
+            message.complete();
             if (interrupted) {
               Thread.currentThread().interrupt();
             }
@@ -422,15 +422,9 @@ public class BasicConnection implements TCConnection {
     
   private WireProtocolMessage buildWireProtocolMessage(TCNetworkMessage message) {
     Assert.eval(!(message instanceof WireProtocolMessage));
-    final TCNetworkMessage payload = message;
 
     WireProtocolMessage wireMessage = WireProtocolMessageImpl.wrapMessage(message, this);
-    Assert.eval(wireMessage.getSentCallback() == null);
 
-    final Runnable callback = payload.getSentCallback();
-    if (callback != null) {
-      wireMessage.setSentCallback(callback);
-    }
     return finalizeWireProtocolMessage(wireMessage, 1);
   }
 

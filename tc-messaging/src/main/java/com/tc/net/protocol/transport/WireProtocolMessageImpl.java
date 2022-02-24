@@ -20,9 +20,9 @@ package com.tc.net.protocol.transport;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.net.core.TCConnection;
-import com.tc.net.protocol.AbstractTCNetworkMessage;
 import com.tc.net.protocol.TCNetworkHeader;
 import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.TCNetworkMessageImpl;
 
 /**
  * Wire protocol message. All network communications in the TC world are conducted with wire protocol messages. Wire
@@ -31,7 +31,7 @@ import com.tc.net.protocol.TCNetworkMessage;
  * 
  * @author teck
  */
-public class WireProtocolMessageImpl extends AbstractTCNetworkMessage implements WireProtocolMessage {
+public class WireProtocolMessageImpl extends TCNetworkMessageImpl implements WireProtocolMessage {
   private final TCConnection sourceConnection;
 
   /**
@@ -50,18 +50,13 @@ public class WireProtocolMessageImpl extends AbstractTCNetworkMessage implements
       msgPayload.seal();
     }
 
-    WireProtocolMessage rv = new WireProtocolMessageImpl(source, header, msgPayload);
+    WireProtocolMessage rv = new WireProtocolMessageImpl(source, header, msgPayload.getEntireMessageData());
+    rv.addCompleteCallback(msgPayload::complete);
     return rv;
   }
 
   protected WireProtocolMessageImpl(TCConnection source, TCNetworkHeader header, TCByteBuffer[] data) {
     super(header, data);
-    recordLength();
-    this.sourceConnection = source;
-  }
-
-  private WireProtocolMessageImpl(TCConnection source, TCNetworkHeader header, TCNetworkMessage subMessage) {
-    super(header, subMessage);
     recordLength();
     this.sourceConnection = source;
   }
@@ -82,13 +77,10 @@ public class WireProtocolMessageImpl extends AbstractTCNetworkMessage implements
   }
 
   protected void recordLength() {
-    TCNetworkMessage msgPayload = getMessagePayload();
     // if the payload is null, then we need to record our own length as the packet length. Otherwise, we need to add the
     // our header length + the length of the our payload message length.
-    int packetLength = msgPayload == null ? getTotalLength() : getHeader().getHeaderByteLength()
-                                                               + msgPayload.getTotalLength();
+    int packetLength = getTotalLength();
 
     ((WireProtocolHeader) getHeader()).setTotalPacketLength(packetLength);
   }
-
 }

@@ -147,7 +147,7 @@ public class ServiceLocator extends ManagedServiceLoader {
   }
 
   public <T> List<Class<? extends T>> getImplementations(Class<T> interfaceClass) {
-    return super.getImplementations(interfaceClass, defaultClassLoader); 
+    return super.getImplementationsTypes(interfaceClass, defaultClassLoader); 
   }
 
   public ClassLoader getServiceLoader() {

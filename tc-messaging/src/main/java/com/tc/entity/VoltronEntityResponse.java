@@ -19,8 +19,8 @@
 
 package com.tc.entity;
 
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.tx.TransactionID;
+import com.tc.net.protocol.tcm.TCAction;
 
 
 /**
@@ -28,7 +28,7 @@ import com.tc.object.tx.TransactionID;
  * This means that the caller needs to down-cast to the specific sub-type, cased on getAckType.
  * In the future, it would be ideal to remove this in favor of a different SEDA implementation.
  */
-public interface VoltronEntityResponse extends TCMessage {
+public interface VoltronEntityResponse extends TCAction {
   TransactionID getTransactionID();
   VoltronEntityMessage.Acks getAckType();
 }

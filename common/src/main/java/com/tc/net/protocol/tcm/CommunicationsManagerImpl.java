@@ -54,9 +54,6 @@ import com.tc.net.protocol.transport.TransportHandshakeMessageFactory;
 import com.tc.net.protocol.transport.TransportMessageFactoryImpl;
 import com.tc.net.protocol.transport.WireProtocolAdaptorFactoryImpl;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
-import com.tc.object.session.NullSessionManager;
-import com.tc.object.session.SessionManager;
-import com.tc.object.session.SessionProvider;
 import com.tc.net.core.ProductID;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -93,14 +90,13 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   private final HealthCheckerConfig                                            healthCheckerConfig;
   private final ConnectionPolicy                                               connectionPolicy;
   private final ReconnectionRejectedHandler                                    reconnectionRejectedHandler;
-  protected final ConcurrentHashMap<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping   = new ConcurrentHashMap<TCMessageType, Class<? extends TCMessage>>();
+  protected final ConcurrentHashMap<TCMessageType, Class<? extends TCAction>> messageTypeClassMapping   = new ConcurrentHashMap<TCMessageType, Class<? extends TCAction>>();
   protected final ConcurrentHashMap<TCMessageType, GeneratedMessageFactory>    messageTypeFactoryMapping = new ConcurrentHashMap<TCMessageType, GeneratedMessageFactory>();
 
   private ConnectionHealthChecker                                              connectionHealthChecker;
   private ServerID                                                             serverID                  = ServerID.NULL_ID;
   private int                                                                  callbackPort              = TransportHandshakeMessage.NO_CALLBACK_PORT;
   private final TransportHandshakeErrorHandler                                 handshakeErrHandler;
-  private final SessionManager                                                 sessionManager = new NullSessionManager();
 
   /**
    * Create a communications manager. This implies that one or more network handling threads will be started on your
@@ -109,7 +105,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   public CommunicationsManagerImpl(MessageMonitor monitor,
                                    NetworkStackHarnessFactory stackHarnessFactory, TCConnectionManager connectionManager, ConnectionPolicy connectionPolicy) {
     this(monitor, new TCMessageRouterImpl(), stackHarnessFactory, connectionManager, connectionPolicy,
-         new DisabledHealthCheckerConfigImpl(), new TransportHandshakeErrorHandlerForL1(), Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
+         new DisabledHealthCheckerConfigImpl(), new TransportHandshakeErrorHandlerForL1(), Collections.<TCMessageType, Class<? extends TCAction>>emptyMap(),
          Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
   }
 
@@ -117,7 +113,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    NetworkStackHarnessFactory stackHarnessFactory, TCConnectionManager connectionManager, ConnectionPolicy connectionPolicy,
                                    HealthCheckerConfig config, ServerID serverID,
                                    TransportHandshakeErrorHandler transportHandshakeErrorHandler,
-                                   Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
+                                   Map<TCMessageType, Class<? extends TCAction>> messageTypeClassMapping,
                                    Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping) {
     this(monitor, messageRouter, stackHarnessFactory, connectionManager, connectionPolicy, config,
          transportHandshakeErrorHandler, messageTypeClassMapping, ReconnectionRejectedHandlerL2.SINGLETON, new ClearTextBufferManagerFactory());
@@ -129,7 +125,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    ConnectionPolicy connectionPolicy,
                                    HealthCheckerConfig config, ServerID serverID,
                                    TransportHandshakeErrorHandler transportHandshakeErrorHandler,
-                                   Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
+                                   Map<TCMessageType, Class<? extends TCAction>> messageTypeClassMapping,
                                    Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping,
                                    BufferManagerFactory bufferManagerFactory) {
     this(monitor, messageRouter, stackHarnessFactory, connectionManager, connectionPolicy, config,
@@ -142,7 +138,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    ConnectionPolicy connectionPolicy,
                                    HealthCheckerConfig healthCheckerConf,
                                    TransportHandshakeErrorHandler transportHandshakeErrorHandler,
-                                   Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
+                                   Map<TCMessageType, Class<? extends TCAction>> messageTypeClassMapping,
                                    Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping) {
     this(monitor, messageRouter, stackHarnessFactory, connMgr, connectionPolicy,
          healthCheckerConf, transportHandshakeErrorHandler, messageTypeClassMapping,
@@ -160,7 +156,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    ConnectionPolicy connectionPolicy, 
                                    HealthCheckerConfig healthCheckerConf,
                                    TransportHandshakeErrorHandler transportHandshakeErrorHandler,
-                                   Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
+                                   Map<TCMessageType, Class<? extends TCAction>> messageTypeClassMapping,
                                    ReconnectionRejectedHandler reconnectionRejectedHandler,
                                    BufferManagerFactory bufferManagerFactory) {
     this.monitor = monitor;
@@ -221,16 +217,16 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   }
 
   @Override
-  public void addClassMapping(TCMessageType messageType, Class<? extends TCMessage> messageClass) {
+  public void addClassMapping(TCMessageType messageType, Class<? extends TCAction> messageClass) {
     messageTypeClassMapping.put(messageType, messageClass);
   }
 
   @Override
-  public ClientMessageChannel createClientChannel(ProductID productId, SessionProvider sessions, int timeout) {
-    return createClientChannel(productId, sessions, timeout, null, null);
+  public ClientMessageChannel createClientChannel(ProductID productId, int timeout) {
+    return createClientChannel(productId, timeout, null, null);
   }
   
-  public ClientMessageChannel createClientChannel(ProductID productId, SessionProvider sessions, 
+  public ClientMessageChannel createClientChannel(ProductID productId, 
                                                   int timeout, 
                                                   MessageTransportFactory transportFactory,
                                                   TCMessageFactory messageFactory) {
@@ -238,8 +234,8 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     final TCMessageFactory msgFactory;
 
     if (messageFactory == null) {
-      msgFactory = new TCMessageFactoryImpl(sessions, monitor);
-      for (Entry<TCMessageType, Class<? extends TCMessage>> entry : this.messageTypeClassMapping.entrySet()) {
+      msgFactory = new TCMessageFactoryImpl(monitor);
+      for (Entry<TCMessageType, Class<? extends TCAction>> entry : this.messageTypeClassMapping.entrySet()) {
         msgFactory.addClassMapping(entry.getKey(), entry.getValue());
       }
 
@@ -251,7 +247,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
       msgFactory = messageFactory;
     }
 
-    ClientMessageChannelImpl rv = new ClientMessageChannelImpl(msgFactory, this.messageRouter, sessions, productId);
+    ClientMessageChannelImpl rv = new ClientMessageChannelImpl(msgFactory, this.messageRouter, productId);
     if (transportFactory == null) transportFactory = new MessageTransportFactoryImpl(transportMessageFactory,
                                                                                      connectionHealthChecker,
                                                                                      connectionManager,
@@ -291,9 +287,9 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
 
     // The idea here is that someday we might want to pass in a custom channel factory. The reason you might want to do
     // that is so that you can control the actual class of the channels created off this listener
-    final TCMessageFactory msgFactory = new TCMessageFactoryImpl(sessionManager, monitor);
+    final TCMessageFactory msgFactory = new TCMessageFactoryImpl(monitor);
 
-    for (Entry<TCMessageType, Class<? extends TCMessage>> entry : this.messageTypeClassMapping.entrySet()) {
+    for (Entry<TCMessageType, Class<? extends TCAction>> entry : this.messageTypeClassMapping.entrySet()) {
       msgFactory.addClassMapping(entry.getKey(), entry.getValue());
     }
 

@@ -59,8 +59,8 @@ public class TCServerImplTest {
 
   @Before
   public void setUp() throws Exception {
-    tcServer = new TCServerImpl(mock(ServerConfigurationManager.class));
     dso = mock(DistributedObjectServer.class);
+    tcServer = new TCServerImpl(dso, mock(ServerConfigurationManager.class));
     when(dso.stop()).thenReturn(CompletableFuture.completedFuture(null));
     when(dso.stop(anyBoolean())).thenReturn(CompletableFuture.completedFuture(null));
     ServerManagementContext smc = mock(ServerManagementContext.class);
@@ -82,7 +82,7 @@ public class TCServerImplTest {
     });
     when(l2.getStateManager()).thenReturn(state);
     try {
-      tcServer.registerDSOServer(dso, mock(MBeanServer.class));
+      tcServer.registerDSOServer(mock(MBeanServer.class));
     } catch (NullPointerException n) {
       n.printStackTrace();
       throw n;

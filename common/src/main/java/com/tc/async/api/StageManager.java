@@ -43,6 +43,4 @@ public interface StageManager extends PrettyPrintable {
   public void setLoggerProvider(TCLoggerProvider loggerProvider);
 
   public Stats[] getStats();
-
-  public void cleanup();
 }

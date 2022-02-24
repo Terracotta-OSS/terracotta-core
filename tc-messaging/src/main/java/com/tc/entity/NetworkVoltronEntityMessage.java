@@ -21,18 +21,18 @@ package com.tc.entity;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.net.ClientID;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.tx.TransactionID;
 import java.util.Set;
+import com.tc.net.protocol.tcm.TCAction;
 
 
 /**
  * VoltronEntityMessage is primarily used over the network but it also has server-internal "loopback" messages so this
  * interface specifically describes how the network variant would work.
  */
-public interface NetworkVoltronEntityMessage extends VoltronEntityMessage, TCMessage {
+public interface NetworkVoltronEntityMessage extends VoltronEntityMessage, TCAction {
 
   public Set<VoltronEntityMessage.Acks> getRequestedAcks();
   

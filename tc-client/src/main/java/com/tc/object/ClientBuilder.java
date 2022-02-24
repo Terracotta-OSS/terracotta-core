@@ -28,7 +28,6 @@ import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.MessageMonitor;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionPolicy;
@@ -36,16 +35,14 @@ import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
-import com.tc.object.session.SessionManager;
-import com.tc.object.session.SessionProvider;
 import com.tc.net.core.TCConnectionManager;
 
 import java.util.Map;
+import com.tc.net.protocol.tcm.TCAction;
 
 
 public interface ClientBuilder {
   ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
-                                                     SessionProvider sessionProvider,
                                                      int socketConnectTimeout);
 
   CommunicationsManager createCommunicationsManager(MessageMonitor monitor,
@@ -54,12 +51,11 @@ public interface ClientBuilder {
                                                     ConnectionPolicy connectionPolicy,
                                                     TCConnectionManager connections,
                                                     HealthCheckerConfig hcConfig,
-                                                    Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
+                                                    Map<TCMessageType, Class<? extends TCAction>> messageTypeClassMapping,
                                                     ReconnectionRejectedHandler reconnectionRejectedBehaviour);
 
   ClientHandshakeManager createClientHandshakeManager(Logger logger,
                                                       ClientHandshakeMessageFactory chmf,
-                                                      SessionManager sessionManager,
                                                       String uuid,
                                                       String name,
                                                       String clientVersion,

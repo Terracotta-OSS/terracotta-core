@@ -19,11 +19,10 @@
 package com.tc.net.protocol.delivery;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.net.protocol.AbstractTCNetworkMessage;
-import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.TCNetworkMessageImpl;
 import com.tc.util.UUID;
 
-class OOOProtocolMessageImpl extends AbstractTCNetworkMessage implements OOOProtocolMessage {
+class OOOProtocolMessageImpl extends TCNetworkMessageImpl implements OOOProtocolMessage {
 
   /**
    * Create a header-only message (no payload). Useful for ack and ack request messages.
@@ -37,13 +36,6 @@ class OOOProtocolMessageImpl extends AbstractTCNetworkMessage implements OOOProt
    */
   OOOProtocolMessageImpl(OOOProtocolMessageHeader header, TCByteBuffer[] payload) {
     super(header, payload);
-  }
-
-  /**
-   * Create a message with the given TCNetworkMessage payload. Useful for propogating messages down the network stack.
-   */
-  OOOProtocolMessageImpl(OOOProtocolMessageHeader header, TCNetworkMessage msgPayload) {
-    super(header, msgPayload);
   }
 
   private OOOProtocolMessageHeader getOOOPHeader() {
@@ -95,4 +87,6 @@ class OOOProtocolMessageImpl extends AbstractTCNetworkMessage implements OOOProt
   public boolean isGoodbye() {
     return getOOOPHeader().isGoodbye();
   }
+
+
 }

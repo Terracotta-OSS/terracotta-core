@@ -52,6 +52,7 @@ public class DiagnosticFunctionIT {
         System.out.println(d.get("Server", "Version"));
         System.out.println(d.get("Server", "CurrentChannelProperties"));
         System.out.println(d.list("Server"));
+        System.out.println(d.getClusterState());
       }
     }
 

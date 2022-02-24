@@ -46,14 +46,17 @@ public class PassiveResultCapture implements ResultCapture {
     this.error = error;
   }
 
+  @Override
   public void setWaitFor(Supplier<ActivePassiveAckWaiter> waitFor) {
 
   }
 
+  @Override
   public void waitForReceived() {
 
   }
 
+  @Override
   public void received() {
     Trace.activeTrace().log("received ");
     this.receivedSent.set();
@@ -62,6 +65,7 @@ public class PassiveResultCapture implements ResultCapture {
     }
   }
 
+  @Override
   public void complete() {
     Trace.activeTrace().log("Completed without result ");
     if (!this.receivedSent.isSet()) {

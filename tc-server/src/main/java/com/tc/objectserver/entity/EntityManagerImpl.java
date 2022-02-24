@@ -223,9 +223,9 @@ public class EntityManagerImpl implements EntityManager {
   public boolean removeDestroyed(FetchID id) {
     snapshotLock.acquireUninterruptibly();
     try {
-      ManagedEntity e = entityIndex.computeIfPresent(id,(fetch,entity)->{
+      ManagedEntity e = entityIndex.computeIfPresent(id, (fetch,entity)->{
         if (entity.isRemoveable()) {
-          entities.remove(entity.getID(), fetch);
+          entities.entrySet().removeIf(i->i.getValue().equals(fetch));
           return null;
         } else {
           return entity;
@@ -265,16 +265,30 @@ public class EntityManagerImpl implements EntityManager {
       return Optional.empty();
     }
     FetchID fetch = entities.get(id);
-    ManagedEntity entity = null;
     if (fetch != null) {
-      entity = entityIndex.get(fetch);
+      ManagedEntity entity = entityIndex.get(fetch);
       //  if the version in the descriptor is not valid, don't check 
       //  check the provided version against the version of the entity
       if (version > 0 && entity.getVersion() != version) {
         throw ServerException.createEntityVersionMismatch(id, entity.getVersion() + " does not match " + version);
       }
+      return Optional.of(entity);
+    } else {
+      return getCompatibleEntity(id, version);
     }
-    return Optional.ofNullable(entity);
+  }
+
+  private Optional<ManagedEntity> getCompatibleEntity(EntityID id, long version) throws ServerException {
+    for (Map.Entry<FetchID, ManagedEntity> e : entityIndex.entrySet()) {
+      if (e.getValue().isCompatibleEntity(id)) {
+        entities.put(id, e.getKey());
+        if (version > 0 && e.getValue().getVersion() != version) {
+          throw ServerException.createEntityVersionMismatch(id, e.getValue().getVersion() + " does not match " + version);
+        }
+        return Optional.of(e.getValue());
+      }
+    }
+    return Optional.empty();
   }
 
   @Override

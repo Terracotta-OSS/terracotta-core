@@ -18,20 +18,23 @@
  */
 package com.tc.object.msg;
 
-import com.tc.bytes.TCByteBuffer;
+import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
+import com.tc.net.protocol.tcm.TCActionImpl;
 import com.tc.net.protocol.tcm.TCMessageHeader;
-import com.tc.net.protocol.tcm.TCMessageImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.session.SessionID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Base class for DSO network messages
  */
-public abstract class DSOMessageBase extends TCMessageImpl {
+public abstract class DSOMessageBase extends TCActionImpl {
 
+  private static final Logger LOG = LoggerFactory.getLogger(DSOMessageBase.class);
   private final SessionID localSessionID;
 
   public DSOMessageBase(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
@@ -40,7 +43,7 @@ public abstract class DSOMessageBase extends TCMessageImpl {
   }
 
   public DSOMessageBase(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header,
-                        TCByteBuffer[] data) {
+                        TCByteBufferInputStream data) {
     super(monitor, channel, header, data);
     this.localSessionID = sessionID;
   }
@@ -49,5 +52,15 @@ public abstract class DSOMessageBase extends TCMessageImpl {
   public SessionID getLocalSessionID() {
     return localSessionID;
   }
+
+  @Override
+  public boolean send() {
+    if (!localSessionID.equals(getChannel().getSessionID())) {
+      LOG.debug("not same connection {} != {}", localSessionID, getChannel().getSessionID());
+    }
+    return super.send();
+  }
+
+
 
 }

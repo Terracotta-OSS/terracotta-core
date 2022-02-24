@@ -65,7 +65,7 @@ public abstract class AbstractTCNetworkHeader implements TCNetworkHeader {
       localAllocation = false;
     }
 
-    Assert.eval(!this.data.isDirect());
+//    Assert.eval(!this.data.isDirect());
     Assert.eval(this.data.capacity() >= this.maxLength);
     if (this.data.limit() % 4 != 0) { throw new AssertionError("buffer limit not a multiple of 4: " + this.data.limit()); }
   }

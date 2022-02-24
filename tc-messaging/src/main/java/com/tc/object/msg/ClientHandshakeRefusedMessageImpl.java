@@ -19,6 +19,7 @@
 package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -40,7 +41,7 @@ public class ClientHandshakeRefusedMessageImpl extends DSOMessageBase implements
 
   public ClientHandshakeRefusedMessageImpl(SessionID sessionID, MessageMonitor monitor,
                                            MessageChannel channel, TCMessageHeader header,
-                                           TCByteBuffer[] data) {
+                                           TCByteBufferInputStream data) {
     super(sessionID, monitor, channel, header, data);
   }
 

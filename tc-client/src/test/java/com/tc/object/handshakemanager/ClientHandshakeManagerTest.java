@@ -19,7 +19,6 @@
 package com.tc.object.handshakemanager;
 
 import com.tc.object.msg.ClientHandshakeMessageFactory;
-import com.tc.object.session.SessionManager;
 import com.tc.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,9 +41,6 @@ public class ClientHandshakeManagerTest {
 
   @Mock
   private ClientHandshakeMessageFactory chmf;
-
-  @Mock
-  private SessionManager sessionManager;
 
   @Mock
   private ClientHandshakeCallback entities;
@@ -71,7 +67,7 @@ public class ClientHandshakeManagerTest {
   }
 
   private void checkClientServerVersionCompatibility(String clientVersion, String serverVersion) {
-    ClientHandshakeManagerImpl manager = new ClientHandshakeManagerImpl(logger, chmf, sessionManager,
+    ClientHandshakeManagerImpl manager = new ClientHandshakeManagerImpl(logger, chmf,
             UUID.getUUID().toString(), "name", clientVersion, "revision", entities);
     manager.checkClientServerVersionCompatibility(serverVersion);
   }

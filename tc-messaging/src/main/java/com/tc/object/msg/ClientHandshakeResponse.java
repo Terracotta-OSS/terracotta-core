@@ -18,11 +18,11 @@
  */
 package com.tc.object.msg;
 
-import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.net.protocol.tcm.TCAction;
 
 /**
  *
  */
-public interface ClientHandshakeResponse extends TCMessage {
+public interface ClientHandshakeResponse extends TCAction {
 
 }

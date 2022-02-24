@@ -31,11 +31,11 @@ import com.tc.util.Assert;
 public class TCMessageHeaderImpl extends AbstractTCNetworkHeader implements TCMessageHeader {
   // TODO: This class (and other network headers) should be auto-generated from some form of definition file
 
-  protected TCMessageHeaderImpl(TCByteBuffer hdrData) {
+  public TCMessageHeaderImpl(TCByteBuffer hdrData) {
     super(hdrData, MIN_LENGTH, MAX_LENGTH);
   }
 
-  protected TCMessageHeaderImpl(TCMessageType type) {
+  public TCMessageHeaderImpl(TCMessageType type) {
     super(MIN_LENGTH, MAX_LENGTH);
 
     setMessageType(type.getType());

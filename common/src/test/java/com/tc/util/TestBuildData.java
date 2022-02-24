@@ -16,8 +16,18 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.config.schema.setup;
+package com.tc.util;
 
-public enum TopologyReloadStatus {
-  TOPOLOGY_CHANGE_ACCEPTABLE, TOPOLOGY_CHANGE_UNACCEPTABLE, TOPOLOGY_UNCHANGED, SPECIFY_MIRROR_GROUPS, SERVER_STILL_ALIVE
+import com.tc.productinfo.BaseBuildInfo;
+import java.io.IOException;
+
+/**
+ *
+ */
+public class TestBuildData extends BaseBuildInfo {
+
+  public TestBuildData() throws IOException {
+    super(TestBuildData.class.getResourceAsStream("TestBuildData.txt"));
+  }
+  
 }

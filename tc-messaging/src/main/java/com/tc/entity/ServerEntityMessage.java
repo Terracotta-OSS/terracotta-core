@@ -19,13 +19,13 @@
 
 package com.tc.entity;
 
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.ClientInstanceID;
+import com.tc.net.protocol.tcm.TCAction;
 
 /**
  * @author twu
  */
-public interface ServerEntityMessage extends TCMessage {
+public interface ServerEntityMessage extends TCAction {
 
   void setMessage(ClientInstanceID clientInstance, byte[] payload);
 

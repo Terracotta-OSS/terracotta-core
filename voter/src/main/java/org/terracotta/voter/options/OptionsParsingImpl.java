@@ -20,7 +20,6 @@ package org.terracotta.voter.options;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.tc.config.schema.setup.ConfigurationSetupException;
 
 import java.util.List;
 
@@ -38,7 +37,7 @@ public class OptionsParsingImpl implements OptionsParsing {
   private List<String> serversHostPort;
 
   @Override
-  public Options process() throws ConfigurationSetupException {
+  public Options process() {
     validateOptions();
     Options options = new Options();
     options.setHelp(help);
@@ -47,12 +46,12 @@ public class OptionsParsingImpl implements OptionsParsing {
     return options;
   }
 
-  private void validateOptions() throws ConfigurationSetupException {
+  private void validateOptions() {
     if (!help) {
       if (overrideHostPort == null && serversHostPort == null) {
-        throw new ConfigurationSetupException("Neither the -vote-for option nor the regular -connect-to option provided");
+        throw new RuntimeException("Neither the -vote-for option nor the regular -connect-to option provided");
       } else if (overrideHostPort != null && serversHostPort != null) {
-        throw new ConfigurationSetupException("Either the -vote-for or the regular -connect-to option can be provided");
+        throw new RuntimeException("Either the -vote-for or the regular -connect-to option can be provided");
       }
     }
   }

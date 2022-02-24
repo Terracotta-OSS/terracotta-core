@@ -213,5 +213,10 @@ public class TestActiveGroupManager implements GroupManager<GroupMessage> {
     return false;
   }
 
+  @Override
+  public int getBufferCount() {
+    return 0;
+  }
+
 
 }

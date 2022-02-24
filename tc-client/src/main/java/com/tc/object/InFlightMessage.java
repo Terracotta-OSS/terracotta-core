@@ -22,7 +22,6 @@ import org.terracotta.exception.EntityException;
 
 import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityMessage;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 import static com.tc.object.StatType.CLIENT_COMPLETE;
@@ -53,6 +52,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import com.tc.net.protocol.tcm.TCAction;
 
 
 /**
@@ -208,7 +208,7 @@ public class InFlightMessage implements PrettyPrintable {
     this.isSent = true;
     this.send = System.nanoTime();
     try {
-      return ((TCMessage)this.message).send();
+      return ((TCAction)this.message).send();
     } finally {
       this.sent = System.nanoTime();
     }

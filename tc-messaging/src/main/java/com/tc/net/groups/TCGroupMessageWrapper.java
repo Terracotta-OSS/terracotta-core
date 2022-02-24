@@ -18,7 +18,6 @@
  */
 package com.tc.net.groups;
 
-import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -29,6 +28,7 @@ import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.session.SessionID;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author EY
@@ -43,7 +43,7 @@ public class TCGroupMessageWrapper extends DSOMessageBase {
   }
 
   public TCGroupMessageWrapper(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,
-                               TCMessageHeader header, TCByteBuffer[] data) {
+                               TCMessageHeader header, TCByteBufferInputStream data) {
     super(sessionID, monitor, channel, header, data);
   }
 
@@ -67,16 +67,13 @@ public class TCGroupMessageWrapper extends DSOMessageBase {
       case GROUP_MESSAGE_ID:
         TCByteBufferInputStream in = getInputStream();
         try {
-          this.message = (AbstractGroupMessage) Class.forName(in.readString()).newInstance();
-        } catch (InstantiationException e) {
-          throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-          throw new RuntimeException(e);
-        } catch (ClassNotFoundException e) {
+          this.message = (AbstractGroupMessage) Class.forName(in.readString()).getDeclaredConstructor().newInstance();
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | InvocationTargetException | NoSuchMethodException e) {
           throw new RuntimeException(e);
         }
         this.message.deserializeFrom(in);
         return true;
+
       default:
         return false;
     }

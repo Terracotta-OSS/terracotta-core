@@ -82,11 +82,6 @@ public abstract class ReplayVoltronEntityMultiResponse implements VoltronEntityM
   }
 
   @Override
-  public void dehydrate() {
-    throw new UnsupportedOperationException("Not supported yet.");
-  }
-
-  @Override
   public boolean send() {
     throw new UnsupportedOperationException("Not supported yet.");
   }
@@ -108,11 +103,6 @@ public abstract class ReplayVoltronEntityMultiResponse implements VoltronEntityM
 
   @Override
   public SessionID getLocalSessionID() {
-    throw new UnsupportedOperationException("Not supported yet.");
-  }
-
-  @Override
-  public int getTotalLength() {
     throw new UnsupportedOperationException("Not supported yet.");
   }
 

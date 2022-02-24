@@ -20,7 +20,7 @@
 package com.tc.objectserver.impl;
 
 import com.tc.objectserver.persistence.ClusterStatePersistor;
-import com.tc.util.ProductInfo;
+import com.tc.productinfo.ProductInfo;
 import com.tc.util.version.Version;
 
 /**

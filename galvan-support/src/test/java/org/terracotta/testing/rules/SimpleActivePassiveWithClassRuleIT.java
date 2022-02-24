@@ -20,7 +20,6 @@ package org.terracotta.testing.rules;
 
 
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.passthrough.IClusterControl;
 
@@ -32,7 +31,6 @@ import org.terracotta.passthrough.IClusterControl;
  */
 // XXX: Currently ignored since this test depends on restartability of the server, which now requires a persistence service
 //  to be plugged in (and there isn't one available, in open source).
-@Ignore
 public class SimpleActivePassiveWithClassRuleIT {
   @ClassRule
   public static final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(2)
@@ -74,7 +72,7 @@ public class SimpleActivePassiveWithClassRuleIT {
     
     // Terminate the passive.
     control.terminateOnePassive();
-    
+    Thread.sleep(5000);
     // Restart the terminated server.
     control.startOneServer();
     // Make sure that the passive comes up (we expect that this will cause the server to come up, get zapped, and then restart as passive).

@@ -33,22 +33,28 @@ import java.nio.channels.SocketChannel;
 public class ClearTextBufferManager extends AbstractBufferManager {
   private static final Logger   logger         = LoggerFactory.getLogger(ClearTextBufferManager.class);
   private static final String   BUFFER_SIZE    = "clear.text.buffer.size";
-  private static final int      BUFFER_SIZE_KB = Integer.getInteger(BUFFER_SIZE, 16) * 1024;
+  static final int      BUFFER_SIZE_KB = Integer.getInteger(BUFFER_SIZE, 16) * 1024;
   private final SocketChannel   channel;
-  private final ByteBuffer      sendBuffer     = ByteBuffer.allocate(BUFFER_SIZE_KB);
-  private final ByteBuffer      recvBuffer     = ByteBuffer.allocate(BUFFER_SIZE_KB);
+  private final ByteBuffer      sendBuffer;
+  private final ByteBuffer      recvBuffer;
 
   public ClearTextBufferManager(SocketChannel channel) {
+    this(channel, ByteBuffer.allocate(BUFFER_SIZE_KB), ByteBuffer.allocate(BUFFER_SIZE_KB));
+  }
+
+  protected ClearTextBufferManager(SocketChannel channel, ByteBuffer send, ByteBuffer recv) {
     this.channel = channel;
     if (logger.isDebugEnabled()) {
       logger.debug(this.getClass().getName() + " " + BUFFER_SIZE + " " + BUFFER_SIZE_KB);
     }
+    sendBuffer = send;
+    recvBuffer = recv;
   }
 
   @Override
   public int sendFromBuffer() throws IOException {
     sendBuffer.flip();
-    int written = this.channel.write(sendBuffer);
+    int written = this.channel.write(getSendBuffer());
     sendBuffer.compact();
     if (written == -1) { throw new EOFException(); }
     return written;
@@ -56,7 +62,7 @@ public class ClearTextBufferManager extends AbstractBufferManager {
 
   @Override
   public int recvToBuffer() throws IOException {
-    int read = this.channel.read(recvBuffer);
+    int read = this.channel.read(getRecvBuffer());
     if (read == -1) { throw new EOFException(); }
     return read;
   }

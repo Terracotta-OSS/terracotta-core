@@ -18,8 +18,6 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.bytes.TCByteBuffer;
-import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
@@ -32,6 +30,7 @@ import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.core.ProductID;
+import com.tc.object.session.SessionID;
 import com.tc.util.TCTimeoutException;
 import java.io.IOException;
 
@@ -51,7 +50,7 @@ public class MockMessageChannel implements MessageChannelInternal {
   BlockingQueue<Object>    closedCalls = new LinkedBlockingQueue<Object>();
   private long             lastClosedCallTimestamp;
 
-  private final Map<TCMessageType, Class<? extends TCMessage>>        knownMessageTypes;
+  private final Map<TCMessageType, Class<? extends TCAction>>        knownMessageTypes;
 
   private int              numSends;
   private TCNetworkMessage lastSentMessage;
@@ -61,7 +60,7 @@ public class MockMessageChannel implements MessageChannelInternal {
 
   public MockMessageChannel(ChannelID channelId) {
     this.channelId = channelId;
-    this.knownMessageTypes = new HashMap<TCMessageType, Class<? extends TCMessage>>();
+    this.knownMessageTypes = new HashMap<TCMessageType, Class<? extends TCAction>>();
     reset();
     source = new ClientID(channelId.toLong());
   }
@@ -132,7 +131,7 @@ public class MockMessageChannel implements MessageChannelInternal {
   }
 
   @Override
-  public void receive(TCByteBuffer[] msgData) {
+  public void receive(TCNetworkMessage msgData) {
     throw new UnsupportedOperationException();
   }
 
@@ -148,13 +147,13 @@ public class MockMessageChannel implements MessageChannelInternal {
   
   @SuppressWarnings("resource")
   @Override
-  public TCMessage createMessage(TCMessageType type) {
-    Class<? extends TCMessage> theClass = this.knownMessageTypes.get(type);
+  public TCAction createMessage(TCMessageType type) {
+    Class<? extends TCAction> theClass = this.knownMessageTypes.get(type);
 
     if (theClass == null) throw new UnsupportedOperationException();
 
     try {
-      Constructor<? extends TCMessage> constructor = theClass.getConstructor(new Class[] { MessageMonitor.class,
+      Constructor<? extends TCAction> constructor = theClass.getConstructor(new Class[] { MessageMonitor.class,
           MessageChannel.class, TCMessageType.class });
       return constructor.newInstance(new Object[] { new NullMessageMonitor(), this, type });
     } catch (Exception e) {
@@ -187,6 +186,11 @@ public class MockMessageChannel implements MessageChannelInternal {
 
   @Override
   public void notifyTransportReconnectionRejected(MessageTransport transport) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public TCByteBufferOutputStream createOutput() {
     throw new UnsupportedOperationException();
   }
 
@@ -260,6 +264,11 @@ public class MockMessageChannel implements MessageChannelInternal {
 
   @Override
   public ConnectionID getConnectionID() {
+    return null;
+  }
+
+  @Override
+  public SessionID getSessionID() {
     return null;
   }
 }

@@ -16,17 +16,16 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.config.schema.repository;
+package com.tc.productinfo;
 
 /**
- * An object that holds onto an {@link XmlObject}, and lets you know when it changes.
+ * Version compatibility check is currently disabled.
  */
-public interface BeanRepository {
+public interface VersionCompatibility {
 
-  void ensureBeanIsOfClass(Class<?> theClass);
+  boolean isCompatibleClientServer(String clientVersion, String serverVersion);
 
-  Object bean();
+  boolean isCompatibleServerServer(String v1, String v2);
 
-  void setBean(Object bean, String description);
-
+  boolean isCompatibleServerPersistence(String persisted, String current);
 }

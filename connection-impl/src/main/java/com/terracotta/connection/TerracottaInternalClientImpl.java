@@ -18,7 +18,6 @@
  */
 package com.terracotta.connection;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.object.ClientBuilder;
 import com.tc.object.ClientEntityManager;
 import com.tc.object.DistributedObjectClient;
@@ -72,7 +71,7 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
     try {
       try {
         client = clientCreator.create(this::destroy);
-      } catch (ConfigurationSetupException | TimeoutException | InterruptedException to) {
+      } catch (TimeoutException | InterruptedException to) {
         throw new DetailedConnectionException(to, errorListener.getErrors());
       } catch (RuntimeException e){
         throw new DetailedConnectionException(new Exception(DetailedConnectionException.getDetailedMessage(errorListener.getErrors()), e), errorListener.getErrors());

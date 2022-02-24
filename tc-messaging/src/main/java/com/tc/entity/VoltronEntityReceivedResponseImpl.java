@@ -20,6 +20,7 @@
 package com.tc.entity;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -41,7 +42,7 @@ public class VoltronEntityReceivedResponseImpl extends DSOMessageBase implements
     super(sessionID, monitor, out, channel, type);
   }
 
-  public VoltronEntityReceivedResponseImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBuffer[] data) {
+  public VoltronEntityReceivedResponseImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBufferInputStream data) {
     super(sessionID, monitor, channel, header, data);
   }
 

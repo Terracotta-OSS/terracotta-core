@@ -19,6 +19,7 @@
 package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -51,7 +52,7 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
 
   public ClientHandshakeAckMessageImpl(SessionID sessionID, MessageMonitor monitor,
                                        MessageChannel channel, TCMessageHeader header,
-                                       TCByteBuffer[] data) {
+                                       TCByteBufferInputStream data) {
     super(sessionID, monitor, channel, header, data);
   }
 

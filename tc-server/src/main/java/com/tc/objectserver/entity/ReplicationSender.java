@@ -358,9 +358,6 @@ public class ReplicationSender {
       outgoing.addToSink(new ReplicationSendingAction(this.executionLane, ()->{
         try {
           long seqId = this.batchContext.flushBatch();
-          if (seqId >= 0) {
-            TripwireFactory.createReplicationEvent(session.toLong(), seqId).commit();
-          }
         } catch (GroupException ge) {
           logger.warn("error sending message to passive ", ge);
         }

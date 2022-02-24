@@ -72,4 +72,6 @@ public interface GroupManager<M extends GroupMessage> extends PrettyPrintable {
   public void shutdown();
 
   public boolean isStopped();
+  
+  int getBufferCount();
 }

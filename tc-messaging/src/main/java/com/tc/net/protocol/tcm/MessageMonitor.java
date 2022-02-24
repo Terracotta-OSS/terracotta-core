@@ -20,8 +20,8 @@ package com.tc.net.protocol.tcm;
 
 public interface MessageMonitor {
 
-  public void newIncomingMessage(TCMessage message);
+  public void newIncomingMessage(TCAction message);
 
-  public void newOutgoingMessage(TCMessage message);
+  public void newOutgoingMessage(TCAction message);
 
 }

@@ -52,7 +52,6 @@ import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageHydrateSink;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
@@ -63,8 +62,6 @@ import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForGroupComm;
 import com.tc.net.protocol.transport.MessageTransport;
-import com.tc.object.session.SessionManagerImpl;
-import com.tc.object.session.SessionProvider;
 import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handler.ReceiveGroupMessageHandler;
@@ -82,8 +79,6 @@ import com.tc.net.utils.L2Utils;
 import com.tc.spi.Guardian;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
-import com.tc.util.sequence.Sequence;
-import com.tc.util.sequence.SimpleSequence;
 import org.terracotta.configuration.ServerConfiguration;
 
 import java.io.IOException;
@@ -109,6 +104,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.stream.Collectors.toSet;
 import org.terracotta.server.ServerEnv;
+import com.tc.net.protocol.tcm.TCAction;
 
 
 public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, ChannelManagerEventListener, TopologyListener {
@@ -225,7 +221,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     final TCMessageRouter messageRouter = new TCMessageRouterImpl();
     initMessageRouter(messageRouter);
 
-    final Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping = new HashMap<>();
+    final Map<TCMessageType, Class<? extends TCAction>> messageTypeClassMapping = new HashMap<>();
     initMessageTypeClassMapping(messageTypeClassMapping);
     HealthCheckerConfig hcconfig = new HealthCheckerConfigImpl(tcProperties
                                                               .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY), ServerEnv.getServer().getIdentifier() + " - TCGroupManager");
@@ -259,7 +255,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     discoveryStage = stageManager.createStage(ServerConfigurationContext.GROUP_DISCOVERY_STAGE, DiscoveryStateMachine.class, new TCGroupMemberDiscoveryHandler(this), 1, maxStageSize, false, false);
   }
 
-  private Map<TCMessageType, Class<? extends TCMessage>> initMessageTypeClassMapping(Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping) {
+  private Map<TCMessageType, Class<? extends TCAction>> initMessageTypeClassMapping(Map<TCMessageType, Class<? extends TCAction>> messageTypeClassMapping) {
     messageTypeClassMapping.put(TCMessageType.GROUP_HANDSHAKE_MESSAGE, TCGroupHandshakeMessage.class);
     messageTypeClassMapping.put(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
     return messageTypeClassMapping;
@@ -597,18 +593,11 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
     if (isStopped.get()) return;
 
-    SessionProvider sessionProvider = new SessionManagerImpl(new SessionManagerImpl.SequenceFactory() {
-      @Override
-      public Sequence newSequence() {
-        return new SimpleSequence();
-      }
-    });
-
     communicationsManager.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
     communicationsManager.addClassMapping(TCMessageType.GROUP_HANDSHAKE_MESSAGE, TCGroupHandshakeMessage.class);
 
     ProductID product = ProductID.DISCOVERY;
-    ClientMessageChannel channel = communicationsManager.createClientChannel(product, sessionProvider, 2_000 /*  timeout */);
+    ClientMessageChannel channel = communicationsManager.createClientChannel(product, 2_000 /*  timeout */);
 
     channel.addListener(listener);
     channel.open(serverAddress);
@@ -690,15 +679,19 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       return;
     }
 
-    if (m == null) {
+    while (m == null) {
       TCGroupHandshakeStateMachine stateMachine = getHandshakeStateMachine(channel);
       String errInfo = "Received message for non-exist member from " + channel.getRemoteAddress() + " to "
                        + channel.getLocalAddress() + "; " + stateMachine
                        + "; msg: " + message;
-      if (stateMachine != null && stateMachine.isFailureState()) {
+      if (stateMachine != null) {
         // message received after node left
-        logger.warn(errInfo);
-        return;
+        if (stateMachine.isFailureState()) {
+          logger.warn(errInfo);
+          return;
+        } else {
+          m = getMember(channel);
+        }
       } else if (isStopped()) {
         return;
       } else {
@@ -1440,6 +1433,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   @Override
   public boolean isServerConnected(String nodeName) {
     return this.discover.isServerConnected(nodeName);
+  }
+  
+  public int getBufferCount() {
+    return connectionManager.getBufferCount();
   }
 
   private static void debugInfo(String message) {

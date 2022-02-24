@@ -110,4 +110,9 @@ public class BasicConnectionManager implements TCConnectionManager {
   public Map<String, ?> getStateMap() {
     return new LinkedHashMap<>();
   }
+  
+  @Override
+  public int getBufferCount() {
+    return 0;
+  }
 }

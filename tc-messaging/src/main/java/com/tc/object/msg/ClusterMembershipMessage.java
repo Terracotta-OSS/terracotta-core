@@ -18,7 +18,7 @@
  */
 package com.tc.object.msg;
 
-import com.tc.bytes.TCByteBuffer;
+import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -45,7 +45,7 @@ public class ClusterMembershipMessage extends DSOMessageBase {
   }
 
   public ClusterMembershipMessage(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,
-                                  TCMessageHeader header, TCByteBuffer[] data) {
+                                  TCMessageHeader header, TCByteBufferInputStream data) {
     super(sessionID, monitor, channel, header, data);
   }
 
@@ -97,11 +97,6 @@ public class ClusterMembershipMessage extends DSOMessageBase {
 
   public ProductID getProductId() {
     return productId;
-  }
-
-  @Override
-  protected String describePayload() {
-    return EventType.toString(eventType) + " nodeId=" + nodeID;
   }
 
   public static class EventType {

@@ -19,18 +19,18 @@
 package com.tc.objectserver.handler;
 
 import com.tc.async.api.MultiThreadedEventContext;
-import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.net.protocol.tcm.TCAction;
 
 
 public class ResponseMessage implements MultiThreadedEventContext {
 
-  private final TCMessage response;
+  private final TCAction response;
 
-  public ResponseMessage(TCMessage response) {
+  public ResponseMessage(TCAction response) {
     this.response = response;
   }
 
-  public TCMessage getResponse() {
+  public TCAction getResponse() {
     return response;
   }
 

@@ -20,6 +20,7 @@ package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.entity.ResendVoltronEntityMessage;
+import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -73,7 +74,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   }
 
   public ClientHandshakeMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,
-                                    TCMessageHeader header, TCByteBuffer[] data) {
+                                    TCMessageHeader header, TCByteBufferInputStream data) {
     super(sessionID, monitor, channel, header, data);
     // if this is on the server, it will be replaced by the dehydrate
     clientAddress = TCSocketAddress.getStringForm(channel.getLocalAddress());

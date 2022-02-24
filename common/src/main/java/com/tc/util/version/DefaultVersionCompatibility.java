@@ -18,24 +18,38 @@
  */
 package com.tc.util.version;
 
+import com.tc.productinfo.VersionCompatibility;
+
 /**
  * Version compatibility check is currently disabled.
  */
-public class VersionCompatibility {
-  private static final Version MINIMUM_COMPATIBLE_PERSISTENCE = new Version("4.1.2");
+public class DefaultVersionCompatibility implements VersionCompatibility {
 
-  public boolean isCompatibleClientServer(Version clientVersion, Version serverVersion) {
-    return isCompatible(clientVersion, serverVersion);
+  @Override
+  public boolean isCompatibleClientServer(String clientVersion, String serverVersion) {
+    return isCompatibleClientServer(new Version(clientVersion), new Version(serverVersion));
   }
 
-  public boolean isCompatibleServerServer(Version v1, Version v2) {
+  @Override
+  public boolean isCompatibleServerServer(String v1, String v2) {
+    return isCompatibleServerServer(new Version(v1), new Version(v2));
+  }
+
+  @Override
+  public boolean isCompatibleServerPersistence(String persisted, String current) {
+    return isCompatibleServerServer(new Version(persisted), new Version(current));
+  }
+
+  private boolean isCompatibleClientServer(Version clientVersion, Version serverVersion) {
+    return isCompatible(clientVersion, serverVersion) && !clientVersion.isNewer(serverVersion, 3);
+  }
+
+  private boolean isCompatibleServerServer(Version v1, Version v2) {
     return isCompatible(v1, v2);
   }
 
-  public boolean isCompatibleServerPersistence(Version persisted, Version current) {
-    if (persisted.compareTo(getMinimumCompatiblePersistence()) < 0) {
-      return false;
-    } else if (persisted.major() == current.major() && persisted.minor() == current.minor()) {
+  private boolean isCompatibleServerPersistence(Version persisted, Version current) {
+    if (persisted.major() == current.major() && persisted.minor() == current.minor()) {
       return true;
     } else {
       return current.compareTo(persisted) >= 0;
@@ -50,9 +64,5 @@ public class VersionCompatibility {
   public static boolean isNewer(Version v1, Version v2, int depth) {
     if (v1 == null || v2 == null) { throw new NullPointerException(); }
     return v1.isNewer(v2, depth);
-  }
-
-  public Version getMinimumCompatiblePersistence() {
-    return MINIMUM_COMPATIBLE_PERSISTENCE;
   }
 }

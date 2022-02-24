@@ -24,7 +24,7 @@ import com.tc.exception.TCException;
  * @author orion
  */
 public class UnknownNameException extends TCException {
-  public UnknownNameException(Class<? extends TCMessage> msgClass, byte name) {
+  public UnknownNameException(Class<? extends TCAction> msgClass, byte name) {
     super("unknown name: " + name + " for message class " + msgClass.getName());
   }
 }

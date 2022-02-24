@@ -22,9 +22,11 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.net.protocol.AbstractTCNetworkHeader;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.delivery.OOOProtocolMessage;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
+import com.tc.net.protocol.tcm.TCAction;
+import com.tc.net.protocol.tcm.TCMessageHeader;
+import com.tc.object.msg.DSOMessageBase;
 
 /**
  * This class models the header portion of a TC wire protocol message. NOTE: This class makes no attempt to be thread
@@ -85,7 +87,7 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
 
   public static short getProtocolForMessageClass(TCNetworkMessage msg) {
     // TODO: is there a better way to do this (ie. not using instanceof)?
-    if (msg instanceof TCMessage) {
+    if (msg.getHeader() instanceof TCMessageHeader) {
       return PROTOCOL_TCM;
     } else if (msg instanceof OOOProtocolMessage) { return PROTOCOL_OOOP; }
 

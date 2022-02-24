@@ -16,11 +16,7 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.util;
-
-import com.tc.productinfo.BuildInfo;
-import com.tc.productinfo.ExtensionInfo;
-import com.tc.productinfo.PatchInfo;
+package com.tc.productinfo;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,22 +37,16 @@ import java.util.ServiceLoader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import com.tc.productinfo.Description;
 import java.util.ArrayList;
 import java.util.Collections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Utility class to retrieve the build information for the product.
  */
 public final class ProductInfo {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ProductInfo.class);
   
   private static final String               DATE_FORMAT                = "yyyyMMdd-HHmmss";
   private static final Pattern              KITIDPATTERN               = Pattern.compile("(\\d+\\.\\d+.\\d+).*");
-  private static final String               BUILD_DATA_RESOURCE_NAME   = "/build-data.txt";
-  private static final String               PATCH_DATA_RESOURCE_NAME   = "/patch-data.txt";
 
   public static final String                UNKNOWN_VALUE              = "[unknown]";
 
@@ -67,11 +57,6 @@ public final class ProductInfo {
   private final List<ExtensionInfo>            extensionInfo = new ArrayList<>();
   private final String                         kitID;
   private String                         buildID;
-
-  ProductInfo(InputStream buildData, InputStream patchData) throws IOException {
-    this(buildData, patchData, null, null, null);
-  }
-
   /**
    * Construct a ProductInfo by reading properties from streams (most commonly by loading properties files as resources
    * from the classpath). If an IOException occurs while loading the build or patch streams, the System will exit. These
@@ -83,19 +68,11 @@ public final class ProductInfo {
    * @throws IOException If there is an error reading the build or patch data streams
    * @throws ParseException If there is an error reading the timestamp format in build or patch data streams
    */
-  ProductInfo(InputStream buildData, InputStream patchData, BuildInfo build, List<PatchInfo> patches, List<ExtensionInfo> extensions) throws IOException {
-    Assert.assertNotNull("buildData", buildData);
-
-    BuildInfo baseBuild = new BaseBuildInfo(buildData);
-    PatchInfo basePatch = new BasePatchInfo(patchData);
-
+  ProductInfo(BuildInfo build, List<PatchInfo> patches, List<ExtensionInfo> extensions) throws IOException {    
     if (build == null) {
-      buildInfo = baseBuild;
-    } else {
-      buildInfo = build;
+      build = new BaseBuildInfo(getClass().getResourceAsStream("/build-data.txt"));
     }
-
-    patchInfo.add(basePatch);
+    buildInfo = build;
 
     if (patches != null) {
       patchInfo.addAll(patches);
@@ -132,7 +109,6 @@ public final class ProductInfo {
           Description next = steps.next();
           if (next instanceof BuildInfo) {
             if (build != null) {
-              LOGGER.error("corrupt installation. multiple builds detected:\n{}\n\n{}", build, next);
               throw new RuntimeException("corrupt installation. multiple builds detected");
             }
             build = (BuildInfo)next;
@@ -144,7 +120,7 @@ public final class ProductInfo {
             info.add((ExtensionInfo)next);
           }
         }
-        INSTANCE = new ProductInfo(getBuildData(), getPatchData(), build, patches, info);
+        INSTANCE = new ProductInfo(build, patches, info);
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -184,18 +160,6 @@ public final class ProductInfo {
     return ProductInfo.class.getResourceAsStream(name);
   }
   
-  static InputStream getBuildData() {
-    return getData(BUILD_DATA_RESOURCE_NAME);
-  }
-
-  static InputStream getPatchData() {
-    return getData(PATCH_DATA_RESOURCE_NAME);
-  }
-
-  public static void printRawData() {
-
-  }
-
   public Collection<String> getExtensions() {
     return this.extensionInfo.stream().map(e->e.getExtensionInfo()).collect(Collectors.toList());
   }
@@ -245,12 +209,7 @@ public final class ProductInfo {
   }
 
   public boolean isPatched() {
-    PatchInfo info = patchInfo.get(0);
-    if (info instanceof BasePatchInfo) {
-      return ((BasePatchInfo)info).isPatched();
-    } else {
-      return true;
-    }
+    return !patchInfo.isEmpty();
   }
 
   public String patchLevel() {

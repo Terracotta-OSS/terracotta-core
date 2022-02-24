@@ -16,14 +16,11 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.object.session;
+package com.tc.net.protocol.tcm;
 
-public interface SessionProvider {
-  public void initProvider();
-  
-  public SessionID getSessionID();
-  
-  public SessionID nextSessionID();
+/**
+ *
+ */
+public interface TCActionMessage {
 
-  public void resetSessionProvider();
 }

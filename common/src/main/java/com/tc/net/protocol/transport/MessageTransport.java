@@ -55,5 +55,4 @@ public interface MessageTransport extends NetworkLayer, PrettyPrintable {
   public int getRemoteCallbackPort();
 
   public void initConnectionID(ConnectionID cid);
-
 }

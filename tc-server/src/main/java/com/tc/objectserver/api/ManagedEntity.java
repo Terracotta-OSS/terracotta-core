@@ -80,6 +80,8 @@ public interface ManagedEntity {
   boolean canDelete();
   
   boolean clearQueue();
+
+  boolean isCompatibleEntity(EntityID type);
   
   void resetReferences(int count);
 

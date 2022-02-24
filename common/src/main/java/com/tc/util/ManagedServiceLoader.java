@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,25 +49,38 @@ import static java.util.stream.Collectors.toList;
 /**
  * Top level service locator class used to identify and isolate service dependencies in its own classloader.
  */
-public class ManagedServiceLoader {
+public class ManagedServiceLoader implements TCServiceLoader.Provider {
 
   private static final Logger LOG = LoggerFactory.getLogger(ManagedServiceLoader.class);
 
   private static final String METAINFCONST = "META-INF/services/";
 
-  public static <T> Collection<T> loadServices(Class<T> serviceClass, ClassLoader loader) {
-    return new ManagedServiceLoader().getImplementations(serviceClass, loader)
-        .stream()
-        .map((clazz) -> {
-          try {
-            return clazz.newInstance();
-          } catch (InstantiationException | IllegalAccessException e) {
-            throw new RuntimeException("Unable to resolve service implementations for " + serviceClass, e);
-          }})
-        .collect(toList());
+  public static <T> Collection<? extends T> loadServices(Class<T> serviceClass, ClassLoader loader) {
+    return new ManagedServiceLoader().getImplementations(serviceClass, loader);
+  }
+  
+  static {
+    TCServiceLoader.setImplementation(new ManagedServiceLoader());
   }
     
   public ManagedServiceLoader() {
+  }
+
+  @Override
+  public <T> Collection<? extends T> getImplementations(Class<T> serviceClass, ClassLoader loader) {
+    return getImplementationsTypes(serviceClass, loader)
+        .stream()
+        .map((clazz) -> {
+          try {
+            return clazz.getConstructor().newInstance();
+          } catch (IllegalAccessException | 
+                  IllegalArgumentException | 
+                  InstantiationException | 
+                  InvocationTargetException |
+                  NoSuchMethodException e) {
+            throw new RuntimeException("Unable to resolve service implementations for " + serviceClass, e);
+          }})
+        .collect(toList());
   }
 
   /**
@@ -196,7 +210,7 @@ public class ManagedServiceLoader {
     return new String[0];
   }
     
-  public <T> List<Class<? extends T>> getImplementations(final Class<T> interfaceClass, ClassLoader loader) {
+  public <T> List<Class<? extends T>> getImplementationsTypes(final Class<T> interfaceClass, ClassLoader loader) {
     Assert.assertNotNull(loader);
     Collection<Class<?>> items = getImplementations(interfaceClass.getName(), loader);
     final Class<?> list[] = items.toArray(new Class<?>[items.size()]);

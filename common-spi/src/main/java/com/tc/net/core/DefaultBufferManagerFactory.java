@@ -16,14 +16,19 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.object.session;
+package com.tc.net.core;
 
-public interface SessionManager extends SessionProvider {
-
-  public boolean isCurrentSession(SessionID sessionID);
-
-  /**
-   * Tells the session manager to start a new session.
-   */
-  public void newSession();
+/**
+ *
+ */
+public class DefaultBufferManagerFactory {
+  private static BufferManagerFactory DEFAULT;
+  
+  public static void setBufferManagerFactory(BufferManagerFactory d) {
+    DEFAULT = d;
+  }
+  
+  public static BufferManagerFactory getBufferManagerFactory() {
+    return DEFAULT;
+  }
 }

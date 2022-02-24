@@ -18,8 +18,6 @@
  */
 package org.terracotta.voter.options;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
-
 public interface OptionsParsing {
-  Options process() throws ConfigurationSetupException;
+  Options process();
 }

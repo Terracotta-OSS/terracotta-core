@@ -18,6 +18,7 @@
  */
 package com.tc.util;
 
+import com.tc.productinfo.ProductInfo;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -84,22 +85,13 @@ public class ProductInfoTest extends TestCase {
   }
 
   public void testOpenSourceEditionWithPatch() throws Exception {
-      InputStream buildData = ProductInfo.getData("TestBuildData.txt");
-      InputStream patchData = ProductInfo.getData("TestPatchData.txt");
-      ProductInfo info = new ProductInfo(buildData, patchData);
+      ProductInfo info = ProductInfo.getInstance();
       verifyOpenSourceBuildData(info);
       verifyPatchInfo(info);
       assertEquals("20080620-235959 (Revision 12112 from thepatchbranch)",
           info.patchBuildID());
       assertEquals("Patch Level 5, as of 20080620-235959 (Revision 12112 from thepatchbranch)",
           info.toLongPatchString());
-  }
-
-  public void testOpenSourceEditionWithoutPatch() throws Exception {
-      InputStream buildData = ProductInfo.getData("TestBuildData.txt");
-      ProductInfo info = new ProductInfo(buildData, null);
-      verifyOpenSourceBuildData(info);
-      verifyNoPatchInfo(info);
   }
 
   private void verifyOpenSourceBuildData(ProductInfo info) {

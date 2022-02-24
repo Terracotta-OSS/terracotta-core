@@ -57,11 +57,6 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
   public L2Coordinator getL2Coordinator() {
     return l2Coordinator;
   }
-  
-  @Override
-  public DSOChannelManager getChannelManager() {
-    return channelManager;
-  }
 
   @Override
   public ServerClientHandshakeManager getClientHandshakeManager() {

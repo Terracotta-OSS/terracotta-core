@@ -25,13 +25,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 
 public class QueueFactory {
-
-  public <E> BlockingQueue<Event> createInstance(Class<E> type) {
-    return new LinkedBlockingQueue<>();
-  }
-
   public <E> BlockingQueue<Event> createInstance(Class<E> type, int capacity) {
     return (capacity == 0) ? new SynchronousQueue<>() : 
+            (capacity == Integer.MAX_VALUE || capacity < 0) ? new LinkedBlockingQueue<>() :
             (capacity <= 1024) ? new ArrayBlockingQueue<>(capacity) :
             new LinkedBlockingQueue<>(capacity);
   }

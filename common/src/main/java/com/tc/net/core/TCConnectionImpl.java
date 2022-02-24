@@ -22,7 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.bytes.TCByteBufferFactory;
+import com.tc.bytes.TCDirectByteBufferCache;
+import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCByteBufferOutputStream;
+import com.tc.io.TCDirectByteBufferOutputStream;
 import com.tc.net.core.event.TCConnectionEventCaller;
 import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.protocol.TCNetworkMessage;
@@ -84,6 +87,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private final AtomicBoolean                   transportEstablished        = new AtomicBoolean(false);
   private final LinkedList<TCNetworkMessage>    writeMessages               = new LinkedList<TCNetworkMessage>();
   private final TCConnectionManagerImpl         parent;
+  private final TCDirectByteBufferCache         buffers;
   private final TCConnectionEventCaller         eventCaller                 = new TCConnectionEventCaller(logger);
   private final AtomicLong                      lastDataWriteTime           = new AtomicLong(System.currentTimeMillis());
   private final LongAdder                      messagesWritten           = new LongAdder();
@@ -155,6 +159,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
     this.socketParams = socketParams;
     this.commWorker = nioServiceThread;
+    this.buffers = new TCDirectByteBufferCache(parent.getBufferCache());
   }
   
   @Override
@@ -174,6 +179,8 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     state.put("connected", isConnected());
     state.put("closePending", isClosePending());
     state.put("transportConnected", isTransportEstablished());
+    state.put("buffers.cached", buffers.size());
+    state.put("buffers.referenced", buffers.referenced());
     if (bufferManager instanceof PrettyPrintable) {
       state.put("buffer", ((PrettyPrintable)this.bufferManager).getStateMap());
     } else {
@@ -193,6 +200,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       if (this.bufferManager != null) {
         this.bufferManager.close();
       }
+      this.buffers.close();
     } catch (EOFException eof) {
       logger.debug("closed", eof);
     } catch (IOException ioe) {
@@ -403,7 +411,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       this.writeMessages.clear();
     }
     ArrayList<TCNetworkMessage> currentBatch = (MSG_GROUPING_ENABLED
-        ? new ArrayList<TCNetworkMessage>()
+        ? new ArrayList<>()
         : null);
     
 
@@ -418,7 +426,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         // GenericNetwork messages are used for testing
         this.writeContexts.add(new WriteContext(element));
       } else if (MSG_GROUPING_ENABLED) {
-        int realMessageSize = getRealMessgeSize(element.getTotalLength());
+        int realMessageSize = element.getTotalLength();
         if (!canBatch(realMessageSize, batchSize, batchMsgCount)) {
           // We can't add this to the current batch so seal the current batch as a write context and create a new one.
           this.writeContexts.add(new WriteContext(buildWireProtocolMessageGroup(currentBatch)));
@@ -447,10 +455,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     return (0 == currentBatchMsgCount) 
         || ((currentBatchSize + realMessageSize) <= MSG_GROUPING_MAX_SIZE_BYTES
           && (currentBatchMsgCount + 1 <= WireProtocolHeader.MAX_MESSAGE_COUNT));
-  }
-
-  private int getRealMessgeSize(int length) {
-    return TCByteBufferFactory.getTotalBufferSizeNeededForMessageSize(length);
   }
 
   private int doReadFromBufferInternal() {
@@ -499,22 +503,22 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     if (this.writeContexts.size() <= 0) {
       buildWriteContextsFromMessages();
     }
-    while (this.writeContexts.size() > 0) {
+    while (!this.writeContexts.isEmpty()) {
       WriteContext context = this.writeContexts.get(0);
-      final TCByteBuffer[] buffers = context.entireMessageData;
+      final TCByteBuffer[] bufs = context.entireMessageData;
 
       long bytesWritten = 0;
       // Do the write in a loop, instead of calling write(ByteBuffer[]).
       // This seems to avoid memory leaks and faster
-      for (int i = context.index, nn = buffers.length; i < nn; i++) {
-        final int written = bufferManager.forwardToWriteBuffer(buffers[i].getNioBuffer());
+      for (int i = context.index, nn = bufs.length; i < nn; i++) {
+        final int written = bufferManager.forwardToWriteBuffer(bufs[i].getNioBuffer());
         if (written == 0) {
           break;
         }
 
         bytesWritten += written;
 
-        if (buffers[i].hasRemaining()) {
+        if (bufs[i].hasRemaining()) {
           break;
         } else {
           context.incrementIndexAndCleanOld();
@@ -820,11 +824,11 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     }
   }
 
-  private final void addNetworkData(TCByteBuffer[] data, int length) {
+  private void addNetworkData(TCByteBuffer[] data, int length) {
     this.lastDataReceiveTime.set(System.currentTimeMillis());
 
     try {
-      this.protocolAdaptor.addReadData(this, data, length);
+      this.protocolAdaptor.addReadData(this, data, length, MESSAGE_PACKUP ? buffers : null);
     } catch (final Exception e) {
       logger.error(this.toString() + " " + e.getMessage());
       for (TCByteBuffer tcByteBuffer : data) {
@@ -861,32 +865,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     if (messageGroupSize == 1) { return buildWireProtocolMessage(messages.get(0)); }
 
     final WireProtocolGroupMessageImpl message = WireProtocolGroupMessageImpl.wrapMessages(messages, this);
-    Assert.eval(message.getSentCallback() == null);
 
-    boolean hasNonNullCallbacks = false;
-    final Runnable[] callbacks = new Runnable[messageGroupSize];
-    for (int i = 0; i < messageGroupSize; i++) {
-      TCNetworkMessage oneMessage = messages.get(i);
-      Assert.eval(!(oneMessage instanceof WireProtocolMessage));
-      Runnable callback = oneMessage.getSentCallback();
-      if (null != callback) {
-        callbacks[i] = callback;
-        hasNonNullCallbacks = true;
-      }
-    }
-
-    if (hasNonNullCallbacks) {
-      message.setSentCallback(new Runnable() {
-        @Override
-        public void run() {
-          for (final Runnable callback : callbacks) {
-            if (callback != null) {
-              callback.run();
-            }
-          }
-        }
-      });
-    }
     return finalizeWireProtocolMessage(message, messageGroupSize);
   }
 
@@ -895,12 +874,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     final TCNetworkMessage payload = message;
 
     WireProtocolMessage wireMessage = WireProtocolMessageImpl.wrapMessage(message, this);
-    Assert.eval(wireMessage.getSentCallback() == null);
 
-    final Runnable callback = payload.getSentCallback();
-    if (callback != null) {
-      wireMessage.setSentCallback(callback);
-    }
     return finalizeWireProtocolMessage(wireMessage, 1);
   }
 
@@ -962,7 +936,31 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     }
   }
 
-  protected static class WriteContext {
+  public static TCByteBuffer[] packupMessage(TCByteBuffer[] sourceMessageByteBuffers) {
+    int len = 0;
+    for (TCByteBuffer sourceMessageByteBuffer : sourceMessageByteBuffers) {
+      len += sourceMessageByteBuffer.remaining();
+    }
+
+    TCByteBufferOutput dest = new TCByteBufferOutputStream();
+    dest.write(sourceMessageByteBuffers);
+    dest.close();
+    TCByteBuffer[] packedUpMessageByteBuffers = dest.toArray();
+    int available = 0;
+    for (TCByteBuffer bufs : packedUpMessageByteBuffers) {
+      available += bufs.remaining();
+    }
+    Assert.assertEquals("Comms Write: packed-up message length is different from original. ", len, available);
+
+    return packedUpMessageByteBuffers;
+  }
+
+  @Override
+  public TCByteBufferOutputStream createOutput() {
+    return MESSAGE_PACKUP ? new TCDirectByteBufferOutputStream(buffers) : new TCByteBufferOutputStream();
+  }
+
+  protected class WriteContext {
     private final TCNetworkMessage message;
     private int                    index = 0;
     private final TCByteBuffer[]   entireMessageData;
@@ -971,7 +969,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       // either WireProtocolMessage or WireProtocolMessageGroup
       this.message = message;
 
-      this.entireMessageData = MESSAGE_PACKUP ? getPackedUpMessage(message.getEntireMessageData()) : getClonedMessage(message.getEntireMessageData());
+      this.entireMessageData = getClonedMessage(message.getEntireMessageData());
     }
 
     boolean done() {
@@ -987,67 +985,16 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     }
 
     void writeComplete() {
-      this.message.wasSent();
+      this.message.complete();
     }
 
-    private static TCByteBuffer[] getClonedMessage(TCByteBuffer[] sourceMessageByteBuffers) {
+    private TCByteBuffer[] getClonedMessage(TCByteBuffer[] sourceMessageByteBuffers) {
       final TCByteBuffer[] msgData = sourceMessageByteBuffers;
       TCByteBuffer[] clonedMessageData = new TCByteBuffer[msgData.length];
       for (int i = 0; i < msgData.length; i++) {
         clonedMessageData[i] = msgData[i].asReadOnlyBuffer();
       }
       return clonedMessageData;
-    }
-
-    /**
-     * Copies full message contents onto series of 4K chunk direct byte buffers. Since this routine operates on source
-     * message byte buffer's backing arrays, these buffers shouldn't be readOnlyBuffers.
-     */
-    protected static TCByteBuffer[] getPackedUpMessage(TCByteBuffer[] sourceMessageByteBuffers) {
-
-      int srcIndex = 0, srcOffset = 0, dstIndex = 0, srcRem = 0, dstRem = 0, written = 0, len = 0;
-      for (TCByteBuffer sourceMessageByteBuffer : sourceMessageByteBuffers) {
-        len += sourceMessageByteBuffer.limit();
-      }
-
-      // packedup message is direct byte buffers based. so that system socket write can avoid copy over of data
-      TCByteBuffer[] packedUpMessageByteBuffers = TCByteBufferFactory.getDirectBuffersForLength(len);
-      srcOffset = sourceMessageByteBuffers[srcIndex].arrayOffset();
-      while (srcIndex < sourceMessageByteBuffers.length) {
-        dstRem = packedUpMessageByteBuffers[dstIndex].remaining();
-        srcRem = (sourceMessageByteBuffers[srcIndex].arrayOffset() + sourceMessageByteBuffers[srcIndex].limit())
-                 - srcOffset;
-
-        if (srcRem > dstRem) {
-          packedUpMessageByteBuffers[dstIndex].put(sourceMessageByteBuffers[srcIndex].array(), srcOffset, dstRem);
-          srcOffset += dstRem;
-          dstIndex++;
-          written += dstRem;
-        } else if (srcRem == dstRem) {
-          packedUpMessageByteBuffers[dstIndex].put(sourceMessageByteBuffers[srcIndex].array(), srcOffset, dstRem);
-          dstIndex++;
-          srcIndex++;
-          srcOffset = ((srcIndex < sourceMessageByteBuffers.length) ? sourceMessageByteBuffers[srcIndex].arrayOffset()
-              : 0);
-          written += dstRem;
-        } else {
-          packedUpMessageByteBuffers[dstIndex].put(sourceMessageByteBuffers[srcIndex].array(), srcOffset, srcRem);
-          srcIndex++;
-          srcOffset = ((srcIndex < sourceMessageByteBuffers.length) ? sourceMessageByteBuffers[srcIndex].arrayOffset()
-              : 0);
-          written += srcRem;
-        }
-      }
-
-      for (TCByteBuffer compactedMessageByteBuffer : packedUpMessageByteBuffers) {
-        compactedMessageByteBuffer.flip();
-      }
-
-      if (len != written) {
-        Assert.assertEquals("Comms Write: packed-up message length is different from original. ", len, written);
-      }
-
-      return packedUpMessageByteBuffers;
     }
   }
   

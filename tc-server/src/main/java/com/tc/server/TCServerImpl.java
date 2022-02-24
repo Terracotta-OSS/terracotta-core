@@ -27,7 +27,6 @@ import org.terracotta.monitoring.PlatformStopException;
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Stage;
 import com.tc.config.ServerConfigurationManager;
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
 import com.tc.lang.TCThreadGroup;
@@ -43,10 +42,10 @@ import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.impl.JMXSubsystem;
+import com.tc.productinfo.ProductInfo;
 import com.tc.spi.Guardian;
 import com.tc.stats.DSO;
 import com.tc.util.Assert;
-import com.tc.util.ProductInfo;
 import com.tc.util.State;
 import java.io.ByteArrayOutputStream;
 
@@ -82,7 +81,6 @@ public class TCServerImpl extends SEDA implements TCServer {
   private volatile long                     activateTime                                 = -1;
 
   private DistributedObjectServer         dsoServer;
-  private StateManager                    stateManager;
   
   private final ServerConfigurationManager configurationSetupManager;
   protected final ConnectionPolicy          connectionPolicy;
@@ -93,8 +91,9 @@ public class TCServerImpl extends SEDA implements TCServer {
   /**
    * This should only be used for tests.
    */
-  public TCServerImpl(ServerConfigurationManager configurationSetupManager) {
+  TCServerImpl(DistributedObjectServer dso, ServerConfigurationManager configurationSetupManager) {
     this(configurationSetupManager, new TCThreadGroup(new ThrowableHandlerImpl(logger)));
+    this.dsoServer = dso;
   }
 
   public TCServerImpl(ServerConfigurationManager configurationSetupManager, TCThreadGroup threadGroup) {
@@ -129,19 +128,19 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   @Override
   public void stopIfPassive(StopAction...restartMode) throws PlatformStopException {
-    if (stateManager.moveToStopStateIf(ServerMode.PASSIVE_STATES)) {
+    if (getStateManager().moveToStopStateIf(ServerMode.PASSIVE_STATES)) {
       stop(restartMode);
     } else {
-      throw new UnexpectedStateException("Server is not in passive state, current state: " + stateManager.getCurrentMode());
+      throw new UnexpectedStateException("Server is not in passive state, current state: " + getStateManager().getCurrentMode());
     }
   }
 
   @Override
   public void stopIfActive(StopAction...restartMode) throws PlatformStopException {
-    if (stateManager.moveToStopStateIf(EnumSet.of(ServerMode.ACTIVE))) {
+    if (getStateManager().moveToStopStateIf(EnumSet.of(ServerMode.ACTIVE))) {
       stop(restartMode);
     } else {
-      throw new UnexpectedStateException("Server is not in active state, current state: " + stateManager.getCurrentMode());
+      throw new UnexpectedStateException("Server is not in active state, current state: " + getStateManager().getCurrentMode());
     }
   }
 
@@ -178,7 +177,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   
   @Override
   public void start() {
-    if (this.stateManager == null) {
+    if (this.dsoServer == null) {
       try {
         startServer().get();
       } catch (Throwable t) {
@@ -186,13 +185,13 @@ public class TCServerImpl extends SEDA implements TCServer {
         throw new RuntimeException(t);
       }
     } else {
-      logger.warn("Server in incorrect state (" + this.stateManager.getCurrentMode().getName() + ") to be started.");
+      logger.warn("Server in incorrect state (" + getStateManager().getCurrentMode().getName() + ") to be started.");
     }
   }
 
   @Override
   public boolean canShutdown() {
-    ServerMode serverState = stateManager.getCurrentMode();
+    ServerMode serverState = getStateManager().getCurrentMode();
     return serverState == ServerMode.PASSIVE ||
        serverState == ServerMode.ACTIVE || 
        serverState == ServerMode.UNINITIALIZED ||
@@ -205,7 +204,7 @@ public class TCServerImpl extends SEDA implements TCServer {
       consoleLogger.info("Server exiting...");
       stop();
     } else {
-      logger.warn("Server in incorrect state (" + stateManager.getCurrentMode().getName() + ") to be shutdown.");
+      logger.warn("Server in incorrect state (" + getStateManager().getCurrentMode().getName() + ") to be shutdown.");
     }
   }
 
@@ -256,35 +255,38 @@ public class TCServerImpl extends SEDA implements TCServer {
     if (this.dsoServer != null) { return this.dsoServer.getGroupPort(); }
     throw new IllegalStateException("TSA Server not running");
   }
-
   public DistributedObjectServer getDSOServer() {
     return this.dsoServer;
+  }
+  
+  private StateManager getStateManager() {
+    return this.dsoServer.getContext().getL2Coordinator().getStateManager();
   }
 
   @Override
   public synchronized boolean isStarted() {
-    return this.stateManager == null || this.stateManager.getCurrentMode().isStartup();
+    return this.dsoServer == null || getStateManager().getCurrentMode().isStartup();
   }
 
   @Override
   public boolean isActive() {
-    return this.stateManager.isActiveCoordinator();
+    return getStateManager().isActiveCoordinator();
   }
 
   @Override
   public synchronized boolean isStopped() {
     // XXX:: introduce a new state when stop is officially supported.
-    return this.stateManager != null && this.stateManager.getCurrentMode() == ServerMode.STOP;
+    return this.dsoServer != null && getStateManager().getCurrentMode() == ServerMode.STOP;
   }
 
   @Override
   public boolean isPassiveUnitialized() {
-    return this.stateManager.getCurrentMode() == ServerMode.UNINITIALIZED;
+    return getStateManager().getCurrentMode() == ServerMode.UNINITIALIZED;
   }
 
   @Override
   public boolean isPassiveStandby() {
-    return this.stateManager.getCurrentMode() == ServerMode.PASSIVE;
+    return getStateManager().getCurrentMode() == ServerMode.PASSIVE;
   }
 
   @Override
@@ -304,7 +306,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   @Override
   public State getState() {
-    return this.stateManager.getCurrentMode().getState();
+    return getStateManager().getCurrentMode().getState();
   }
   
   @Override
@@ -368,12 +370,12 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   private void startDSOServer() throws Exception {
-    Assert.assertTrue(this.stateManager == null);
-    DistributedObjectServer server = createDistributedObjectServer(this.configurationSetupManager, this.connectionPolicy, this);
-    server.start();
+    Assert.assertTrue(this.dsoServer == null);
+    this.dsoServer = createDistributedObjectServer(this.configurationSetupManager, this.connectionPolicy, this);
+    this.dsoServer.start();
     MBeanServer mbean = subsystem.getServer();
-    registerDSOServer(server, mbean);
-    registerServerMBeans(server, mbean);
+    registerDSOServer(mbean);
+    registerServerMBeans(mbean);
   }
 
   protected DistributedObjectServer createDistributedObjectServer(ServerConfigurationManager configSetupManager,
@@ -389,16 +391,14 @@ public class TCServerImpl extends SEDA implements TCServer {
     TCLogging.getDumpLogger().info(new String(this.dsoServer.getClusterState(Charset.defaultCharset(), null), Charset.defaultCharset()));
   }
 
-  protected synchronized void registerDSOServer(DistributedObjectServer server, MBeanServer mBeanServer) throws InstanceAlreadyExistsException, MBeanRegistrationException,
+  protected synchronized void registerDSOServer(MBeanServer mBeanServer) throws InstanceAlreadyExistsException, MBeanRegistrationException,
       NotCompliantMBeanException {
-    this.dsoServer = server;
     ServerManagementContext mgmtContext = this.dsoServer.getManagementContext();
     ServerConfigurationContext configContext = this.dsoServer.getContext();
-    registerDSOMBeans(mgmtContext, configContext, server, mBeanServer);
-    stateManager = dsoServer.getContext().getL2Coordinator().getStateManager();
+    registerDSOMBeans(mgmtContext, configContext, mBeanServer);
   }
   
-  protected void registerServerMBeans(DistributedObjectServer tcDumper, MBeanServer mBeanServer) 
+  protected void registerServerMBeans(MBeanServer mBeanServer) 
       throws NotCompliantMBeanException, InstanceAlreadyExistsException, MBeanRegistrationException {
     mBeanServer.registerMBean(new TCServerInfo(this), L2MBeanNames.TC_SERVER_INFO);
     mBeanServer.registerMBean(new L2Dumper(this, mBeanServer), L2MBeanNames.DUMPER);
@@ -408,7 +408,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     mbs.unregisterMBean(L2MBeanNames.TC_SERVER_INFO);
     mbs.unregisterMBean(L2MBeanNames.DUMPER);
   }
-  protected void registerDSOMBeans(ServerManagementContext mgmtContext, ServerConfigurationContext configContext, DistributedObjectServer tcDumper,
+  protected void registerDSOMBeans(ServerManagementContext mgmtContext, ServerConfigurationContext configContext,
                                    MBeanServer mBeanServer) throws NotCompliantMBeanException,
       InstanceAlreadyExistsException, MBeanRegistrationException {
       dso = new DSO(mgmtContext, configContext, mBeanServer);
@@ -433,11 +433,6 @@ public class TCServerImpl extends SEDA implements TCServer {
     } catch (InterruptedException ie) {
       throw new RuntimeException(ie);
     }
-  }
-
-  @Override
-  public void reloadConfiguration() throws ConfigurationSetupException {
-
   }
 
   @Override

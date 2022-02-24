@@ -18,9 +18,9 @@
  */
 package com.tc.net.protocol.tcm;
 
+import com.tc.io.TCByteBufferOutputStream;
 import org.slf4j.Logger;
 
-import com.tc.bytes.TCByteBuffer;
 import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
@@ -31,6 +31,7 @@ import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.core.ProductID;
+import com.tc.object.session.SessionID;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import java.io.IOException;
@@ -119,13 +120,18 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
   }
 
   @Override
-  public TCMessage createMessage(TCMessageType type) {
-    TCMessage rv = this.msgFactory.createMessage(this, type);
+  public TCAction createMessage(TCMessageType type) {
+    TCAction rv = this.msgFactory.createMessage(this, type, createOutput());
     // TODO: set default channel specific information in the TC message header
 
     return rv;
   }
 
+  @Override
+  public TCByteBufferOutputStream createOutput() {
+    return sendLayer.createOutput();
+  }
+  
   private void fireChannelOpenedEvent() {
     fireEvent(new ChannelEventImpl(ChannelEventType.CHANNEL_OPENED_EVENT, AbstractMessageChannel.this));
   }
@@ -134,7 +140,7 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
     fireEvent(new ChannelEventImpl(ChannelEventType.CHANNEL_CLOSED_EVENT, AbstractMessageChannel.this));
   }
 
-  public void addClassMapping(TCMessageType type, Class<? extends TCMessage> msgClass) {
+  public void addClassMapping(TCMessageType type, Class<? extends TCAction> msgClass) {
     this.msgFactory.addClassMapping(type, msgClass);
   }
 
@@ -176,41 +182,14 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
   @Override
   public void send(final TCNetworkMessage message) throws IOException {
     if (logger.isDebugEnabled()) {
-      final Runnable logMsg = new Runnable() {
-        @Override
-        public void run() {
-          logger.debug("Message Sent: " + message.toString());
-        }
-      };
-
-      final Runnable existingCallback = message.getSentCallback();
-      final Runnable newCallback;
-
-      if (existingCallback != null) {
-        newCallback = new Runnable() {
-          @Override
-          public void run() {
-            try {
-              existingCallback.run();
-            } catch (Exception e) {
-              logger.error("Exception: ", e);
-            } finally {
-              logMsg.run();
-            }
-          }
-        };
-      } else {
-        newCallback = logMsg;
-      }
-
-      message.setSentCallback(newCallback);
+      message.addCompleteCallback(()->logger.debug("Message Sent: " + message.toString()));
     }
 
     this.sendLayer.send(message);
   }
 
   @Override
-  public final void receive(TCByteBuffer[] msgData) {
+  public final void receive(TCNetworkMessage msgData) {
     this.router.putMessage(parser.parseMessage(this, msgData));
   }
 
@@ -365,6 +344,11 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
       return "Status:" + this.state.toString();
     }
 
+  }
+
+  @Override
+  public SessionID getSessionID() {
+    return sendLayer.getSessionID();
   }
 
   // for testing purpose

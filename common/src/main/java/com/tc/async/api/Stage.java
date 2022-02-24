@@ -37,8 +37,6 @@ public interface Stage<EC> {
   public void unpause();
     
   public String getName();
-
-  public void clear();
   
   public boolean isEmpty();
   

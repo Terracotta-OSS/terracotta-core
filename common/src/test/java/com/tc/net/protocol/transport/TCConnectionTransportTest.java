@@ -21,7 +21,6 @@ package com.tc.net.protocol.transport;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
@@ -49,6 +48,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import junit.framework.TestCase;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import java.net.InetSocketAddress;
+import java.util.Objects;
 
 import org.terracotta.utilities.test.net.PortManager;
 
@@ -220,10 +220,7 @@ public class TCConnectionTransportTest extends TestCase {
   }
 
   private TCNetworkMessage getDSOMessage(MessageMonitor monitor, TCByteBuffer[] bufs) {
-    TCNetworkMessage msg = new MyMessage(monitor);
-    ((MyMessage) msg).initialize(seq.getNextSequence(), bufs);
-    msg.seal();
-    return msg;
+    return new MyMessage(monitor, seq.getNextSequence(), bufs).convertToNetworkMessage();
   }
 
   class MyMessage extends DSOMessageBase {
@@ -234,17 +231,20 @@ public class TCConnectionTransportTest extends TestCase {
     private TCByteBuffer[]    data;
 
     @SuppressWarnings("resource")
-    MyMessage(MessageMonitor monitor) {
+    MyMessage(MessageMonitor monitor, long nextSequence, TCByteBuffer[] bufs) {
       super(new SessionID(0), monitor, new TCByteBufferOutputStream(), null, TCMessageType.PING_MESSAGE);
+      initialize(nextSequence, bufs);
     }
 
-    public void initialize(long nextSequence, TCByteBuffer[] bufs) {
+    private void initialize(long nextSequence, TCByteBuffer[] bufs) {
+      Objects.requireNonNull(bufs);
       this.seqID = nextSequence;
       this.data = bufs;
+    }
+
+    @Override
+    public TCByteBuffer[] getDataBuffers() {
       int tot = 0;
-      for (TCByteBuffer c : bufs) {
-        tot += c.remaining();
-      }
       dehydrateValues();
       TCByteBufferOutputStream out = getOutputStream();
       final TCByteBuffer[] nvData = out.toArray();
@@ -254,8 +254,8 @@ public class TCConnectionTransportTest extends TestCase {
         after += c.remaining();
       }
       System.out.println(out.getBytesWritten() + " " + tot + " " + after);
-      nvData[0].putInt(0, 2);
-      this.setPayload(nvData);
+
+      return nvData;
     }
 
     @Override
@@ -272,7 +272,16 @@ public class TCConnectionTransportTest extends TestCase {
           this.seqID = getLongValue();
           return true;
         case DATA:
-          this.data = getInputStream().toArray();
+          int len = getInputStream().available();
+          TCByteBufferOutputStream out = new TCByteBufferOutputStream();
+          while (getInputStream().available() > 0) {
+            int c = getInputStream().read();
+            if (c >= 0) {
+              out.write(c);
+            }
+          }
+          out.close();
+          this.data = out.toArray();
           return true;
         default:
           throw new AssertionError("unknown type in message");

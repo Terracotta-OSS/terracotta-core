@@ -24,9 +24,9 @@ import com.tc.async.api.Sink;
 public class HydrateContext<T> implements MultiThreadedEventContext {
 
   private final Sink<T>      destSink;
-  private final TCMessage message;
+  private final TCAction message;
 
-  public HydrateContext(TCMessage message, Sink<T> destSink) {
+  public HydrateContext(TCAction message, Sink<T> destSink) {
     this.message = message;
     this.destSink = destSink;
   }
@@ -35,7 +35,7 @@ public class HydrateContext<T> implements MultiThreadedEventContext {
     return destSink;
   }
 
-  public TCMessage getMessage() {
+  public TCAction getMessage() {
     return message;
   }
 

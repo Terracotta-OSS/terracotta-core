@@ -35,7 +35,6 @@ import com.tc.exception.ServerExceptionType;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.utils.L2Utils;
 import com.tc.object.ClientInstanceID;
@@ -81,13 +80,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.concurrent.Future;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.EntityMessage;
+import com.tc.net.protocol.tcm.TCAction;
 
 public class ProcessTransactionHandler implements ReconnectListener {
 
@@ -120,14 +119,16 @@ public class ProcessTransactionHandler implements ReconnectListener {
     @Override
     public void handleEvent(ResponseMessage context) throws EventHandlerException {
       NodeID destinationID = context.getResponse().getDestinationNodeID();
-      TCMessage response = context.getResponse();
+      TCAction response = context.getResponse();
             
       if (response instanceof VoltronEntityMultiResponse) {
         VoltronEntityMultiResponse voltronEntityMultiResponse = (VoltronEntityMultiResponse)response;
         VoltronEntityMultiResponse sub = (VoltronEntityMultiResponse)response.getChannel().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
         invokeReturn.put((ClientID)destinationID, sub);
         voltronEntityMultiResponse.stopAdding();
-        waitForTransactions(voltronEntityMultiResponse);
+        if (!transactionOrderPersistenceFutures.isEmpty()) {
+          waitForTransactions(voltronEntityMultiResponse);
+        }
       } else if (response instanceof VoltronEntityAppliedResponse) {
         waitForTransactionOrderPersistenceFuture(((VoltronEntityAppliedResponse)response).getTransactionID());
       } else {

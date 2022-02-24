@@ -96,6 +96,7 @@ public class ServerMessageTransport extends MessageTransportBase {
         // avoid the deadlock encountered in DEV-7123.
         fireTransportConnectedEvent();
       }
+      message.complete();
     } else {
       // ReceiveToReceiveLayer(message) takes care of verifying the handshake message
       super.receiveToReceiveLayer(message);

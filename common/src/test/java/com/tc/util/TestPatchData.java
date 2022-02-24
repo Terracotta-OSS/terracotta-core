@@ -16,13 +16,19 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.config.schema.repository;
+package com.tc.util;
+
+import com.tc.productinfo.BasePatchInfo;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
- * Knows how to fetch a child of a bean.
+ *
  */
-public interface ChildBeanFetcher {
+public class TestPatchData extends BasePatchInfo {
 
-  Object getChild(Object parent);
+  public TestPatchData() throws IOException {
+    super(TestBuildData.class.getResourceAsStream("TestPatchData.txt"));
+  }
   
 }

@@ -18,6 +18,7 @@
  */
 package com.tc.net.core;
 
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.protocol.NetworkMessageSink;
 import com.tc.util.TCTimeoutException;
@@ -147,4 +148,8 @@ public interface TCConnection extends NetworkMessageSink {
   boolean isClosePending();
   
   Map<String, ?> getState();
+
+  default TCByteBufferOutputStream createOutput() {
+    return new TCByteBufferOutputStream();
+  }
 }

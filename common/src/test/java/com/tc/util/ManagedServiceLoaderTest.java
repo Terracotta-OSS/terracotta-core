@@ -77,7 +77,7 @@ public class ManagedServiceLoaderTest {
   @Test
   public void testServiceLoad() {
     ManagedServiceLoader loader = new ManagedServiceLoader();
-    List<Class<? extends TestService>> services = loader.getImplementations(TestService.class, Thread.currentThread().getContextClassLoader());
+    List<Class<? extends TestService>> services = loader.getImplementationsTypes(TestService.class, Thread.currentThread().getContextClassLoader());
     Assert.assertEquals(1, services.size());
     Assert.assertEquals(TestServiceImpl.class, services.get(0));
   }  
@@ -115,7 +115,7 @@ public class ManagedServiceLoaderTest {
     }
      
     ManagedServiceLoader loader = spy(new ManagedServiceLoader());
-    List<Class<? extends TestService>> services = loader.getImplementations(TestService.class, overrides);
+    List<Class<? extends TestService>> services = loader.getImplementationsTypes(TestService.class, overrides);
     Assert.assertEquals(1, services.size());
     Assert.assertEquals(OverrideTestServiceImpl.class, services.get(0));
     // test the loadClass got called twice

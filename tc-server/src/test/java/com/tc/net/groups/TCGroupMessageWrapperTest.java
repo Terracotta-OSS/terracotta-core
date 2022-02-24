@@ -36,7 +36,6 @@ import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageFactory;
 import com.tc.net.protocol.tcm.TCMessageFactoryImpl;
 import com.tc.net.protocol.tcm.TCMessageRouter;
@@ -49,7 +48,6 @@ import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
-import com.tc.object.session.NullSessionManager;
 import com.tc.net.core.ProductID;
 import com.tc.util.State;
 import com.tc.util.UUID;
@@ -61,6 +59,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
+import com.tc.net.protocol.tcm.TCAction;
 
 /*
  * This test really belongs in the TC Messaging module but it's dependencies
@@ -73,8 +72,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
 
   private final static String                     LOCALHOST      = "localhost";
   MessageMonitor                                  monitor        = new NullMessageMonitor();
-  final NullSessionManager                        sessionManager = new NullSessionManager();
-  final TCMessageFactory                          msgFactory     = new TCMessageFactoryImpl(sessionManager, monitor);
+  final TCMessageFactory                          msgFactory     = new TCMessageFactoryImpl(monitor);
   final TCMessageRouter                           msgRouter      = new TCMessageRouterImpl();
   private TCConnectionManager                     clientConns;
   private TCConnectionManager                     serverConns;  
@@ -131,7 +129,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
     ((CommunicationsManagerImpl) serverComms).getMessageRouter().routeMessageType(TCMessageType.GROUP_WRAPPER_MESSAGE,
                                                                                   new TCMessageSink() {
                                                                                     @Override
-                                                                                    public void putMessage(TCMessage message)
+                                                                                    public void putMessage(TCAction message)
                                                                                         throws UnsupportedMessageTypeException {
                                                                                       try {
                                                                                         TCGroupMessageWrapper mesg = (TCGroupMessageWrapper) message;
@@ -154,7 +152,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
     ClientMessageChannel channel;
     clientComms.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
     channel = clientComms
-        .createClientChannel(ProductID.SERVER, sessionManager,
+        .createClientChannel(ProductID.SERVER,
                              3000);
     channel.open(InetSocketAddress.createUnresolved(LOCALHOST, lsnr.getBindPort()));
 

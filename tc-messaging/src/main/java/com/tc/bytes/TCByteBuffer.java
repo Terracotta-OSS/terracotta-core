@@ -26,11 +26,15 @@ public interface TCByteBuffer {
 
   public TCByteBuffer reInit();
 
+  public TCByteBuffer unlock();
+
   public int capacity();
 
   public int position();
 
   public TCByteBuffer flip();
+
+  public TCByteBuffer compact();
 
   public boolean hasRemaining();
 

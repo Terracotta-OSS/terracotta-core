@@ -27,7 +27,6 @@ import com.tc.config.GroupConfiguration;
 import com.tc.l2.state.DiagnosticModeConsistencyManager;
 import com.tc.l2.state.SafeStartupManagerImpl;
 import com.tc.logging.TCLogging;
-import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.services.PlatformConfigurationImpl;
 import com.tc.services.PlatformServiceProvider;
@@ -116,7 +115,6 @@ import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.MessageMonitorImpl;
 import com.tc.net.protocol.tcm.NetworkListener;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -160,7 +158,6 @@ import com.tc.services.TerracottaServiceProviderRegistryImpl;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.util.Assert;
-import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
 import com.tc.util.startuplock.FileNotCreatedException;
@@ -204,6 +201,8 @@ import com.tc.l2.state.ConsistencyManagerImpl;
 import com.tc.l2.state.ServerMode;
 import com.tc.net.ClientID;
 import com.tc.net.core.BufferManagerFactory;
+import com.tc.net.core.CachingClearTextBufferManagerFactory;
+import com.tc.net.core.DefaultBufferManagerFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.tcm.HydrateContext;
@@ -240,6 +239,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import org.terracotta.configuration.FailoverBehavior;
 import org.terracotta.server.ServerEnv;
+import com.tc.net.protocol.tcm.TCAction;
+import com.tc.productinfo.ProductInfo;
+import com.tc.productinfo.VersionCompatibility;
+import com.tc.util.version.CollectionVersionCompatibility;
+import com.tc.util.version.DefaultVersionCompatibility;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -306,7 +310,6 @@ public class DistributedObjectServer {
     this.server = server;
     this.serverBuilder = createServerBuilder(configSetupManager.getGroupConfiguration(), logger, server);
     this.timer = new SingleThreadedTimer(null, threadGroup);
-    this.timer.start();
     this.serviceRegistry = new TerracottaServiceProviderRegistryImpl();
     this.topologyManager = new TopologyManager(this.configSetupManager.getGroupConfiguration().getHostPorts(), ()-> {
       Configuration config = this.configSetupManager.getConfiguration();
@@ -367,7 +370,9 @@ public class DistributedObjectServer {
     collectState(this.seda.getStageManager(), pp);
     collectState(this.persistor, pp);
     collectState(this.communicationsManager, pp);
-    collectState(new ClientHandshakePrettyPrintable(this.context.getChannelManager().getActiveChannels()), pp);
+    if (managementContext != null) {
+      collectState(new ClientHandshakePrettyPrintable(this.managementContext.getChannelManager().getActiveChannels()), pp);
+    }
     collectState(this.groupCommManager, pp);
     collectState(this.l2Coordinator, pp);
     collectState(this.entityManager, pp);
@@ -380,7 +385,9 @@ public class DistributedObjectServer {
 
   private static void collectState(PrettyPrintable prettyPrintable, PrettyPrinter prettyPrinter) {
     try {
-      prettyPrintable.prettyPrint(prettyPrinter);
+      if (prettyPrintable != null) {
+        prettyPrintable.prettyPrint(prettyPrinter);
+      }
     } catch (Throwable t) {
       prettyPrinter.println("unable to collect cluster state for " + prettyPrintable + " : " + t.getLocalizedMessage());
       StringWriter w = new StringWriter();
@@ -456,6 +463,7 @@ public class DistributedObjectServer {
 
     this.tcProperties = TCPropertiesImpl.getProperties();
 
+    TCByteBufferFactory.setFixedBufferSize(tcProperties.getInt("bytebuffer.direct.size", 4096));
     final int maxStageSize = tcProperties.getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
     final int fastStageSize = 1024;
     final StageManager stageManager = this.seda.getStageManager();
@@ -683,11 +691,11 @@ public class DistributedObjectServer {
     if (consistencyMgr instanceof GroupEventsListener) {
       this.groupCommManager.registerForGroupEvents((GroupEventsListener)consistencyMgr);
     }
-
-    final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler), 1, maxStageSize);
+    
+    final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler, getVersionCompatibility()), 1, maxStageSize);
 
     Stage<HydrateContext> hydrator = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_STAGE, HydrateContext.class, new HydrateHandler(), L2Utils.getOptimalCommWorkerThreads(), maxStageSize);
-    Stage<TCMessage> diagStage = stageManager.createStage(ServerConfigurationContext.MONITOR_STAGE, TCMessage.class, new DiagnosticsHandler(this, this.server.getJMX()), 1, 1);
+    Stage<TCAction> diagStage = stageManager.createStage(ServerConfigurationContext.MONITOR_STAGE, TCAction.class, new DiagnosticsHandler(this, this.server.getJMX()), 1, 1);
 
     VoltronMessageSink voltronSink = new VoltronMessageSink(hydrator, fast.getSink(), entityManager);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, new TCMessageHydrateSink<>(clientHandshake.getSink()));
@@ -806,11 +814,12 @@ public class DistributedObjectServer {
                                                                        maxStageSize);
     this.context.addShutdownItem(passives::close);
     toInit.add(this.serverBuilder);
-
+    
+    this.timer.start();
     startStages(stageManager, toInit);
 
     // XXX: yucky casts
-    this.managementContext = new ServerManagementContext((DSOChannelManagerMBean) channelManager,channelStats,
+    this.managementContext = new ServerManagementContext((DSOChannelManagerMBean) channelManager, connectionManager, channelStats,
                                                          connectionPolicy, getOperationGuardian(platformServiceRegistry,
                                                                  channelLifeCycleHandler), voltron, voltronSink);
 
@@ -916,13 +925,14 @@ public class DistributedObjectServer {
 
   private BufferManagerFactory getBufferManagerFactory(ServiceRegistry platformRegistry) {
     BufferManagerFactory bufferManagerFactory = null;
+    DefaultBufferManagerFactory.setBufferManagerFactory(new CachingClearTextBufferManagerFactory());
     try {
       bufferManagerFactory = platformRegistry.getService(new BasicServiceConfiguration<>(BufferManagerFactory.class));
     } catch (ServiceException e) {
       Assert.fail("Multiple BufferManagerFactory implementations found!");
     }
     if (bufferManagerFactory == null) {
-      bufferManagerFactory = new ClearTextBufferManagerFactory();
+      bufferManagerFactory = DefaultBufferManagerFactory.getBufferManagerFactory();
     }
     return bufferManagerFactory;
   }
@@ -965,6 +975,7 @@ public class DistributedObjectServer {
         ServerConfigurationContext.VOLTRON_MESSAGE_STAGE,
         ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE,
         ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
+        ServerConfigurationContext.PASSIVE_TO_ACTIVE_DRIVER_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_STAGE,
         ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE
@@ -1034,6 +1045,7 @@ public class DistributedObjectServer {
     // entities are create or existing entities are reloaded
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
+    control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.PASSIVE_TO_ACTIVE_DRIVER_STAGE);
     return control;
   }
 
@@ -1114,8 +1126,8 @@ public class DistributedObjectServer {
     }
   }
 
-  private HashMap<TCMessageType, Class<? extends TCMessage>> getMessageTypeClassMappings() {
-    HashMap<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping = new HashMap<>();
+  private HashMap<TCMessageType, Class<? extends TCAction>> getMessageTypeClassMappings() {
+    HashMap<TCMessageType, Class<? extends TCAction>> messageTypeClassMapping = new HashMap<>();
     messageTypeClassMapping.put(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, ClientHandshakeMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);
     messageTypeClassMapping
@@ -1257,6 +1269,17 @@ public class DistributedObjectServer {
     return -1;
   }
 
+  private VersionCompatibility getVersionCompatibility() {
+    Collection<VersionCompatibility> compat = serviceRegistry.subRegistry(0).getServices(()->VersionCompatibility.class);
+    if (compat == null || compat.isEmpty()) {
+      return new DefaultVersionCompatibility();
+    } else if (compat.size() == 1) {
+      return compat.iterator().next();
+    } else {
+      return new CollectionVersionCompatibility(compat);
+    }
+  }
+  
   public int getGroupPort() {
     final ServerConfiguration l2DSOConfig = this.configSetupManager.getServerConfiguration();
     final int configValue = l2DSOConfig.getGroupPort().getPort();
@@ -1284,8 +1307,8 @@ public class DistributedObjectServer {
     return configSetupManager;
   }
 
-  protected ClientHandshakeHandler createHandShakeHandler(EntityManager entities, ProcessTransactionHandler processTransactionHandler) {
-    return new ClientHandshakeHandler(entities, processTransactionHandler);
+  protected ClientHandshakeHandler createHandShakeHandler(EntityManager entities, ProcessTransactionHandler processTransactionHandler, VersionCompatibility versionCheck) {
+    return new ClientHandshakeHandler(entities, processTransactionHandler, versionCheck);
   }
 
   // for tests only

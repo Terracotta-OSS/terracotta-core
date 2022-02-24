@@ -717,11 +717,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
 
     @Override
-    public void dehydrate() {
-
-    }
-
-    @Override
     public synchronized int replay(ReplayReceiver receiver) {
       notifyAll();
       accessed = true;
@@ -754,7 +749,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
 
     @Override
-    public int getTotalLength() {
+    public int getMessageLength() {
       return 0;
     }
 

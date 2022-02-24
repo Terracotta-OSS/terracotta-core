@@ -21,7 +21,6 @@ package org.terracotta.voter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import org.terracotta.voter.options.Options;
 import org.terracotta.voter.options.OptionsParsing;
 import org.terracotta.voter.options.OptionsParsingImpl;
@@ -39,7 +38,7 @@ public class TCVoterMain {
 
   private static final String ID = UUID.randomUUID().toString();
 
-  public void processArgs(String[] args) throws ConfigurationSetupException {
+  public void processArgs(String[] args) {
     OptionsParsing optionsParsing = getParsingObject();
     CustomJCommander jCommander = new CustomJCommander(optionsParsing);
     jCommander.parse(args);
@@ -71,7 +70,7 @@ public class TCVoterMain {
     return Optional.empty();
   }
 
-  protected void processServerArg(Optional<Properties> connectionProps, String[] stripes) throws ConfigurationSetupException {
+  protected void processServerArg(Optional<Properties> connectionProps, String[] stripes) {
     validateStripesLimit(stripes);
     String[] hostPorts = stripes[0].split(",");
     for (String hostPort : hostPorts) {
@@ -88,26 +87,26 @@ public class TCVoterMain {
     new ActiveVoter(ID, new CompletableFuture<>(), connectionProps, hostPorts).start();
   }
 
-  protected void validateStripesLimit(String[] args) throws ConfigurationSetupException {
+  protected void validateStripesLimit(String[] args) {
     if (args.length > 1) {
-      throw new ConfigurationSetupException("Usage of multiple -connect-to options not supported");
+      throw new RuntimeException("Usage of multiple -connect-to options not supported");
     }
   }
 
-  protected void validateHostPort(String hostPort) throws ConfigurationSetupException {
+  protected void validateHostPort(String hostPort) {
     URI uri;
     try {
       uri = new URI("tc://" + hostPort);
     } catch (URISyntaxException e) {
-      throw new ConfigurationSetupException(e);
+      throw new RuntimeException(e);
     }
 
     if (uri.getHost() == null || uri.getPort() == -1) {
-      throw new ConfigurationSetupException("Invalid host:port combination provided: " + hostPort);
+      throw new RuntimeException("Invalid host:port combination provided: " + hostPort);
     }
   }
 
-  public static void main(String[] args) throws ConfigurationSetupException {
+  public static void main(String[] args) {
     TCVoterMain main = new TCVoterMain();
     main.processArgs(args);
   }

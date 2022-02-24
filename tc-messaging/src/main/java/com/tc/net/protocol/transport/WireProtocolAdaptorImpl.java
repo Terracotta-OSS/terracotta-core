@@ -31,6 +31,7 @@ import com.tc.net.protocol.TCProtocolException;
 import com.tc.util.Assert;
 
 import java.util.Iterator;
+import java.util.Queue;
 
 /**
  * Connection adaptor to parse wire protocol messages
@@ -47,10 +48,10 @@ public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implement
   }
 
   @Override
-  public void addReadData(TCConnection source, TCByteBuffer[] data, int length) throws TCProtocolException {
+  public void addReadData(TCConnection source, TCByteBuffer[] data, int length, Queue<TCByteBuffer> recycle) throws TCProtocolException {
     final WireProtocolMessage msg;
     try {
-      msg = (WireProtocolMessage) this.processIncomingData(source, data, length);
+      msg = (WireProtocolMessage) this.processIncomingData(source, data, length, recycle);
     } catch (TCProtocolException e) {
       init();
       throw e;

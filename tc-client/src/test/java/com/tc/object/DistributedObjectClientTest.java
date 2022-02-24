@@ -24,7 +24,6 @@ import com.tc.net.ClientID;
 import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
-import com.tc.object.session.SessionProvider;
 import com.tc.util.Assert;
 import com.tc.net.core.ProductID;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -80,7 +79,7 @@ public class DistributedObjectClientTest extends TestCase {
       connectionProperties.put(ConnectionPropertyNames.CONNECTION_TYPE, ProductID.PERMANENT);
       ClientBuilder builder = new StandardClientBuilder(connectionProperties, new ClearTextBufferManagerFactory()) {
         @Override
-        public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr, SessionProvider sessionProvider, int socketConnectTimeout) {
+        public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr, int socketConnectTimeout) {
           ClientMessageChannel channel = Mockito.mock(ClientMessageChannel.class);
           try {
             Mockito.when(channel.open(Mockito.anyCollection())).thenThrow(new RuntimeException("bad connection"));

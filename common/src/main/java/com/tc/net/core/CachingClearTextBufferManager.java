@@ -16,38 +16,32 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.object.session;
+package com.tc.net.core;
 
-public class NullSessionManager implements SessionManager {
+import com.tc.bytes.TCByteBuffer;
+import java.nio.channels.SocketChannel;
+import java.util.Queue;
 
-  @Override
-  public SessionID getSessionID() {
-    return SessionID.NULL_ID;
+/**
+ *
+ */
+public class CachingClearTextBufferManager extends ClearTextBufferManager {
+
+  private final Queue<TCByteBuffer> retPool;
+  private final TCByteBuffer send;
+  private final TCByteBuffer recv;
+
+  public CachingClearTextBufferManager(SocketChannel channel, TCByteBuffer send, TCByteBuffer recv, Queue<TCByteBuffer> returnpool) {
+    super(channel, send.getNioBuffer(), recv.getNioBuffer());
+    this.retPool = returnpool;
+    this.send = send;
+    this.recv = recv;
   }
 
   @Override
-  public SessionID nextSessionID() {
-    return SessionID.NULL_ID;
+  public void close() {
+    super.close();
+    retPool.offer(send.reInit());
+    retPool.offer(recv.reInit());
   }
-
-  @Override
-  public void newSession() {
-    return;
-  }
-
-  @Override
-  public boolean isCurrentSession(SessionID sessionID) {
-    return true;
-  }
-
-  @Override
-  public void initProvider() {
-    return;
-  }
-
-  @Override
-  public void resetSessionProvider() {
-    return;
-  }
-
 }

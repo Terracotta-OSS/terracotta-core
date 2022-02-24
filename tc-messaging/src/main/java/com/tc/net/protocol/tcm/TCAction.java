@@ -26,7 +26,7 @@ import java.io.IOException;
 /**
  * Base interface for application level messages sent through the TC messaging stack
  */
-public interface TCMessage {
+public interface TCAction {
 
   public TCMessageType getMessageType();
 
@@ -34,8 +34,6 @@ public interface TCMessage {
    * Hydrates the message with the given local session id.
    */
   public void hydrate() throws IOException, UnknownNameException;
-
-  public void dehydrate();
 
   public boolean send();
 
@@ -50,7 +48,17 @@ public interface TCMessage {
    * client session id; likewise, if this is a server, then its the server session id.
    */
   public SessionID getLocalSessionID();
+  /**
+   * only for stats
+   * @return
+   */
+  default int getMessageLength() {
+    return 0;
+  }
 
-  public int getTotalLength();
+//  public int getTotalLength();
 
+  default void addProcessedCallback(Runnable r) {
+    
+  }
 }

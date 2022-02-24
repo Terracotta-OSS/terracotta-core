@@ -41,7 +41,6 @@ import com.tc.logging.ClientIDLogger;
 import com.tc.logging.ClientIDLoggerProvider;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ChannelEvent;
@@ -51,7 +50,6 @@ import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.MessageMonitorImpl;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -70,8 +68,6 @@ import com.tc.object.msg.ClientHandshakeResponse;
 import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.request.MultiRequestReceiveHandler;
 import com.tc.object.request.RequestReceiveHandler;
-import com.tc.object.session.SessionManager;
-import com.tc.object.session.SessionManagerImpl;
 import com.tc.cluster.ClientChannelEventController;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
@@ -85,15 +81,12 @@ import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.SetOnceRef;
-import com.tc.util.sequence.Sequence;
-import com.tc.util.sequence.SimpleSequence;
 import com.tc.entity.DiagnosticResponse;
 import com.tc.entity.LinearVoltronEntityMultiResponse;
 import com.tc.entity.ReplayVoltronEntityMultiResponse;
 import com.tc.logging.CallbackOnExitState;
 import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.core.ProductID;
-import com.tc.util.ProductInfo;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.tcm.TCMessageHydrateAndConvertSink;
@@ -102,7 +95,6 @@ import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.ThreadUtil;
-import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -110,15 +102,15 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import com.tc.net.protocol.tcm.TCAction;
+import com.tc.productinfo.ProductInfo;
 
 
 /**
@@ -231,12 +223,6 @@ public class DistributedObjectClient {
     final TCProperties tcProperties = TCPropertiesImpl.getProperties();
     final int maxSize = tcProperties.getInt(TCPropertiesConsts.L1_SEDA_STAGE_SINK_CAPACITY);
 
-    final SessionManager sessionManager = new SessionManagerImpl(new SessionManagerImpl.SequenceFactory() {
-      @Override
-      public Sequence newSequence() {
-        return new SimpleSequence();
-      }
-    });
 //  weak reference to allow garbage collection if ref is dropped    
     Reference<DistributedObjectClient> ref = new WeakReference<>(this);
     this.threadGroup.addCallbackOnExitDefaultHandler((CallbackOnExitState state) -> {
@@ -272,7 +258,7 @@ public class DistributedObjectClient {
     DSO_LOGGER.debug("Created CommunicationsManager.");
 
     ClientMessageChannel clientChannel = this.clientBuilder.createClientMessageChannel(this.communicationsManager,
-                                                                 sessionManager, socketTimeout);
+                                                                 socketTimeout);
 
 
     final ClientIDLoggerProvider cidLoggerProvider = new ClientIDLoggerProvider(clientChannel::getClientID);
@@ -310,7 +296,7 @@ public class DistributedObjectClient {
     
     this.clientHandshakeManager = this.clientBuilder
         .createClientHandshakeManager(new ClientIDLogger(clientChannel, LoggerFactory
-                                          .getLogger(ClientHandshakeManagerImpl.class)), chmf, sessionManager,
+                                          .getLogger(ClientHandshakeManagerImpl.class)), chmf,
                                           this.uuid, this.name, pInfo.version(), pInfo.buildRevision(), clientEntityManager);
 
     ClientChannelEventController.connectChannelEventListener(clientChannel, clientHandshakeManager);
@@ -439,8 +425,8 @@ public class DistributedObjectClient {
     }
   }
 
-  private Map<TCMessageType, Class<? extends TCMessage>> getMessageTypeClassMapping() {
-    final Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping = new HashMap<TCMessageType, Class<? extends TCMessage>>();
+  private Map<TCMessageType, Class<? extends TCAction>> getMessageTypeClassMapping() {
+    final Map<TCMessageType, Class<? extends TCAction>> messageTypeClassMapping = new HashMap<TCMessageType, Class<? extends TCAction>>();
 
     messageTypeClassMapping.put(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, ClientHandshakeMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);

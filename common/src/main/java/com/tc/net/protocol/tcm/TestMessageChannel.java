@@ -30,6 +30,7 @@ import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.core.ProductID;
+import com.tc.object.session.SessionID;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import java.io.IOException;
@@ -43,7 +44,7 @@ public class TestMessageChannel implements MessageChannel {
 
   public List<CreateMessageContext>               createMessageContexts = new ArrayList<CreateMessageContext>();
   public NoExceptionLinkedQueue<TCNetworkMessage> sendQueue             = new NoExceptionLinkedQueue<TCNetworkMessage>();
-  public TCMessage                                message;
+  public TCAction                                message;
   public ChannelID                                channelID             = new ChannelID(1);
   private NodeID                                  source                = ClientID.NULL_ID;
   private NodeID                                  destination           = ServerID.NULL_ID;
@@ -91,7 +92,7 @@ public class TestMessageChannel implements MessageChannel {
   }
 
   @Override
-  public TCMessage createMessage(TCMessageType type) {
+  public TCAction createMessage(TCMessageType type) {
     createMessageContexts.add(new CreateMessageContext(type, this.message));
     return this.message;
   }
@@ -181,9 +182,9 @@ public class TestMessageChannel implements MessageChannel {
 
   public static class CreateMessageContext {
     public final TCMessageType type;
-    public final TCMessage     returnedMessage;
+    public final TCAction     returnedMessage;
 
-    private CreateMessageContext(TCMessageType type, TCMessage returnedMessage) {
+    private CreateMessageContext(TCMessageType type, TCAction returnedMessage) {
       this.type = type;
       this.returnedMessage = returnedMessage;
     }
@@ -198,5 +199,12 @@ public class TestMessageChannel implements MessageChannel {
   @Override
   public ConnectionID getConnectionID() {
     return null;
-  }  
+  }
+
+  @Override
+  public SessionID getSessionID() {
+    return null;
+  }
+
+
 }

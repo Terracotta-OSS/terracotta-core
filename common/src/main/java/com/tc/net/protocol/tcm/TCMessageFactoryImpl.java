@@ -18,10 +18,9 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.bytes.TCByteBuffer;
+import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.session.SessionID;
-import com.tc.object.session.SessionProvider;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -32,30 +31,24 @@ import java.util.Map;
 public class TCMessageFactoryImpl implements TCMessageFactory {
   private final Map<TCMessageType, GeneratedMessageFactory> generators = new EnumMap<>(TCMessageType.class);
   private final MessageMonitor  monitor;
-  private final SessionProvider sessionProvider;
 
-  public TCMessageFactoryImpl(SessionProvider sessionProvider, MessageMonitor monitor) {
-    this.sessionProvider = sessionProvider;
+  public TCMessageFactoryImpl(MessageMonitor monitor) {
     this.monitor = monitor;
   }
 
   @Override
-  public TCMessage createMessage(MessageChannel source, TCMessageType type)
+  public TCAction createMessage(MessageChannel source, TCMessageType type, TCByteBufferOutputStream output)
       throws UnsupportedMessageTypeException {
     final GeneratedMessageFactory factory = lookupFactory(type);
-    return factory.createMessage(this.sessionProvider.getSessionID(), this.monitor,
-                                 createBuffer(), source, type);
-  }
-
-  private static TCByteBufferOutputStream createBuffer() {
-    return new TCByteBufferOutputStream();
+    return factory.createMessage(source.getSessionID(), this.monitor,
+                                 output, source, type);
   }
 
   @Override
-  public TCMessage createMessage(MessageChannel source, TCMessageType type, TCMessageHeader header,
-                                 TCByteBuffer[] data) {
+  public TCAction createMessage(MessageChannel source, TCMessageType type, TCMessageHeader header,
+                                 TCByteBufferInputStream data) {
     final GeneratedMessageFactory factory = lookupFactory(type);
-    return factory.createMessage(this.sessionProvider.getSessionID(), this.monitor, source,
+    return factory.createMessage(source.getSessionID(), this.monitor, source,
                                  header, data);
   }
 
@@ -68,7 +61,7 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
   }
 
   @Override
-  public void addClassMapping(TCMessageType type, Class<? extends TCMessage> msgClass) {
+  public void addClassMapping(TCMessageType type, Class<? extends TCAction> msgClass) {
     if ((type == null) || (msgClass == null)) { throw new IllegalArgumentException(); }
 
     // This strange synchronization is for things like system tests that will end up using the same
@@ -91,18 +84,18 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
     private final MethodHandle sendHdl;
     private final MethodHandle recvHdl;
     
-    GeneratedMessageFactoryImpl(Class<? extends TCMessage> msgClass) {
+    GeneratedMessageFactoryImpl(Class<? extends TCAction> msgClass) {
       sendHdl = findMethodHandle(msgClass, SessionID.class, MessageMonitor.class, TCByteBufferOutputStream.class,
                                  MessageChannel.class, TCMessageType.class);
       recvHdl = findMethodHandle(msgClass, SessionID.class, MessageMonitor.class, MessageChannel.class,
-                                 TCMessageHeader.class, TCByteBuffer[].class);
+                                 TCMessageHeader.class, TCByteBufferInputStream.class);
       if (sendHdl == null && recvHdl == null) {
         // require at least one half of message construction to work
         throw new RuntimeException("No constructors available for " + msgClass);
       }
     }
 
-    private static MethodHandle findMethodHandle(Class<? extends TCMessage> msgClass, Class<?>... argTypes) {
+    private static MethodHandle findMethodHandle(Class<? extends TCAction> msgClass, Class<?>... argTypes) {
       try {
         MethodType type = MethodType.methodType(void.class, argTypes);
         return MethodHandles.lookup().findConstructor(msgClass, type);
@@ -112,24 +105,24 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
     }
     
     @Override
-    public TCMessage createMessage(SessionID sid, MessageMonitor monitor, TCByteBufferOutputStream output,
+    public TCAction createMessage(SessionID sid, MessageMonitor monitor, TCByteBufferOutputStream output,
                                    MessageChannel channel, TCMessageType type) {
       if (sendHdl == null) { throw new UnsupportedOperationException(); }
 
       try {
-        return (TCMessage)sendHdl.invoke(sid, monitor, output, channel, type);
+        return (TCAction)sendHdl.invoke(sid, monitor, output, channel, type);
       } catch (Throwable e) {
         throw new RuntimeException(e);
       }
     }
 
     @Override
-    public TCMessage createMessage(SessionID sid, MessageMonitor monitor, MessageChannel channel,
-                                   TCMessageHeader msgHeader, TCByteBuffer[] data) {
+    public TCAction createMessage(SessionID sid, MessageMonitor monitor, MessageChannel channel,
+                                   TCMessageHeader msgHeader, TCByteBufferInputStream data) {
       if (recvHdl == null) { throw new UnsupportedOperationException(); }
 
       try {
-        return (TCMessage)recvHdl.invoke(sid, monitor, channel, msgHeader, data);
+        return (TCAction)recvHdl.invoke(sid, monitor, channel, msgHeader, data);
       } catch (Throwable e) {
         throw new RuntimeException(e);
       }

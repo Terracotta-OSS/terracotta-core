@@ -24,5 +24,5 @@ package com.tc.net.protocol.tcm;
  * @author teck
  */
 public interface TCMessageSink {
-  public void putMessage(TCMessage message) throws UnsupportedMessageTypeException;
+  public void putMessage(TCAction message) throws UnsupportedMessageTypeException;
 }

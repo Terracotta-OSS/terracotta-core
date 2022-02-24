@@ -25,7 +25,6 @@ import com.tc.net.ClientID;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
-import com.tc.object.session.SessionManager;
 import com.tc.util.Assert;
 import com.tc.util.Util;
 
@@ -52,7 +51,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   private final ClientHandshakeCallback callBacks;
   private final ClientHandshakeMessageFactory chmf;
   private final Logger logger;
-  private final SessionManager sessionManager;
   private final String clientVersion;
   private final String clientRevision;
   
@@ -64,12 +62,10 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   private volatile boolean isShutdown = false;
 
   public ClientHandshakeManagerImpl(Logger logger, ClientHandshakeMessageFactory chmf,
-                                    SessionManager sessionManager,
                                     String uuid, String name, String clientVersion, String clientRevision,
                                     ClientHandshakeCallback entities) {
     this.logger = logger;
     this.chmf = chmf;
-    this.sessionManager = sessionManager;
     this.uuid = uuid;
     this.name = name;
     this.clientVersion = clientVersion;
@@ -142,8 +138,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
       // A thread might be waiting for us to change whether or not we are disconnected.
         notifyAll();
         pauseCallbacks();
-        this.sessionManager.newSession();
-        this.logger.debug("ClientHandshakeManager moves to " + this.sessionManager.getSessionID());
       }
     }
   }

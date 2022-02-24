@@ -25,13 +25,13 @@ import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.core.TCComm;
 import com.tc.net.protocol.tcm.HydrateContext;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageHydrateSink;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.tc.net.protocol.tcm.TCAction;
 
 public class VoltronMessageSink extends TCMessageHydrateSink<VoltronEntityMessage> {
   private final MessageCodecSupplier codecSupplier;
@@ -49,7 +49,7 @@ public class VoltronMessageSink extends TCMessageHydrateSink<VoltronEntityMessag
   }
 
   @Override
-  public void putMessage(TCMessage message) { 
+  public void putMessage(TCAction message) { 
     if (message instanceof NetworkVoltronEntityMessage) {
       ((NetworkVoltronEntityMessage)message).setMessageCodecSupplier(codecSupplier);
       if (always_hydrate || TCComm.hasPendingRead() || !helper.isEmpty()) {

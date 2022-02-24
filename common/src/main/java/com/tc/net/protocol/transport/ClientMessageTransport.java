@@ -283,6 +283,8 @@ public class ClientMessageTransport extends MessageTransportBase {
     }
     if (receive) {
       super.receiveToReceiveLayer(message);
+    } else {
+      message.complete();
     }
   }
 

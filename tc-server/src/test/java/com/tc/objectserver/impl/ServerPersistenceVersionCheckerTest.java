@@ -20,8 +20,8 @@
 package com.tc.objectserver.impl;
 
 import com.tc.objectserver.persistence.ClusterStatePersistor;
+import com.tc.productinfo.ProductInfo;
 import com.tc.test.TCTestCase;
-import com.tc.util.ProductInfo;
 import com.tc.util.version.Version;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;

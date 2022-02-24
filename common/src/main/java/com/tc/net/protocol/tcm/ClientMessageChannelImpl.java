@@ -33,8 +33,6 @@ import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.JvmIDUtil;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportInitiator;
-import com.tc.object.session.SessionID;
-import com.tc.object.session.SessionProvider;
 import com.tc.net.core.ProductID;
 import com.tc.util.TCTimeoutException;
 
@@ -52,17 +50,13 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   private int                             connectCount;
   private volatile ChannelID                       channelID = ChannelID.NULL_ID;
   private final ProductID                 productID;
-  private final SessionProvider           sessionProvider;
   private MessageTransportInitiator       initiator;
-  private volatile SessionID              channelSessionID = SessionID.NULL_ID;
   private final List<ClientConnectionErrorListener> errorListeners = new CopyOnWriteArrayList<>();
 
   protected ClientMessageChannelImpl(TCMessageFactory msgFactory, TCMessageRouter router,
-                                     SessionProvider sessionProvider, ProductID productId) {
+                                     ProductID productId) {
     super(router, logger, msgFactory);
     this.productID = productId;
-    this.sessionProvider = sessionProvider;
-    this.sessionProvider.initProvider();
   }
 
   @Override
@@ -89,7 +83,6 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
       final NetworkStackID id = this.initiator.openMessageTransport(serverAddresses, cid);
 
-      this.channelSessionID = this.sessionProvider.getSessionID();
       if (!isClosed()) {
         channelOpened();
       } else {
@@ -147,8 +140,6 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public void notifyTransportDisconnected(MessageTransport transport, boolean forcedDisconnect) {
-    this.channelSessionID = this.sessionProvider.nextSessionID();
-    logger.debug("ClientMessageChannel moves to " + this.channelSessionID + " for remote node " + getRemoteNodeID());
     super.notifyTransportDisconnected(transport, forcedDisconnect);
   }
 
