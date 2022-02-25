@@ -20,7 +20,6 @@ package com.tc.net.groups;
 
 import com.tc.async.api.Sink;
 import com.tc.net.NodeID;
-import com.tc.net.groups.GroupMessage;
 
 public class RouteGroupMessagesToSink<M extends GroupMessage> implements GroupMessageListener<M> {
 

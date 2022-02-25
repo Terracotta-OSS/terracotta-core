@@ -190,7 +190,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   @Override
   public boolean isNodeConnected(NodeID sid) {
-    TCGroupMember m = members.get(sid);
+    TCGroupMember m = members.get((ServerID)sid);
     return (m != null) && m.getChannel().isOpen();
   }
 
@@ -634,6 +634,13 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   private TCGroupMember getMember(MessageChannel channel) {
+    TCGroupHandshakeStateMachine stateMachine = getHandshakeStateMachine(channel);
+    if (stateMachine != null) {
+      ServerID sid = stateMachine.getPeerNodeID();
+      if (sid != null) {
+        return getMember(sid);
+      }
+    }
     return members.values().stream().filter(m->m.getChannel() == channel).findFirst().orElse(null);
   }
 
@@ -653,7 +660,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     return discover;
   }
 
-  public Timer getHandshakeTimer() {
+  private Timer getHandshakeTimer() {
     return (handshakeTimer);
   }
 
@@ -793,7 +800,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   public Map<String, ?> getStateMap() {
     Map<String, Object> map = new LinkedHashMap<>();
     map.put("className", this.getClass().getName());
-    Map<String, Object> channels = new LinkedHashMap<>();
     map.put("communications", this.communicationsManager.getStateMap());
 
     Map<String, Object> memberReport = new LinkedHashMap<>();
@@ -951,7 +957,11 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       stateMachine = new TCGroupHandshakeStateMachine(this, channel, getNodeID(), weightGeneratorFactory, version);
       channel.addAttachment(HANDSHAKE_STATE_MACHINE_TAG, stateMachine, false);
       channel.addListener(new HandshakeChannelEventListener(stateMachine));
-      stateMachine.start();
+      if (channel.isOpen()) {
+        stateMachine.start();
+      } else {
+        stateMachine.disconnected();
+      }
     }
     Assert.assertNotNull(stateMachine);
     return stateMachine;
@@ -1088,6 +1098,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
     MessageChannel getChannel() {
       return channel;
+    }
+    
+    ServerID getPeerNodeID() {
+      return peerNodeID;
     }
 
     private synchronized void setTimerTask(long timeout) {

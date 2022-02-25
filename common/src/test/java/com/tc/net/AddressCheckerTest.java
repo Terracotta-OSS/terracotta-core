@@ -19,6 +19,7 @@
 package com.tc.net;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import junit.framework.TestCase;
 
@@ -32,6 +33,18 @@ public class AddressCheckerTest extends TestCase {
     assertTrue(ac.isLegalBindAddress(InetAddress.getLocalHost()));
 
     assertFalse(ac.isLegalBindAddress(InetAddress.getByName("137.254.16.113")));
+  }
+
+  public void testTTL() {
+    int secs = Integer.parseInt(java.security.Security.getProperty("networkaddress.cache.negative.ttl"));
+    long time = System.currentTimeMillis();
+    try {
+      AddressChecker.getByName("     ", 1);
+      fail();
+    } catch (UnknownHostException unknown) {
+// expected
+    }
+    assertTrue(System.currentTimeMillis() - time > secs * 1000);
   }
 
 }
