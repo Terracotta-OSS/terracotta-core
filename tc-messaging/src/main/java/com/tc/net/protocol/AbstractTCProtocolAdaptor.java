@@ -113,6 +113,9 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
       TCByteBuffer last = null;
       while (run < length) {
         TCByteBuffer buf = recycle.poll();
+        if (buf == null) {
+          buf = TCByteBufferFactory.getInstance(length - run);
+        }
         bufs.add(buf);
         run += buf.remaining();
         last = buf;

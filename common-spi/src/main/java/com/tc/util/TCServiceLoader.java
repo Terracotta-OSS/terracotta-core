@@ -20,6 +20,7 @@
 package com.tc.util;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.ServiceLoader;
 import static java.util.stream.Collectors.toList;
 import java.util.stream.StreamSupport;
@@ -33,7 +34,9 @@ public class TCServiceLoader {
   private static Provider IMPL;
   
   static void setImplementation(Provider impl) {
-    IMPL = impl;
+    if (IMPL != null) {
+      IMPL = impl;
+    }
   }
 
   public static <T> Collection<? extends T> loadServices(Class<T> serviceClass, ClassLoader loader) {
@@ -45,7 +48,7 @@ public class TCServiceLoader {
   }
   
   private static Provider getImpl() {
-    return IMPL == null ? createDefault() : IMPL;
+    return IMPL == null ? loadServiceProvider() : IMPL;
   }
   
   private static Provider createDefault() {
@@ -55,6 +58,18 @@ public class TCServiceLoader {
         return StreamSupport.stream(ServiceLoader.load(serviceClass, loader).spliterator(), false).collect(toList());
       }
     };
+  }
+  
+  private static Provider loadServiceProvider() {
+    ServiceLoader<Provider> p = ServiceLoader.load(Provider.class);
+    Iterator<Provider>  ip = p.iterator();
+    if (ip.hasNext()) {
+      IMPL = ip.next();
+      return IMPL;
+    } else {
+      IMPL = createDefault();
+    }
+    return IMPL;
   }
   
   static interface Provider {

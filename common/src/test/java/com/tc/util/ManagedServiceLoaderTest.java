@@ -27,9 +27,11 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -80,7 +82,16 @@ public class ManagedServiceLoaderTest {
     List<Class<? extends TestService>> services = loader.getImplementationsTypes(TestService.class, Thread.currentThread().getContextClassLoader());
     Assert.assertEquals(1, services.size());
     Assert.assertEquals(TestServiceImpl.class, services.get(0));
-  }  
+  }
+  
+  @Test
+  public void testServiceLoaderBootstrap() throws Throwable {
+    Collection<? extends TestService> services = TCServiceLoader.loadServices(TestService.class);
+    Field f = TCServiceLoader.class.getDeclaredField("IMPL");
+    f.setAccessible(true);
+    String name = f.get(TCServiceLoader.class).getClass().getName();
+    Assert.assertTrue(name.contains("ManagedServiceLoader"));
+  }
 
   @Test
   public void testOverrideAnnotation() throws Throwable {
