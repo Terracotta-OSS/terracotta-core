@@ -34,9 +34,7 @@ public class TCServiceLoader {
   private static Provider IMPL;
   
   static void setImplementation(Provider impl) {
-    if (IMPL != null) {
-      IMPL = impl;
-    }
+    IMPL = impl;
   }
 
   public static <T> Collection<? extends T> loadServices(Class<T> serviceClass, ClassLoader loader) {

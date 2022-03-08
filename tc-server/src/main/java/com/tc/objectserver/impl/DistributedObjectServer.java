@@ -320,6 +320,7 @@ public class DistributedObjectServer {
         return consistent.getExternalVoters();
       }
     });
+    DefaultBufferManagerFactory.setBufferManagerFactory(new CachingClearTextBufferManagerFactory());
   }
 
   protected final ServerBuilder createServerBuilder(GroupConfiguration groupConfiguration, Logger tcLogger,
@@ -928,7 +929,6 @@ public class DistributedObjectServer {
 
   private BufferManagerFactory getBufferManagerFactory(ServiceRegistry platformRegistry) {
     BufferManagerFactory bufferManagerFactory = null;
-    DefaultBufferManagerFactory.setBufferManagerFactory(new CachingClearTextBufferManagerFactory());
     try {
       bufferManagerFactory = platformRegistry.getService(new BasicServiceConfiguration<>(BufferManagerFactory.class));
     } catch (ServiceException e) {

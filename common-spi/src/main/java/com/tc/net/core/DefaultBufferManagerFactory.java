@@ -18,6 +18,8 @@
  */
 package com.tc.net.core;
 
+import com.tc.util.TCServiceLoader;
+
 /**
  *
  */
@@ -29,6 +31,9 @@ public class DefaultBufferManagerFactory {
   }
   
   public static BufferManagerFactory getBufferManagerFactory() {
+    if (DEFAULT == null) {
+      DEFAULT = (BufferManagerFactory)TCServiceLoader.loadServices(BufferManagerFactory.class).stream().findFirst().orElseThrow(()->new RuntimeException("not found"));
+    }
     return DEFAULT;
   }
 }
