@@ -120,7 +120,12 @@ public class TCDirectByteBufferCache extends AbstractQueue<TCByteBuffer> {
 
   @Override
   public TCByteBuffer peek() {
-    throw new UnsupportedOperationException();
+    return localpool.peek();
+  }
+
+  @Override
+  public void clear() {
+    localpool.clear();
   }
 
   public void close() {
