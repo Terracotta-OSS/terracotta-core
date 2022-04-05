@@ -89,6 +89,7 @@ public class TCPropertiesImpl implements TCProperties {
     // this happens last -- system properties have highest precedence
     processSystemProperties();
 
+    printLocalProperties();
     warnForOldProperties();
   }
 
@@ -282,6 +283,12 @@ public class TCPropertiesImpl implements TCProperties {
       }
     }
     return sb.toString();
+  }
+  
+  private void printLocalProperties() {
+    if (!localTcProperties.isEmpty()) {
+      logger.info("using the following local tc properties = {" + sortedPropertiesToString() + " }");
+    }
   }
 
   @Override
