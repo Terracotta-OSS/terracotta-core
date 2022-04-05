@@ -32,6 +32,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
+import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.util.Assert;
 import org.terracotta.server.Server;
@@ -55,6 +56,7 @@ public class TCServerImplTest {
 
   private TCServerImpl tcServer;
   private DistributedObjectServer dso;
+  private ServerConfigurationContext cxt;
   private ServerMode currentState = ServerMode.START;
 
   @Before
@@ -69,7 +71,7 @@ public class TCServerImplTest {
     when(smc.getChannelManager()).thenReturn(cm);    
     when(smc.getOperationGuardian()).thenReturn((o,p)->true);
     when(dso.getManagementContext()).thenReturn(smc);
-    ServerConfigurationContext cxt = mock(ServerConfigurationContext.class);
+    cxt = mock(ServerConfigurationContext.class);
     when(dso.getContext()).thenReturn(cxt);
     L2Coordinator l2 = mock(L2Coordinator.class);
     when(cxt.getL2Coordinator()).thenReturn(l2);
@@ -164,4 +166,31 @@ public class TCServerImplTest {
     verify(dso).stop(ArgumentMatchers.anyBoolean());
     Assert.assertTrue(tcServer.waitUntilShutdown());
   }
+
+  @Test
+  public void testAcceptingClientsNoReconnect() throws Exception {
+    when(dso.isL1Listening()).thenReturn(Boolean.FALSE);
+    ServerClientHandshakeManager handshake = mock(ServerClientHandshakeManager.class);
+    when(handshake.isStarted()).thenReturn(Boolean.TRUE);
+    when(cxt.getClientHandshakeManager()).thenReturn(handshake);
+    Assert.assertFalse(tcServer.isAcceptingClients());
+    verify(dso).isL1Listening();
+    when(dso.isL1Listening()).thenReturn(Boolean.TRUE);
+    Assert.assertTrue(tcServer.isAcceptingClients());
+  }
+  
+
+  @Test
+  public void testAcceptingClientsWithReconnect() throws Exception {
+    ServerClientHandshakeManager handshake = mock(ServerClientHandshakeManager.class);
+    when(handshake.isStarting()).thenReturn(Boolean.TRUE);
+    when(handshake.isStarted()).thenReturn(Boolean.FALSE);
+    when(dso.isL1Listening()).thenReturn(Boolean.TRUE);
+    when(cxt.getClientHandshakeManager()).thenReturn(handshake);
+    Assert.assertFalse(tcServer.isAcceptingClients());
+    verify(dso).isL1Listening();
+    verify(handshake).isStarted();
+    when(handshake.isStarted()).thenReturn(Boolean.TRUE);
+    Assert.assertTrue(tcServer.isAcceptingClients());
+  }  
 }

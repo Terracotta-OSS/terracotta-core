@@ -37,7 +37,7 @@ public class BasicExternalClusterActivePassiveIT {
 
   @Rule
   public final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(3).withClientReconnectWindowTime(30)
-      .withTcProperty("server.entity.processor.threads", "16")
+      .withTcProperty("server.entity.processor.threads", "16").inline(false)
       .build();
 
   @Test

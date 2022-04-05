@@ -1198,8 +1198,12 @@ public class DistributedObjectServer {
       }
     }
   }
+  
+  public boolean isL1Listening() {
+    return this.l1Listener.isStarted();
+  }
 
-  public void startL1Listener(Set<ConnectionID> existingConnections) {
+  private void startL1Listener(Set<ConnectionID> existingConnections) {
     while (!server.isStopped()) {
       try {
         this.l1Diagnostics.stop(1000L);
@@ -1234,7 +1238,7 @@ public class DistributedObjectServer {
                        + " successfully, and is now ready for work.");
   }
 
-  public void startDiagnosticListener() {
+  private void startDiagnosticListener() {
     try {
       this.l1Diagnostics.start(Collections.emptySet());
       consoleLogger.info("Terracotta Server instance has started diagnostic listening on  {}", this.l1Diagnostics);
