@@ -20,6 +20,14 @@ REM
 setlocal EnableExtensions EnableDelayedExpansion
 set TC_VOTER_MAIN=org.terracotta.voter.TCVoterMain
 
+echo "%~dp0" > "%temp%\TC_VOTER_DIR.txt"
+findstr /r "[\"\"].*[\`!@#$%%^&*()+={}\[\]|;\"\"'<>?,/\.].*[\"\"]" <"%temp%\TC_VOTER_DIR.txt" >nul
+if %errorlevel% equ 0 (
+  echo Invalid install directory name. Cannot include the ASCII characters:
+  echo `^^!@#$%^^^&^*^(^)+={}[]^|^;"'<>?,/.
+  exit /b 1
+)
+
 pushd "%~dp0.."
 set "TC_VOTER_DIR=%CD%"
 popd
