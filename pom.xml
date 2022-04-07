@@ -58,7 +58,6 @@
     <module>common</module>
     <module>tc-client</module>
     <module>tc-server</module>
-    <module>voter</module>
     <module>connection-impl</module>
     <module>management</module>
     <module>terracotta-kit</module>
