@@ -257,7 +257,7 @@ public abstract class BaseScriptTest {
                   }));
 
   private static final char[] CURRENT_OPERATING_SYSTEM_INVALID_CHARACTERS = {'`', '!', '#', '$', '&', '*', '(', ')',
-          '+', '=', '{', '}', '[', ']', '|', ';', '"', '\'', '<', '>', '?', ',', '/', '.'};
+          '+', '=', '{', '}', '[', ']', '|', ';', '"', '\'', '<', '>', '?', ',', '.'};
 
   private static final char[] CURRENT_WINDOWS_INVALID_CHARACTERS = {'`', '!', '#', '$', '&', '(', ')',
           '+', '=', '{', '}', '[', ']', ';', ',', '.'};
