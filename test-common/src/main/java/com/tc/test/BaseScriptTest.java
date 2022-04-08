@@ -334,12 +334,15 @@ public abstract class BaseScriptTest {
   /**
    * Test using installation directory name containing <i>invalid</i> special characters for the
    * current operating system.
+   * Currently, only Windows script is testing for invalid characters.
    */
   @Test
   public void testInvalidInstallDir() throws Exception {
-    long seed = getSeed();
-    testScriptInternal(seed, generateInvalidSegment(new Random(seed), pathNameSegmentLength),
-            "Invalid install directory name.", 1);
+    if (CURRENT_OPERATING_SYSTEM.equals(OperatingSystem.WINDOWS)) {
+      long seed = getSeed();
+      testScriptInternal(seed, generateInvalidSegment(new Random(seed), pathNameSegmentLength),
+              "Invalid install directory name.", 1);
+    }
   }
 
 
