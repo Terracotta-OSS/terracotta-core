@@ -86,7 +86,9 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
 
   @Override
   public long heartbeat(String id) throws TimeoutException {
+    long time = System.currentTimeMillis();
     String result = processInvocation(diagnostics.invokeWithArg(MBEAN_NAME, "heartbeat", id));
+    LOGGER.debug("voting result {} time {} id {} host {} thread {}", result, System.currentTimeMillis() - time, id, hostPort, Thread.currentThread().getName());
     long nr = Long.parseLong(result);
     if (nr <= 0) {
       voting = false;

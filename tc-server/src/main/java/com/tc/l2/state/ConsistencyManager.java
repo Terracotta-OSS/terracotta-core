@@ -23,7 +23,6 @@ import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.objectserver.impl.Topology;
 import org.terracotta.configuration.FailoverBehavior;
-import org.terracotta.configuration.ServerConfiguration;
 import org.slf4j.Logger;
 
 import java.util.Collection;

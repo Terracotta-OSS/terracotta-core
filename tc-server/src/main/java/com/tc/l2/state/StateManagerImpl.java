@@ -119,7 +119,7 @@ public class StateManagerImpl implements StateManager {
     return this.state;
   }
   
-  private synchronized Enrollment createVerificationEnrollment() {
+  private Enrollment createVerificationEnrollment() {
     return availabilityMgr.createVerificationEnrollment(syncedTo, weightsFactory);
   }
   
