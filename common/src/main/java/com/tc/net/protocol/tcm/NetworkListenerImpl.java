@@ -143,7 +143,8 @@ class NetworkListenerImpl implements NetworkListener {
     return started;
   }
 
-  private boolean isStarted() {
+  @Override
+  public boolean isStarted() {
     Future<Boolean> startDone = null;
     synchronized (this) {
       if (started == null) {

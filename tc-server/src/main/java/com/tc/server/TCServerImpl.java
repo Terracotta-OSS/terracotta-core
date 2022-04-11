@@ -81,6 +81,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   private volatile long                     activateTime                                 = -1;
 
   private DistributedObjectServer         dsoServer;
+  private boolean                         dsoStarted;
   
   private final ServerConfigurationManager configurationSetupManager;
   protected final ConnectionPolicy          connectionPolicy;
@@ -94,6 +95,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   TCServerImpl(DistributedObjectServer dso, ServerConfigurationManager configurationSetupManager) {
     this(configurationSetupManager, new TCThreadGroup(new ThrowableHandlerImpl(logger)));
     this.dsoServer = dso;
+    this.dsoStarted = true;
   }
 
   public TCServerImpl(ServerConfigurationManager configurationSetupManager, TCThreadGroup threadGroup) {
@@ -265,38 +267,37 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   @Override
   public synchronized boolean isStarted() {
-    return this.dsoServer == null || getStateManager().getCurrentMode().isStartup();
+    return !this.dsoStarted || getStateManager().getCurrentMode().isStartup();
   }
 
   @Override
   public boolean isActive() {
-    return getStateManager().isActiveCoordinator();
+    return this.dsoStarted && getStateManager().isActiveCoordinator();
   }
 
   @Override
   public synchronized boolean isStopped() {
-    // XXX:: introduce a new state when stop is officially supported.
-    return this.dsoServer != null && getStateManager().getCurrentMode() == ServerMode.STOP;
+    return this.dsoStarted && getStateManager().getCurrentMode() == ServerMode.STOP;
   }
 
   @Override
   public boolean isPassiveUnitialized() {
-    return getStateManager().getCurrentMode() == ServerMode.UNINITIALIZED;
+    return this.dsoStarted && getStateManager().getCurrentMode() == ServerMode.UNINITIALIZED;
   }
 
   @Override
   public boolean isPassiveStandby() {
-    return getStateManager().getCurrentMode() == ServerMode.PASSIVE;
+    return this.dsoStarted && getStateManager().getCurrentMode() == ServerMode.PASSIVE;
   }
 
   @Override
   public boolean isReconnectWindow() {
-    return dsoServer.getContext().getClientHandshakeManager().isStarting();
+    return this.dsoStarted && dsoServer.getContext().getClientHandshakeManager().isStarting();
   }
 
   @Override
   public boolean isAcceptingClients() {
-    return dsoServer.getContext().getClientHandshakeManager().isStarted();
+    return this.dsoStarted && dsoServer.isL1Listening() && dsoServer.getContext().getClientHandshakeManager().isStarted();
   }
 
   @Override
@@ -373,6 +374,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     Assert.assertTrue(this.dsoServer == null);
     this.dsoServer = createDistributedObjectServer(this.configurationSetupManager, this.connectionPolicy, this);
     this.dsoServer.start();
+    this.dsoStarted = true;
     MBeanServer mbean = subsystem.getServer();
     registerDSOServer(mbean);
     registerServerMBeans(mbean);

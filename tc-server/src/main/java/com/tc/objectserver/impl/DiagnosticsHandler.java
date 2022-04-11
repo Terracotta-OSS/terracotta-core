@@ -77,6 +77,7 @@ public class DiagnosticsHandler extends AbstractEventHandler<TCAction> {
     String raw = new String(TCByteBufferFactory.unwrap(data), set);
     String[] cmd = raw.split(" ");
     byte[] result = null;
+    long startTime = System.currentTimeMillis();
     ChannelID channelID = message.getChannel().getChannelID();
     try {
       GuardianContext.setCurrentChannelID(channelID);
@@ -158,6 +159,11 @@ public class DiagnosticsHandler extends AbstractEventHandler<TCAction> {
       DiagnosticResponse resp = (DiagnosticResponse)channel.createMessage(TCMessageType.DIAGNOSTIC_RESPONSE);
       resp.setResponse(msg.getTransactionID(), result);
       resp.send();
+      long end = System.currentTimeMillis();
+      if (end - startTime > 500) {
+        logger.warn("command {} took {}ms", raw, end - startTime);
+      }
+      logger.debug("command {} took {}ms and returned {}", raw, end - startTime, new String(result, set));
     } catch (Throwable t) {
       logger.warn("caught exception while running diagnostic command: " + Arrays.toString(cmd), t);
       DiagnosticResponse resp = (DiagnosticResponse)channel.createMessage(TCMessageType.DIAGNOSTIC_RESPONSE);

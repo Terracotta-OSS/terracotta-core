@@ -88,6 +88,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
 
   @Override
   public long heartbeat(String id) {
+    logger.debug("received heartbeat {}", id);
     Long val = voters.computeIfPresent(id, (key, timeStamp) -> {
       long currentTime = timeSource.currentTimeMillis();
       // make sure some crazy time lapse didn't happen since last heartbeat
@@ -186,7 +187,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
 
   @Override
   public boolean deregisterVoter(String id) {
-    System.out.println("Deregister " + id);
+    logger.info("Deregister " + id);
     return !votingInProgress ? voters.remove(id) != null : false;
   }
 

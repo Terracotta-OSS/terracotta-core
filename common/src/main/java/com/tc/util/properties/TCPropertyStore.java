@@ -49,6 +49,10 @@ public class TCPropertyStore {
   public synchronized int size() {
     return props.size();
   }
+  
+  public boolean isEmpty() {
+    return props.isEmpty();
+  }
 
   public synchronized String[] keysArray() {
     String[] keys = new String[props.size()];

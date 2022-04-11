@@ -86,11 +86,20 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
   }
 
   @Override
-  public synchronized boolean requestTransition(ServerMode mode, NodeID sourceNode, Topology topology, Transition newMode) throws IllegalStateException {
+  public boolean requestTransition(ServerMode mode, NodeID sourceNode, Topology topology, Transition newMode) throws IllegalStateException {
+    if (safeTransition(mode, sourceNode, topology, newMode)) {
+      return consistencyManager.requestTransition(mode, sourceNode, topology, newMode);
+    } else {
+      return false;
+    }
+  }
+  
+  private synchronized boolean safeTransition(ServerMode mode, NodeID sourceNode, Topology topology, Transition newMode) throws IllegalStateException {
     if (newMode == Transition.CONNECT_TO_ACTIVE) {
       // disable this mode since we have already tried to connect to an existing active.
       // safe startup mode no longer applies
       disable.attemptSet();
+      suspended = false;
     } else if (!disable.isSet() && consistentStartup && mode.isStartup() && newMode == Transition.MOVE_TO_ACTIVE) {
       if (activePeers.size() == peerServers) {
         CONSOLE.info("Action:{} allowed because all servers are connected", newMode);
@@ -102,10 +111,10 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
         CONSOLE.info("Action:{} not allowed because not enough servers are connected", newMode);
         suspended = true;
       }
-      return !suspended;
+    } else {
+      suspended = false;
     }
-    suspended = false;
-    return consistencyManager.requestTransition(mode, sourceNode, topology, newMode);
+    return !suspended;
   }
 
   @Override

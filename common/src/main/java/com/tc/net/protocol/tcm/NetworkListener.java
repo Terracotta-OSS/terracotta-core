@@ -36,5 +36,7 @@ public interface NetworkListener {
   public InetAddress getBindAddress();
 
   public int getBindPort();
+  
+  public boolean isStarted();
 
 }
