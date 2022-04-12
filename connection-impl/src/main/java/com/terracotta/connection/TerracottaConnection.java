@@ -40,6 +40,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import org.terracotta.entity.EndpointConnector;
+import org.terracotta.exception.ConnectionClosedException;
 
 
 public class TerracottaConnection implements Connection, PrettyPrintable {
@@ -102,7 +103,12 @@ public class TerracottaConnection implements Connection, PrettyPrintable {
 
   @Override
   public boolean isValid() {
-    return entityManager.get().isValid();
+    try {
+      return entityManager.get().isValid();
+    } catch (ConnectionClosedException c) {
+      // swallow this, we are checking for valid connection
+      return false;
+    }
   }
 
   @Override

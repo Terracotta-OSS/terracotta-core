@@ -45,7 +45,7 @@ public interface ClientEntityManager extends PrettyPrintable, RequestResponseHan
    * @param closeHook To be passed into the found EntityClientEndpoint for it to call on close or called, directly, if lookup fails.
    * @return The end-point or null if the entity doesn't exist
    */
-  public EntityClientEndpoint fetchEntity(EntityID entity, long version, ClientInstanceID instance, MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec, Runnable closeHook) throws EntityException;
+  public EntityClientEndpoint fetchEntity(EntityID entity, long version, ClientInstanceID instance, MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec) throws EntityException;
 
   byte[] createEntity(EntityID entityID, long version, byte[] config) throws EntityException;
   

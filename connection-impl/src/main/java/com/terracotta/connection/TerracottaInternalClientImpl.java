@@ -35,10 +35,6 @@ import org.terracotta.exception.ConnectionClosedException;
 
 
 public class TerracottaInternalClientImpl implements TerracottaInternalClient {
-  static class ClientShutdownException extends Exception {
-    private static final long serialVersionUID = 1L;
-  }
-
   private final DistributedObjectClientFactory clientCreator;
   private final ClientConnectionErrorDetails errorListener = new ClientConnectionErrorDetails();
   private volatile ClientHandle       clientHandle;
