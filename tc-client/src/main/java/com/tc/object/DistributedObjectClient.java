@@ -181,13 +181,7 @@ public class DistributedObjectClient {
   }
 
   public boolean connectFor(long timeout, TimeUnit units) throws InterruptedException {
-    final TCProperties tcProperties = TCPropertiesImpl.getProperties();
-    final int socketConnectTimeout = tcProperties.getInt(TCPropertiesConsts.L1_SOCKET_CONNECT_TIMEOUT);
-
-    if (socketConnectTimeout < 0) { throw new IllegalArgumentException("invalid socket time value: "
-                                                                       + socketConnectTimeout); }
-
-    ClientMessageChannel client = internalStart(socketConnectTimeout);
+    ClientMessageChannel client = internalStart(getSocketConnectTimeout());
     setClientMessageChannel(client);
     connectionThread.set(new Thread(threadGroup, ()->{
           while (!connectionMade.isSet() && !clientStopped.isSet() && !exceptionMade.isSet()) {
@@ -204,10 +198,19 @@ public class DistributedObjectClient {
       throw e;
     }
   }
+  
+  private int getSocketConnectTimeout() {
+    final TCProperties tcProperties = TCPropertiesImpl.getProperties();
+    final int socketConnectTimeout = tcProperties.getInt(TCPropertiesConsts.L1_SOCKET_CONNECT_TIMEOUT);
 
-  public boolean connectOnce(int socketTimeout) {
+    if (socketConnectTimeout < 0) { throw new IllegalArgumentException("invalid socket time value: "
+                                                                       + socketConnectTimeout); }
+    return socketConnectTimeout;
+  }
+
+  public boolean connectOnce() {
     try {
-      if (!directConnect(internalStart(socketTimeout))) {
+      if (!directConnect(internalStart(getSocketConnectTimeout()))) {
         shutdown();
         return false;
       } else {
@@ -386,13 +389,13 @@ public class DistributedObjectClient {
         DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for 5 sec.", serverAddresses);
         DSO_LOGGER.debug("Timeout connecting to server/s: {} {}", serverAddresses, tcte.getMessage());
         synchronized(clientStopped) {
-          clientStopped.wait(5000);
+          clientStopped.wait(1000);
         }
       } catch (final ConnectException e) {
         DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for 5 sec.", serverAddresses);
         DSO_LOGGER.debug("Connection refused from server/s: {} {}", serverAddresses, e.getMessage());
         synchronized(clientStopped) {
-          clientStopped.wait(5000);
+          clientStopped.wait(1000);
         }
       } catch (final MaxConnectionsExceededException e) {
         DSO_LOGGER.error(e.getMessage());
@@ -407,7 +410,7 @@ public class DistributedObjectClient {
         DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for 5 sec.", serverAddresses);
         DSO_LOGGER.debug("IOException connecting to server/s: {} {}", serverAddresses, ioe.getMessage());
         synchronized(clientStopped) {
-          clientStopped.wait(5000);
+          clientStopped.wait(1000);
         }
       }
     }
