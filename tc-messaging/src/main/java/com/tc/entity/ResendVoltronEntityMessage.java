@@ -138,4 +138,9 @@ public class ResendVoltronEntityMessage implements VoltronEntityMessage, TCSeria
     // There is no built-in message.
     return null;
   }
+
+  @Override
+  public String toString() {
+    return "ResendVoltronEntityMessage{" + "source=" + source + ", transactionID=" + transactionID + ", entityDescriptor=" + entityDescriptor + '}';
+  }
 }

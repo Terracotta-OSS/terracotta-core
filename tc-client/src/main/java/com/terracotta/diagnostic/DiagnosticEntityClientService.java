@@ -21,7 +21,6 @@ package com.terracotta.diagnostic;
 import com.tc.util.concurrent.ThreadUtil;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.net.ConnectException;
 import java.nio.charset.Charset;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
