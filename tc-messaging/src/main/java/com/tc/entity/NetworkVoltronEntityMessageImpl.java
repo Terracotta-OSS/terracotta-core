@@ -237,4 +237,9 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   public EntityMessage getEntityMessage() {
     return this.message;
   }
+
+  @Override
+  public String toString() {
+    return "NetworkVoltronEntityMessageImpl{" + "clientID=" + clientID + ", transactionID=" + transactionID + ", eid=" + eid + '}';
+  }
 }
