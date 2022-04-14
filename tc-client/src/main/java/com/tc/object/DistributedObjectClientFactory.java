@@ -78,7 +78,7 @@ public class DistributedObjectClientFactory {
     boolean reconnect = !type.isReconnectEnabled();
     String timeout = properties.getProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "0");
     if (reconnect && Integer.parseInt(timeout) < 0) {
-      if (!client.connectOnce(5_000)) {
+      if (!client.connectOnce()) {
         return null;
       }
     } else {
