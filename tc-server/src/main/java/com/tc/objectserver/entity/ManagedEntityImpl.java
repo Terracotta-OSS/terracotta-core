@@ -209,7 +209,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   @Override
   public void addRequestMessage(ServerEntityRequest request, MessagePayload data, ResultCapture resp) {
     if (logger.isDebugEnabled()) {
-      logger.debug("add " + request.getAction() + " " + this.id + " " + this.fetchID);
+      logger.debug("add req: {} id: {} fetch: {} client:{}-{}", request.getAction(), this.id, this.fetchID, request.getNodeID(), request.getTransaction());
     }
     Trace.activeTrace().log("ManagedEntityImpl.addRequestMessage");
     switch (request.getAction()) {
@@ -320,7 +320,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
     SchedulingRunnable next = new SchedulingRunnable(request, payload, r, ckey);
     if (logger.isDebugEnabled()) {
-      logger.debug("Scheduling " + next.request.getAction() + " on " + getID() + ":" + getConsumerID());
+      logger.debug("Scheduling action: {} entity: {}-{} from {}-{} ({})", next.request.getAction(), getID(), getConsumerID(), request.getNodeID(), request.getTransaction(), request.getTraceID());
     }
 
     if (isActive()) {
@@ -331,14 +331,14 @@ public class ManagedEntityImpl implements ManagedEntity {
 
     for (SchedulingRunnable msg : runnables) {
       if (logger.isDebugEnabled()) {
-        logger.debug("Starting " + msg.request.getAction() + " on " + getID() + ":" + getConsumerID());
+      logger.debug("Starting action: {} entity: {}-{} from {}-{} ({})", next.request.getAction(), getID(), getConsumerID(), request.getNodeID(), request.getTransaction(), request.getTraceID());
       }
       msg.start();
     }
 
     if (!runnables.offer(next)) {
       if (logger.isDebugEnabled()) {
-        logger.debug("Starting offered " + next.request.getAction() + " on " + getID() + ":" + getConsumerID());
+      logger.debug("Starting Offered action: {} entity: {}-{} from {}-{} ({})", next.request.getAction(), getID(), getConsumerID(), request.getNodeID(), request.getTransaction(), request.getTraceID());
       }
       Assert.assertTrue(next, runnables.isEmpty() && runnables.deferCleared);
       next.start();
