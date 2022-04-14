@@ -54,12 +54,6 @@ limitations under the License.
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>voter</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>galvan</artifactId>
       <version>${galvan.version}</version>

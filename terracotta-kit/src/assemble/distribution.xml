@@ -96,10 +96,6 @@ The Initial Developer of the Covered Software is
       <directory>src/assemble/client</directory>
       <outputDirectory>/client</outputDirectory>
     </fileSet>
-    <fileSet>
-      <directory>src/assemble/voter</directory>
-      <outputDirectory>/tools/voter</outputDirectory>
-    </fileSet>
     <!-- copy dependencies of terracotta (except itself) into /server/lib -->
     <fileSet>
       <directory>${project.build.directory}/server-lib</directory>
@@ -123,12 +119,6 @@ The Initial Developer of the Covered Software is
       <outputDirectory>client/lib</outputDirectory>
       <includes>
         <include>org.terracotta.internal:client-*</include>
-      </includes>
-    </dependencySet>
-    <dependencySet>
-      <outputDirectory>tools/voter/lib</outputDirectory>
-      <includes>
-        <include>org.terracotta.internal:voter</include>
       </includes>
     </dependencySet>
     <dependencySet>
