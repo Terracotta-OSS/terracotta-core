@@ -89,7 +89,7 @@ import java.nio.file.attribute.PosixFilePermission;
  * {@code C:\Program Files (x86)} and in default names used for downloads.  So we test for the use of
  * <i>special</i> characters.
  * <p>
- * Extending classes must implement {@link #testScript(File, String, int)}.  {@code testScript} is called for each test
+ * Extending classes must implement {@link #testScript(File)}.  {@code testScript} is called for each test
  * and is responsible for establishing the script execution environment -- "installing" files and setting
  * environment variables -- then invoking {@link #execScript(File, Duration, Map, String, String...)} to
  * execute the script.
@@ -176,7 +176,6 @@ public abstract class BaseScriptTest {
       /*
        * The following characters are not NOT LEGAL for use in Windows
        * file path names.
-       *
        */
       def('<', "lessThan", OperatingSystem.WINDOWS),
       def('>', "greaterThan", OperatingSystem.WINDOWS),
@@ -215,29 +214,26 @@ public abstract class BaseScriptTest {
        * The following characters are LEGAL in both Windows and Linux and
        * are otherwise not restricted.  Use in scripts may require strict
        * attention to quoting or other techniques.
-       *
-       * The Windows installer prohibits these characters:
-          `!@#$&*()+={}[]|;"'<>?,/.
        */
       def((char)0x20, "space"),
-      def('#', "number", OperatingSystem.WINDOWS),
-      def('$', "dollar", OperatingSystem.WINDOWS),
-      def('&', "ampersand", OperatingSystem.WINDOWS),
-      def('\'', "apostrophe", OperatingSystem.WINDOWS),
-      def('(', "leftParen", OperatingSystem.WINDOWS),
-      def(')', "rightParen", OperatingSystem.WINDOWS),
-      def('+', "plus", OperatingSystem.WINDOWS),
-      def(',', "comma", OperatingSystem.WINDOWS),
+      def('#', "number"),
+      def('$', "dollar"),
+      def('&', "ampersand"),
+      def('\'', "apostrophe"),
+      def('(', "leftParen"),
+      def(')', "rightParen"),
+      def('+', "plus"),
+      def(',', "comma"),
       def('-', "minus"),
-      def('.', "period", OperatingSystem.WINDOWS),
-      def('=', "equals", OperatingSystem.WINDOWS),
-      def('@', "at", OperatingSystem.WINDOWS),
-      def('[', "leftBracket", OperatingSystem.WINDOWS),
-      def(']', "rightBracket", OperatingSystem.WINDOWS),
+      def('.', "period"),
+      def('=', "equals"),
+      def('@', "at"),
+      def('[', "leftBracket"),
+      def(']', "rightBracket"),
       def('^', "caret"),
       def('_', "underscore"),
-      def('`', "backtick", OperatingSystem.WINDOWS),
-      def('}', "rightBrace", OperatingSystem.WINDOWS),
+      def('`', "backtick"),
+      def('}', "rightBrace"),
       def('~', "tilde")
   );
 
@@ -245,23 +241,16 @@ public abstract class BaseScriptTest {
    * Special characters permitted for the current operating system.
    */
   private static final char[] CURRENT_OPERATING_SYSTEM_SPECIAL_CHARACTERS = SPECIAL_CHARACTERS.stream()
-          .filter(d -> d.supportedOs.contains(CURRENT_OPERATING_SYSTEM))
-          .collect(Collector.of(
-                  () -> CharBuffer.allocate(SPECIAL_CHARACTERS.size()),
-                  (b, d) -> b.append(d.character),
-                  CharBuffer::append,
-                  b -> {
-                    char[] chars = new char[b.position()];
-                    ((CharBuffer)b.flip()).get(chars);
-                    return chars;
-                  }));
-
-  private static final char[] CURRENT_OPERATING_SYSTEM_INVALID_CHARACTERS = {'`', '!', '#', '$', '&', '*', '(', ')',
-          '+', '=', '{', '}', '[', ']', '|', ';', '"', '\'', '<', '>', '?', ',', '.'};
-
-  private static final char[] CURRENT_WINDOWS_INVALID_CHARACTERS = {'`', '!', '#', '$', '&', '(', ')',
-          '+', '=', '{', '}', '[', ']', ';', ',', '.'};
-
+      .filter(d -> d.supportedOs.contains(CURRENT_OPERATING_SYSTEM))
+      .collect(Collector.of(
+          () -> CharBuffer.allocate(SPECIAL_CHARACTERS.size()),
+          (b, d) -> b.append(d.character),
+          CharBuffer::append,
+          b -> {
+            char[] chars = new char[b.position()];
+            ((CharBuffer)b.flip()).get(chars);
+            return chars;
+          }));
 
   /** These characters have unrestricted use in file name segments. */
   private static final char[] UNRESTRICTED_STANDARD_CHARACTERS =
@@ -270,7 +259,8 @@ public abstract class BaseScriptTest {
   /** Some characters, on some operating systems, may not be used to start or end a name segment. */
   private static final char[] ALL_STANDARD_CHARACTERS;
   static {
-    char[] all = Arrays.copyOf(UNRESTRICTED_STANDARD_CHARACTERS, UNRESTRICTED_STANDARD_CHARACTERS.length + 1);
+    char[] all = Arrays.copyOf(UNRESTRICTED_STANDARD_CHARACTERS, UNRESTRICTED_STANDARD_CHARACTERS.length + 2);
+    all[all.length - 2] = '.';
     all[all.length - 1] = '-';
     ALL_STANDARD_CHARACTERS = all;
   }
@@ -301,13 +291,12 @@ public abstract class BaseScriptTest {
    *   <li>Assert results</li>
    * </ol>
    * @param installRoot the directory serving as the root of the installation environment
-   * @param stdOutContains the standard output string to test the contains against
    * @throws Exception if the test fails
    * @see #createInstallDir(File, Path)
    * @see #installScript(String, Path)
    * @see #execScript(File, Duration, Map, String, String...)
    */
-  protected abstract void testScript(File installRoot, String stdOutContains, int exitCode) throws Exception;
+  protected abstract void testScript(File installRoot) throws Exception;
 
 
   /**
@@ -316,8 +305,7 @@ public abstract class BaseScriptTest {
   @Test
   public void testStandardChars() throws Exception {
     long seed = getSeed();
-    testScriptInternal(seed, generateStandardSegment(new Random(seed), pathNameSegmentLength),
-            "In setenv", 0);
+    testScriptInternal(seed, generateStandardSegment(new Random(seed), pathNameSegmentLength));
   }
 
   /**
@@ -327,26 +315,11 @@ public abstract class BaseScriptTest {
   @Test
   public void testUnusualInstallDir() throws Exception {
     long seed = getSeed();
-    testScriptInternal(seed, generateSpecialSegment(new Random(seed), pathNameSegmentLength),
-            "In setenv", 0);
-  }
-
-  /**
-   * Test using installation directory name containing <i>invalid</i> special characters for the
-   * current operating system.
-   * Currently, only Windows script is testing for invalid characters.
-   */
-  @Test
-  public void testInvalidInstallDir() throws Exception {
-    if (CURRENT_OPERATING_SYSTEM.equals(OperatingSystem.WINDOWS)) {
-      long seed = getSeed();
-      testScriptInternal(seed, generateInvalidSegment(new Random(seed), pathNameSegmentLength),
-              "Invalid install directory name.", 1);
-    }
+    testScriptInternal(seed, generateSpecialSegment(new Random(seed), pathNameSegmentLength));
   }
 
 
-  private void testScriptInternal(long seed, String folder, String contains, int exitCode) throws Exception {
+  private void testScriptInternal(long seed, String folder) throws Exception {
     File installRoot;
     try {
       installRoot = INSTALL_ROOT_PARENT.newFolder(folder);
@@ -356,7 +329,7 @@ public abstract class BaseScriptTest {
     }
 
     try {
-      testScript(installRoot, contains, exitCode);
+      testScript(installRoot);
     } catch (AssertionError e) {
       throw new AssertionError("Failed with seed " + seed + " using installRoot=\"" + installRoot + "\"", e);
     }
@@ -742,23 +715,6 @@ public abstract class BaseScriptTest {
 
     for (int i = 1; i < length - 1; i++) {
       segment[i] = CURRENT_OPERATING_SYSTEM_SPECIAL_CHARACTERS[rnd.nextInt(CURRENT_OPERATING_SYSTEM_SPECIAL_CHARACTERS.length)];
-    }
-
-    segment[length - 1] = UNRESTRICTED_STANDARD_CHARACTERS[rnd.nextInt(UNRESTRICTED_STANDARD_CHARACTERS.length)];
-    return String.valueOf(segment);
-  }
-
-  private static String generateInvalidSegment(Random rnd, int length) {
-    assert length >= 1 : "length must be greater than or equal to 1";
-    char[] segment = new char[length];
-    segment[0] = UNRESTRICTED_STANDARD_CHARACTERS[rnd.nextInt(UNRESTRICTED_STANDARD_CHARACTERS.length)];
-
-    for (int i = 1; i < length - 1; i++) {
-      if (CURRENT_OPERATING_SYSTEM.equals(OperatingSystem.WINDOWS)) {
-        segment[i] = CURRENT_WINDOWS_INVALID_CHARACTERS[rnd.nextInt(CURRENT_WINDOWS_INVALID_CHARACTERS.length)];
-      } else {
-        segment[i] = CURRENT_OPERATING_SYSTEM_INVALID_CHARACTERS[rnd.nextInt(CURRENT_OPERATING_SYSTEM_INVALID_CHARACTERS.length)];
-      }
     }
 
     segment[length - 1] = UNRESTRICTED_STANDARD_CHARACTERS[rnd.nextInt(UNRESTRICTED_STANDARD_CHARACTERS.length)];

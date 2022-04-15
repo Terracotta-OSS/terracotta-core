@@ -400,7 +400,7 @@ public class ClientEntityManagerTest extends TestCase {
         return new TestRequestBatchMessage(manager, resultObject, null, true);
       }
     });
-    EntityClientEndpoint endpoint = this.manager.fetchEntity(entityID, 1L, instance, new ByteArrayMessageCodec(), mock(Runnable.class));
+    EntityClientEndpoint endpoint = this.manager.fetchEntity(entityID, 1L, instance, new ByteArrayMessageCodec());
 
     InvokeFuture future = endpoint.beginInvoke().message(new ByteArrayEntityMessage(messageObject)).invoke();
     ByteArrayEntityResponse response = (ByteArrayEntityResponse) future.getWithTimeout(5, TimeUnit.SECONDS);
@@ -423,7 +423,7 @@ public class ClientEntityManagerTest extends TestCase {
         return new TestRequestBatchMessage(manager, resultObject, null, true);
       }
     });
-    EntityClientEndpoint endpoint = this.manager.fetchEntity(entityID, 1L, instance, new ByteArrayMessageCodec(), mock(Runnable.class));
+    EntityClientEndpoint endpoint = this.manager.fetchEntity(entityID, 1L, instance, new ByteArrayMessageCodec());
 
     try {
       endpoint.beginInvoke().message(new ByteArrayEntityMessage(messageObject)).invoke().getWithTimeout(10, TimeUnit.SECONDS);
@@ -444,7 +444,7 @@ public class ClientEntityManagerTest extends TestCase {
         return new TestRequestBatchMessage(manager, resultObject, null, true);
       }
     });
-    EntityClientEndpoint endpoint = this.manager.fetchEntity(entityID, 1L, instance, new ByteArrayMessageCodec(), mock(Runnable.class));
+    EntityClientEndpoint endpoint = this.manager.fetchEntity(entityID, 1L, instance, new ByteArrayMessageCodec());
 
     AuditingInvocationCallback callback = new AuditingInvocationCallback();
     endpoint.beginAsyncInvoke().message(new ByteArrayEntityMessage(messageObject)).invoke(callback);
@@ -474,7 +474,7 @@ public class ClientEntityManagerTest extends TestCase {
         return new TestRequestBatchMessage(manager, resultObject, null, true);
       }
     });
-    EntityClientEndpoint endpoint = this.manager.fetchEntity(entityID, 1L, instance, new ByteArrayMessageCodec(), mock(Runnable.class));
+    EntityClientEndpoint endpoint = this.manager.fetchEntity(entityID, 1L, instance, new ByteArrayMessageCodec());
 
     AuditingInvocationCallback callback = new AuditingInvocationCallback();
     endpoint.beginAsyncInvoke().message(new ByteArrayEntityMessage(messageObject)).invoke(callback);
@@ -510,7 +510,7 @@ public class ClientEntityManagerTest extends TestCase {
         return new TestRequestBatchMessage(manager, resultObject, null, true);
       }
     });
-    EntityClientEndpoint endpoint = this.manager.fetchEntity(entityID, 1L, instance, new ByteArrayMessageCodec(), mock(Runnable.class));
+    EntityClientEndpoint endpoint = this.manager.fetchEntity(entityID, 1L, instance, new ByteArrayMessageCodec());
 
     AuditingInvocationCallback callback = new AuditingInvocationCallback();
     // saturate the send queue
@@ -542,7 +542,7 @@ public class ClientEntityManagerTest extends TestCase {
         return new TestRequestBatchMessage(manager, resultObject, null, true);
       }
     });
-    EntityClientEndpoint endpoint = this.manager.fetchEntity(entityID, 1L, instance, new ByteArrayMessageCodec(), mock(Runnable.class));
+    EntityClientEndpoint endpoint = this.manager.fetchEntity(entityID, 1L, instance, new ByteArrayMessageCodec());
 
     AuditingInvocationCallback callback = new AuditingInvocationCallback();
     // saturate the send queue
@@ -861,7 +861,7 @@ public class ClientEntityManagerTest extends TestCase {
         if (this.interrupt) {
           this.interrupt();
         }
-        this.result = this.manager.fetchEntity(entity, version, instance, codec, mock(Runnable.class));
+        this.result = this.manager.fetchEntity(entity, version, instance, codec);
         if (this.interrupt) {
           Assert.assertTrue(this.isInterrupted());
         }

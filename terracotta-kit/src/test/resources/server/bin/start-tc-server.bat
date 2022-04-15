@@ -19,14 +19,6 @@ REM
 
 setlocal enabledelayedexpansion enableextensions
 
-echo "%~dp0" > "%temp%\TC_SERVER_DIR.txt"
-findstr /r "[\"\"].*[\`!@#$%%^&*()+={}\[\]|;\"\"'<>?,/\.].*[\"\"]" <"%temp%\TC_SERVER_DIR.txt" >nul
-if %errorlevel% equ 0 (
-  echo Invalid install directory name. Cannot include the ASCII characters:
-  echo `^^!@#$%^^^&^*^(^)+={}[]^|^;"'<>?,/.
-  exit /b 1
-)
-
 pushd "%~dp0.."
 set "TC_SERVER_DIR=%CD%"
 popd

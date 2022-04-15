@@ -195,8 +195,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   @SuppressWarnings("rawtypes")
   @Override
-  public EntityClientEndpoint fetchEntity(EntityID entity, long version, ClientInstanceID instance, MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec, Runnable closeHook) throws EntityException {
-    return internalLookup(entity, version, instance, codec, closeHook);
+  public EntityClientEndpoint fetchEntity(EntityID entity, long version, ClientInstanceID instance, MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec) throws EntityException {
+    return internalLookup(entity, version, instance, codec);
   }
 
   @Override
@@ -532,7 +532,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     transactionSource.retire(msg.getTransactionID());
   }
 
-  private <M extends EntityMessage, R extends EntityResponse> EntityClientEndpoint<M, R> internalLookup(final EntityID entity, long version, final ClientInstanceID instance, final MessageCodec<M, R> codec, final Runnable closeHook) throws EntityException {
+  private <M extends EntityMessage, R extends EntityResponse> EntityClientEndpoint<M, R> internalLookup(final EntityID entity, long version, final ClientInstanceID instance, final MessageCodec<M, R> codec) throws EntityException {
     Assert.assertNotNull("Can't lookup null entity descriptor", instance);
     final EntityDescriptor fetchDescriptor = EntityDescriptor.createDescriptorForFetch(entity, version, instance);
     EntityClientEndpointImpl<M, R> resolvedEndpoint = null;
@@ -552,7 +552,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         @Override
         public void run() {
           try {
-            internalRelease(entity, fetchDescriptor, closeHook);
+            internalRelease(entity, fetchDescriptor);
           } catch (EntityException e) {
             // We aren't expecting there to be any problems releasing an entity in the close hook so we will just log and re-throw.
             Util.printLogAndRethrowError(e, logger);
@@ -570,13 +570,13 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       throw notfound;
     } catch (EntityException e) {
       // Release the entity and re-throw to the higher level.
-      internalRelease(entity, fetchDescriptor, null);
+      internalRelease(entity, fetchDescriptor);
       // NOTE:  Since we are throwing, we are not responsible for calling the given closeHook.
       throw e;
     } catch (Throwable t) {
       // This is the unexpected case so clean up and re-throw as a RuntimeException
       // Clean up any client-side or server-side state regarding this failed connection.
-      internalRelease(entity, fetchDescriptor, null);
+      internalRelease(entity, fetchDescriptor);
       // NOTE:  Since we are throwing, we are not responsible for calling the given closeHook.
       throw Throwables.propagate(t);
     }
@@ -584,7 +584,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     return resolvedEndpoint;
   }
 
-  private void internalRelease(EntityID eid, EntityDescriptor entityDescriptor, Runnable closeHook) throws EntityException {
+  private void internalRelease(EntityID eid, EntityDescriptor entityDescriptor) throws EntityException {
     // We need to provide fully blocking semantics with this call so we will wait for the "COMPLETED" ack.
     Set<VoltronEntityMessage.Acks> requestedAcks = EnumSet.of(VoltronEntityMessage.Acks.COMPLETED);
     // A "RELEASE" doesn't matter to the passive.
@@ -601,9 +601,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       MapListPrettyPrint print = new MapListPrettyPrint();
       ref.getStatistics().prettyPrint(print);
       logger.debug("Releasing " + ref.getEntityID() + "=" + print.toString());
-    }
-    if (closeHook != null) {
-      closeHook.run();
     }
   }
   

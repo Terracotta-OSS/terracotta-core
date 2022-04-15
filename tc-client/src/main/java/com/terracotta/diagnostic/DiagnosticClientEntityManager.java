@@ -62,13 +62,13 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
   }
 
   @Override
-  public EntityClientEndpoint fetchEntity(EntityID entity, long version, ClientInstanceID entityDescriptor, MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec, Runnable closeHook) throws EntityException {
+  public EntityClientEndpoint fetchEntity(EntityID entity, long version, ClientInstanceID entityDescriptor, MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec) throws EntityException {
     if (!entity.getClassName().equals(com.terracotta.diagnostic.Diagnostics.class.getName())
             && !entity.getClassName().equals(org.terracotta.connection.Diagnostics.class.getName())) {
       throw new AssertionError("wrong entity type " + entity.getClassName());
     }
     Assert.assertEquals("root", entity.getEntityName());
-    return new EntityClientEndpointImpl(entity, version, EntityDescriptor.NULL_ID, this, new byte[] {}, codec, closeHook, null);
+    return new EntityClientEndpointImpl(entity, version, EntityDescriptor.NULL_ID, this, new byte[] {}, codec, null, null);
   }
 
   @Override
