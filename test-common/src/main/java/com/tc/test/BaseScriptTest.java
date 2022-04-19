@@ -98,7 +98,7 @@ import java.nio.file.attribute.PosixFilePermission;
  * @see #installScript(String, Path)
  * @see #createJar(String, Path, boolean, String...)
  * @see #execScript(File, Duration, Map, String, String...)
- * @see com.tc.test.BaseScriptTest.ScriptResult
+ * @see ScriptResult
  */
 public abstract class BaseScriptTest {
 
@@ -120,7 +120,7 @@ public abstract class BaseScriptTest {
   /**
    * Identifies the current operating system.
    */
-  protected static final com.tc.test.BaseScriptTest.OperatingSystem CURRENT_OPERATING_SYSTEM = com.tc.test.BaseScriptTest.OperatingSystem.currentOperatingSystem();
+  protected static final OperatingSystem CURRENT_OPERATING_SYSTEM = OperatingSystem.currentOperatingSystem();
 
   private static final Random SEEDS = new Random();
 
@@ -241,33 +241,33 @@ public abstract class BaseScriptTest {
    * Special characters permitted for the current operating system.
    */
   private static final char[] CURRENT_OPERATING_SYSTEM_SPECIAL_CHARACTERS = SPECIAL_CHARACTERS.stream()
-          .filter(d -> d.supportedOs.contains(CURRENT_OPERATING_SYSTEM))
-          .collect(Collector.of(
-                  () -> CharBuffer.allocate(SPECIAL_CHARACTERS.size()),
-                  (b, d) -> b.append(d.character),
-                  CharBuffer::append,
-                  b -> {
-                    char[] chars = new char[b.position()];
-                    ((CharBuffer)b.flip()).get(chars);
-                    return chars;
-                  }));
-
-  private static final char[] CURRENT_OPERATING_SYSTEM_INVALID_CHARACTERS = {'!', ';'};
-
-  private static final char[] CURRENT_WINDOWS_INVALID_CHARACTERS = {'!', ';'};
-
+      .filter(d -> d.supportedOs.contains(CURRENT_OPERATING_SYSTEM))
+      .collect(Collector.of(
+          () -> CharBuffer.allocate(SPECIAL_CHARACTERS.size()),
+          (b, d) -> b.append(d.character),
+          CharBuffer::append,
+          b -> {
+            char[] chars = new char[b.position()];
+            ((CharBuffer)b.flip()).get(chars);
+            return chars;
+          }));
 
   /** These characters have unrestricted use in file name segments. */
   private static final char[] UNRESTRICTED_STANDARD_CHARACTERS =
-          "abcdefghijlkmnopqrstuvwxyzABCDEFGHIJLKMNOPQRSTUVWXYZ0123456789_".toCharArray();
+      "abcdefghijlkmnopqrstuvwxyzABCDEFGHIJLKMNOPQRSTUVWXYZ0123456789_".toCharArray();
 
   /** Some characters, on some operating systems, may not be used to start or end a name segment. */
   private static final char[] ALL_STANDARD_CHARACTERS;
   static {
-    char[] all = Arrays.copyOf(UNRESTRICTED_STANDARD_CHARACTERS, UNRESTRICTED_STANDARD_CHARACTERS.length + 1);
+    char[] all = Arrays.copyOf(UNRESTRICTED_STANDARD_CHARACTERS, UNRESTRICTED_STANDARD_CHARACTERS.length + 2);
+    all[all.length - 2] = '.';
     all[all.length - 1] = '-';
     ALL_STANDARD_CHARACTERS = all;
   }
+
+  private static final char[] CURRENT_OPERATING_SYSTEM_INVALID_CHARACTERS = {'!', ';'};
+
+  private static final char[] CURRENT_WINDOWS_INVALID_CHARACTERS = {'!', ';'};
 
   private final int pathNameSegmentLength;
 
@@ -332,7 +332,7 @@ public abstract class BaseScriptTest {
    */
   @Test
   public void testInvalidInstallDir() throws Exception {
-    if (CURRENT_OPERATING_SYSTEM.equals(com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS)) {
+    if (CURRENT_OPERATING_SYSTEM.equals(OperatingSystem.WINDOWS)) {
       long seed = getSeed();
       testScriptInternal(seed, generateInvalidSegment(new Random(seed), pathNameSegmentLength),
               "Invalid install directory name.", 1);
@@ -402,7 +402,7 @@ public abstract class BaseScriptTest {
             PosixFilePermission.OWNER_EXECUTE,
             PosixFilePermission.OWNER_READ,
             PosixFilePermission.OWNER_WRITE
-    );
+            );
     Path f = Files.copy(scriptPath, binPath.resolve(scriptPath.getFileName()), StandardCopyOption.COPY_ATTRIBUTES);
     try {
       Files.setPosixFilePermissions(f, perms);
@@ -425,7 +425,7 @@ public abstract class BaseScriptTest {
    * @throws IOException if an error is encountered while writing the JAR file or creating the surrogate
    */
   protected final void createJar(String jarName, Path libDir, boolean useSurrogate, String... classNames)
-          throws IOException {
+      throws IOException {
     Path jarPath = libDir.resolve(jarName);
     Files.deleteIfExists(jarPath);
 
@@ -458,10 +458,10 @@ public abstract class BaseScriptTest {
    * @throws IOException if an error occurs while writing to {@code jarOut}
    */
   private void addEntry(Set<String> entrySet, JarOutputStream jarOut, boolean useSurrogate, String className)
-          throws IOException {
+      throws IOException {
 
     String targetResourceName = className.replace('.', '/') + ".class";
-    try (com.tc.test.BaseScriptTest.ClassStream classIn = (useSurrogate ? createSurrogate(className) : getClassFile(targetResourceName))) {
+    try (ClassStream classIn = (useSurrogate ? createSurrogate(className) : getClassFile(targetResourceName))) {
 
       long lastModifiedTime = classIn.lastModifiedTime();
 
@@ -506,14 +506,14 @@ public abstract class BaseScriptTest {
    * @return a {@code byte[]} containing the renamed surrogate
    * @throws IOException if an error occurs while reading the surrogate class
    */
-  private com.tc.test.BaseScriptTest.ClassStream createSurrogate(String targetClassName) throws IOException {
+  private ClassStream createSurrogate(String targetClassName) throws IOException {
 
     String targetTypeName = targetClassName.replace('.', '/');
     String sourceTypeName = SurrogateMain.class.getName().replace('.', '/');
 
     String resourceName = sourceTypeName + ".class";
 
-    try (com.tc.test.BaseScriptTest.ClassStream classStream = getClassFile(resourceName)) {
+    try (ClassStream classStream = getClassFile(resourceName)) {
       ClassWriter writer = new ClassWriter(0);
       Remapper classRenamer = new Remapper() {
         @Override
@@ -531,7 +531,7 @@ public abstract class BaseScriptTest {
       reader.accept(processVisitor, 0);
       writer.visitEnd();
 
-      return new com.tc.test.BaseScriptTest.ClassStream(new ByteArrayInputStream(writer.toByteArray()), classStream.lastModifiedTime());
+      return new ClassStream(new ByteArrayInputStream(writer.toByteArray()), classStream.lastModifiedTime());
     }
   }
 
@@ -543,7 +543,7 @@ public abstract class BaseScriptTest {
    *      open and should be disposed of properly
    * @throws IOException if an error is raised while processing {@code classResourceName}
    */
-  private com.tc.test.BaseScriptTest.ClassStream getClassFile(String classResourceName) throws IOException {
+  private ClassStream getClassFile(String classResourceName) throws IOException {
     URL classUrl = this.getClass().getClassLoader().getResource(classResourceName);
     if (classUrl == null) {
       throw new FileNotFoundException("Class file \"" + classResourceName.replace('/', '.') + "\" not found in classpath");
@@ -560,7 +560,7 @@ public abstract class BaseScriptTest {
         lastModifiedTime = urlConnection.getLastModified();
       }
 
-      return new com.tc.test.BaseScriptTest.ClassStream(urlConnection.getInputStream(), lastModifiedTime);
+      return new ClassStream(urlConnection.getInputStream(), lastModifiedTime);
 
     } catch (IOException e) {
       throw new IOException("Failed while processing "+ classResourceName.replace('/', '.'), e);
@@ -626,8 +626,8 @@ public abstract class BaseScriptTest {
    * @throws IOException if {@link ProcessBuilder#start()} fails for the script
    * @throws InterruptedException if awaiting script completion is interrupted
    */
-  protected final com.tc.test.BaseScriptTest.ScriptResult execScript(File workingDirectory, Duration timeout, Map<String, String> environment, String command, String... arguments)
-          throws IOException, InterruptedException {
+  protected final ScriptResult execScript(File workingDirectory, Duration timeout, Map<String, String> environment, String command, String... arguments)
+      throws IOException, InterruptedException {
 
     String[] commandLine = new String[1 + arguments.length];
     commandLine[0] = command;
@@ -663,16 +663,16 @@ public abstract class BaseScriptTest {
       throw new AssertionError("Completion time exceeded for " + Arrays.toString(commandLine));
     }
 
-    return new com.tc.test.BaseScriptTest.ScriptResult(process.exitValue(), stdout.toString(), stderr.toString());
+    return new ScriptResult(process.exitValue(), stdout.toString(), stderr.toString());
   }
 
   /**
-   * Writes the output captured in a {@link com.tc.test.BaseScriptTest.ScriptResult} instance to the {@code PrintStream} provided.
+   * Writes the output captured in a {@link ScriptResult} instance to the {@code PrintStream} provided.
    * @param out the {@code PrintStream} to which the {@code ScriptResult} capture is written
    * @param t the {@code Throwable} leading to calling this method
    * @param scriptResult the {@code ScriptResult} holding the output to show
    */
-  protected void showFailureOutput(PrintStream out, Throwable t, com.tc.test.BaseScriptTest.ScriptResult scriptResult) {
+  protected void showFailureOutput(PrintStream out, Throwable t, ScriptResult scriptResult) {
     out.format("Script execution failed: %s%n", t.getMessage());
     if (scriptResult != null) {
       try {
@@ -686,11 +686,11 @@ public abstract class BaseScriptTest {
   }
 
   /**
-   * Writes the output captured  in a {@link com.tc.test.BaseScriptTest.ScriptResult} instance to the {@code PrintStream} provided.
+   * Writes the output captured  in a {@link ScriptResult} instance to the {@code PrintStream} provided.
    * @param out the {@code PrintStream} to which the {@code ScriptResult} capture is written
    * @param scriptResult the {@code ScriptResult} holding the output to show
    */
-  protected final void showScriptOutput(PrintStream out, com.tc.test.BaseScriptTest.ScriptResult scriptResult) {
+  protected final void showScriptOutput(PrintStream out, ScriptResult scriptResult) {
     if (scriptResult != null) {
       out.println("---- Captured STDOUT ----");
       out.println(scriptResult.getStdoutAsString());
@@ -748,7 +748,7 @@ public abstract class BaseScriptTest {
     segment[0] = UNRESTRICTED_STANDARD_CHARACTERS[rnd.nextInt(UNRESTRICTED_STANDARD_CHARACTERS.length)];
 
     for (int i = 1; i < length - 1; i++) {
-      if (CURRENT_OPERATING_SYSTEM.equals(com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS)) {
+      if (CURRENT_OPERATING_SYSTEM.equals(OperatingSystem.WINDOWS)) {
         segment[i] = CURRENT_WINDOWS_INVALID_CHARACTERS[rnd.nextInt(CURRENT_WINDOWS_INVALID_CHARACTERS.length)];
       } else {
         segment[i] = CURRENT_OPERATING_SYSTEM_INVALID_CHARACTERS[rnd.nextInt(CURRENT_OPERATING_SYSTEM_INVALID_CHARACTERS.length)];
@@ -864,57 +864,57 @@ public abstract class BaseScriptTest {
     public abstract String quoteCommand(String command);
     public abstract String appendScriptExtension(String command);
 
-    static EnumSet<com.tc.test.BaseScriptTest.OperatingSystem> NONE = EnumSet.noneOf(com.tc.test.BaseScriptTest.OperatingSystem.class);
+    static EnumSet<OperatingSystem> NONE = EnumSet.noneOf(OperatingSystem.class);
 
     /**
      * Identify the current operating system.
      * @return the current {@code OperatingSystem}
      */
-    static com.tc.test.BaseScriptTest.OperatingSystem currentOperatingSystem() {
+    static OperatingSystem currentOperatingSystem() {
       String osName = System.getProperty("os.name").toLowerCase(Locale.ROOT);
       if (osName.contains("windows")) {
-        return com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS;
+        return OperatingSystem.WINDOWS;
       } else if (osName.contains("linux")) {
-        return com.tc.test.BaseScriptTest.OperatingSystem.UNIX;
+        return OperatingSystem.UNIX;
       } else if (osName.contains("mac os x") || osName.contains("darwin") || osName.contains("osx")) {
-        return com.tc.test.BaseScriptTest.OperatingSystem.UNIX;
+        return OperatingSystem.UNIX;
       } else if (osName.contains("sunos") || osName.contains("solaris")) {
-        return com.tc.test.BaseScriptTest.OperatingSystem.UNIX;
+        return OperatingSystem.UNIX;
       } else if (osName.contains("freebsd")) {
-        return com.tc.test.BaseScriptTest.OperatingSystem.UNIX;
+        return OperatingSystem.UNIX;
       }
-      return com.tc.test.BaseScriptTest.OperatingSystem.OTHER;
+      return OperatingSystem.OTHER;
     }
   }
 
-  private static com.tc.test.BaseScriptTest.CharDef def(char character, String identifier, com.tc.test.BaseScriptTest.OperatingSystem... unsupportedOs) {
-    return new com.tc.test.BaseScriptTest.CharDef(character, identifier, unsupportedOs);
+  private static CharDef def(char character, String identifier, OperatingSystem... unsupportedOs) {
+    return new CharDef(character, identifier, unsupportedOs);
   }
 
-  private static com.tc.test.BaseScriptTest.CharDef def(char character, String identifier, EnumSet<com.tc.test.BaseScriptTest.OperatingSystem> unsupportedOs) {
-    return new com.tc.test.BaseScriptTest.CharDef(character, identifier, unsupportedOs);
+  private static CharDef def(char character, String identifier, EnumSet<OperatingSystem> unsupportedOs) {
+    return new CharDef(character, identifier, unsupportedOs);
   }
 
   private static final class CharDef {
     private final char character;
     private final String identifier;
-    private final EnumSet<com.tc.test.BaseScriptTest.OperatingSystem> supportedOs;
+    private final EnumSet<OperatingSystem> supportedOs;
 
-    private CharDef(char character, String identifier, EnumSet<com.tc.test.BaseScriptTest.OperatingSystem> supportedOs) {
+    private CharDef(char character, String identifier, EnumSet<OperatingSystem> supportedOs) {
       this.character = character;
       this.identifier = identifier;
       this.supportedOs = supportedOs;
     }
 
-    private CharDef(char character, String identifier, com.tc.test.BaseScriptTest.OperatingSystem... unsupportedOs) {
+    private CharDef(char character, String identifier, OperatingSystem... unsupportedOs) {
       this(character, identifier, composeSupportedOs(unsupportedOs));
     }
 
-    private static EnumSet<com.tc.test.BaseScriptTest.OperatingSystem> composeSupportedOs(com.tc.test.BaseScriptTest.OperatingSystem[] unsupportedOs) {
+    private static EnumSet<OperatingSystem> composeSupportedOs(OperatingSystem[] unsupportedOs) {
       if (unsupportedOs.length == 0) {
-        return EnumSet.allOf(com.tc.test.BaseScriptTest.OperatingSystem.class);
+        return EnumSet.allOf(OperatingSystem.class);
       } else {
-        EnumSet<com.tc.test.BaseScriptTest.OperatingSystem> supported = EnumSet.allOf(com.tc.test.BaseScriptTest.OperatingSystem.class);
+        EnumSet<OperatingSystem> supported = EnumSet.allOf(OperatingSystem.class);
         supported.removeAll(Arrays.asList(unsupportedOs));
         return supported;
       }
