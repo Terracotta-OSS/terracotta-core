@@ -128,117 +128,113 @@ public abstract class BaseScriptTest {
    * Identifies the level of support for special characters used in file path names.
    * @see <a href="https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file">Naming Files, Paths, and Namespaces</a>
    */
-  private static List<com.tc.test.BaseScriptTest.CharDef> SPECIAL_CHARACTERS = Arrays.asList(
-          /*
-           * Characters 0x00 through 0x1F are the C0 control characters.  These
-           * characters are NOT LEGAL for use in Windows file path names.  While
-           * control characters other than 0x00 are LEGAL in Linux, we don't support
-           * them for use in file paths used in Terracotta.
-           */
-          def((char)0x00, "NUL", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x01, "SOH", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x02, "STX", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x03, "ETX", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x04, "EOT", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x05, "ENQ", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x06, "ACK", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x07, "BEL", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x08, "BS", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x09, "TAB", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x0A, "LF", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x0B, "VT", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x0C, "FF", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x0D, "CR", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x0E, "SO", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x0F, "SI", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x10, "DLE", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x11, "DC1", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x12, "DC2", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x13, "DC3", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x14, "DC4", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x15, "NAK", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x16, "SYN", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x17, "ETB", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x18, "CAN", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x19, "EM", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x1A, "SUB", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x1B, "ESC", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x1C, "FS", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x1D, "GS", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x1E, "RS", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
-          def((char)0x1F, "US", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+  private static List<CharDef> SPECIAL_CHARACTERS = Arrays.asList(
+      /*
+       * Characters 0x00 through 0x1F are the C0 control characters.  These
+       * characters are NOT LEGAL for use in Windows file path names.  While
+       * control characters other than 0x00 are LEGAL in Linux, we don't support
+       * them for use in file paths used in Terracotta.
+       */
+      def((char)0x00, "NUL", OperatingSystem.NONE),
+      def((char)0x01, "SOH", OperatingSystem.NONE),
+      def((char)0x02, "STX", OperatingSystem.NONE),
+      def((char)0x03, "ETX", OperatingSystem.NONE),
+      def((char)0x04, "EOT", OperatingSystem.NONE),
+      def((char)0x05, "ENQ", OperatingSystem.NONE),
+      def((char)0x06, "ACK", OperatingSystem.NONE),
+      def((char)0x07, "BEL", OperatingSystem.NONE),
+      def((char)0x08, "BS", OperatingSystem.NONE),
+      def((char)0x09, "TAB", OperatingSystem.NONE),
+      def((char)0x0A, "LF", OperatingSystem.NONE),
+      def((char)0x0B, "VT", OperatingSystem.NONE),
+      def((char)0x0C, "FF", OperatingSystem.NONE),
+      def((char)0x0D, "CR", OperatingSystem.NONE),
+      def((char)0x0E, "SO", OperatingSystem.NONE),
+      def((char)0x0F, "SI", OperatingSystem.NONE),
+      def((char)0x10, "DLE", OperatingSystem.NONE),
+      def((char)0x11, "DC1", OperatingSystem.NONE),
+      def((char)0x12, "DC2", OperatingSystem.NONE),
+      def((char)0x13, "DC3", OperatingSystem.NONE),
+      def((char)0x14, "DC4", OperatingSystem.NONE),
+      def((char)0x15, "NAK", OperatingSystem.NONE),
+      def((char)0x16, "SYN", OperatingSystem.NONE),
+      def((char)0x17, "ETB", OperatingSystem.NONE),
+      def((char)0x18, "CAN", OperatingSystem.NONE),
+      def((char)0x19, "EM", OperatingSystem.NONE),
+      def((char)0x1A, "SUB", OperatingSystem.NONE),
+      def((char)0x1B, "ESC", OperatingSystem.NONE),
+      def((char)0x1C, "FS", OperatingSystem.NONE),
+      def((char)0x1D, "GS", OperatingSystem.NONE),
+      def((char)0x1E, "RS", OperatingSystem.NONE),
+      def((char)0x1F, "US", OperatingSystem.NONE),
 
-          /*
-           * The following characters are NOT LEGAL in both Windows and Linux.
-           */
-          def('/', "slash", com.tc.test.BaseScriptTest.OperatingSystem.UNIX, com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+      /*
+       * The following characters are NOT LEGAL in both Windows and Linux.
+       */
+      def('/', "slash", OperatingSystem.UNIX, OperatingSystem.WINDOWS),
 
-          /*
-           * The following characters are not NOT LEGAL for use in Windows
-           * file path names.
-           *
-           */
-          def('<', "lessThan", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
-          def('>', "greaterThan", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
-          def('"', "quote", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
-          def('\\', "backslash", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
-          def('|', "bar", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
-          def('?', "question", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
-          def('*', "asterisk", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+      /*
+       * The following characters are not NOT LEGAL for use in Windows
+       * file path names.
+       */
+      def('<', "lessThan", OperatingSystem.WINDOWS),
+      def('>', "greaterThan", OperatingSystem.WINDOWS),
+      def('"', "quote", OperatingSystem.WINDOWS),
+      def('\\', "backslash", OperatingSystem.WINDOWS),
+      def('|', "bar", OperatingSystem.WINDOWS),
+      def('?', "question", OperatingSystem.WINDOWS),
+      def('*', "asterisk", OperatingSystem.WINDOWS),
 
-          /*
-           * The following character is NOT LEGAL in Windows but, while being
-           * LEGAL in Linux, must be avoided because of its use in Java.
-           */
-          def(':', "colon", com.tc.test.BaseScriptTest.OperatingSystem.UNIX, com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+      /*
+       * The following character is NOT LEGAL in Windows but, while being
+       * LEGAL in Linux, must be avoided because of its use in Java.
+       */
+      def(':', "colon", OperatingSystem.UNIX, OperatingSystem.WINDOWS),
 
-          /*
-           * The following characters are LEGAL in both Windows and Linux but
-           * must be avoided in Windows because its use in Java.
-           */
-          def(';', "semicolon", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+      /*
+       * The following characters are LEGAL in both Windows and Linux but
+       * must be avoided in Windows because its use in Java.
+       */
+      def(';', "semicolon", OperatingSystem.WINDOWS),
 
-          /*
-           * The following characters are LEGAL in both Windows and Linux but,
-           * because of scripting issues in Windows, are not supported in Windows.
-           */
-          def('!', "exclamation", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+      /*
+       * The following characters are LEGAL in both Windows and Linux but,
+       * because of scripting issues in Windows, are not supported in Windows.
+       */
+      def('!', "exclamation", OperatingSystem.WINDOWS),
 
-          /*
-           * The following characters are LEGAL in both Windows and Linux but,
-           * due to issues with Spring Boot and Logback, must not be used.
-           */
-          def('%', "percent", com.tc.test.BaseScriptTest.OperatingSystem.NONE),    // `org.springframework.boot.logging.logback.DefaultLogbackConfiguration#setRollingPolicy` issue
-          def('{', "leftBrace", com.tc.test.BaseScriptTest.OperatingSystem.NONE),  // `ch.qos.logback.core.rolling.RollingFileAppender#checkForFileAndPatternCollisions` issue
+      /*
+       * The following characters are LEGAL in both Windows and Linux but,
+       * due to issues with Spring Boot and Logback, must not be used.
+       */
+      def('%', "percent", OperatingSystem.NONE),    // `org.springframework.boot.logging.logback.DefaultLogbackConfiguration#setRollingPolicy` issue
+      def('{', "leftBrace", OperatingSystem.NONE),  // `ch.qos.logback.core.rolling.RollingFileAppender#checkForFileAndPatternCollisions` issue
 
       /*
        * The following characters are LEGAL in both Windows and Linux and
        * are otherwise not restricted.  Use in scripts may require strict
        * attention to quoting or other techniques.
-       *
-       * The Windows installer prohibits these characters:
-          `!@#$&*()+={}[]|;"'<>?,/.
        */
-          def((char)0x20, "space"),
-          def('#', "number", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
-          def('$', "dollar", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
-          def('&', "ampersand", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
-          def('\'', "apostrophe", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
-          def('(', "leftParen", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
-          def(')', "rightParen", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
-          def('+', "plus", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
-          def(',', "comma", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
-          def('-', "minus"),
-          def('.', "period", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
-          def('=', "equals", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
-          def('@', "at", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
-          def('[', "leftBracket", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
-          def(']', "rightBracket", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
-          def('^', "caret"),
-          def('_', "underscore"),
-          def('`', "backtick", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
-          def('}', "rightBrace", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
-          def('~', "tilde")
+      def((char)0x20, "space"),
+      def('#', "number"),
+      def('$', "dollar"),
+      def('&', "ampersand"),
+      def('\'', "apostrophe"),
+      def('(', "leftParen"),
+      def(')', "rightParen"),
+      def('+', "plus"),
+      def(',', "comma"),
+      def('-', "minus"),
+      def('.', "period"),
+      def('=', "equals"),
+      def('@', "at"),
+      def('[', "leftBracket"),
+      def(']', "rightBracket"),
+      def('^', "caret"),
+      def('_', "underscore"),
+      def('`', "backtick"),
+      def('}', "rightBrace"),
+      def('~', "tilde")
   );
 
   /**
