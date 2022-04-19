@@ -89,7 +89,7 @@ import java.nio.file.attribute.PosixFilePermission;
  * {@code C:\Program Files (x86)} and in default names used for downloads.  So we test for the use of
  * <i>special</i> characters.
  * <p>
- * Extending classes must implement {@link #testScript(File)}.  {@code testScript} is called for each test
+ * Extending classes must implement {@link #testScript(File, String, int)}.  {@code testScript} is called for each test
  * and is responsible for establishing the script execution environment -- "installing" files and setting
  * environment variables -- then invoking {@link #execScript(File, Duration, Map, String, String...)} to
  * execute the script.
@@ -98,7 +98,7 @@ import java.nio.file.attribute.PosixFilePermission;
  * @see #installScript(String, Path)
  * @see #createJar(String, Path, boolean, String...)
  * @see #execScript(File, Duration, Map, String, String...)
- * @see ScriptResult
+ * @see com.tc.test.BaseScriptTest.ScriptResult
  */
 public abstract class BaseScriptTest {
 
@@ -120,7 +120,7 @@ public abstract class BaseScriptTest {
   /**
    * Identifies the current operating system.
    */
-  protected static final OperatingSystem CURRENT_OPERATING_SYSTEM = OperatingSystem.currentOperatingSystem();
+  protected static final com.tc.test.BaseScriptTest.OperatingSystem CURRENT_OPERATING_SYSTEM = com.tc.test.BaseScriptTest.OperatingSystem.currentOperatingSystem();
 
   private static final Random SEEDS = new Random();
 
@@ -128,139 +128,147 @@ public abstract class BaseScriptTest {
    * Identifies the level of support for special characters used in file path names.
    * @see <a href="https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file">Naming Files, Paths, and Namespaces</a>
    */
-  private static List<CharDef> SPECIAL_CHARACTERS = Arrays.asList(
-      /*
-       * Characters 0x00 through 0x1F are the C0 control characters.  These
-       * characters are NOT LEGAL for use in Windows file path names.  While
-       * control characters other than 0x00 are LEGAL in Linux, we don't support
-       * them for use in file paths used in Terracotta.
-       */
-      def((char)0x00, "NUL", OperatingSystem.NONE),
-      def((char)0x01, "SOH", OperatingSystem.NONE),
-      def((char)0x02, "STX", OperatingSystem.NONE),
-      def((char)0x03, "ETX", OperatingSystem.NONE),
-      def((char)0x04, "EOT", OperatingSystem.NONE),
-      def((char)0x05, "ENQ", OperatingSystem.NONE),
-      def((char)0x06, "ACK", OperatingSystem.NONE),
-      def((char)0x07, "BEL", OperatingSystem.NONE),
-      def((char)0x08, "BS", OperatingSystem.NONE),
-      def((char)0x09, "TAB", OperatingSystem.NONE),
-      def((char)0x0A, "LF", OperatingSystem.NONE),
-      def((char)0x0B, "VT", OperatingSystem.NONE),
-      def((char)0x0C, "FF", OperatingSystem.NONE),
-      def((char)0x0D, "CR", OperatingSystem.NONE),
-      def((char)0x0E, "SO", OperatingSystem.NONE),
-      def((char)0x0F, "SI", OperatingSystem.NONE),
-      def((char)0x10, "DLE", OperatingSystem.NONE),
-      def((char)0x11, "DC1", OperatingSystem.NONE),
-      def((char)0x12, "DC2", OperatingSystem.NONE),
-      def((char)0x13, "DC3", OperatingSystem.NONE),
-      def((char)0x14, "DC4", OperatingSystem.NONE),
-      def((char)0x15, "NAK", OperatingSystem.NONE),
-      def((char)0x16, "SYN", OperatingSystem.NONE),
-      def((char)0x17, "ETB", OperatingSystem.NONE),
-      def((char)0x18, "CAN", OperatingSystem.NONE),
-      def((char)0x19, "EM", OperatingSystem.NONE),
-      def((char)0x1A, "SUB", OperatingSystem.NONE),
-      def((char)0x1B, "ESC", OperatingSystem.NONE),
-      def((char)0x1C, "FS", OperatingSystem.NONE),
-      def((char)0x1D, "GS", OperatingSystem.NONE),
-      def((char)0x1E, "RS", OperatingSystem.NONE),
-      def((char)0x1F, "US", OperatingSystem.NONE),
+  private static List<com.tc.test.BaseScriptTest.CharDef> SPECIAL_CHARACTERS = Arrays.asList(
+          /*
+           * Characters 0x00 through 0x1F are the C0 control characters.  These
+           * characters are NOT LEGAL for use in Windows file path names.  While
+           * control characters other than 0x00 are LEGAL in Linux, we don't support
+           * them for use in file paths used in Terracotta.
+           */
+          def((char)0x00, "NUL", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x01, "SOH", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x02, "STX", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x03, "ETX", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x04, "EOT", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x05, "ENQ", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x06, "ACK", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x07, "BEL", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x08, "BS", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x09, "TAB", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x0A, "LF", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x0B, "VT", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x0C, "FF", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x0D, "CR", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x0E, "SO", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x0F, "SI", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x10, "DLE", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x11, "DC1", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x12, "DC2", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x13, "DC3", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x14, "DC4", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x15, "NAK", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x16, "SYN", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x17, "ETB", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x18, "CAN", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x19, "EM", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x1A, "SUB", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x1B, "ESC", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x1C, "FS", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x1D, "GS", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x1E, "RS", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
+          def((char)0x1F, "US", com.tc.test.BaseScriptTest.OperatingSystem.NONE),
 
-      /*
-       * The following characters are NOT LEGAL in both Windows and Linux.
-       */
-      def('/', "slash", OperatingSystem.UNIX, OperatingSystem.WINDOWS),
+          /*
+           * The following characters are NOT LEGAL in both Windows and Linux.
+           */
+          def('/', "slash", com.tc.test.BaseScriptTest.OperatingSystem.UNIX, com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
 
-      /*
-       * The following characters are not NOT LEGAL for use in Windows
-       * file path names.
-       */
-      def('<', "lessThan", OperatingSystem.WINDOWS),
-      def('>', "greaterThan", OperatingSystem.WINDOWS),
-      def('"', "quote", OperatingSystem.WINDOWS),
-      def('\\', "backslash", OperatingSystem.WINDOWS),
-      def('|', "bar", OperatingSystem.WINDOWS),
-      def('?', "question", OperatingSystem.WINDOWS),
-      def('*', "asterisk", OperatingSystem.WINDOWS),
+          /*
+           * The following characters are not NOT LEGAL for use in Windows
+           * file path names.
+           *
+           */
+          def('<', "lessThan", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+          def('>', "greaterThan", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+          def('"', "quote", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+          def('\\', "backslash", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+          def('|', "bar", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+          def('?', "question", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+          def('*', "asterisk", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
 
-      /*
-       * The following character is NOT LEGAL in Windows but, while being
-       * LEGAL in Linux, must be avoided because of its use in Java.
-       */
-      def(':', "colon", OperatingSystem.UNIX, OperatingSystem.WINDOWS),
+          /*
+           * The following character is NOT LEGAL in Windows but, while being
+           * LEGAL in Linux, must be avoided because of its use in Java.
+           */
+          def(':', "colon", com.tc.test.BaseScriptTest.OperatingSystem.UNIX, com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
 
-      /*
-       * The following characters are LEGAL in both Windows and Linux but
-       * must be avoided in Windows because its use in Java.
-       */
-      def(';', "semicolon", OperatingSystem.WINDOWS),
+          /*
+           * The following characters are LEGAL in both Windows and Linux but
+           * must be avoided in Windows because its use in Java.
+           */
+          def(';', "semicolon", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
 
-      /*
-       * The following characters are LEGAL in both Windows and Linux but,
-       * because of scripting issues in Windows, are not supported in Windows.
-       */
-      def('!', "exclamation", OperatingSystem.WINDOWS),
+          /*
+           * The following characters are LEGAL in both Windows and Linux but,
+           * because of scripting issues in Windows, are not supported in Windows.
+           */
+          def('!', "exclamation", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
 
-      /*
-       * The following characters are LEGAL in both Windows and Linux but,
-       * due to issues with Spring Boot and Logback, must not be used.
-       */
-      def('%', "percent", OperatingSystem.NONE),    // `org.springframework.boot.logging.logback.DefaultLogbackConfiguration#setRollingPolicy` issue
-      def('{', "leftBrace", OperatingSystem.NONE),  // `ch.qos.logback.core.rolling.RollingFileAppender#checkForFileAndPatternCollisions` issue
+          /*
+           * The following characters are LEGAL in both Windows and Linux but,
+           * due to issues with Spring Boot and Logback, must not be used.
+           */
+          def('%', "percent", com.tc.test.BaseScriptTest.OperatingSystem.NONE),    // `org.springframework.boot.logging.logback.DefaultLogbackConfiguration#setRollingPolicy` issue
+          def('{', "leftBrace", com.tc.test.BaseScriptTest.OperatingSystem.NONE),  // `ch.qos.logback.core.rolling.RollingFileAppender#checkForFileAndPatternCollisions` issue
 
       /*
        * The following characters are LEGAL in both Windows and Linux and
        * are otherwise not restricted.  Use in scripts may require strict
        * attention to quoting or other techniques.
+       *
+       * The Windows installer prohibits these characters:
+          `!@#$&*()+={}[]|;"'<>?,/.
        */
-      def((char)0x20, "space"),
-      def('#', "number"),
-      def('$', "dollar"),
-      def('&', "ampersand"),
-      def('\'', "apostrophe"),
-      def('(', "leftParen"),
-      def(')', "rightParen"),
-      def('+', "plus"),
-      def(',', "comma"),
-      def('-', "minus"),
-      def('.', "period"),
-      def('=', "equals"),
-      def('@', "at"),
-      def('[', "leftBracket"),
-      def(']', "rightBracket"),
-      def('^', "caret"),
-      def('_', "underscore"),
-      def('`', "backtick"),
-      def('}', "rightBrace"),
-      def('~', "tilde")
+          def((char)0x20, "space"),
+          def('#', "number", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+          def('$', "dollar", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+          def('&', "ampersand", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+          def('\'', "apostrophe", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+          def('(', "leftParen", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+          def(')', "rightParen", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+          def('+', "plus", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+          def(',', "comma", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+          def('-', "minus"),
+          def('.', "period", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+          def('=', "equals", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+          def('@', "at", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+          def('[', "leftBracket", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+          def(']', "rightBracket", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+          def('^', "caret"),
+          def('_', "underscore"),
+          def('`', "backtick", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+          def('}', "rightBrace", com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS),
+          def('~', "tilde")
   );
 
   /**
    * Special characters permitted for the current operating system.
    */
   private static final char[] CURRENT_OPERATING_SYSTEM_SPECIAL_CHARACTERS = SPECIAL_CHARACTERS.stream()
-      .filter(d -> d.supportedOs.contains(CURRENT_OPERATING_SYSTEM))
-      .collect(Collector.of(
-          () -> CharBuffer.allocate(SPECIAL_CHARACTERS.size()),
-          (b, d) -> b.append(d.character),
-          CharBuffer::append,
-          b -> {
-            char[] chars = new char[b.position()];
-            ((CharBuffer)b.flip()).get(chars);
-            return chars;
-          }));
+          .filter(d -> d.supportedOs.contains(CURRENT_OPERATING_SYSTEM))
+          .collect(Collector.of(
+                  () -> CharBuffer.allocate(SPECIAL_CHARACTERS.size()),
+                  (b, d) -> b.append(d.character),
+                  CharBuffer::append,
+                  b -> {
+                    char[] chars = new char[b.position()];
+                    ((CharBuffer)b.flip()).get(chars);
+                    return chars;
+                  }));
+
+  private static final char[] CURRENT_OPERATING_SYSTEM_INVALID_CHARACTERS = {'!', ';'};
+
+  private static final char[] CURRENT_WINDOWS_INVALID_CHARACTERS = {'!', ';'};
+
 
   /** These characters have unrestricted use in file name segments. */
   private static final char[] UNRESTRICTED_STANDARD_CHARACTERS =
-      "abcdefghijlkmnopqrstuvwxyzABCDEFGHIJLKMNOPQRSTUVWXYZ0123456789_".toCharArray();
+          "abcdefghijlkmnopqrstuvwxyzABCDEFGHIJLKMNOPQRSTUVWXYZ0123456789_".toCharArray();
 
   /** Some characters, on some operating systems, may not be used to start or end a name segment. */
   private static final char[] ALL_STANDARD_CHARACTERS;
   static {
-    char[] all = Arrays.copyOf(UNRESTRICTED_STANDARD_CHARACTERS, UNRESTRICTED_STANDARD_CHARACTERS.length + 2);
-    all[all.length - 2] = '.';
+    char[] all = Arrays.copyOf(UNRESTRICTED_STANDARD_CHARACTERS, UNRESTRICTED_STANDARD_CHARACTERS.length + 1);
     all[all.length - 1] = '-';
     ALL_STANDARD_CHARACTERS = all;
   }
@@ -291,12 +299,13 @@ public abstract class BaseScriptTest {
    *   <li>Assert results</li>
    * </ol>
    * @param installRoot the directory serving as the root of the installation environment
+   * @param stdOutContains the standard output string to test the contains against
    * @throws Exception if the test fails
    * @see #createInstallDir(File, Path)
    * @see #installScript(String, Path)
    * @see #execScript(File, Duration, Map, String, String...)
    */
-  protected abstract void testScript(File installRoot) throws Exception;
+  protected abstract void testScript(File installRoot, String stdOutContains, int exitCode) throws Exception;
 
 
   /**
@@ -305,7 +314,8 @@ public abstract class BaseScriptTest {
   @Test
   public void testStandardChars() throws Exception {
     long seed = getSeed();
-    testScriptInternal(seed, generateStandardSegment(new Random(seed), pathNameSegmentLength));
+    testScriptInternal(seed, generateStandardSegment(new Random(seed), pathNameSegmentLength),
+            "In setenv", 0);
   }
 
   /**
@@ -315,21 +325,36 @@ public abstract class BaseScriptTest {
   @Test
   public void testUnusualInstallDir() throws Exception {
     long seed = getSeed();
-    testScriptInternal(seed, generateSpecialSegment(new Random(seed), pathNameSegmentLength));
+    testScriptInternal(seed, generateSpecialSegment(new Random(seed), pathNameSegmentLength),
+            "In setenv", 0);
+  }
+
+  /**
+   * Test using installation directory name containing <i>invalid</i> special characters for the
+   * current operating system.
+   * Currently, only Windows script is testing for invalid characters.
+   */
+  @Test
+  public void testInvalidInstallDir() throws Exception {
+    if (CURRENT_OPERATING_SYSTEM.equals(com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS)) {
+      long seed = getSeed();
+      testScriptInternal(seed, generateInvalidSegment(new Random(seed), pathNameSegmentLength),
+              "Invalid install directory name.", 1);
+    }
   }
 
 
-  private void testScriptInternal(long seed, String folder) throws Exception {
+  private void testScriptInternal(long seed, String folder, String contains, int exitCode) throws Exception {
     File installRoot;
     try {
       installRoot = INSTALL_ROOT_PARENT.newFolder(folder);
     } catch (IOException e) {
       throw new AssertionError("Failed with seed " + seed + " using folder=\""
-          + folder + "\" in \"" + INSTALL_ROOT_PARENT.getRoot() + "\"", e);
+              + folder + "\" in \"" + INSTALL_ROOT_PARENT.getRoot() + "\"", e);
     }
 
     try {
-      testScript(installRoot);
+      testScript(installRoot, contains, exitCode);
     } catch (AssertionError e) {
       throw new AssertionError("Failed with seed " + seed + " using installRoot=\"" + installRoot + "\"", e);
     }
@@ -381,7 +406,7 @@ public abstract class BaseScriptTest {
             PosixFilePermission.OWNER_EXECUTE,
             PosixFilePermission.OWNER_READ,
             PosixFilePermission.OWNER_WRITE
-            );
+    );
     Path f = Files.copy(scriptPath, binPath.resolve(scriptPath.getFileName()), StandardCopyOption.COPY_ATTRIBUTES);
     try {
       Files.setPosixFilePermissions(f, perms);
@@ -404,7 +429,7 @@ public abstract class BaseScriptTest {
    * @throws IOException if an error is encountered while writing the JAR file or creating the surrogate
    */
   protected final void createJar(String jarName, Path libDir, boolean useSurrogate, String... classNames)
-      throws IOException {
+          throws IOException {
     Path jarPath = libDir.resolve(jarName);
     Files.deleteIfExists(jarPath);
 
@@ -437,10 +462,10 @@ public abstract class BaseScriptTest {
    * @throws IOException if an error occurs while writing to {@code jarOut}
    */
   private void addEntry(Set<String> entrySet, JarOutputStream jarOut, boolean useSurrogate, String className)
-      throws IOException {
+          throws IOException {
 
     String targetResourceName = className.replace('.', '/') + ".class";
-    try (ClassStream classIn = (useSurrogate ? createSurrogate(className) : getClassFile(targetResourceName))) {
+    try (com.tc.test.BaseScriptTest.ClassStream classIn = (useSurrogate ? createSurrogate(className) : getClassFile(targetResourceName))) {
 
       long lastModifiedTime = classIn.lastModifiedTime();
 
@@ -485,14 +510,14 @@ public abstract class BaseScriptTest {
    * @return a {@code byte[]} containing the renamed surrogate
    * @throws IOException if an error occurs while reading the surrogate class
    */
-  private ClassStream createSurrogate(String targetClassName) throws IOException {
+  private com.tc.test.BaseScriptTest.ClassStream createSurrogate(String targetClassName) throws IOException {
 
     String targetTypeName = targetClassName.replace('.', '/');
     String sourceTypeName = SurrogateMain.class.getName().replace('.', '/');
 
     String resourceName = sourceTypeName + ".class";
 
-    try (ClassStream classStream = getClassFile(resourceName)) {
+    try (com.tc.test.BaseScriptTest.ClassStream classStream = getClassFile(resourceName)) {
       ClassWriter writer = new ClassWriter(0);
       Remapper classRenamer = new Remapper() {
         @Override
@@ -510,7 +535,7 @@ public abstract class BaseScriptTest {
       reader.accept(processVisitor, 0);
       writer.visitEnd();
 
-      return new ClassStream(new ByteArrayInputStream(writer.toByteArray()), classStream.lastModifiedTime());
+      return new com.tc.test.BaseScriptTest.ClassStream(new ByteArrayInputStream(writer.toByteArray()), classStream.lastModifiedTime());
     }
   }
 
@@ -522,7 +547,7 @@ public abstract class BaseScriptTest {
    *      open and should be disposed of properly
    * @throws IOException if an error is raised while processing {@code classResourceName}
    */
-  private ClassStream getClassFile(String classResourceName) throws IOException {
+  private com.tc.test.BaseScriptTest.ClassStream getClassFile(String classResourceName) throws IOException {
     URL classUrl = this.getClass().getClassLoader().getResource(classResourceName);
     if (classUrl == null) {
       throw new FileNotFoundException("Class file \"" + classResourceName.replace('/', '.') + "\" not found in classpath");
@@ -539,7 +564,7 @@ public abstract class BaseScriptTest {
         lastModifiedTime = urlConnection.getLastModified();
       }
 
-      return new ClassStream(urlConnection.getInputStream(), lastModifiedTime);
+      return new com.tc.test.BaseScriptTest.ClassStream(urlConnection.getInputStream(), lastModifiedTime);
 
     } catch (IOException e) {
       throw new IOException("Failed while processing "+ classResourceName.replace('/', '.'), e);
@@ -605,8 +630,8 @@ public abstract class BaseScriptTest {
    * @throws IOException if {@link ProcessBuilder#start()} fails for the script
    * @throws InterruptedException if awaiting script completion is interrupted
    */
-  protected final ScriptResult execScript(File workingDirectory, Duration timeout, Map<String, String> environment, String command, String... arguments)
-      throws IOException, InterruptedException {
+  protected final com.tc.test.BaseScriptTest.ScriptResult execScript(File workingDirectory, Duration timeout, Map<String, String> environment, String command, String... arguments)
+          throws IOException, InterruptedException {
 
     String[] commandLine = new String[1 + arguments.length];
     commandLine[0] = command;
@@ -642,16 +667,16 @@ public abstract class BaseScriptTest {
       throw new AssertionError("Completion time exceeded for " + Arrays.toString(commandLine));
     }
 
-    return new ScriptResult(process.exitValue(), stdout.toString(), stderr.toString());
+    return new com.tc.test.BaseScriptTest.ScriptResult(process.exitValue(), stdout.toString(), stderr.toString());
   }
 
   /**
-   * Writes the output captured in a {@link ScriptResult} instance to the {@code PrintStream} provided.
+   * Writes the output captured in a {@link com.tc.test.BaseScriptTest.ScriptResult} instance to the {@code PrintStream} provided.
    * @param out the {@code PrintStream} to which the {@code ScriptResult} capture is written
    * @param t the {@code Throwable} leading to calling this method
    * @param scriptResult the {@code ScriptResult} holding the output to show
    */
-  protected void showFailureOutput(PrintStream out, Throwable t, ScriptResult scriptResult) {
+  protected void showFailureOutput(PrintStream out, Throwable t, com.tc.test.BaseScriptTest.ScriptResult scriptResult) {
     out.format("Script execution failed: %s%n", t.getMessage());
     if (scriptResult != null) {
       try {
@@ -665,11 +690,11 @@ public abstract class BaseScriptTest {
   }
 
   /**
-   * Writes the output captured  in a {@link ScriptResult} instance to the {@code PrintStream} provided.
+   * Writes the output captured  in a {@link com.tc.test.BaseScriptTest.ScriptResult} instance to the {@code PrintStream} provided.
    * @param out the {@code PrintStream} to which the {@code ScriptResult} capture is written
    * @param scriptResult the {@code ScriptResult} holding the output to show
    */
-  protected final void showScriptOutput(PrintStream out, ScriptResult scriptResult) {
+  protected final void showScriptOutput(PrintStream out, com.tc.test.BaseScriptTest.ScriptResult scriptResult) {
     if (scriptResult != null) {
       out.println("---- Captured STDOUT ----");
       out.println(scriptResult.getStdoutAsString());
@@ -715,6 +740,23 @@ public abstract class BaseScriptTest {
 
     for (int i = 1; i < length - 1; i++) {
       segment[i] = CURRENT_OPERATING_SYSTEM_SPECIAL_CHARACTERS[rnd.nextInt(CURRENT_OPERATING_SYSTEM_SPECIAL_CHARACTERS.length)];
+    }
+
+    segment[length - 1] = UNRESTRICTED_STANDARD_CHARACTERS[rnd.nextInt(UNRESTRICTED_STANDARD_CHARACTERS.length)];
+    return String.valueOf(segment);
+  }
+
+  private static String generateInvalidSegment(Random rnd, int length) {
+    assert length >= 1 : "length must be greater than or equal to 1";
+    char[] segment = new char[length];
+    segment[0] = UNRESTRICTED_STANDARD_CHARACTERS[rnd.nextInt(UNRESTRICTED_STANDARD_CHARACTERS.length)];
+
+    for (int i = 1; i < length - 1; i++) {
+      if (CURRENT_OPERATING_SYSTEM.equals(com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS)) {
+        segment[i] = CURRENT_WINDOWS_INVALID_CHARACTERS[rnd.nextInt(CURRENT_WINDOWS_INVALID_CHARACTERS.length)];
+      } else {
+        segment[i] = CURRENT_OPERATING_SYSTEM_INVALID_CHARACTERS[rnd.nextInt(CURRENT_OPERATING_SYSTEM_INVALID_CHARACTERS.length)];
+      }
     }
 
     segment[length - 1] = UNRESTRICTED_STANDARD_CHARACTERS[rnd.nextInt(UNRESTRICTED_STANDARD_CHARACTERS.length)];
@@ -826,57 +868,57 @@ public abstract class BaseScriptTest {
     public abstract String quoteCommand(String command);
     public abstract String appendScriptExtension(String command);
 
-    static EnumSet<OperatingSystem> NONE = EnumSet.noneOf(OperatingSystem.class);
+    static EnumSet<com.tc.test.BaseScriptTest.OperatingSystem> NONE = EnumSet.noneOf(com.tc.test.BaseScriptTest.OperatingSystem.class);
 
     /**
      * Identify the current operating system.
      * @return the current {@code OperatingSystem}
      */
-    static OperatingSystem currentOperatingSystem() {
+    static com.tc.test.BaseScriptTest.OperatingSystem currentOperatingSystem() {
       String osName = System.getProperty("os.name").toLowerCase(Locale.ROOT);
       if (osName.contains("windows")) {
-        return OperatingSystem.WINDOWS;
+        return com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS;
       } else if (osName.contains("linux")) {
-        return OperatingSystem.UNIX;
+        return com.tc.test.BaseScriptTest.OperatingSystem.UNIX;
       } else if (osName.contains("mac os x") || osName.contains("darwin") || osName.contains("osx")) {
-        return OperatingSystem.UNIX;
+        return com.tc.test.BaseScriptTest.OperatingSystem.UNIX;
       } else if (osName.contains("sunos") || osName.contains("solaris")) {
-        return OperatingSystem.UNIX;
+        return com.tc.test.BaseScriptTest.OperatingSystem.UNIX;
       } else if (osName.contains("freebsd")) {
-        return OperatingSystem.UNIX;
+        return com.tc.test.BaseScriptTest.OperatingSystem.UNIX;
       }
-      return OperatingSystem.OTHER;
+      return com.tc.test.BaseScriptTest.OperatingSystem.OTHER;
     }
   }
 
-  private static CharDef def(char character, String identifier, OperatingSystem... unsupportedOs) {
-    return new CharDef(character, identifier, unsupportedOs);
+  private static com.tc.test.BaseScriptTest.CharDef def(char character, String identifier, com.tc.test.BaseScriptTest.OperatingSystem... unsupportedOs) {
+    return new com.tc.test.BaseScriptTest.CharDef(character, identifier, unsupportedOs);
   }
 
-  private static CharDef def(char character, String identifier, EnumSet<OperatingSystem> unsupportedOs) {
-    return new CharDef(character, identifier, unsupportedOs);
+  private static com.tc.test.BaseScriptTest.CharDef def(char character, String identifier, EnumSet<com.tc.test.BaseScriptTest.OperatingSystem> unsupportedOs) {
+    return new com.tc.test.BaseScriptTest.CharDef(character, identifier, unsupportedOs);
   }
 
   private static final class CharDef {
     private final char character;
     private final String identifier;
-    private final EnumSet<OperatingSystem> supportedOs;
+    private final EnumSet<com.tc.test.BaseScriptTest.OperatingSystem> supportedOs;
 
-    private CharDef(char character, String identifier, EnumSet<OperatingSystem> supportedOs) {
+    private CharDef(char character, String identifier, EnumSet<com.tc.test.BaseScriptTest.OperatingSystem> supportedOs) {
       this.character = character;
       this.identifier = identifier;
       this.supportedOs = supportedOs;
     }
 
-    private CharDef(char character, String identifier, OperatingSystem... unsupportedOs) {
+    private CharDef(char character, String identifier, com.tc.test.BaseScriptTest.OperatingSystem... unsupportedOs) {
       this(character, identifier, composeSupportedOs(unsupportedOs));
     }
 
-    private static EnumSet<OperatingSystem> composeSupportedOs(OperatingSystem[] unsupportedOs) {
+    private static EnumSet<com.tc.test.BaseScriptTest.OperatingSystem> composeSupportedOs(com.tc.test.BaseScriptTest.OperatingSystem[] unsupportedOs) {
       if (unsupportedOs.length == 0) {
-        return EnumSet.allOf(OperatingSystem.class);
+        return EnumSet.allOf(com.tc.test.BaseScriptTest.OperatingSystem.class);
       } else {
-        EnumSet<OperatingSystem> supported = EnumSet.allOf(OperatingSystem.class);
+        EnumSet<com.tc.test.BaseScriptTest.OperatingSystem> supported = EnumSet.allOf(com.tc.test.BaseScriptTest.OperatingSystem.class);
         supported.removeAll(Arrays.asList(unsupportedOs));
         return supported;
       }

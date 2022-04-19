@@ -36,22 +36,23 @@ REM The Initial Developer of the Covered Software is
 REM     Terracotta, Inc., a Software AG company
 REM
 
-echo "%~dp0" > "%temp%\TC_SERVER_DIR.txt"
-findstr /r "[\"\"].*[!;].*[\"\"]" <"%temp%\TC_SERVER_DIR.txt" >nul
+echo "%~dp0" > "%temp%\TC_VOTER_DIR.txt"
+findstr /r "[\"\"].*[!;].*[\"\"]" <"%temp%\TC_VOTER_DIR.txt" >nul
 if %errorlevel% equ 0 (
   echo Invalid install directory name. Cannot include the ASCII characters:
   echo ^^!^;
   exit /b 1
 )
 
-setlocal enabledelayedexpansion enableextensions
+setlocal EnableExtensions EnableDelayedExpansion
+set TC_VOTER_MAIN=org.terracotta.voter.TCVoterMain
 
 pushd "%~dp0.."
-set "TC_SERVER_DIR=%CD%"
+set "TC_VOTER_DIR=%CD%"
 popd
 
-if exist "!TC_SERVER_DIR!\bin\setenv.bat" (
-  pushd "!TC_SERVER_DIR!\bin" && (
+if exist "!TC_VOTER_DIR!\bin\setenv.bat" (
+  pushd "!TC_VOTER_DIR!\bin" && (
     call .\setenv.bat
     popd
   )
@@ -62,36 +63,17 @@ if not defined JAVA_HOME (
   exit /b 1
 )
 
-for %%C in ("-d64 -server -XX:MaxDirectMemorySize=1048576g" ^
-			"-server -XX:MaxDirectMemorySize=1048576g" ^
-			"-d64 -client  -XX:MaxDirectMemorySize=1048576g" ^
-			"-client -XX:MaxDirectMemorySize=1048576g" ^
-			"-XX:MaxDirectMemorySize=1048576g") ^
-do (
-  set JAVA_COMMAND="%JAVA_HOME%\bin\java" %%~C
-  !JAVA_COMMAND! -version > NUL 2>&1
+pushd "%TC_VOTER_DIR%\..\.."
+set "TC_KIT_ROOT=%CD%"
+popd
+set "TC_LOGGING_ROOT=%TC_KIT_ROOT%\client\logging"
+set "TC_CLIENT_ROOT=%TC_KIT_ROOT%\client\lib"
 
-  if not errorlevel 1 (
-	goto setJavaOptsAndClasspath
-  ) else (
-    echo [!JAVA_COMMAND!] failed - trying further options
-  )
-)
-echo No executable Java environment found in [%JAVA_HOME%]
-exit /b 1
+set "CLASSPATH=%TC_VOTER_DIR%\lib\*;%TC_CLIENT_ROOT%\*;%TC_LOGGING_ROOT%\*;%TC_LOGGING_ROOT%\impl\*;%TC_LOGGING_ROOT%\impl"
+set "JAVA=%JAVA_HOME%\bin\java.exe"
 
-:setJavaOptsAndClasspath
+"%JAVA%" %JAVA_OPTS% -cp "%CLASSPATH%" %TC_VOTER_MAIN% %*
 
-set OPTS=%SERVER_OPT% -Xms256m -Xmx2g -XX:+HeapDumpOnOutOfMemoryError
-set OPTS=%OPTS% "-Dtc.install-root=%TC_SERVER_DIR%"
-set JAVA_OPTS=%OPTS% %JAVA_OPTS%
-
-
-:START_TCSERVER
-%JAVA_COMMAND% %JAVA_OPTS% -jar "%TC_SERVER_DIR%\lib\tc.jar" %*
-if %ERRORLEVEL% EQU 11 (
-	echo start-tc-server: Restarting the server...
-	goto START_TCSERVER
-)
 exit /b %ERRORLEVEL%
+
 endlocal

@@ -40,7 +40,6 @@ import org.junit.Ignore;
 /**
  * Tests for {@code start-tc-server} scripts.
  */
-@Ignore("fix tool encoding")
 public class StartTcServerScriptTest extends BaseScriptTest {
 
   private static final int PATH_NAME_SEGMENT_LENGTH = 14;
@@ -50,19 +49,18 @@ public class StartTcServerScriptTest extends BaseScriptTest {
   }
 
   @Override
-  protected void testScript(File installRoot) throws Exception {
+  protected void testScript(File installRoot, String stdOutContains, int exitCode) throws Exception {
+    System.out.println(this.getClass() + "::installRoot: " + installRoot.toString());
     Duration timeout = Duration.ofSeconds(2L);
-
     Path basePath = Paths.get("server");
     String scriptResource = CURRENT_OPERATING_SYSTEM.appendScriptExtension("/server/bin/start-tc-server");
 
     Path binDir = createInstallDir(installRoot, basePath.resolve("bin"));
     Path scriptPath = installScript(scriptResource, binDir);
     installScript(CURRENT_OPERATING_SYSTEM.appendScriptExtension("/setenv"), binDir);
-
     createJar("tc.jar",
-        createInstallDir(installRoot, basePath.resolve("lib")),
-        true, "com.tc.server.TCServerMain");
+            createInstallDir(installRoot, basePath.resolve("lib")),
+            true, "com.tc.server.TCServerMain");
 
     Map<String, String> environment = new LinkedHashMap<>();
     environment.put("JAVA_OPTS", "-Dfoo=bar");
@@ -73,16 +71,25 @@ public class StartTcServerScriptTest extends BaseScriptTest {
     try {
       scriptResult = execScript(installRoot, timeout, environment, CURRENT_OPERATING_SYSTEM.quoteCommand(scriptPath.toString()), arguments);
 
+      if (CURRENT_OPERATING_SYSTEM.equals(com.tc.test.BaseScriptTest.OperatingSystem.WINDOWS)) {
+        // this is a simple test for invalid chars for Windows since it will not find the path with the special chars
+        if (scriptResult.getStderrAsString().contains("The system cannot find the path specified.")) {
+          return;
+        }
+      }
+
       assertThat(scriptResult.getStderrAsString(), isEmptyString());
-      assertThat(scriptResult.getStdoutAsString(), containsString("In setenv"));
-      assertThat(scriptResult.getCode(), is(0));
+      assertThat(scriptResult.getStdoutAsString(), containsString(stdOutContains));
+      assertThat(scriptResult.getCode(), is(exitCode));
 
-      assertThat(scriptResult.arguments(), is(arrayContaining(arguments)));
+      if (exitCode == 0) {
+        assertThat(scriptResult.arguments(), is(arrayContaining(arguments)));
 
-      Map<String, String> properties = scriptResult.properties();
-      assertTrue(Files.isSameFile(Paths.get(properties.get("user.dir")), Paths.get(installRoot.toString())));
-      assertThat(properties, hasEntry("tc.install-root", installRoot.toPath().resolve(basePath).toString()));
-      assertThat(properties, hasEntry("foo", "bar"));
+        Map<String, String> properties = scriptResult.properties();
+        assertTrue(Files.isSameFile(Paths.get(properties.get("user.dir")), Paths.get(installRoot.toString())));
+        assertThat(properties, hasEntry("tc.install-root", installRoot.toPath().resolve(basePath).toString()));
+        assertThat(properties, hasEntry("foo", "bar"));
+      }
 
     } catch (Throwable t) {
       showFailureOutput(System.err, t, scriptResult);
