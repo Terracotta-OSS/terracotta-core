@@ -45,7 +45,7 @@ import javax.management.ReflectionException;
  *
  */
 public class JMXSubsystem {
-  private static final Logger LOGGER = LoggerFactory.getLogger(DiagnosticsHandler.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(JMXSubsystem.class);
   private final MBeanServer server;
   
   public JMXSubsystem(MBeanServer server) {
