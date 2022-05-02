@@ -111,11 +111,8 @@ final class TCListenerImpl implements TCListener {
     if (stopPending.attemptSet()) {
       final TCFuture future = new TCFuture();
 
-      stopImpl(new Runnable() {
-        @Override
-        public void run() {
-          future.set("stop done");
-        }
+      stopImpl(() -> {
+        future.set("stop done");
       });
 
       try {
@@ -123,14 +120,12 @@ final class TCListenerImpl implements TCListener {
       } catch (InterruptedException e) {
         logger.warn("stop interrupted");
         Thread.currentThread().interrupt();
-        return;
       } catch (TCExceptionResultException e) {
         logger.error("Exception: ", e);
         Assert.eval("exception result set in future", false);
-        return;
       } finally {
-        fireCloseEvent();
         stopped.set();
+        fireCloseEvent();
       }
     } else {
       logger.warn("stop already requested");

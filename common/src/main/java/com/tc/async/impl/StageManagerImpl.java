@@ -169,8 +169,11 @@ public class StageManagerImpl implements StageManager {
   @SuppressWarnings("unchecked")
   @Override
   public  <EC> Stage<EC> getStage(String name, Class<EC> verification) {
-    Assert.assertTrue(verification.isAssignableFrom(classVerifications.get(name)));
-    return (Stage<EC>) stages.get(name);
+    Stage<EC> stage = (Stage<EC>) stages.get(name);
+    if (stage != null) {
+      Assert.assertTrue(verification.isAssignableFrom(classVerifications.get(name)));
+    }
+    return stage;
   }
 
   @Override
