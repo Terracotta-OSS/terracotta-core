@@ -154,7 +154,7 @@ final class TCListenerImpl implements TCListener {
 
   @Override
   public final boolean isStopped() {
-    return stopped.isSet();
+    return stopPending.isSet() || stopped.isSet();
   }
 
   @Override

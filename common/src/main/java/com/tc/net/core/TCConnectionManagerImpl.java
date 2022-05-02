@@ -136,35 +136,31 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   }
 
   @Override
-  public TCListener[] getAllListeners() {
-    synchronized (listeners) {
-      return listeners.toArray(EMPTY_LISTENER_ARRAY);
-    }
+  public synchronized TCListener[] getAllListeners() {
+    return listeners.toArray(EMPTY_LISTENER_ARRAY);
   }
 
   @Override
-  public final synchronized TCListener createListener(InetSocketAddress addr, ProtocolAdaptorFactory factory)
+  public final TCListener createListener(InetSocketAddress addr, ProtocolAdaptorFactory factory)
       throws IOException {
     return createListener(addr, factory, Constants.DEFAULT_ACCEPT_QUEUE_DEPTH, true);
   }
 
   @Override
-  public final synchronized TCListener createListener(InetSocketAddress addr, ProtocolAdaptorFactory factory,
+  public final TCListener createListener(InetSocketAddress addr, ProtocolAdaptorFactory factory,
                                                       int backlog, boolean reuseAddr) throws IOException {
     checkShutdown();
 
     TCListener rv = createListenerImpl(addr, factory, backlog, reuseAddr);
     rv.addEventListener(listenerEvents);
 
-    synchronized (listeners) {
-      listeners.add(rv);
-    }
+    addCreatedListener(rv);
 
     return rv;
   }
 
   @Override
-  public final synchronized TCConnection createConnection(TCProtocolAdaptor adaptor) throws IOException {
+  public final TCConnection createConnection(TCProtocolAdaptor adaptor) throws IOException {
     checkShutdown();
 
     TCConnection rv = createConnectionImpl(adaptor, connEvents);
@@ -174,22 +170,19 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   }
 
   @Override
-  public synchronized void closeAllConnections(long timeout) {
+  public void closeAllConnections(long timeout) {
     closeAllConnections(false, timeout);
   }
 
   @Override
-  public synchronized void asynchCloseAllConnections() {
+  public void asynchCloseAllConnections() {
     closeAllConnections(true, 0);
   }
 
   private void closeAllConnections(boolean async, long timeout) {
-    TCConnection[] conns;
+    TCConnection[] conns = getAllConnections();
 
-    synchronized (connections) {
-      conns = connections.toArray(EMPTY_CONNECTION_ARRAY);
-    }
-
+    logger.info("closing {} connection/s for {}", conns.length, this.comm.toString());
     for (TCConnection conn : conns) {
       try {
         if (async) {
@@ -204,13 +197,8 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   }
 
   @Override
-  public synchronized void closeAllListeners() {
-    TCListener[] list;
-
-    synchronized (listeners) {
-      list = listeners.toArray(EMPTY_LISTENER_ARRAY);
-    }
-
+  public void closeAllListeners() {    
+    TCListener[] list = getAllListeners();
     for (TCListener lsnr : list) {
       try {
         lsnr.stop();
@@ -219,12 +207,26 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
       }
     }
   }
+  
+  private synchronized void addCreatedListener(TCListener listener) throws IOException {
+    if (listener.isStopped()) {
+      throw new IOException("listener closed");
+    }
+    listeners.add(listener);
+  }
+  
+  private synchronized void removeDeadListener(TCListener listener) {
+    if (!listener.isStopped()) {
+      throw new RuntimeException("listener not closed");
+    }
+    listeners.remove(listener);
+  }
 
   @Override
   public TCComm getTcComm() {
     return this.comm;
   }
-
+  
   @Override
   public final synchronized void shutdown() {
     if (shutdown.attemptSet()) {
@@ -309,9 +311,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   class ListenerEvents implements TCListenerEventListener {
     @Override
     public void closeEvent(TCListenerEvent event) {
-      synchronized (listeners) {
-        listeners.remove(event.getSource());
-      }
+      removeDeadListener(event.getSource());
     }
   }
 
@@ -319,8 +319,8 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     return buffers;
   }
   
+  @Override
   public int getBufferCount() {
     return buffers.referenced();
   }
-
 }
