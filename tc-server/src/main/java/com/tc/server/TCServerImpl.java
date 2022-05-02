@@ -149,10 +149,10 @@ public class TCServerImpl extends SEDA implements TCServer {
   @Override
   public void stop(StopAction...restartMode) {
     audit("Stop invoked", new Properties());
-    
     TCLogging.getConsoleLogger().info("Stopping server");
     if (dsoServer != null) {
       try {
+        getStateManager().moveToStopStateIf(EnumSet.complementOf(EnumSet.of(ServerMode.STOP)));
         EnumSet<StopAction> set = EnumSet.noneOf(StopAction.class);
         for (StopAction s : restartMode) {
           set.add(s);
@@ -161,7 +161,7 @@ public class TCServerImpl extends SEDA implements TCServer {
           TCLogging.getConsoleLogger().info("Setting data to dirty");
           dsoServer.getPersistor().getClusterStatePersistor().setDBClean(false);
         }
-        CompletableFuture<Void> dsoStop = dsoServer.stop(set.contains(StopAction.IMMEDIATE));
+        CompletableFuture<Void> dsoStop = dsoServer.destroy(set.contains(StopAction.IMMEDIATE));
         if (set.contains(StopAction.RESTART)) {
           TCLogging.getConsoleLogger().info("Requesting restart");
           dsoStop.thenRun(()->shutdownGate.complete(true));

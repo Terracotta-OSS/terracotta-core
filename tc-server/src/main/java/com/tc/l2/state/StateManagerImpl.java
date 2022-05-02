@@ -180,6 +180,7 @@ public class StateManagerImpl implements StateManager {
 
   @Override
   public void shutdown() {
+    moveToStopState();
     logger.info("shutting down elections");
     this.electionMgr.shutdown();
   }
@@ -325,8 +326,10 @@ public class StateManagerImpl implements StateManager {
 
     // active is already set 
     if (!getActiveNodeID().isNull()) {
-      Assert.assertEquals(getActiveNodeID(), active);
       logger.info("active already set");
+      if (!getActiveNodeID().equals(active)) {
+        zapAndResyncLocalNode("server already syncing with an active");
+      }
       return;
     }
     
@@ -460,9 +463,8 @@ public class StateManagerImpl implements StateManager {
     } else {
       eventCollector.serverDidEnterState(newState, System.currentTimeMillis());      
     }
-    //  TODO: rationalize the stop state.  Transistions here should be handled 
-    //  but more work is required to properly shut queues
-    if (StateManager.convert(newState) != ServerMode.STOP && StateManager.convert(event.getOldState()) != StateManager.convert(newState)) {
+
+    if (StateManager.convert(event.getOldState()) != StateManager.convert(newState)) {
       this.stateChangeSink.transition(event.getOldState(), newState);
     }
     fireStateChangedEvent(event);
