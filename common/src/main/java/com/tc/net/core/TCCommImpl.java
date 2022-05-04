@@ -34,7 +34,7 @@ class TCCommImpl implements TCComm {
 
   private final TCWorkerCommManager workerCommMgr;
   private final CoreNIOServices     commThread;
-  private final String              commThreadName = "TCComm Main Selector Thread";
+  private final String              commThreadName;
   private static final Logger logger = LoggerFactory.getLogger(TCCommImpl.class);
 
   private volatile boolean          started        = false;
@@ -47,7 +47,8 @@ class TCCommImpl implements TCComm {
       workerCommMgr = null;
     }
 
-    this.commThread = new CoreNIOServices(name + ":" + commThreadName, workerCommMgr, socketParams);
+    this.commThreadName = name + ":TCComm Main Selector Thread";
+    this.commThread = new CoreNIOServices(commThreadName, workerCommMgr, socketParams);
   }
 
   protected int getWeightForWorkerComm(int workerCommId) {

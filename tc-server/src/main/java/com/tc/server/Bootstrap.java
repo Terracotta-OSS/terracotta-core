@@ -320,7 +320,11 @@ public class Bootstrap implements BootstrapService {
 
       @Override
       public boolean waitUntilShutdown() {
-        return impl.waitUntilShutdown();
+        try {
+          return impl.waitUntilShutdown();
+        } finally {
+          TCLogbackLogging.resetLogging();
+        }
       }
 
       @Override

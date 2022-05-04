@@ -103,7 +103,7 @@ public class StageController {
       } else {
         try {
           Stage<?> st = cxt.getStage(s, Object.class);
-          if (st != null && !leaving.contains(s)) {
+          if (st != null && !leaving.contains(s) && !st.isStarted()) {
             st.start(cxt);
             st.unpause();
           }
