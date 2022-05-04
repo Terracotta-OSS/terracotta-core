@@ -212,6 +212,9 @@ public class StateManagerImplTest {
       while (stateManagers[i].getCurrentMode() == ServerMode.START) {
         ThreadUtil.reallySleep(1000);
       }
+      while (stateManagers[i].getCurrentMode() == ServerMode.DIAGNOSTIC) {
+        ThreadUtil.reallySleep(1000);
+      }
     }
 
     for (int i = 0; i < NUM_OF_SERVERS; i++) {
