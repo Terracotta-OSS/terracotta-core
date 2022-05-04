@@ -63,8 +63,7 @@ public class TCServerImplTest {
   public void setUp() throws Exception {
     dso = mock(DistributedObjectServer.class);
     tcServer = new TCServerImpl(dso, mock(ServerConfigurationManager.class));
-    when(dso.stop()).thenReturn(CompletableFuture.completedFuture(null));
-    when(dso.stop(anyBoolean())).thenReturn(CompletableFuture.completedFuture(null));
+    when(dso.destroy(anyBoolean())).thenReturn(CompletableFuture.completedFuture(null));
     ServerManagementContext smc = mock(ServerManagementContext.class);
     DSOChannelManagerMBean cm = mock(DSOChannelManagerMBean.class);
     when(cm.getActiveChannels()).thenReturn(new MessageChannel[0]);
@@ -99,13 +98,13 @@ public class TCServerImplTest {
   @Test
   public void testForceStop() throws Exception {
     tcServer.stop();
-    verify(dso).stop(ArgumentMatchers.anyBoolean());
+    verify(dso).destroy(ArgumentMatchers.anyBoolean());
   }
 
   @Test
   public void testForceRestart() throws Exception {
     tcServer.stop(RESTART);
-    verify(dso).stop(ArgumentMatchers.anyBoolean());
+    verify(dso).destroy(ArgumentMatchers.anyBoolean());
     Assert.assertTrue(tcServer.waitUntilShutdown());
   }
 
@@ -113,21 +112,21 @@ public class TCServerImplTest {
   public void testStopIfPassive() throws Exception {
     setState(ServerMode.PASSIVE);
     tcServer.stopIfPassive();
-    verify(dso).stop(ArgumentMatchers.anyBoolean());
+    verify(dso).destroy(ArgumentMatchers.anyBoolean());
   }
 
   @Test
   public void testStopIfPassiveWhenStateStateIsUninitialized() throws Exception {
     setState(ServerMode.UNINITIALIZED);
     tcServer.stopIfPassive();
-    verify(dso).stop(ArgumentMatchers.anyBoolean());
+    verify(dso).destroy(ArgumentMatchers.anyBoolean());
   }
 
   @Test
   public void testStopIfPassiveWhenStateStateIsSyncing() throws Exception {
     setState(ServerMode.SYNCING);
     tcServer.stopIfPassive();
-    verify(dso).stop(ArgumentMatchers.anyBoolean());
+    verify(dso).destroy(ArgumentMatchers.anyBoolean());
   }
 
   @Test
@@ -141,7 +140,7 @@ public class TCServerImplTest {
   public void testStopIfPassiveWithRestart() throws Exception {
     setState(ServerMode.PASSIVE);
     tcServer.stopIfPassive(RESTART);
-    verify(dso).stop(ArgumentMatchers.anyBoolean());
+    verify(dso).destroy(ArgumentMatchers.anyBoolean());
     Assert.assertTrue(tcServer.waitUntilShutdown());
   }
 
@@ -149,7 +148,7 @@ public class TCServerImplTest {
   public void testStopIfActive() throws Exception {
     setState(ServerMode.ACTIVE);
     tcServer.stopIfActive();
-    verify(dso).stop(ArgumentMatchers.anyBoolean());
+    verify(dso).destroy(ArgumentMatchers.anyBoolean());
   }
 
   @Test
@@ -163,7 +162,7 @@ public class TCServerImplTest {
   public void testStopIfActiveWithRestart() throws Exception {
     setState(ServerMode.ACTIVE);
     tcServer.stopIfActive(RESTART);
-    verify(dso).stop(ArgumentMatchers.anyBoolean());
+    verify(dso).destroy(ArgumentMatchers.anyBoolean());
     Assert.assertTrue(tcServer.waitUntilShutdown());
   }
 

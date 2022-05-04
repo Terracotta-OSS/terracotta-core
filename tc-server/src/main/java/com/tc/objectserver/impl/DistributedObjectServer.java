@@ -85,7 +85,6 @@ import com.tc.l2.handler.GroupEvent;
 import com.tc.l2.handler.GroupEventsDispatchHandler;
 import com.tc.l2.handler.L2StateMessageHandler;
 import com.tc.l2.handler.PlatformInfoRequestHandler;
-import com.tc.l2.logging.TCLogbackLogging;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.PlatformInfoRequest;
 import com.tc.l2.msg.ReplicationMessage;
@@ -236,7 +235,6 @@ import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.ThreadUtil;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import org.terracotta.configuration.FailoverBehavior;
 import org.terracotta.server.ServerEnv;
 import com.tc.net.protocol.tcm.TCAction;
@@ -244,6 +242,8 @@ import com.tc.productinfo.ProductInfo;
 import com.tc.productinfo.VersionCompatibility;
 import com.tc.util.version.CollectionVersionCompatibility;
 import com.tc.util.version.DefaultVersionCompatibility;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -262,7 +262,6 @@ public class DistributedObjectServer {
   protected NetworkListener                      l1Listener;
   protected NetworkListener                      l1Diagnostics;
   private CommunicationsManager                  communicationsManager;
-  private TCConnectionManager                    connectionManager;
   private ServerConfigurationContext             context;
   private CounterManager                         sampledCounterManager;
   private ServerManagementContext                managementContext;
@@ -286,6 +285,7 @@ public class DistributedObjectServer {
   private EntityManagerImpl entityManager;
 
   private final SetOnceFlag  stopping = new SetOnceFlag();
+  private final CompletableFuture<Void> stopped = new CompletableFuture<>();
 
   // used by a test
   public DistributedObjectServer(ServerConfigurationManager configSetupManager, TCThreadGroup threadGroup,
@@ -567,10 +567,10 @@ public class DistributedObjectServer {
 
     BufferManagerFactory bufferManagerFactory = getBufferManagerFactory(platformServiceRegistry);
 
-    this.connectionManager = new TCConnectionManagerImpl(configSetupManager.getServerConfiguration().getName() + " - " + CommunicationsManager.COMMSMGR_SERVER, commWorkerThreadCount, bufferManagerFactory);
+    TCConnectionManager connectionManager = new TCConnectionManagerImpl(configSetupManager.getServerConfiguration().getName() + " - " + CommunicationsManager.COMMSMGR_SERVER, commWorkerThreadCount, bufferManagerFactory);
     this.communicationsManager = new CommunicationsManagerImpl(mm,
                                                                messageRouter, networkStackHarnessFactory,
-                                                               this.connectionManager,
+                                                               connectionManager,
                                                                this.connectionPolicy,
                                                                new DisabledHealthCheckerConfigImpl(),
                                                                this.thisServerNodeID,
@@ -839,43 +839,48 @@ public class DistributedObjectServer {
     }
   }
 
-  public CompletableFuture<Void> stop() throws Exception {
-    return stop(false);
-  }
-
-  public CompletableFuture<Void> stop(boolean immediate) throws Exception {
-    CompletableFuture<Void> stopped = new CompletableFuture<>();
+  public CompletableFuture<Void> destroy(boolean immediate) throws Exception {
     if (this.threadGroup.isStoppable() && this.stopping.attemptSet()) {
-      CountDownLatch barrier = new CountDownLatch(immediate ? 0 : 1);
       ThreadUtil.executeInThread(threadGroup.getParent(), ()->{
         try {
-          if (!barrier.await(60, TimeUnit.SECONDS)) {
-            logger.warn("Timeout waiting for clean shutdown.");
+          if (!immediate) {
+            try {
+                stopped.get(60, TimeUnit.SECONDS);
+            } catch (TimeoutException to) {
+              logger.warn("Timeout waiting for clean shutdown.");
+            } catch (ExecutionException ee) {
+              logger.warn("stop not complete", ee.getCause());
+            }
           }
           killThreads(stopped, immediate);
         }catch(InterruptedException ie) {
           logger.warn("shutdown thread failed", ie);
         }
       }, "server shutdown thread", true);
-      this.l1Diagnostics.stop(60000);
-      this.l1Listener.stop(60000);
+    } else {
+      consoleLogger.info("Server Exiting...");
+      stopped.complete(null);
+    }
+    return stopped;
+  }
+  
+  private void shutdown() {
+    try {
       this.l2Coordinator.shutdown();
       this.groupCommManager.shutdown();
+      this.communicationsManager.shutdown();
+      this.communicationsManager.getConnectionManager().closeAllConnections(6000);
       this.persistor.shutdown();
-      this.connectionManager.shutdown();
       this.context.shutdown();
       this.entityManager.shutdown();
       this.serviceRegistry.shutdown();
       this.timer.cancelAll();
       this.timer.stop();
       this.configSetupManager.close();
-      barrier.countDown();
-    } else {
-      consoleLogger.info("Server Exiting...");
-      TCLogbackLogging.resetLogging();
       stopped.complete(null);
+    } catch (InterruptedException in) {
+      stopped.completeExceptionally(in);
     }
-    return stopped;
   }
 
   private void killThreads(CompletableFuture<Void> stopped, boolean immediate) {
@@ -890,7 +895,6 @@ public class DistributedObjectServer {
       }
       consoleLogger.info("Server Exiting...");
     } finally {
-      TCLogbackLogging.resetLogging();
       stopped.complete(null);
     }
   }
@@ -1049,6 +1053,10 @@ public class DistributedObjectServer {
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.PASSIVE_TO_ACTIVE_DRIVER_STAGE);
+    
+    control.addTriggerToState(ServerMode.STOP.getState(),s->{
+      shutdown();
+    });
     return control;
   }
 

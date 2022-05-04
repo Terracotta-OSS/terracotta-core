@@ -56,6 +56,7 @@ import com.tc.net.protocol.transport.WireProtocolAdaptorFactoryImpl;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.net.core.ProductID;
 import com.tc.util.Assert;
+import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;
@@ -204,6 +205,15 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   public void shutdown() {
     if (shutdown.attemptSet()) {
       connectionHealthChecker.stop();
+      NetworkListener[] col = getAllListeners();
+      for (NetworkListener l : col) {
+        try {
+          l.stop(0);
+        } catch (TCTimeoutException to) {
+          logger.info("failed to shutdown listener", to);
+        }
+      }
+      connectionManager.shutdown();
     } else {
       logger.warn("shutdown already started");
     }

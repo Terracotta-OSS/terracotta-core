@@ -371,12 +371,14 @@ public class StageImpl<EC> implements Stage<EC> {
   
 
   private static boolean isTCNotRunningException(Throwable e) {
-    Throwable rootCause = null;
     while (e != null) {
-      rootCause = e;
-      e = e.getCause();
+      if (e instanceof TCNotRunningException) {
+        return true;
+      } else {
+        e = e.getCause();
+      }
     }
-    return rootCause instanceof TCNotRunningException;
+    return false;
   }
 
   @Override
