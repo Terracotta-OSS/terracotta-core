@@ -30,6 +30,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Optional;
@@ -39,8 +40,16 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.fail;
-import org.junit.Ignore;
+import static org.junit.Assume.assumeTrue;
 
+/**
+ * Tests {@link AbstractHarnessEntry}.
+ * <p>
+ * The tests in this class take a fair amount of time if the
+ * {@value PortManager#DISABLE_PORT_RELEASE_CHECK_PROPERTY} is <b>not</b> set to {@code true}.
+ * This property is expected to be set in the POM for this module; when running the tests in
+ * an IDE, you may need to set the property when setting up the test.
+ */
 @SuppressWarnings("deprecation")
 public class AbstractHarnessEntryTest {
   private static final Logger LOGGER = LoggerFactory.getLogger(AbstractHarnessEntryTest.class);
@@ -76,7 +85,7 @@ public class AbstractHarnessEntryTest {
     reservePort(firstPort);
   }
 
-  @Test(timeout = 10000) @Ignore("test times out on mac")
+  @Test(timeout = 40000)
   public void testChooseRandomPortRangeMultiple() throws Exception {
     LOGGER.info("************************************************************" +
             "\nRunning test {}" +
@@ -112,9 +121,16 @@ public class AbstractHarnessEntryTest {
    * Tests the operation of {@link AbstractHarnessEntry#chooseRandomPortRange(int)} when
    * desired ranges are obstructed.  This test relies on internal knowledge of
    * {@link PortManager}.
+   * <p>
+   * There is some variability due to randomness used in {@link PortManager#reservePort()} but,
+   * in general, this test takes 3+ minutes to run.  Because of this, the test is suppressed but
+   * should be run locally if {@link AbstractHarnessEntry#chooseRandomPortRange(int)} is altered.
    */
-  @Test @Ignore("test takes too long")
-  public void testChooseRandomPortRangeBlocked() throws Exception {
+  @Test
+  public void testChooseRandomPortRangeBlocked() {
+    assumeTrue("Use '-Drun.testChooseRandomPortRangeBlocked=true' to run this test",
+        Boolean.getBoolean("run.testChooseRandomPortRangeBlocked"));
+
     LOGGER.info("************************************************************" +
             "\nRunning test {}" +
             "\n************************************************************",
@@ -134,7 +150,8 @@ public class AbstractHarnessEntryTest {
     EphemeralPorts.Range ephemeralPorts = EphemeralPorts.getRange();
     blockedPorts.set(ephemeralPorts.getLower(), 1 + ephemeralPorts.getUpper());
 
-    LOGGER.info("Blocking every {}th port", portCount);
+    LOGGER.info("Blocking every {}th port of {} non-ephemeral ports",
+        portCount, blockedPorts.length() - blockedPorts.cardinality());
     List<PortManager.PortRef> blockingPorts = new ArrayList<>();
     try {
       /*
@@ -148,6 +165,9 @@ public class AbstractHarnessEntryTest {
         if (!blockedPorts.get(blockerPort)) {
           try {
             PORT_MANAGER.reserve(blockerPort).ifPresent(blockingPorts::add);
+            if (blockingPorts.size() % 250 == 0) {
+              LOGGER.info("Blocked {} ports", blockingPorts.size());
+            }
           } catch (IllegalArgumentException | IllegalStateException ignored) {
           }
         }
@@ -178,7 +198,7 @@ public class AbstractHarnessEntryTest {
         ListIterator<PortManager.PortRef> iterator = blockingPorts.listIterator();
         for (int i = 0; i < 10 && iterator.hasNext(); i++) {
           PortManager.PortRef blockedPort = iterator.next();
-          blockedPort.close();
+          blockedPort.close(EnumSet.of(PortManager.PortRef.CloseOption.NO_RELEASE_CHECK));
           iterator.remove();
           unblockedRangeCount++;
         }
@@ -206,7 +226,7 @@ public class AbstractHarnessEntryTest {
 
     } finally {
       LOGGER.info("Releasing all blocked ranges");
-      blockingPorts.forEach(PortManager.PortRef::close);
+      blockingPorts.forEach(ref -> ref.close(EnumSet.of(PortManager.PortRef.CloseOption.NO_RELEASE_CHECK)));
     }
   }
 
@@ -216,16 +236,16 @@ public class AbstractHarnessEntryTest {
       portRef = PORT_MANAGER.reserve(port);
       if (!portRef.isPresent()) {
         System.gc();
-        TimeUnit.MILLISECONDS.sleep(1000);
+        TimeUnit.MILLISECONDS.sleep(100);
       }
     } while (!portRef.isPresent());
-    portRef.ifPresent(PortManager.PortRef::close);
+    portRef.ifPresent(ref -> ref.close(EnumSet.of(PortManager.PortRef.CloseOption.NO_RELEASE_CHECK)));
   }
 
   private void awaitEnqueue(ReferenceQueue<HarnessEntry> queue) throws InterruptedException {
     while (queue.poll() == null) {
       System.gc();
-      TimeUnit.MILLISECONDS.sleep(1000);
+      TimeUnit.MILLISECONDS.sleep(100);
     }
   }
 
