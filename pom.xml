@@ -85,28 +85,6 @@ limitations under the License.
     </snapshotRepository>
   </distributionManagement>
 
-  <repositories>
-    <repository>
-      <id>terracotta-snapshots</id>
-      <url>http://www.terracotta.org/download/reflector/snapshots</url>
-    </repository>
-    <repository>
-      <id>terracotta-releases</id>
-      <url>http://www.terracotta.org/download/reflector/releases</url>
-    </repository>
-  </repositories>
-
-  <pluginRepositories>
-    <pluginRepository>
-      <id>terracotta-snapshots</id>
-      <url>http://www.terracotta.org/download/reflector/snapshots</url>
-    </pluginRepository>
-    <pluginRepository>
-      <id>terracotta-releases</id>
-      <url>http://www.terracotta.org/download/reflector/releases</url>
-    </pluginRepository>
-  </pluginRepositories>
-
   <scm>
     <connection>scm:git:https://github.com/Terracotta-OSS/galvan.git</connection>
     <developerConnection>scm:git:https://github.com/Terracotta-OSS/galvan.git</developerConnection>
