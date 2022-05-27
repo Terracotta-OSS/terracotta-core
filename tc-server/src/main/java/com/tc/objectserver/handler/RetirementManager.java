@@ -86,6 +86,10 @@ public class RetirementManager {
     currentlyRunning.remove(id(invoke));
     waitingForDeferredRegistration.remove(id(invoke));
   }
+  
+  public int size() {
+    return currentlyRunning.size();
+  }
 
   public void registerWithMessage(EntityMessage invokeMessage, int concurrencyKey, Retiree retiree) {
     LogicalSequence newWrapper = new LogicalSequence(invokeMessage, concurrencyKey);

@@ -68,12 +68,21 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
     
     // See if we have an existing message we must batch.
     boolean didCreateNewBatch = false;
+    try {
+      while (this.cachedMessage != null && this.cachedMessage.getBatchSize() >= maximumBatchSize) {
+        wait();
+      }      
+    } catch (InterruptedException ie) {
+      L2Utils.handleInterrupted(LOGGER, ie);
+      throw new RuntimeException(ie);
+    }
     if (null != this.cachedMessage) {
       // Just add to this batch.
       this.cachedMessage.addToBatch(activity);
     } else {
       // Create a new batch.
       this.cachedMessage = this.messageFactory.apply(activity);
+      notifyAll();
       this.cachedMessage.setSequenceID(nextReplicationID++);
       didCreateNewBatch = true;
     }
@@ -87,35 +96,19 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
    * @throws GroupException Something went wrong in the transmission (note that this same exception will be thrown on
    *  the next call to batchMessage).
    */
-  public long flushBatch() throws GroupException {
-    IBatchableGroupMessage<E> messageToSend = null;
-    synchronized (this) {
-      // See if we have a batched message and are ready to send one.
-      // Note that we will override the ideal number of in-flight messages if the batch is getting too large.
-      if (null != this.cachedMessage) {
-        if ((0 == this.idealMessagesInFlight) ||
-          (this.messagesInFlight < this.idealMessagesInFlight) ||
-          (this.cachedMessage.getBatchSize() >= this.maximumBatchSize) || 
-          (this.cachedMessage.getPayloadSize() > THRESHOLD)
-        ) {
-          // There is a batched message so send it.
-          messageToSend = this.cachedMessage;
-          this.cachedMessage = null;
-          this.messagesInFlight += 1;
-        }
-      }
-    }
+  public void flushBatch() throws GroupException {
+    IBatchableGroupMessage<E> messageToSend = getMessageToSend();
     
     // Note that we don't want to make this call to send the message under lock since it results in the message
     //  serialization, which is potentially slow and shouldn't block other attempts to batch.
-    if (null != messageToSend) {
+    while (messageToSend != null) {
       try {
         AbstractGroupMessage msg = messageToSend.asAbstractGroupMessage();
         this.groupManager.sendToWithSentCallback(this.target, msg, this::handleNetworkDone);
         if (messageToSend.getPayloadSize() > THRESHOLD) {
           waitForFlush();
         }
-        return messageToSend.getSequenceID();
+        messageToSend = getMessageToSend();
       } catch (GroupException e) {
         LOGGER.warn("replication message failed", e);
         //  message failed but we still need to reset state
@@ -123,7 +116,26 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
         throw e;
       }
     }
-    return -1L;
+  }
+  
+  private synchronized IBatchableGroupMessage<E> getMessageToSend() {
+    IBatchableGroupMessage<E> messageToSend = null;
+      // See if we have a batched message and are ready to send one.
+      // Note that we will override the ideal number of in-flight messages if the batch is getting too large.
+    if (null != this.cachedMessage) {
+      if ((0 == this.idealMessagesInFlight) ||
+        (this.messagesInFlight < this.idealMessagesInFlight) ||
+        (this.cachedMessage.getBatchSize() >= this.maximumBatchSize) || 
+        (this.cachedMessage.getPayloadSize() > THRESHOLD)
+      ) {
+        // There is a batched message so send it.
+        messageToSend = this.cachedMessage;
+        this.cachedMessage = null;
+        notifyAll();
+        this.messagesInFlight += 1;
+      }
+    }
+    return messageToSend;
   }
   
   private synchronized void waitForFlush() {

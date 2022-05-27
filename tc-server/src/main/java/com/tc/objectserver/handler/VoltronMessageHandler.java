@@ -113,7 +113,6 @@ public class VoltronMessageHandler extends AbstractEventHandler<VoltronEntityMes
 
   @Override
   protected void initialize(ConfigurationContext context) {
-    ServerConfigurationContext cxt = (ServerConfigurationContext)context;
     super.initialize(context);
     fastPath = context.getStage(ServerConfigurationContext.SINGLE_THREADED_FAST_PATH, VoltronEntityMessage.class);
     destPath = context.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class);

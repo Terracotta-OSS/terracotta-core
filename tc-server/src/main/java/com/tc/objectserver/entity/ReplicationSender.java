@@ -47,7 +47,7 @@ import org.terracotta.tripwire.TripwireFactory;
 
 
 public class ReplicationSender {
-  private static final int DEFAULT_BATCH_LIMIT = 64;
+  private static final int DEFAULT_BATCH_LIMIT = 1024;
   private static final int DEFAULT_INFLIGHT_MESSAGES = 1;
   // Find out how many messages we should keep in-flight and our maximum batch size.
   private static int maximumBatchSize = TCPropertiesImpl.getProperties().getInt("active-passive.batchsize", DEFAULT_BATCH_LIMIT);
@@ -357,7 +357,7 @@ public class ReplicationSender {
     private void flushBatch() {
       outgoing.addToSink(new ReplicationSendingAction(this.executionLane, ()->{
         try {
-          long seqId = this.batchContext.flushBatch();
+          this.batchContext.flushBatch();
         } catch (GroupException ge) {
           logger.warn("error sending message to passive ", ge);
         }
