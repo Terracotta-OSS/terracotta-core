@@ -18,6 +18,7 @@
  */
 package com.tc.services;
 
+import com.tc.exception.TCNotRunningException;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.monitoring.PlatformService.RestartMode;
@@ -49,18 +50,34 @@ public class PlatformServiceImplTest {
 
   @Test(expected=PlatformStopException.class)
   public void stopPlatformIfPassive() throws Exception {
-    platformService.stopPlatformIfPassive(RestartMode.STOP_ONLY);
-    verify(tcServerMock).stopIfPassive();
-
-    platformService.stopPlatformIfPassive(RestartMode.STOP_AND_RESTART);
-    verify(tcServerMock).stopIfPassive(Mockito.eq(StopAction.RESTART));
-
-    platformService.stopPlatformIfPassive(RestartMode.ZAP_AND_RESTART);
+    try {
+      platformService.stopPlatformIfPassive(RestartMode.STOP_ONLY);
+      verify(tcServerMock).stopIfPassive();
+    } catch (TCNotRunningException expected) {
+      
+    }
+    
+    try {
+      platformService.stopPlatformIfPassive(RestartMode.STOP_AND_RESTART);
+      verify(tcServerMock).stopIfPassive(Mockito.eq(StopAction.RESTART));
+    } catch (TCNotRunningException expected) {
+      
+    }
+    
+    try {
+      platformService.stopPlatformIfPassive(RestartMode.ZAP_AND_RESTART);
 //    verify(tcServerMock).stopIfPassive(Mockito.argThat(varargs(RestartMode.ZAP_AND_RESTART)));
-    verify(tcServerMock).stopIfPassive(Mockito.eq(StopAction.ZAP), Mockito.eq(StopAction.RESTART));
-
-    platformService.stopPlatformIfPassive(RestartMode.ZAP_AND_STOP);
-    verify(tcServerMock).stopIfPassive(Mockito.eq(StopAction.ZAP));
+      verify(tcServerMock).stopIfPassive(Mockito.eq(StopAction.ZAP), Mockito.eq(StopAction.RESTART));
+    } catch (TCNotRunningException expected) {
+      
+    }
+    
+    try {
+      platformService.stopPlatformIfPassive(RestartMode.ZAP_AND_STOP);
+      verify(tcServerMock).stopIfPassive(Mockito.eq(StopAction.ZAP));
+    } catch (TCNotRunningException expected) {
+      
+    }
 
     Mockito.doThrow(new PlatformStopException("not passive")).when(tcServerMock).stopIfPassive(any());
     platformService.stopPlatformIfPassive(RestartMode.STOP_ONLY);
@@ -68,18 +85,33 @@ public class PlatformServiceImplTest {
 
   @Test(expected=PlatformStopException.class)
   public void stopPlatformIfActive() throws Exception {
-    platformService.stopPlatformIfActive(RestartMode.STOP_ONLY);
-    verify(tcServerMock).stopIfActive();
+    try {
+      platformService.stopPlatformIfActive(RestartMode.STOP_ONLY);
+      verify(tcServerMock).stopIfActive();
+    } catch (TCNotRunningException expected) {
+      
+    }
 
-    platformService.stopPlatformIfActive(RestartMode.STOP_AND_RESTART);
-    verify(tcServerMock).stopIfActive(Mockito.eq(StopAction.RESTART));
+    try {
+      platformService.stopPlatformIfActive(RestartMode.STOP_AND_RESTART);
+      verify(tcServerMock).stopIfActive(Mockito.eq(StopAction.RESTART));
+    } catch (TCNotRunningException expected) {
+      
+    }
 
-    platformService.stopPlatformIfActive(RestartMode.ZAP_AND_RESTART);
-//    verify(tcServerMock).stopIfActive(Mockito.argThat(varargs(RestartMode.ZAP_AND_RESTART)));
-    verify(tcServerMock).stopIfActive(Mockito.eq(StopAction.ZAP), Mockito.eq(StopAction.RESTART));
-
-    platformService.stopPlatformIfActive(RestartMode.ZAP_AND_STOP);
-    verify(tcServerMock).stopIfActive(Mockito.eq(StopAction.ZAP));
+    try {
+      platformService.stopPlatformIfActive(RestartMode.ZAP_AND_RESTART);
+      verify(tcServerMock).stopIfActive(Mockito.eq(StopAction.ZAP), Mockito.eq(StopAction.RESTART));
+    } catch (TCNotRunningException expected) {
+      
+    }
+    
+    try {
+      platformService.stopPlatformIfActive(RestartMode.ZAP_AND_STOP);
+      verify(tcServerMock).stopIfActive(Mockito.eq(StopAction.ZAP));
+    } catch (TCNotRunningException expected) {
+      
+    }
 
     Mockito.doThrow(new PlatformStopException("not active")).when(tcServerMock).stopIfActive(any());
     platformService.stopPlatformIfActive(RestartMode.STOP_ONLY);
@@ -87,18 +119,33 @@ public class PlatformServiceImplTest {
 
   @Test
   public void stopPlatform() {
-    platformService.stopPlatform(RestartMode.STOP_ONLY);
-    verify(tcServerMock).stop();
+    try {
+      platformService.stopPlatform(RestartMode.STOP_ONLY);
+      verify(tcServerMock).stop();
+    } catch (TCNotRunningException expect) {
+      
+    }
 
-    platformService.stopPlatform(RestartMode.STOP_AND_RESTART);
-    verify(tcServerMock).stop(Mockito.eq(StopAction.RESTART));
-
-    platformService.stopPlatform(RestartMode.ZAP_AND_RESTART);
+    try {
+      platformService.stopPlatform(RestartMode.STOP_AND_RESTART);
+      verify(tcServerMock).stop(Mockito.eq(StopAction.RESTART));
+    } catch (TCNotRunningException expect) {
+      
+    }
+    try {
+      platformService.stopPlatform(RestartMode.ZAP_AND_RESTART);
 //    verify(tcServerMock).stop(Mockito.argThat(varargs(RestartMode.ZAP_AND_RESTART)));
-    verify(tcServerMock).stop(Mockito.eq(StopAction.ZAP), Mockito.eq(StopAction.RESTART));
+      verify(tcServerMock).stop(Mockito.eq(StopAction.ZAP), Mockito.eq(StopAction.RESTART));
+    } catch (TCNotRunningException expect) {
+      
+    }
 
-    platformService.stopPlatform(RestartMode.ZAP_AND_STOP);
-    verify(tcServerMock).stop(Mockito.eq(StopAction.ZAP));
+    try {
+      platformService.stopPlatform(RestartMode.ZAP_AND_STOP);
+      verify(tcServerMock).stop(Mockito.eq(StopAction.ZAP));
+    } catch (TCNotRunningException expect) {
+      
+    }
   }
 
   private ArgumentMatcher<StopAction[]> varargs(RestartMode mode) {

@@ -22,6 +22,7 @@ import com.tc.util.Assert;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author teck A thin wrapper to a real java.nio.ByteBuffer instance
@@ -32,7 +33,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class TCByteBufferImpl implements TCByteBuffer {
   private final ByteBuffer          hiddenBuffer;
   private static final boolean ACCESS_CHECK = Boolean.getBoolean("buffer.access.check");
-  AtomicBoolean lock =  ACCESS_CHECK ? new AtomicBoolean() : null;
+  private final AtomicBoolean lock =  ACCESS_CHECK ? new AtomicBoolean() : null;
+  private final AtomicInteger references = ACCESS_CHECK ? new AtomicInteger() : null;
 
   TCByteBufferImpl(int capacity, boolean direct) {
     if (direct) {
@@ -114,10 +116,33 @@ public class TCByteBufferImpl implements TCByteBuffer {
     accessBuffer().rewind();
     return this;
   }
-
+  
+  private void incrementBufferReference() {
+    if (references != null) {
+      references.incrementAndGet();
+    }
+  }
+  
+  private void decrementBufferReference() {
+    if (references != null) {
+      references.decrementAndGet();
+    }
+  }
+  
   @Override
   public ByteBuffer getNioBuffer() {
-    return accessBuffer();
+    ByteBuffer buffer = accessBuffer();
+    incrementBufferReference();
+    return buffer;
+  }
+
+  @Override
+  public void returnNioBuffer(ByteBuffer buffer) {
+    if (buffer == accessBuffer()) {
+      decrementBufferReference();
+    } else {
+      throw new IllegalArgumentException("buffer is not owned");
+    }
   }
 
   @Override
@@ -373,9 +398,16 @@ public class TCByteBufferImpl implements TCByteBuffer {
   public boolean hasArray() {
     return accessBuffer().hasArray();
   }
+  
+  private void checkReferences() {
+    if (references != null && references.get() > 0) {
+      throw new IllegalStateException("Nio buffer still referenced " + references.get());
+    }
+  }
 
   @Override
   public TCByteBuffer reInit() {
+    checkReferences();
     clear();
     lock();
     return this;

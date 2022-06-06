@@ -41,6 +41,13 @@ public class CachingClearTextBufferManager extends ClearTextBufferManager {
   @Override
   public void close() {
     super.close();
+  }
+
+  @Override
+  public void dispose() {
+    recv.returnNioBuffer(getRecvBuffer());
+    send.returnNioBuffer(getSendBuffer());
+    super.dispose();
     retPool.offer(send.reInit());
     retPool.offer(recv.reInit());
   }

@@ -22,7 +22,7 @@ import java.net.InetSocketAddress;
 import java.util.Properties;
 import static org.junit.Assert.fail;
 
-import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.Diagnostics;
@@ -36,8 +36,8 @@ import org.terracotta.testing.rules.Cluster;
  */
 public class DiagnosticFunctionIT {
 
-  @ClassRule
-  public static final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(1).withClientReconnectWindowTime(30)
+  @Rule
+  public final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(1).withClientReconnectWindowTime(30)
       .build();
 
   @Test
@@ -80,5 +80,21 @@ public class DiagnosticFunctionIT {
       System.out.println("success:" + (System.currentTimeMillis() - start));
     }
   }
-
+  
+  @Test
+  public void testCyclingConnections() throws Exception {
+    String[] clusterHostPorts = CLUSTER.getClusterHostPorts();
+    for (int x=0;x<500;x++) {
+      for (String hostPort: clusterHostPorts) {
+        String[] hp = hostPort.split("[:]");
+        InetSocketAddress inet = InetSocketAddress.createUnresolved(hp[0], Integer.parseInt(hp[1]));
+        try (com.terracotta.diagnostic.Diagnostics d = (com.terracotta.diagnostic.Diagnostics)DiagnosticsFactory.connect(inet, new Properties())) {
+          System.out.println(d.invoke("Server", "isAcceptingClients"));
+          System.out.println(d.get("Server", "Version"));
+          System.out.println(d.get("Server", "CurrentChannelProperties"));
+          System.out.println(d.list("Server"));
+        }
+      }
+    }
+  }
 }

@@ -18,6 +18,7 @@
  */
 package com.tc.services;
 
+import com.tc.exception.TCNotRunningException;
 import com.tc.lang.ServerExitStatus;
 import com.tc.logging.TCLogging;
 import com.tc.server.TCServer;
@@ -90,16 +91,19 @@ public class PlatformServiceImpl implements PlatformService, StateDumpable {
     @Override
     public void stopPlatformIfPassive(RestartMode restartMode) throws PlatformStopException {
       tcServer.stopIfPassive(convert(restartMode));
+      throw new TCNotRunningException("shutdown as PASSIVE");
     }
 
     @Override
     public void stopPlatformIfActive(RestartMode restartMode) throws PlatformStopException {
       tcServer.stopIfActive(convert(restartMode));
+      throw new TCNotRunningException("shutdown as ACTIVE");
     }
 
     @Override
     public void stopPlatform(RestartMode restartMode) {
       tcServer.stop(convert(restartMode));
+      throw new TCNotRunningException("shutdown");
     }
 
   @Override

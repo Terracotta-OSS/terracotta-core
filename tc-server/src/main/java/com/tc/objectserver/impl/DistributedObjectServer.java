@@ -840,28 +840,32 @@ public class DistributedObjectServer {
   }
 
   public CompletableFuture<Void> destroy(boolean immediate) throws Exception {
-    if (this.threadGroup.isStoppable() && this.stopping.attemptSet()) {
-      ThreadUtil.executeInThread(threadGroup.getParent(), ()->{
-        try {
-          if (!immediate) {
-            try {
+    CompletableFuture<Void> finished = new CompletableFuture<>();
+    if (this.threadGroup.isStoppable()) {
+      if (this.stopping.attemptSet()) {
+        ThreadUtil.executeInThread(threadGroup.getParent(), ()->{
+          try {
+            if (!immediate) {
+              try {
                 stopped.get(60, TimeUnit.SECONDS);
-            } catch (TimeoutException to) {
-              logger.warn("Timeout waiting for clean shutdown.");
-            } catch (ExecutionException ee) {
-              logger.warn("stop not complete", ee.getCause());
+              } catch (TimeoutException to) {
+                logger.warn("Timeout waiting for clean shutdown.");
+              } catch (ExecutionException ee) {
+                logger.warn("stop not complete", ee.getCause());
+              }
             }
+            killThreads(finished, immediate);
+          }catch(InterruptedException ie) {
+            logger.warn("shutdown thread failed", ie);
+            finished.completeExceptionally(ie);
           }
-          killThreads(stopped, immediate);
-        }catch(InterruptedException ie) {
-          logger.warn("shutdown thread failed", ie);
-        }
-      }, "server shutdown thread", true);
+        }, "server shutdown thread", true);
+      }
     } else {
       consoleLogger.info("Server Exiting...");
-      stopped.complete(null);
+      finished.complete(null);
     }
-    return stopped;
+    return finished;
   }
   
   private void shutdown() {
