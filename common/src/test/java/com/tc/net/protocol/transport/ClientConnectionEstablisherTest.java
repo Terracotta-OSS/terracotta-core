@@ -28,7 +28,6 @@ import org.mockito.MockitoAnnotations;
 import com.tc.logging.ConnectionIdLogger;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.NetworkStackID;

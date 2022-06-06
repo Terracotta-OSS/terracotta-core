@@ -200,7 +200,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       if (this.bufferManager != null) {
         this.bufferManager.close();
       }
-      this.buffers.close();
     } catch (EOFException eof) {
       logger.debug("closed", eof);
     } catch (IOException ioe) {
@@ -465,21 +464,25 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     // Do the read in a loop, instead of calling read(ByteBuffer[]).
     // This seems to avoid memory leaks on sun's 1.4.2 JDK
     for (final TCByteBuffer readBuffer : readBuffers) {
-      final ByteBuffer buf = extractNioBuffer(readBuffer);
+      final ByteBuffer buf = readBuffer.getNioBuffer();
 
-      if (buf.hasRemaining()) {
-        final int read = bufferManager.forwardFromReadBuffer(buf);
-
-        if (0 == read) {
-          break;
-        }
-
-        bytesRead += read;
-
+      try {
         if (buf.hasRemaining()) {
-          // don't move on to the next buffer if we didn't fill the current one
-          break;
+          final int read = bufferManager.forwardFromReadBuffer(buf);
+
+          if (0 == read) {
+            break;
+          }
+
+          bytesRead += read;
+
+          if (buf.hasRemaining()) {
+            // don't move on to the next buffer if we didn't fill the current one
+            break;
+          }
         }
+      } finally {
+        readBuffer.returnNioBuffer(buf);
       }
     }
 
@@ -511,12 +514,18 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       // Do the write in a loop, instead of calling write(ByteBuffer[]).
       // This seems to avoid memory leaks and faster
       for (int i = context.index, nn = bufs.length; i < nn; i++) {
-        final int written = bufferManager.forwardToWriteBuffer(bufs[i].getNioBuffer());
-        if (written == 0) {
-          break;
+        ByteBuffer buf = bufs[i].getNioBuffer();
+        try {
+          final int written = bufferManager.forwardToWriteBuffer(buf);
+          if (written == 0) {
+            break;
+          }
+
+          bytesWritten += written;
+        } finally {
+          bufs[i].returnNioBuffer(buf);
         }
 
-        bytesWritten += written;
 
         if (bufs[i].hasRemaining()) {
           break;
@@ -552,10 +561,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       }
     }
     return totalBytesWritten;
-  }
-
-  static private ByteBuffer extractNioBuffer(TCByteBuffer buffer) {
-    return buffer.getNioBuffer();
   }
 
   private void putMessageImpl(TCNetworkMessage message) {
@@ -647,6 +652,12 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
         if (latch != null) {
           latch.countDown();
+        }
+        if (buffers != null) {
+          buffers.close();
+        }
+        if (bufferManager != null) {
+          bufferManager.dispose();
         }
       }
     };

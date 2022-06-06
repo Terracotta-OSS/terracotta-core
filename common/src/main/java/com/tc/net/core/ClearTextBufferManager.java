@@ -54,7 +54,7 @@ public class ClearTextBufferManager extends AbstractBufferManager {
   @Override
   public int sendFromBuffer() throws IOException {
     sendBuffer.flip();
-    int written = this.channel.write(getSendBuffer());
+    int written = this.channel.write(sendBuffer);
     sendBuffer.compact();
     if (written == -1) { throw new EOFException(); }
     return written;

@@ -49,6 +49,8 @@ public interface TCByteBuffer {
   public com.tc.bytes.TCByteBuffer rewind();
 
   public ByteBuffer getNioBuffer();
+  
+  public void returnNioBuffer(ByteBuffer buffer);
 
   public boolean isDirect();
 

@@ -64,6 +64,10 @@ public interface BufferManager {
   int recvToBuffer() throws IOException;
 
   void close() throws IOException;
+  
+  default void dispose() {
+    
+  }
 
   // These methods are used by the PipeSocket.
   int forwardFromReadBuffer(GatheringByteChannel gbc) throws IOException;

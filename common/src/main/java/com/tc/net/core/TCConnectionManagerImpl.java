@@ -41,6 +41,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 
 /**
@@ -52,6 +54,10 @@ import com.tc.text.PrettyPrintable;
 public class TCConnectionManagerImpl implements TCConnectionManager {
   protected static final TCConnection[] EMPTY_CONNECTION_ARRAY = new TCConnection[] {};
   protected static final TCListener[]   EMPTY_LISTENER_ARRAY   = new TCListener[] {};
+  private static final boolean                  MESSAGE_PACKUP             = TCPropertiesImpl
+                                                                                .getProperties()
+                                                                                .getBoolean(TCPropertiesConsts.TC_MESSAGE_PACKUP_ENABLED,
+                                                                                            false);
   protected static final Logger logger                 = LoggerFactory.getLogger(TCConnectionManager.class);
 
   private final TCCommImpl              comm;
@@ -66,7 +72,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   private final TCDirectByteBufferCache buffers = new TCDirectByteBufferCache(TCByteBufferFactory.getFixedBufferSize(), 16 * 1024);
 
   public TCConnectionManagerImpl() {
-    this("ConnectionMgr", 0, new CachingClearTextBufferManagerFactory());
+    this("ConnectionMgr", 0, MESSAGE_PACKUP ? new CachingClearTextBufferManagerFactory() : new ClearTextBufferManagerFactory());
   }
 
   public TCConnectionManagerImpl(String name, int workerCommCount, BufferManagerFactory bufferManagerFactory) {
