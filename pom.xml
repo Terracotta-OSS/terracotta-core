@@ -18,7 +18,7 @@
     <java.build.version>1.8</java.build.version>
     <java.build.vendor>zulu</java.build.vendor>
   </properties>
-  
+
   <modules>
       <module>appenders</module>
       <module>plugin</module>
@@ -97,7 +97,7 @@
       </plugin>
     </plugins>
   </build>
-  
+
   <distributionManagement>
     <repository>
       <id>terracotta-os-releases</id>
@@ -112,30 +112,8 @@
     </snapshotRepository>
   </distributionManagement>
 
-  <repositories>
-    <repository>
-      <id>terracotta-snapshots</id>
-      <url>http://www.terracotta.org/download/reflector/snapshots</url>
-    </repository>
-    <repository>
-      <id>terracotta-releases</id>
-      <url>http://www.terracotta.org/download/reflector/releases</url>
-    </repository>
-  </repositories>
-
-  <pluginRepositories>
-    <pluginRepository>
-      <id>terracotta-snapshots</id>
-      <url>http://www.terracotta.org/download/reflector/snapshots</url>
-    </pluginRepository>
-    <pluginRepository>
-      <id>terracotta-releases</id>
-      <url>http://www.terracotta.org/download/reflector/releases</url>
-    </pluginRepository>
-  </pluginRepositories>
-
   <scm>
     <connection>scm:git:https://github.com/Terracotta-OSS/tc-tripwire.git</connection>
     <developerConnection>scm:git:https://github.com/Terracotta-OSS/tc-tripwire.git</developerConnection>
-  </scm>  
+  </scm>
 </project>
