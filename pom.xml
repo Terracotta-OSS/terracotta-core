@@ -34,7 +34,7 @@ limitations under the License.
 
     <!-- External dependency versions for the project -->
     <ipc-eventbus.version>1.1.1</ipc-eventbus.version>
-    <terracotta-utilities.version>0.0.9</terracotta-utilities.version>
+    <terracotta-utilities.version>0.0.13</terracotta-utilities.version>
     <logback.version>1.2.3</logback.version>
     <junit.version>4.12</junit.version>
   </properties>
@@ -84,28 +84,6 @@ limitations under the License.
       <url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-snapshots</url>
     </snapshotRepository>
   </distributionManagement>
-
-  <repositories>
-    <repository>
-      <id>terracotta-snapshots</id>
-      <url>http://www.terracotta.org/download/reflector/snapshots</url>
-    </repository>
-    <repository>
-      <id>terracotta-releases</id>
-      <url>http://www.terracotta.org/download/reflector/releases</url>
-    </repository>
-  </repositories>
-
-  <pluginRepositories>
-    <pluginRepository>
-      <id>terracotta-snapshots</id>
-      <url>http://www.terracotta.org/download/reflector/snapshots</url>
-    </pluginRepository>
-    <pluginRepository>
-      <id>terracotta-releases</id>
-      <url>http://www.terracotta.org/download/reflector/releases</url>
-    </pluginRepository>
-  </pluginRepositories>
 
   <scm>
     <connection>scm:git:https://github.com/Terracotta-OSS/galvan.git</connection>

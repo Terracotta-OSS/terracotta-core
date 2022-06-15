@@ -6,6 +6,7 @@
   </appender>
 
   <logger name="org.terracotta.utilities.test.net.SystemLevelLocker" level="WARN"/>
+  <logger name="org.terracotta.utilities.test.net.PortManager" level="WARN"/>
 
   <root level="INFO">
     <appender-ref ref="STDOUT"/>

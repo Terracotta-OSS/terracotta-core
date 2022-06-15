@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -88,7 +89,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
         /*
          * Close and discard any previously obtained PortRefs now.
          */
-        portRefs.forEach(PortManager.PortRef::close);
+        portRefs.forEach(ref -> ref.close(EnumSet.of(PortManager.PortRef.CloseOption.NO_RELEASE_CHECK)));
         portRefs.clear();
 
         portRefs.add(portRef);
@@ -112,7 +113,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
       }
 
       if (portRefs.size() != number) {
-        portRefs.forEach(PortManager.PortRef::close);
+        portRefs.forEach(ref -> ref.close(EnumSet.of(PortManager.PortRef.CloseOption.NO_RELEASE_CHECK)));
         portRefs.clear();
         throw new IllegalStateException("Failed to obtain " + number + " consecutive ports within " + maxAttempts + " attempts");
       }
