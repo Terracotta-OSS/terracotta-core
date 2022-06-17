@@ -43,7 +43,7 @@
       <artifactId>tc-client</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
-    </dependency> 
+    </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>common-spi</artifactId>
@@ -108,17 +108,4 @@
       </plugin>
     </plugins>
   </reporting>
-
-  <repositories>
-    <repository>
-      <id>terracotta-repository</id>
-      <url>https://www.terracotta.org/download/reflector/releases</url>
-    </repository>
-  </repositories>
-  <pluginRepositories>
-    <pluginRepository>
-      <id>terracotta-repository</id>
-      <url>https://www.terracotta.org/download/reflector/releases</url>
-    </pluginRepository>
-  </pluginRepositories>
 </project>
