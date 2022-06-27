@@ -24,13 +24,14 @@ import com.tc.object.DistributedObjectClient;
 import com.tc.object.DistributedObjectClientFactory;
 import com.tc.net.protocol.transport.ClientConnectionErrorDetails;
 import com.tc.object.StandardClientBuilderFactory;
-import com.tc.util.concurrent.SetOnceFlag;
 import com.terracotta.connection.api.DetailedConnectionException;
 import java.io.IOException;
 
 import java.net.InetSocketAddress;
 import java.util.Properties;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.terracotta.exception.ConnectionClosedException;
 
 
@@ -38,7 +39,7 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   private final DistributedObjectClientFactory clientCreator;
   private final ClientConnectionErrorDetails errorListener = new ClientConnectionErrorDetails();
   private volatile ClientHandle       clientHandle;
-  private SetOnceFlag           isInitialized        = new SetOnceFlag();
+  private AtomicBoolean isInitialized = new AtomicBoolean();
 
   TerracottaInternalClientImpl(String scheme, Iterable<InetSocketAddress> serverAddresses, Properties props) {
     try {
@@ -60,7 +61,7 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
 
   @Override
   public void init() throws DetailedConnectionException {
-    if (!isInitialized.attemptSet()) { return; }
+    if (!isInitialized.compareAndSet(false, true)) { return; }
     DistributedObjectClient client = null;
     //Attach the internal collector in the listener
     errorListener.attachCollector();

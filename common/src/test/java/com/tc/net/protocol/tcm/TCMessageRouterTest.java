@@ -19,10 +19,10 @@
 package com.tc.net.protocol.tcm;
 
 import com.tc.net.protocol.tcm.msgs.PingMessage;
-import com.tc.util.concurrent.SetOnceFlag;
 
 import java.security.SecureRandom;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.TestCase;
@@ -93,7 +93,7 @@ public class TCMessageRouterTest extends TestCase {
   public void testConcurrency() throws Exception {
     final Random random = new SecureRandom();
     final AtomicReference<Throwable> error = new AtomicReference<Throwable>(null);
-    final SetOnceFlag stop = new SetOnceFlag();
+    final AtomicBoolean stop = new AtomicBoolean();
     final TCMessageSink nullSink = new TCMessageSink() {
       @Override
       public void putMessage(TCAction message) {
@@ -111,7 +111,7 @@ public class TCMessageRouterTest extends TestCase {
             for (int i = 0; i < 100; i++) {
               router.putMessage(msg);
             }
-            if (stop.isSet()) { return; }
+            if (stop.get()) { return; }
           }
         } catch (Throwable t) {
           setError(t, error);
@@ -131,7 +131,7 @@ public class TCMessageRouterTest extends TestCase {
                   router.unrouteMessageType(TCMessageType.PING_MESSAGE);
                 }
             }
-            if (stop.isSet()) { return; }
+            if (stop.get()) { return; }
           }
         } catch (Throwable t) {
           setError(t, error);
@@ -151,7 +151,7 @@ public class TCMessageRouterTest extends TestCase {
     }
     
     Thread.sleep(5000);
-    stop.set();
+    stop.set(true);
     
     for (Thread thread : threads) {
       thread.join(5000);

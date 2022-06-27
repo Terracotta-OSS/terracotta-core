@@ -19,7 +19,6 @@
 package com.tc.net.protocol.transport;
 
 import com.tc.net.protocol.tcm.ClientMessageChannel;
-import com.tc.util.concurrent.SetOnceFlag;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -32,7 +31,7 @@ public class ConnectionWatcher implements MessageTransportListener {
   private volatile ConnectionID connection;
   private final ClientConnectionEstablisher cce;
   private final ReferenceQueue<ClientMessageChannel> stopQueue = new ReferenceQueue<>();
-  private final SetOnceFlag stopped = new SetOnceFlag();
+  private volatile boolean stopped = false;
   private final WeakReference<ClientMessageChannel> targetHolder;
 
   /**
@@ -48,12 +47,12 @@ public class ConnectionWatcher implements MessageTransportListener {
     Reference<? extends ClientMessageChannel> target = stopQueue.poll();
     if (target != null) {
       if (target == targetHolder) {
-        stopped.set();
+        stopped = true;
         LOGGER.warn("unreferenced connection left open {} {}", targetHolder.get(), connection);
         cce.shutdown();
       }
     }
-    return stopped.isSet();
+    return stopped;
   }
 
   @Override

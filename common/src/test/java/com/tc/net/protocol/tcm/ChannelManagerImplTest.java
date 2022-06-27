@@ -20,8 +20,10 @@ package com.tc.net.protocol.tcm;
 
 import com.tc.test.TCTestCase;
 
-import com.tc.util.concurrent.SetOnceFlag;
 import org.mockito.Mockito;
+
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,15 +31,15 @@ import static org.mockito.Mockito.when;
 public class ChannelManagerImplTest extends TCTestCase {
 
   public void testNotifyRemoves() throws Exception {
-    SetOnceFlag reconnect = new SetOnceFlag();
-    ChannelManagerImpl impl = new ChannelManagerImpl(c->reconnect.isSet(), mock(ServerMessageChannelFactory.class));
+    AtomicBoolean reconnect = new AtomicBoolean();
+    ChannelManagerImpl impl = new ChannelManagerImpl(c->reconnect.get(), mock(ServerMessageChannelFactory.class));
     ChannelEvent event = mock(ChannelEvent.class);
     MessageChannel channel = mock(MessageChannel.class);
     when(event.getChannel()).thenReturn(channel);
     when(event.getType()).thenReturn(ChannelEventType.TRANSPORT_DISCONNECTED_EVENT);
     impl.notifyChannelEvent(event);
     verify(channel, Mockito.never()).close();
-    reconnect.set();
+    reconnect.set(true);
     impl.notifyChannelEvent(event);
     verify(channel).close();
   }

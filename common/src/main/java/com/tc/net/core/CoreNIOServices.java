@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.exception.TCInternalError;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionErrorEvent;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;
@@ -30,7 +29,6 @@ import com.tc.net.core.event.TCListenerEvent;
 import com.tc.net.core.event.TCListenerEventListener;
 import com.tc.util.Assert;
 import com.tc.util.Util;
-import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.runtime.Os;
 
 import java.io.IOException;
@@ -72,7 +70,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
   private final SocketParams                   socketParams;
   private final CommThread                     readerComm;
   private final CommThread                     writerComm;
-  private final SetOnceFlag                    stopRequested = new SetOnceFlag();
+  private final AtomicBoolean                  stopRequested = new AtomicBoolean();
 
   // maintains weight of all L1 Connections which is handled by this WorkerComm
   private final AtomicInteger                                  clientWeights = new AtomicInteger();
@@ -98,7 +96,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
   }
 
   public void requestStop() {
-    if (stopRequested.attemptSet()) {
+    if (stopRequested.compareAndSet(false, true)) {
       readerComm.requestStop();
       writerComm.requestStop();
     }
@@ -789,7 +787,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     }
 
     private boolean isStopRequested() {
-      return stopRequested.isSet();
+      return stopRequested.get();
     }
 
     private void modifyInterest(InterestRequest request) {

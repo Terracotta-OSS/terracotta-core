@@ -65,7 +65,6 @@ import com.tc.services.ClientMessageSender;
 import com.tc.services.EntityMessengerService;
 import com.tc.util.Assert;
 import com.tc.util.SparseList;
-import com.tc.util.concurrent.SetOnceFlag;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -78,6 +77,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
@@ -706,7 +706,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
 
   private class InvokeHandler extends AbstractServerEntityRequestResponse implements ResultCapture, StatisticsCapture {
     private Supplier<ActivePassiveAckWaiter> waiter;
-    private final SetOnceFlag lastSent = new SetOnceFlag();
+    private final AtomicBoolean lastSent = new AtomicBoolean();
     private final boolean sendReceived;
     private final boolean holdResultForRetired;
     private byte[] heldResult;
@@ -769,7 +769,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     }
 
     private void sendResponse(byte[] result) {
-      if (lastSent.attemptSet()) {
+      if (lastSent.compareAndSet(false, true)) {
         if (getNodeID().isNull()) {
           super.complete(result);
         } else {
@@ -785,7 +785,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     }
 
     private void sendFailure(ServerException e) {
-      if (!lastSent.attemptSet()) {
+      if (!lastSent.compareAndSet(false, true)) {
         if (heldResult == null) {
           // no held result.  failure already sent
           return;
@@ -804,7 +804,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       this.waiter.get().runWhenCompleted(()->{
         if (!getNodeID().isNull()) {
           stats[StatType.SERVER_RETIRED.serverSpot()] = System.nanoTime();
-          Assert.assertTrue(lastSent.isSet());
+          Assert.assertTrue(lastSent.get());
           safeGetChannel(getNodeID()).ifPresent(c -> {
             if (c.getAttachment("SendStats") != null) {
               addSequentially(getNodeID(), addTo -> addTo.addStats(InvokeHandler.this.getTransaction(), stats));

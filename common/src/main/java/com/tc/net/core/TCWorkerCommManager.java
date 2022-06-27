@@ -24,12 +24,12 @@ import org.slf4j.LoggerFactory;
 import com.tc.logging.LossyTCLogger;
 import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
 import com.tc.util.Assert;
-import com.tc.util.concurrent.SetOnceFlag;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 
@@ -46,8 +46,8 @@ public class TCWorkerCommManager {
 
   private final int               totalWorkerComm;
   private final CoreNIOServices[] workerCommThreads;
-  private final SetOnceFlag       started            = new SetOnceFlag();
-  private final SetOnceFlag       stopped            = new SetOnceFlag();
+  private final AtomicBoolean       started            = new AtomicBoolean();
+  private final AtomicBoolean       stopped            = new AtomicBoolean();
   
   private boolean paused = false;
 
@@ -96,7 +96,7 @@ public class TCWorkerCommManager {
   }
 
   public synchronized void start() {
-    if (this.started.attemptSet()) {
+    if (this.started.compareAndSet(false, true)) {
       for (CoreNIOServices workerCommThread : this.workerCommThreads) {
         workerCommThread.start();
       }
@@ -106,9 +106,9 @@ public class TCWorkerCommManager {
   }
 
   public synchronized void stop() {
-    if (!this.started.isSet()) { return; }
+    if (!this.started.get()) { return; }
 
-    if (this.stopped.attemptSet()) {
+    if (this.stopped.compareAndSet(false, true)) {
       for (int i = 0; i < this.totalWorkerComm; i++) {
         this.workerCommThreads[i].requestStop();
       }

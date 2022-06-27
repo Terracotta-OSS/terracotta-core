@@ -22,9 +22,9 @@ import org.slf4j.Logger;
 
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.TCNetworkMessage;
-import com.tc.util.concurrent.SetOnceFlag;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 // calls each event only once
 public class TCConnectionEventCaller {
@@ -33,10 +33,10 @@ public class TCConnectionEventCaller {
   private static final int  ERROR        = 3;
   private static final int  CLOSE        = 4;
 
-  private final SetOnceFlag connectEvent = new SetOnceFlag();
-  private final SetOnceFlag eofEvent     = new SetOnceFlag();
-  private final SetOnceFlag errorEvent   = new SetOnceFlag();
-  private final SetOnceFlag closeEvent   = new SetOnceFlag();
+  private final AtomicBoolean connectEvent = new AtomicBoolean();
+  private final AtomicBoolean eofEvent     = new AtomicBoolean();
+  private final AtomicBoolean errorEvent   = new AtomicBoolean();
+  private final AtomicBoolean closeEvent   = new AtomicBoolean();
 
   private final Logger logger;
 
@@ -46,28 +46,28 @@ public class TCConnectionEventCaller {
 
   public void fireErrorEvent(List<TCConnectionEventListener> eventListeners, TCConnection conn, Exception exception,
                              TCNetworkMessage context) {
-    if (errorEvent.attemptSet()) {
+    if (errorEvent.compareAndSet(false, true)) {
       final TCConnectionErrorEvent event = new TCConnectionErrorEvent(conn, exception, context);
       fireEvent(eventListeners, event, logger, ERROR);
     }
   }
 
   public void fireConnectEvent(List<TCConnectionEventListener> eventListeners, TCConnection conn) {
-    if (connectEvent.attemptSet()) {
+    if (connectEvent.compareAndSet(false, true)) {
       final TCConnectionEvent event = new TCConnectionEvent(conn);
       fireEvent(eventListeners, event, logger, CONNECT);
     }
   }
 
   public void fireEndOfFileEvent(List<TCConnectionEventListener> eventListeners, TCConnection conn) {
-    if (eofEvent.attemptSet()) {
+    if (eofEvent.compareAndSet(false, true)) {
       final TCConnectionEvent event = new TCConnectionEvent(conn);
       fireEvent(eventListeners, event, logger, EOF);
     }
   }
 
   public void fireCloseEvent(List<TCConnectionEventListener> eventListeners, TCConnection conn) {
-    if (closeEvent.attemptSet()) {
+    if (closeEvent.compareAndSet(false, true)) {
       final TCConnectionEvent event = new TCConnectionEvent(conn);
       fireEvent(eventListeners, event, logger, CLOSE);
     }

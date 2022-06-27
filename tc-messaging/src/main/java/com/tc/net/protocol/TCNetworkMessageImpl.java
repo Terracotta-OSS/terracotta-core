@@ -25,9 +25,9 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.TCInternalError;
 import com.tc.util.Assert;
 import com.tc.util.HexDump;
-import com.tc.util.concurrent.SetOnceFlag;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Base class for network messages
@@ -121,7 +121,7 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   protected final String toString0() {
     StringBuffer buf = new StringBuffer();
     buf.append("Message Class: ").append(getClass().getName()).append("\n");
-    buf.append("Sealed: ").append(sealed.isSet()).append(", ");
+    buf.append("Sealed: ").append(sealed.get()).append(", ");
     buf.append("Header Length: ").append(getHeaderLength()).append(", ");
     buf.append("Data Length: ").append(getDataLength()).append(", ");
     buf.append("Total Length: ").append(getTotalLength()).append("\n");
@@ -197,12 +197,12 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
 
   @Override
   public final boolean isSealed() {
-    return sealed.isSet();
+    return sealed.get();
   }
 
   @Override
   public final void seal() {
-    if (sealed.attemptSet()) {
+    if (sealed.compareAndSet(false, true)) {
       final int size = 1 + payloadData.length;
       entireMessageData = new TCByteBuffer[size];
       entireMessageData[0] = header.getDataBuffer();
@@ -229,7 +229,7 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   }
 
   private void fireCallbacks() {
-    if (callbackFired.attemptSet()) {
+    if (callbackFired.compareAndSet(false, true)) {
       try {
         callbacks.forEach(Runnable::run);
       } catch (Exception e) {
@@ -248,11 +248,11 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   }
 
   private void checkNotSealed() {
-    if (sealed.isSet()) { throw new IllegalStateException("Message is sealed"); }
+    if (sealed.get()) { throw new IllegalStateException("Message is sealed"); }
   }
 
-  private final SetOnceFlag           sealed             = new SetOnceFlag();
-  private final SetOnceFlag           callbackFired  = new SetOnceFlag();
+  private final AtomicBoolean         sealed = new AtomicBoolean();
+  private final AtomicBoolean         callbackFired = new AtomicBoolean();
   private static final TCByteBuffer[] EMPTY_BUFFER_ARRAY = {};
   private final TCNetworkHeader       header;
   private TCByteBuffer[]              payloadData;

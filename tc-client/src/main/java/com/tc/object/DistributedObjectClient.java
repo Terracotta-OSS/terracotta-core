@@ -79,8 +79,6 @@ import com.tc.util.Assert;
 import com.tc.util.CommonShutDownHook;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
-import com.tc.util.concurrent.SetOnceFlag;
-import com.tc.util.concurrent.SetOnceRef;
 import com.tc.entity.DiagnosticResponse;
 import com.tc.entity.LinearVoltronEntityMultiResponse;
 import com.tc.entity.ReplayVoltronEntityMultiResponse;
@@ -108,6 +106,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import com.tc.net.protocol.tcm.TCAction;
 import com.tc.productinfo.ProductInfo;
@@ -136,10 +136,10 @@ public class DistributedObjectClient {
 
   private final ClientShutdownManager                shutdownManager = new ClientShutdownManager(this);
 
-  private final SetOnceFlag                          clientStopped                       = new SetOnceFlag();
-  private final SetOnceFlag                          connectionMade                      = new SetOnceFlag();
-  private final SetOnceRef<Thread>                   connectionThread                    = new SetOnceRef<>();
-  private final SetOnceRef<Exception>                exceptionMade                       = new SetOnceRef<>();
+  private final AtomicBoolean                        clientStopped                       = new AtomicBoolean();
+  private final AtomicBoolean                        connectionMade                      = new AtomicBoolean();
+  private final AtomicReference<Thread>              connectionThread                    = new AtomicReference<>();
+  private final AtomicReference<Exception>           exceptionMade                       = new AtomicReference<>();
  
   private ClientEntityManager clientEntityManager;
   private final StageManager communicationStageManager;
@@ -177,19 +177,23 @@ public class DistributedObjectClient {
   }
 
   public boolean isShutdown() {
-    return this.clientStopped.isSet();
+    return this.clientStopped.get();
   }
 
   public boolean connectFor(long timeout, TimeUnit units) throws InterruptedException {
     ClientMessageChannel client = internalStart(getSocketConnectTimeout());
     setClientMessageChannel(client);
-    connectionThread.set(new Thread(threadGroup, ()->{
-          while (!connectionMade.isSet() && !clientStopped.isSet() && !exceptionMade.isSet()) {
+    Thread thread;
+    if (connectionThread.compareAndSet(null, thread = new Thread(threadGroup, ()->{
+          while (!connectionMade.get() && !clientStopped.get() && exceptionMade.get() == null) {
             connectionSequence(client);
           }
           //  don't reset interrupted, thread is done
-        }, "Connection Maker - " + uuid));
-      connectionThread.get().start();
+        }, "Connection Maker - " + uuid))) {
+      thread.start();
+    } else {
+      throw new IllegalStateException("Connection thread already set!");
+    }
 
     try {
       return waitForConnection(timeout, units);
@@ -348,12 +352,12 @@ public class DistributedObjectClient {
       waitForHandshake(clientChannel);
       connectionMade();
     } catch (RuntimeException | InterruptedException runtime) {
-      exceptionMade.set(runtime);
+      exceptionMade.compareAndSet(null, runtime);
     }
   }
 
   private void connectionMade() {
-    connectionMade.attemptSet();
+    connectionMade.compareAndSet(false, true);
   }
 
   public void addShutdownHook(Runnable r) {
@@ -361,16 +365,17 @@ public class DistributedObjectClient {
   }
 
   private boolean waitForConnection(long timeout, TimeUnit units) throws InterruptedException {
-    if (!connectionThread.isSet()) {
+    Thread thread = connectionThread.get();
+    if (thread == null) {
       throw new IllegalStateException("not started");
+    } else {
+      thread.join(units.toMillis(timeout));
     }
-    connectionThread.get().join(units.toMillis(timeout));
 
-    if (exceptionMade.isSet()) {
-      Exception exp = exceptionMade.get();
-      throw new RuntimeException(exp);
-    }
-    if (!connectionMade.isSet()) {
+    Exception exception = exceptionMade.get();
+    if (exception != null) {
+      throw new RuntimeException(exception);
+    } else if (!connectionMade.get()) {
       shutdown();
       return false;
     } else {
@@ -379,7 +384,7 @@ public class DistributedObjectClient {
   }
 
   private void openChannel(ClientMessageChannel channel) throws InterruptedException {
-    while (!clientStopped.isSet()) {
+    while (!clientStopped.get()) {
       try {
         DSO_LOGGER.debug("Trying to open channel....");
         channel.open(serverAddresses);
@@ -550,14 +555,14 @@ public class DistributedObjectClient {
     if (this.threadGroup != null) {
       final long timeout = TCPropertiesImpl.getProperties()
                              .getLong(TCPropertiesConsts.L1_SHUTDOWN_THREADGROUP_GRACETIME);
-      SetOnceFlag interrupted = new SetOnceFlag();
+      AtomicBoolean interrupted = new AtomicBoolean();
       try {
-        if (!threadGroup.retire(timeout, e->interrupted.attemptSet())) {
+        if (!threadGroup.retire(timeout, e->interrupted.set(true))) {
             logger.warn("Timed out waiting for TC thread group threads to die for connection " + name + "/" + uuid + " - probable shutdown memory leak\n"
                      + " in thread group " + this.threadGroup);
             threadGroup.printLiveThreads(logger::warn);
             ThreadUtil.executeInThread(threadGroup.getParent(), ()->{
-            if (!threadGroup.retire(timeout, e->interrupted.attemptSet())) {
+            if (!threadGroup.retire(timeout, e->interrupted.set(true))) {
               threadGroup.interrupt();
             }
           }, name + " - Connection Reaper", true);
@@ -565,7 +570,7 @@ public class DistributedObjectClient {
       } catch (final Throwable t) {
         logger.error("Error destroying TC thread group", t);
       } finally {
-        if (interrupted.isSet()) {
+        if (interrupted.get()) {
           Thread.currentThread().interrupt();
         }
       }
@@ -576,10 +581,11 @@ public class DistributedObjectClient {
   }
 
   public void shutdown() {
-    if (connectionThread.isSet()) {
-      connectionThread.get().interrupt();
+    Thread thread = connectionThread.get();
+    if (thread != null) {
+      thread.interrupt();
     }
-    if (clientStopped.attemptSet()) {
+    if (clientStopped.compareAndSet(false, true)) {
       synchronized (clientStopped) {
         clientStopped.notifyAll();
       }

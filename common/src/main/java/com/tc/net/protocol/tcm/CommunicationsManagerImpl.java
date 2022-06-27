@@ -57,7 +57,6 @@ import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.net.core.ProductID;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
-import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -69,6 +68,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
@@ -80,7 +80,7 @@ import java.util.function.Predicate;
 public class CommunicationsManagerImpl implements CommunicationsManager {
   private static final Logger logger = LoggerFactory.getLogger(CommunicationsManager.class);
 
-  private final SetOnceFlag                                                    shutdown                  = new SetOnceFlag();
+  private final AtomicBoolean                                                  shutdown                  = new AtomicBoolean();
   private final Set<NetworkListener>                                           listeners                 = new HashSet<NetworkListener>();
   private final ReentrantLock                                                  licenseLock               = new ReentrantLock();
   private final TCConnectionManager                                            connectionManager;
@@ -198,12 +198,12 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
 
   @Override
   public boolean isInShutdown() {
-    return shutdown.isSet();
+    return shutdown.get();
   }
 
   @Override
   public void shutdown() {
-    if (shutdown.attemptSet()) {
+    if (shutdown.compareAndSet(false, true)) {
       connectionHealthChecker.stop();
       NetworkListener[] col = getAllListeners();
       for (NetworkListener l : col) {
@@ -293,7 +293,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                          Predicate<MessageChannel> transportDisconnectRemovesChannel,
                                          ConnectionIDFactory connectionIdFactory, boolean reuseAddr,
                                          WireProtocolMessageSink wireProtoMsgSnk, RedirectAddressProvider activeProvider, Predicate<MessageTransport> validation) {
-    if (shutdown.isSet()) { throw new IllegalStateException("Comms manger shut down"); }
+    if (shutdown.get()) { throw new IllegalStateException("Comms manger shut down"); }
 
     // The idea here is that someday we might want to pass in a custom channel factory. The reason you might want to do
     // that is so that you can control the actual class of the channels created off this listener

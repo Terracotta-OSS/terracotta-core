@@ -22,13 +22,13 @@ import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.net.ServerID;
 import com.tc.object.session.SessionID;
 import com.tc.util.Assert;
-import com.tc.util.concurrent.SetOnceFlag;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Test;
 
@@ -230,17 +230,17 @@ public class ActivePassiveAckWaiterTest {
     ServerID node1 = mock(ServerID.class);
     map.put(node1, onePassive);
     
-    SetOnceFlag checkMark = new SetOnceFlag();
+    AtomicBoolean checkMark = new AtomicBoolean();
     
     ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(map, passives, null);
-    waiter.runWhenCompleted(checkMark::set);
+    waiter.runWhenCompleted(() -> checkMark.set(true));
     Interlock interlock = new Interlock(1);
     LockStep lockStep = new LockStep(waiter, interlock);
     lockStep.start();
     interlock.waitOnStarts();
     boolean waiterIsDone = waiter.failedToSendToPassive(onePassive);
     Assert.assertTrue(waiterIsDone);
-    Assert.assertTrue(checkMark.isSet());
+    Assert.assertTrue(checkMark.get());
     interlock.waitOnCompletes();
     lockStep.join();
   }

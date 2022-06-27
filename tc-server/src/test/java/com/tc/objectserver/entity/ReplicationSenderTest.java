@@ -39,13 +39,14 @@ import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.handler.ReplicationSendingAction;
 import com.tc.util.Assert;
-import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -275,35 +276,35 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_END), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
-    SetOnceFlag started = new SetOnceFlag();
-    SetOnceFlag finished = new SetOnceFlag();
+    AtomicBoolean started = new AtomicBoolean();
+    AtomicBoolean finished = new AtomicBoolean();
     origin.stream().forEach(activity-> {
         SyncReplicationActivity.ActivityType activityType = activity.getActivityType();
         if (SyncReplicationActivity.ActivityType.SYNC_BEGIN == activityType) {
-          started.set();
+          started.set(true);
         } else if (SyncReplicationActivity.ActivityType.SYNC_END == activityType) {
-          finished.set();
+          finished.set(true);
         }
         // We normally don't send the local flush operations.
         if (SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE != activityType) {
-          SetOnceFlag sent = new SetOnceFlag();
-          SetOnceFlag notsent = new SetOnceFlag();
+          AtomicBoolean sent = new AtomicBoolean();
+          AtomicBoolean notsent = new AtomicBoolean();
           if (SyncReplicationActivity.ActivityType.SYNC_START == activityType) {
             this.testSender.addPassive(node, session, 1, activity);
-            sent.set();
+            sent.set(true);
           } else {
             this.testSender.replicateMessage(session, activity, (didSend)->{
               if (didSend) {
-                sent.set();
+                sent.set(true);
               } else {
-                notsent.set();
+                notsent.set(true);
               }
             });
    
           }
-          Assert.assertEquals(started.isSet() + " " + finished.isSet(), started.isSet() && !finished.isSet(), testSender.isSyncOccuring(session));
+          Assert.assertEquals(started.get() + " " + finished.get(), started.get() && !finished.get(), testSender.isSyncOccuring(session));
           if (!testSender.isSyncOccuring(session) && (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER != activityType)) {
-            Assert.assertTrue(activity, sent.isSet());
+            Assert.assertTrue(activity, sent.get());
           }
         }
     });

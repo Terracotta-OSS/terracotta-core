@@ -18,7 +18,6 @@
  */
 package com.tc.bytes;
 
-import com.tc.util.concurrent.SetOnceFlag;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
@@ -29,6 +28,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  *
@@ -40,7 +40,7 @@ public class TCDirectByteBufferCache extends AbstractQueue<TCByteBuffer> {
 
   private final int size;
   private final Queue<TCByteBuffer> localpool;
-  private final SetOnceFlag closed = new SetOnceFlag();
+  private final AtomicBoolean closed = new AtomicBoolean();
 
   public TCDirectByteBufferCache() {
     this(TCByteBufferFactory.getFixedBufferSize());
@@ -92,13 +92,13 @@ public class TCDirectByteBufferCache extends AbstractQueue<TCByteBuffer> {
     if (e instanceof TCByteBufferImpl) {
       ((TCByteBufferImpl)e).verifyLocked();
     }
-    return (closed.isSet() || !localpool.offer(e)) ? parent.offer(e) : true;
+    return (closed.get() || !localpool.offer(e)) ? parent.offer(e) : true;
   }
 
   @Override
   public TCByteBuffer poll() {
     processReferencePool();
-    if (closed.isSet()) {
+    if (closed.get()) {
       return null;
     }
     TCByteBuffer buffer = localpool.poll();
@@ -129,7 +129,7 @@ public class TCDirectByteBufferCache extends AbstractQueue<TCByteBuffer> {
   }
 
   public void close() {
-    if (closed.attemptSet()) {
+    if (closed.compareAndSet(false, true)) {
       while (!localpool.isEmpty()) {
         parent.offer(localpool.remove());
       }

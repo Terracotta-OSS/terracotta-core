@@ -36,7 +36,6 @@ import javax.management.ObjectName;
 import static com.tc.l2.state.ConsistencyMBean.CONSISTENCY_BEAN_NAME;
 
 import com.tc.objectserver.impl.Topology;
-import com.tc.util.concurrent.SetOnceFlag;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -55,7 +54,7 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
   private final int peerServers;
   private final ConsistencyManager consistencyManager;
   private final Set<NodeID> activePeers = new HashSet<>();
-  private final SetOnceFlag disable = new SetOnceFlag();
+  private volatile boolean disable = false;
 
   public SafeStartupManagerImpl(boolean consistentStartup, int peerServers, ConsistencyManager consistencyManager) {
     this.consistentStartup = consistentStartup;
@@ -71,7 +70,7 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
     map.put("allowTransition", allowTransition);
     map.put("suspended", suspended);
     map.put("peerServers", new ArrayList<>(peerServers).stream().map(n->n.toString()).collect(Collectors.toList()));
-    map.put("disable", disable.isSet());
+    map.put("disable", disable);
     map.put("delegate", consistencyManager.getStateMap());
     return map;
   }
@@ -98,9 +97,9 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
     if (newMode == Transition.CONNECT_TO_ACTIVE) {
       // disable this mode since we have already tried to connect to an existing active.
       // safe startup mode no longer applies
-      disable.attemptSet();
+      disable = true;
       suspended = false;
-    } else if (!disable.isSet() && consistentStartup && mode.isStartup() && newMode == Transition.MOVE_TO_ACTIVE) {
+    } else if (!disable && consistentStartup && mode.isStartup() && newMode == Transition.MOVE_TO_ACTIVE) {
       if (activePeers.size() == peerServers) {
         CONSOLE.info("Action:{} allowed because all servers are connected", newMode);
         suspended = false;

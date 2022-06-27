@@ -27,13 +27,14 @@ import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportListener;
 import com.tc.util.Assert;
-import com.tc.util.concurrent.SetOnceFlag;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ServerNetworkStackHarness extends LayeredNetworkStackHarness {
   protected MessageTransport                transport;
   protected MessageChannelInternal          channel;
   private final ServerMessageChannelFactory channelFactory;
-  private final SetOnceFlag                 finalized = new SetOnceFlag();
+  private final AtomicBoolean               finalized = new AtomicBoolean();
 
   public ServerNetworkStackHarness(ServerMessageChannelFactory channelFactory, MessageTransport transport) {
     this.channelFactory = channelFactory;
@@ -45,7 +46,7 @@ public class ServerNetworkStackHarness extends LayeredNetworkStackHarness {
    */
   @Override
   public final MessageTransport attachNewConnection(TCConnection connection) throws IllegalReconnectException {
-    Assert.eval("Attempt to connect a transport to a stack that hasn't been finalized.", finalized.isSet());
+    Assert.eval("Attempt to connect a transport to a stack that hasn't been finalized.", finalized.get());
     this.transport.attachNewConnection(connection);
     return this.transport;
   }
@@ -55,7 +56,7 @@ public class ServerNetworkStackHarness extends LayeredNetworkStackHarness {
    */
   @Override
   public final void finalizeStack() {
-    if (finalized.attemptSet()) {
+    if (finalized.compareAndSet(false, true)) {
       Assert.assertNotNull(this.transport);
       Assert.assertNotNull(this.channelFactory);
       this.channel = channelFactory.createNewChannel(new ChannelID(transport.getConnectionID().getChannelID()));

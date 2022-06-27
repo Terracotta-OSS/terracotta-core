@@ -29,7 +29,6 @@ import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.core.event.TCListenerEvent;
 import com.tc.net.core.event.TCListenerEventListener;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
-import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -39,6 +38,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.properties.TCPropertiesConsts;
@@ -63,7 +63,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   private final TCCommImpl              comm;
   private final Set<TCConnection>       connections            = new HashSet<>();
   private final Set<TCListener>         listeners              = new HashSet<>();
-  private final SetOnceFlag             shutdown               = new SetOnceFlag();
+  private final AtomicBoolean           shutdown               = new AtomicBoolean();
   private final ConnectionEvents        connEvents;
   private final ListenerEvents          listenerEvents;
   private final SocketParams            socketParams;
@@ -235,7 +235,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   
   @Override
   public final synchronized void shutdown() {
-    if (shutdown.attemptSet()) {
+    if (shutdown.compareAndSet(false, true)) {
       closeAllListeners();
       asynchCloseAllConnections();
       this.buffers.close();
@@ -266,7 +266,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   }
 
   private void checkShutdown() throws IOException {
-    if (shutdown.isSet()) { throw new IOException("connection manager shutdown"); }
+    if (shutdown.get()) { throw new IOException("connection manager shutdown"); }
   }
 
   static class ConnectionEvents implements TCConnectionEventListener {

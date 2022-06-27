@@ -33,15 +33,15 @@ import com.tc.net.protocol.transport.MessageTransportInitiator;
 import com.tc.net.protocol.transport.MessageTransportListener;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
-import com.tc.util.concurrent.SetOnceFlag;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ClientNetworkStackHarness extends LayeredNetworkStackHarness {
   protected ClientMessageTransport          transport;
   protected ClientMessageChannel            channel;
   private final MessageTransportFactory     transportFactory;
-  private final SetOnceFlag                 finalized = new SetOnceFlag();
+  private final AtomicBoolean               finalized = new AtomicBoolean();
 
   public ClientNetworkStackHarness(MessageTransportFactory transportFactory, ClientMessageChannel channel) {
     this.transportFactory = transportFactory;
@@ -61,7 +61,7 @@ public class ClientNetworkStackHarness extends LayeredNetworkStackHarness {
    */
   @Override
   public final void finalizeStack() {
-    if (finalized.attemptSet()) {
+    if (finalized.compareAndSet(false, true)) {
       Assert.assertNotNull(this.channel);
       Assert.assertNotNull(this.transportFactory);
       this.transport = transportFactory.createNewTransport();

@@ -31,11 +31,11 @@ import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.TCNetworkMessageImpl;
 import com.tc.util.AbstractIdentifier;
 import com.tc.util.Assert;
-import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author teck
@@ -44,8 +44,8 @@ public abstract class TCActionImpl implements TCAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TCActionImpl.class);
   private final MessageMonitor          monitor;
-  private final SetOnceFlag             processed         = new SetOnceFlag();
-  private final SetOnceFlag             isSent            = new SetOnceFlag();
+  private final AtomicBoolean           processed = new AtomicBoolean();
+  private final AtomicBoolean           isSent = new AtomicBoolean();
   private final TCMessageType           type;
   private final MessageChannel          channel;
   private final boolean                 isOutgoing;
@@ -138,7 +138,7 @@ public abstract class TCActionImpl implements TCAction {
    */
   @Override
   public synchronized void hydrate() throws IOException, UnknownNameException {
-    if (processed.attemptSet()) {
+    if (processed.compareAndSet(false, true)) {
       try {
         final int count = bbis.readInt();
         if (count < 0) { throw new IOException("negative NV count: " + count); }
@@ -319,7 +319,7 @@ public abstract class TCActionImpl implements TCAction {
    */
   @Override
   public boolean send() {
-    if (isSent.attemptSet()) {
+    if (isSent.compareAndSet(false, true)) {
       TCNetworkMessage msg = convertToNetworkMessage();
       try {
         basicSend(msg);

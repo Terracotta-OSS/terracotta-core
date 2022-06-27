@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.util.Assert;
-import com.tc.util.concurrent.SetOnceFlag;
 import java.net.InetSocketAddress;
 
 import java.util.Iterator;
@@ -32,6 +31,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -46,8 +46,8 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
   private final Timer                           monitorThread;
   private final HealthCheckerMonitorThreadEngine monitorThreadEngine;
 
-  private final SetOnceFlag                      shutdown = new SetOnceFlag();
-  private final SetOnceFlag                      started  = new SetOnceFlag();
+  private final AtomicBoolean                    shutdown = new AtomicBoolean();
+  private final AtomicBoolean                    started  = new AtomicBoolean();
 
   public ConnectionHealthCheckerImpl(HealthCheckerConfig healthCheckerConfig, TCConnectionManager connManager) {
     Assert.assertNotNull(healthCheckerConfig);
@@ -66,7 +66,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
 
   @Override
   public void start() {
-    if (started.attemptSet() && !shutdown.isSet()) {
+    if (started.compareAndSet(false, true) && !shutdown.get()) {
       try {
         monitorThread.scheduleAtFixedRate(monitorThreadEngine, 0L, monitorThreadEngine.pingInterval);
       } catch (IllegalStateException state) {
@@ -81,7 +81,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
 
   @Override
   public void stop() {
-    if (shutdown.attemptSet()) {
+    if (shutdown.compareAndSet(false, true)) {
       monitorThreadEngine.stop();
       monitorThread.cancel();
 // don't bother to join the monitorThread here.  shutdown should take care of all the
@@ -93,7 +93,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
   }
 
   public boolean isRunning() {
-    return started.isSet() && !shutdown.isSet();
+    return started.get() && !shutdown.get();
   }
 
   @Override
@@ -149,7 +149,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     private final long                pingInterval;
     private final int                 pingProbes;
     private final long                checkTimeInterval;
-    private final SetOnceFlag         stop          = new SetOnceFlag();
+    private final AtomicBoolean       stop = new AtomicBoolean();
     private final HealthCheckerConfig config;
     private final Logger logger;
     private final TCConnectionManager connectionManager;
@@ -193,7 +193,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     }
 
     public void stop() {
-      stop.attemptSet();
+      stop.compareAndSet(false, true);
       this.cancel();
     }
 

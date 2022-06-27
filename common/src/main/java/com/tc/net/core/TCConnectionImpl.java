@@ -38,8 +38,6 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
-import com.tc.util.concurrent.SetOnceFlag;
-import com.tc.util.concurrent.SetOnceRef;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -62,6 +60,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import com.tc.net.protocol.TCProtocolAdaptor;
 
@@ -97,10 +96,10 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private final List<TCConnectionEventListener> eventListeners              = new CopyOnWriteArrayList<TCConnectionEventListener>();
   private final TCProtocolAdaptor               protocolAdaptor;
   private final AtomicBoolean                   isSocketEndpoint            = new AtomicBoolean(false);
-  private final SetOnceFlag                     closed                      = new SetOnceFlag();
+  private final AtomicBoolean                   closed                      = new AtomicBoolean(false);
   private final AtomicBoolean                   connected                   = new AtomicBoolean(false);
-  private final SetOnceRef<InetSocketAddress>     localSocketAddress          = new SetOnceRef<>();
-  private final SetOnceRef<InetSocketAddress>     remoteSocketAddress         = new SetOnceRef<>();
+  private final AtomicReference<InetSocketAddress> localSocketAddress = new AtomicReference<>();
+  private final AtomicReference<InetSocketAddress> remoteSocketAddress = new AtomicReference<>();
   private final SocketParams                    socketParams;
   private final AtomicLong                      totalRead                   = new AtomicLong(0);
   private final AtomicLong                      totalWrite                  = new AtomicLong(0);
@@ -194,7 +193,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   }
 
   private void closeImpl(Runnable callback) {
-    Assert.assertTrue(this.closed.isSet());
+    Assert.assertTrue(this.closed.get());
     this.transportEstablished.set(false);
     try {
       if (this.bufferManager != null) {
@@ -405,7 +404,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private void buildWriteContextsFromMessages() {
     TCNetworkMessage messagesToWrite[];
     synchronized (this.writeMessages) {
-      if (this.closed.isSet()) { return; }
+      if (this.closed.get()) { return; }
       messagesToWrite = this.writeMessages.toArray(new TCNetworkMessage[this.writeMessages.size()]);
       this.writeMessages.clear();
     }
@@ -554,7 +553,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     }
 
     synchronized (this.writeMessages) {
-      if (this.closed.isSet()) { return totalBytesWritten; }
+      if (this.closed.get()) { return totalBytesWritten; }
 
       if (this.writeMessages.isEmpty() && this.writeContexts.isEmpty()) {
         this.commWorker.removeWriteInterest(this, this.channel);
@@ -579,7 +578,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     final int msgCount;
 
     synchronized (this.writeMessages) {
-      if (this.closed.isSet()) { return; }
+      if (this.closed.get()) { return; }
       this.writeMessages.addLast(message);
       msgCount = this.writeMessages.size();
       newData = (msgCount == 1);
@@ -611,7 +610,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
   @Override
   public final void asynchClose() {
-    if (this.closed.attemptSet()) {
+    if (this.closed.compareAndSet(false, true)) {
       closeImpl(createCloseCallback(null));
     } else {
       this.parent.removeConnection(this);
@@ -622,7 +621,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   public final boolean close(long timeout) {
     if (timeout <= 0) { throw new IllegalArgumentException("timeout cannot be less than or equal to zero"); }
 
-    if (this.closed.attemptSet()) {
+    if (this.closed.compareAndSet(false, true)) {
       final CountDownLatch latch = new CountDownLatch(1);
       closeImpl(createCloseCallback(latch));
       try {
@@ -665,7 +664,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
   @Override
   public final boolean isClosed() {
-    return this.closed.isSet();
+    return this.closed.get();
   }
 
   @Override
@@ -684,15 +683,17 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
     if (this.isSocketEndpoint.get()) {
       buf.append(" local=");
-      if (this.localSocketAddress.isSet()) {
-        buf.append(this.localSocketAddress.get().toString());
+      InetSocketAddress localAddress = this.localSocketAddress.get();
+      if (localAddress != null) {
+        buf.append(localAddress.toString());
       } else {
         buf.append("[unknown]");
       }
 
       buf.append(" remote=");
-      if (this.remoteSocketAddress.isSet()) {
-        buf.append(this.remoteSocketAddress.get().toString());
+      InetSocketAddress remoteAddress = this.remoteSocketAddress.get();
+      if (remoteAddress != null) {
+        buf.append(remoteAddress.toString());
       } else {
         buf.append("[unknown]");
       }
@@ -749,7 +750,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   @Override
   public final synchronized Socket connect(InetSocketAddress addr, int timeout) throws IOException,
       TCTimeoutException {
-    if (this.closed.isSet() || this.connected.get()) { throw new IllegalStateException(
+    if (this.closed.get() || this.connected.get()) { throw new IllegalStateException(
                                                                                        "Connection closed or already connected"); }
     connectImpl(addr, timeout);
     finishConnect();
@@ -761,7 +762,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
   @Override
   public final synchronized boolean asynchConnect(InetSocketAddress addr) throws IOException {
-    if (this.closed.isSet() || this.connected.get()) { throw new IllegalStateException(
+    if (this.closed.get() || this.connected.get()) { throw new IllegalStateException(
                                                                                        "Connection closed or already connected"); }
 
     final boolean rv = asynchConnectImpl(addr);
@@ -782,20 +783,12 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
   @Override
   public final InetSocketAddress getLocalAddress() {
-    if (this.localSocketAddress.isSet()) {
-      return this.localSocketAddress.get();
-    } else {
-      return null;
-    }
+    return localSocketAddress.get();
   }
 
   @Override
   public final InetSocketAddress getRemoteAddress() {
-    if (this.remoteSocketAddress.isSet()) {
-      return this.remoteSocketAddress.get();
-    } else {
-      return null;
-    }
+    return this.remoteSocketAddress.get();
   }
 
   private void setConnected(boolean connected) {
@@ -812,8 +805,12 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
       if (remoteAddress != null && localAddress != null) {
         this.isSocketEndpoint.set(true);
-        this.localSocketAddress.set(new InetSocketAddress(cloneInetAddress(localAddress), socket.getLocalPort()));
-        this.remoteSocketAddress.set(new InetSocketAddress(cloneInetAddress(remoteAddress), socket.getPort()));
+        if (!this.localSocketAddress.compareAndSet(null, new InetSocketAddress(cloneInetAddress(localAddress), socket.getLocalPort()))) {
+          throw new IllegalStateException("Local socket address has already been set");
+        }
+        if (!this.remoteSocketAddress.compareAndSet(null, new InetSocketAddress(cloneInetAddress(remoteAddress), socket.getPort()))) {
+          throw new IllegalStateException("Remote socket address has already been set");
+        }
       } else {
         // abort if socket is not connected
         throw new IOException("socket is not connected");

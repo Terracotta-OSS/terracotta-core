@@ -18,13 +18,12 @@
  */
 package com.tc.util;
 
-import com.tc.util.concurrent.SetOnceFlag;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CommonShutDownHook implements Runnable {
-  private static final SetOnceFlag run       = new SetOnceFlag();
+  private static final AtomicBoolean run = new AtomicBoolean();
   private static final List<Runnable>        runnables = new ArrayList<Runnable>();
   private static Thread            hooker;                       // ;-)
   private static boolean           shutdown;
@@ -71,7 +70,7 @@ public class CommonShutDownHook implements Runnable {
   }
 
   private static void runHooks() {
-    if (!run.attemptSet()) return;
+    if (!run.compareAndSet(false, true)) return;
 
     // Use a copy of the hooks for good measure (to avoid a possible ConcurrentModificationException here)
     final Runnable[] hooks;

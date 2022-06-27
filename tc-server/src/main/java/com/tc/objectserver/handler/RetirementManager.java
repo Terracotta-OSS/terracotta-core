@@ -21,7 +21,6 @@ package com.tc.objectserver.handler;
 import com.tc.objectserver.api.Retiree;
 import com.tc.tracing.Trace;
 import com.tc.util.Assert;
-import com.tc.util.concurrent.SetOnceFlag;
 import org.terracotta.entity.EntityMessage;
 
 import java.util.Deque;
@@ -238,9 +237,9 @@ public class RetirementManager {
     // The message which is explicitly waiting for us to retire before it can.
     private LogicalSequence deferNotify;
     // True if the request is completed
-    private final SetOnceFlag isCompleted = new SetOnceFlag();
+    private volatile boolean isCompleted = false;
     // True if retirement is complete (only used when stitching in the key).
-    private final SetOnceFlag isRetired = new SetOnceFlag();
+    private volatile boolean isRetired = false;
     
     private int heldCount = 0;
         
@@ -293,16 +292,16 @@ public class RetirementManager {
     }
     
     public void retire() {
-      isRetired.attemptSet();
+      isRetired = true;
     }
     
     public boolean complete() {
-      isCompleted.attemptSet();
+      isCompleted = true;
       return !isWaitingForExplicitDefer();
     }
     
     public boolean isRetireable() {
-      return isCompleted.isSet() && !isWaitingForExplicitDefer();
+      return isCompleted && !isWaitingForExplicitDefer();
     }
     
     @Override

@@ -28,7 +28,6 @@ import com.tc.net.core.event.TCListenerEventListener;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
-import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.TCExceptionResultException;
 import com.tc.util.concurrent.TCFuture;
 
@@ -40,6 +39,7 @@ import com.tc.net.protocol.TCProtocolAdaptor;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * TCListener implementation
@@ -54,9 +54,9 @@ final class TCListenerImpl implements TCListener {
   private final TCConnectionManagerImpl                      parent;
   private final InetSocketAddress                              sockAddr;
   private final TCListenerEvent                              staticEvent;
-  private final SetOnceFlag                                  closeEventFired = new SetOnceFlag();
-  private final SetOnceFlag                                  stopPending     = new SetOnceFlag();
-  private final SetOnceFlag                                  stopped         = new SetOnceFlag();
+  private final AtomicBoolean                                closeEventFired = new AtomicBoolean();
+  private final AtomicBoolean                                stopPending     = new AtomicBoolean();
+  private volatile boolean                                   stopped         = false;
   private final CopyOnWriteArraySet<TCListenerEventListener> listeners       = new CopyOnWriteArraySet<>();
   private final ProtocolAdaptorFactory                       factory;
   private final CoreNIOServices                              commNIOServiceThread;
@@ -103,12 +103,12 @@ final class TCListenerImpl implements TCListener {
 
   @Override
   public final void stop(long timeout) throws TCTimeoutException {
-    if (stopped.isSet()) {
+    if (stopped) {
       logger.warn("listener already stopped");
       return;
     }
 
-    if (stopPending.attemptSet()) {
+    if (stopPending.compareAndSet(false, true)) {
       final TCFuture future = new TCFuture();
 
       stopImpl(() -> {
@@ -124,7 +124,7 @@ final class TCListenerImpl implements TCListener {
         logger.error("Exception: ", e);
         Assert.eval("exception result set in future", false);
       } finally {
-        stopped.set();
+        stopped = true;
         fireCloseEvent();
       }
     } else {
@@ -154,7 +154,7 @@ final class TCListenerImpl implements TCListener {
 
   @Override
   public final boolean isStopped() {
-    return stopPending.isSet() || stopped.isSet();
+    return stopPending.get() || stopped;
   }
 
   @Override
@@ -163,7 +163,7 @@ final class TCListenerImpl implements TCListener {
   }
 
   protected final void fireCloseEvent() {
-    if (closeEventFired.attemptSet()) {
+    if (closeEventFired.compareAndSet(false, true)) {
       for (TCListenerEventListener lsnr : listeners) {
         
         try {

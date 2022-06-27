@@ -21,7 +21,6 @@ package com.tc.async.impl;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.Stage;
 import com.tc.util.State;
-import com.tc.util.concurrent.SetOnceFlag;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -35,6 +34,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  *
@@ -71,13 +72,13 @@ public class StageControllerTest {
     
     ConfigurationContext cxt = mock(ConfigurationContext.class);
     StageController instance = new StageController(()->cxt);
-    final SetOnceFlag didRun = new SetOnceFlag();
+    final AtomicBoolean didRun = new AtomicBoolean();
 
     final Stage prestage = mock(Stage.class);
     when(cxt.getStage(eq("PRE"), any(Class.class))).then(new Answer<Stage>() {
       @Override
       public Stage answer(InvocationOnMock invocation) throws Throwable {
-        Assert.assertFalse("PRE", didRun.isSet());
+        Assert.assertFalse("PRE", didRun.get());
         return prestage;
       }
     });
@@ -86,7 +87,7 @@ public class StageControllerTest {
     when(cxt.getStage(eq("POST"), any(Class.class))).then(new Answer<Stage>() {
       @Override
       public Stage answer(InvocationOnMock invocation) throws Throwable {
-        Assert.assertTrue("POST", didRun.isSet());
+        Assert.assertTrue("POST", didRun.get());
         return poststage;
       }
     });
@@ -95,18 +96,18 @@ public class StageControllerTest {
     when(cxt.getStage(eq("INIT"), any(Class.class))).then(new Answer<Stage>() {
       @Override
       public Stage answer(InvocationOnMock invocation) throws Throwable {
-        Assert.assertFalse("INIT", didRun.isSet());
+        Assert.assertFalse("INIT", didRun.get());
         return i;
       }
     });
     
     instance.addStageToState(init, "INIT");
     instance.addStageToState(test, "PRE");
-    instance.addTriggerToState(test, s->didRun.set());
+    instance.addTriggerToState(test, s->didRun.set(true));
     instance.addStageToState(test, "POST");
 
     instance.transition(init, test);
-    Assert.assertTrue(didRun.isSet());
+    Assert.assertTrue(didRun.get());
     verify(prestage).start(cxt);
     verify(poststage).start(cxt);
     verify(i).destroy();

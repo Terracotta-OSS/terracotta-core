@@ -228,10 +228,10 @@ import org.terracotta.configuration.Configuration;
 import org.terracotta.configuration.ServerConfiguration;
 import java.net.InetSocketAddress;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.ThreadUtil;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
@@ -284,7 +284,7 @@ public class DistributedObjectServer {
   private WeightGeneratorFactory globalWeightGeneratorFactory;
   private EntityManagerImpl entityManager;
 
-  private final SetOnceFlag  stopping = new SetOnceFlag();
+  private final AtomicBoolean stopping = new AtomicBoolean();
   private final CompletableFuture<Void> stopped = new CompletableFuture<>();
 
   // used by a test
@@ -842,7 +842,7 @@ public class DistributedObjectServer {
   public CompletableFuture<Void> destroy(boolean immediate) throws Exception {
     CompletableFuture<Void> finished = new CompletableFuture<>();
     if (this.threadGroup.isStoppable()) {
-      if (this.stopping.attemptSet()) {
+      if (this.stopping.compareAndSet(false, true)) {
         ThreadUtil.executeInThread(threadGroup.getParent(), ()->{
           try {
             if (!immediate) {
@@ -1238,7 +1238,7 @@ public class DistributedObjectServer {
           throw new RuntimeException(bind);
         }
       } catch (IOException ioe) {
-        if (!stopping.isSet()) {
+        if (!stopping.get()) {
           consoleLogger.info("Unable to start Terracotta Server instance diagnostic listening on {}", this.l1Diagnostics, ioe);
           throw new RuntimeException(ioe);
         } else {
@@ -1255,7 +1255,7 @@ public class DistributedObjectServer {
       this.l1Diagnostics.start(Collections.emptySet());
       consoleLogger.info("Terracotta Server instance has started diagnostic listening on  {}", this.l1Diagnostics);
     } catch (IOException ioe) {
-      if (!stopping.isSet()) {
+      if (!stopping.get()) {
         consoleLogger.info("Unable to start Terracotta Server instance diagnostic listening on {}", this.l1Diagnostics, ioe);
         throw new RuntimeException(ioe);
       } else {

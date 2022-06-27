@@ -22,7 +22,6 @@ import com.tc.exception.ServerException;
 import com.tc.objectserver.api.ResultCapture;
 import com.tc.tracing.Trace;
 import com.tc.util.Assert;
-import com.tc.util.concurrent.SetOnceFlag;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -38,7 +37,7 @@ public class ResultCaptureImpl implements ResultCapture {
   private final Consumer<byte[]> result;
   private final Consumer<byte[]> message;
   private final Consumer<ServerException> error;
-  private final SetOnceFlag receivedSent = new SetOnceFlag();
+  private volatile boolean receivedSent = false;
   private static final Logger LOGGER = LoggerFactory.getLogger(ResultCaptureImpl.class);
 
   Supplier<ActivePassiveAckWaiter> setOnce;
@@ -67,7 +66,7 @@ public class ResultCaptureImpl implements ResultCapture {
   @Override
   public void received() {
     Trace.activeTrace().log("received ");
-    this.receivedSent.set();
+    this.receivedSent = true;
     if (received != null) {
       received.run();
     }
@@ -76,7 +75,7 @@ public class ResultCaptureImpl implements ResultCapture {
   @Override
   public void complete() {
     Trace.activeTrace().log("Completed without result ");
-    if (!this.receivedSent.isSet()) {
+    if (!this.receivedSent) {
       received();
     }
     if (result != null) {
@@ -89,7 +88,7 @@ public class ResultCaptureImpl implements ResultCapture {
     if (Trace.isTraceEnabled()) {
       Trace.activeTrace().log("Completed with result: " + value);
     }
-    if (!this.receivedSent.isSet()) {
+    if (!this.receivedSent) {
       received();
     }
     if (result != null) {
@@ -102,7 +101,7 @@ public class ResultCaptureImpl implements ResultCapture {
     if (Trace.isTraceEnabled()) {
       Trace.activeTrace().log("Failure - exception: " + ee.getLocalizedMessage());
     }
-    if (!this.receivedSent.isSet()) {
+    if (!this.receivedSent) {
       received();
     }
     if (error != null) {
