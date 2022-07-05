@@ -37,7 +37,7 @@ limitations under the License.
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>${logback.version}</version>
+      <version>${logback.range.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -55,7 +55,7 @@ limitations under the License.
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>terracotta-utilities-port-chooser</artifactId>
-      <version>${terracotta-utilities.version}</version>
+      <version>${terracotta-utilities.range.version}</version>
     </dependency>
     <dependency>
       <groupId>net.java.dev.jna</groupId>
