@@ -42,10 +42,11 @@
     <exclude-spotbugs-dependency>true</exclude-spotbugs-dependency>
 
     <terracotta-apis.version>1.8.2</terracotta-apis.version>
-    <terracotta-configuration.version>10.7.2</terracotta-configuration.version>
-    <galvan.version>1.6.4</galvan.version>
-    <tc-tripwire.version>1.0.3</tc-tripwire.version>
-    <terracotta-utilities.version>0.0.13</terracotta-utilities.version>
+    <terracotta-configuration.version>10.7.3</terracotta-configuration.version>
+    <galvan.version>1.6.5</galvan.version>
+    <tc-tripwire.version>1.0.4</tc-tripwire.version>
+    <terracotta-utilities.base.version>0.0.14</terracotta-utilities.base.version>
+    <terracotta-utilities.range.version>[${terracotta-utilities.base.version},)</terracotta-utilities.range.version>
   </properties>
 
   <modules>

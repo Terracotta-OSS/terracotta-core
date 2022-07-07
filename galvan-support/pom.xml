@@ -57,6 +57,12 @@ limitations under the License.
       <groupId>org.terracotta</groupId>
       <artifactId>galvan</artifactId>
       <version>${galvan.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.terracotta</groupId>
+          <artifactId>terracotta-utilities-port-chooser</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
@@ -66,6 +72,12 @@ limitations under the License.
       <groupId>org.terracotta.internal</groupId>
       <artifactId>tc-server</artifactId>
       <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
