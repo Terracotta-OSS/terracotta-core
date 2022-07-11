@@ -43,6 +43,10 @@
   </properties>
 
   <dependencies>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
     <!-- entity API needs to be loaded in app class loader layer as entities too fall into it -->
     <dependency>
       <groupId>org.terracotta</groupId>
