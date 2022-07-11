@@ -386,13 +386,13 @@ public class DistributedObjectClient {
         DSO_LOGGER.debug("Channel open");
         break;
       } catch (final TCTimeoutException tcte) {
-        DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for 5 sec.", serverAddresses);
+        DSO_LOGGER.debug("Unable to connect to server/s {} ...sleeping for 1 sec.", serverAddresses);
         DSO_LOGGER.debug("Timeout connecting to server/s: {} {}", serverAddresses, tcte.getMessage());
         synchronized(clientStopped) {
           clientStopped.wait(1000);
         }
       } catch (final ConnectException e) {
-        DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for 5 sec.", serverAddresses);
+        DSO_LOGGER.debug("Unable to connect to server/s {} ...sleeping for 1 sec.", serverAddresses);
         DSO_LOGGER.debug("Connection refused from server/s: {} {}", serverAddresses, e.getMessage());
         synchronized(clientStopped) {
           clientStopped.wait(1000);
@@ -407,7 +407,7 @@ public class DistributedObjectClient {
         DSO_LOGGER.error(handshake.getMessage());
         throw new IllegalStateException(handshake.getMessage(), handshake);
       } catch (final IOException ioe) {
-        DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for 5 sec.", serverAddresses);
+        DSO_LOGGER.debug("Unable to connect to server/s {} ...sleeping for 1 sec.", serverAddresses);
         DSO_LOGGER.debug("IOException connecting to server/s: {} {}", serverAddresses, ioe.getMessage());
         synchronized(clientStopped) {
           clientStopped.wait(1000);
