@@ -104,7 +104,9 @@ public class ClientConnectionEstablisher {
               RuntimeException e) {
         AsyncReconnect reconnect = disableReconnects();
         // if there was an error here, no reconnect attempts should have happened, thus no thread created
-        Assert.assertNull(reconnect.getConnectionThread());
+        if (reconnect != null) {
+            Assert.assertNull(reconnect.getConnectionThread());
+        }
         throw e;
       }
     } else {
