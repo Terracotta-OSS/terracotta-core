@@ -20,7 +20,6 @@ package com.tc.net.protocol.tcm;
 
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
-import com.tc.net.protocol.transport.ClientConnectionEstablisher;
 import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.net.protocol.transport.ConnectionHealthChecker;
 import com.tc.net.protocol.transport.MessageTransportFactory;

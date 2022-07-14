@@ -110,6 +110,16 @@
         <version>${terracotta-apis.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>entity-common-api</artifactId>
+        <version>${terracotta-apis.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>passthrough-server</artifactId>
+        <version>${passthrough-testing.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.terracotta.internal</groupId>
         <artifactId>tc-messaging</artifactId>
         <version>${project.version}</version>

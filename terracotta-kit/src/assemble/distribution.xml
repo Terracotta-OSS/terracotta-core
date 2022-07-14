@@ -135,11 +135,5 @@ The Initial Developer of the Covered Software is
         <include>org.terracotta:tc-tripwire-appenders</include>
       </includes>
     </dependencySet>
-    <dependencySet>
-      <outputDirectory>server/plugins/lib</outputDirectory>
-      <includes>
-        <include>org.terracotta:default-configuration:jar:jar-with-dependencies</include>
-      </includes>
-    </dependencySet>
   </dependencySets>
 </assembly>

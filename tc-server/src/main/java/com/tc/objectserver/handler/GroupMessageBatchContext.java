@@ -103,6 +103,9 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
     //  serialization, which is potentially slow and shouldn't block other attempts to batch.
     while (messageToSend != null) {
       try {
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Sending batch id:{} count:{} size:{}", messageToSend.getSequenceID(), messageToSend.getBatchSize(), messageToSend.getPayloadSize());
+        }
         AbstractGroupMessage msg = messageToSend.asAbstractGroupMessage();
         this.groupManager.sendToWithSentCallback(this.target, msg, this::handleNetworkDone);
         if (messageToSend.getPayloadSize() > THRESHOLD) {

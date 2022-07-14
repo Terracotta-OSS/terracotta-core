@@ -99,6 +99,21 @@ limitations under the License.
       <artifactId>logback-classic</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+        <groupId>org.terracotta.entities</groupId>
+        <artifactId>clustered-map-server</artifactId>
+        <version>${project.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.terracotta.entities</groupId>
+        <artifactId>clustered-map-common</artifactId>
+        <version>${project.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.terracotta.entities</groupId>
+        <artifactId>clustered-map-client</artifactId>
+        <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -125,6 +140,37 @@ limitations under the License.
               </artifactItems>
             </configuration>
           </execution>
+          <execution>
+            <id>copy</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                 <artifactItem>
+                  <groupId>org.terracotta.entities</groupId>
+                  <artifactId>clustered-map-server</artifactId>
+                  <version>${project.version}</version>
+                  <outputDirectory>${kitUnzipLocation}/terracotta-${project.version}/server/plugins/lib/</outputDirectory>
+                </artifactItem>
+                 <artifactItem>
+                  <groupId>org.terracotta.entities</groupId>
+                  <artifactId>clustered-map-common</artifactId>
+                  <version>${project.version}</version>
+                  <outputDirectory>${kitUnzipLocation}/terracotta-${project.version}/server/plugins/lib/</outputDirectory>
+                </artifactItem>
+                 <artifactItem>
+                  <groupId>org.terracotta</groupId>
+                  <artifactId>default-configuration</artifactId>
+                  <version>${project.version}</version>
+                  <classifier>jar-with-dependencies</classifier>
+                  <outputDirectory>${kitUnzipLocation}/terracotta-${project.version}/server/plugins/lib/</outputDirectory>
+                  
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
       <plugin>
@@ -133,6 +179,7 @@ limitations under the License.
           <systemPropertyVariables>
             <kitInstallationPath>${kitUnzipLocation}/terracotta-${project.version}</kitInstallationPath>
             <kitTestDirectory>${project.build.testOutputDirectory}/testing_directory</kitTestDirectory>
+            <logback.debug>true</logback.debug>
           </systemPropertyVariables>
         </configuration>
       </plugin>
