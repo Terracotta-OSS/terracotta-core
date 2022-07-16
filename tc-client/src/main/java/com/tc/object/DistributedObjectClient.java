@@ -379,23 +379,25 @@ public class DistributedObjectClient {
   }
 
   private void openChannel(ClientMessageChannel channel) throws InterruptedException {
+    long waitTime = 0;
     while (!clientStopped.isSet()) {
       try {
+        waitTime = Math.min(Math.max(Math.round(waitTime * 1.5), 1_000L), 30_000L);
         DSO_LOGGER.debug("Trying to open channel....");
         channel.open(serverAddresses);
         DSO_LOGGER.debug("Channel open");
         break;
       } catch (final TCTimeoutException tcte) {
-        DSO_LOGGER.debug("Unable to connect to server/s {} ...sleeping for 1 sec.", serverAddresses);
+        DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for {} sec.", serverAddresses, TimeUnit.MILLISECONDS.toSeconds(waitTime));
         DSO_LOGGER.debug("Timeout connecting to server/s: {} {}", serverAddresses, tcte.getMessage());
         synchronized(clientStopped) {
-          clientStopped.wait(1000);
+          clientStopped.wait(waitTime);
         }
       } catch (final ConnectException e) {
-        DSO_LOGGER.debug("Unable to connect to server/s {} ...sleeping for 1 sec.", serverAddresses);
+        DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for {} sec.", serverAddresses, TimeUnit.MILLISECONDS.toSeconds(waitTime));
         DSO_LOGGER.debug("Connection refused from server/s: {} {}", serverAddresses, e.getMessage());
         synchronized(clientStopped) {
-          clientStopped.wait(1000);
+          clientStopped.wait(waitTime);
         }
       } catch (final MaxConnectionsExceededException e) {
         DSO_LOGGER.error(e.getMessage());
@@ -407,15 +409,15 @@ public class DistributedObjectClient {
         DSO_LOGGER.error(handshake.getMessage());
         throw new IllegalStateException(handshake.getMessage(), handshake);
       } catch (final IOException ioe) {
-        DSO_LOGGER.debug("Unable to connect to server/s {} ...sleeping for 1 sec.", serverAddresses);
+        DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for {} sec.", serverAddresses, TimeUnit.MILLISECONDS.toSeconds(waitTime));
         DSO_LOGGER.debug("IOException connecting to server/s: {} {}", serverAddresses, ioe.getMessage());
         synchronized(clientStopped) {
-          clientStopped.wait(1000);
+          clientStopped.wait(waitTime);
         }
       }
     }
   }
-
+  
   private void waitForHandshake(ClientMessageChannel channel) {
     this.clientHandshakeManager.waitForHandshake();
     ClientMessageChannel cmc = this.getClientMessageChannel();
