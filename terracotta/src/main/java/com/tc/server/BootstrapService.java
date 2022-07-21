@@ -20,11 +20,11 @@ package com.tc.server;
 
 import java.io.OutputStream;
 import java.util.List;
-import org.terracotta.server.Server;
+import java.util.concurrent.Future;
 
 /**
  *
  */
 public interface BootstrapService {
-  Server createServer(List<String> args, OutputStream console, ClassLoader loader) throws Exception;
+  Future<Boolean> createServer(List<String> args, OutputStream console, ClassLoader loader) throws Exception;
 }

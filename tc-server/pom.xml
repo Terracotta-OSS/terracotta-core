@@ -49,6 +49,10 @@
         <artifactId>slf4j-api</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>standard-cluster-services</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>configuration-provider</artifactId>
       <version>${project.version}</version>

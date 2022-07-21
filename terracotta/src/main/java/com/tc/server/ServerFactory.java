@@ -22,25 +22,12 @@ package com.tc.server;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.ServiceLoader;
-import javax.management.ObjectName;
-import org.terracotta.server.Server;
+import java.util.concurrent.Future;
 
 
 public class ServerFactory {
-
-  public static ObjectName SERVER_DOMAIN = createObjectName();
-  public static String RESTART_INLINE = "restart.inline";
-
-  private static ObjectName createObjectName() {
-    try {
-      return new ObjectName("org.terracotta.internal:name=ServerDomain");
-    } catch (Exception exp) {
-      // IGNORE
-    }
-    return null;
-  }
   
-  public static Server createServer(List<String> args, OutputStream console, ClassLoader loader) {
+  public static Future<Boolean> createServer(List<String> args, OutputStream console, ClassLoader loader) {
     try {
       ServiceLoader<BootstrapService> s = ServiceLoader.load(BootstrapService.class, loader);
       return s.iterator().next().createServer(args, console, loader);

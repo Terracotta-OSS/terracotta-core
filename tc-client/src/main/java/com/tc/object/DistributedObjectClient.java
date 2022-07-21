@@ -382,7 +382,7 @@ public class DistributedObjectClient {
     long waitTime = 0;
     while (!clientStopped.isSet()) {
       try {
-        waitTime = Math.min(Math.max(Math.round(waitTime * 1.5), 1_000L), 30_000L);
+        waitTime = Math.min(Math.max(Math.round(waitTime * 1.5), 1_000L), 30_000L); // exponential waittime with bounds.
         DSO_LOGGER.debug("Trying to open channel....");
         channel.open(serverAddresses);
         DSO_LOGGER.debug("Channel open");
