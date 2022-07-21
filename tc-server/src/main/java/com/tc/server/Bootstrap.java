@@ -116,8 +116,12 @@ public class Bootstrap implements BootstrapService {
     return new Future<Boolean>() {
       @Override
       public boolean cancel(boolean mayInterruptIfRunning) {
-       server.stop();
-       return true;
+       if (server.isStopped()) {
+         return false;
+       } else {
+         server.stop();
+         return true;
+       }
       }
 
       @Override
@@ -137,6 +141,7 @@ public class Bootstrap implements BootstrapService {
 
       @Override
       public Boolean get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+        //  for completeness , do not use
         long end = System.currentTimeMillis() + unit.toMillis(timeout);
         while (System.currentTimeMillis() < end) {
           if (!server.isStopped()) {
@@ -146,6 +151,18 @@ public class Bootstrap implements BootstrapService {
           }
         }
         throw new TimeoutException();
+      }
+      // for galvan compatiblity
+      public boolean waitUntilShutdown() {
+        try {
+          return get();
+        } catch (ExecutionException | InterruptedException e) {
+          return false;
+        }
+      }
+      
+      public Object getManagement() {
+        return server.getManagement();
       }
     };
   }
@@ -365,7 +382,11 @@ public class Bootstrap implements BootstrapService {
         try {
           return impl.waitUntilShutdown();
         } finally {
-          TCLogbackLogging.resetLogging();
+          try {
+            TCLogbackLogging.resetLogging();
+          } catch (Exception e) {
+            // Ignore
+          }
         }
       }
 

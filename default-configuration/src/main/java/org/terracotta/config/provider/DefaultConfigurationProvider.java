@@ -224,7 +224,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
       return defaultUserHomeConfigurationPath;
     }
 
-    return Directories.getDefaultConfigFile();
+    return Directories.getInstallationRoot().resolve("conf/tc-config.xml");
   }
 
   private static Options createOptions() {
