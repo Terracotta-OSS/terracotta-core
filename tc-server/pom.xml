@@ -167,6 +167,9 @@
                 <manifest>
                   <addClasspath>true</addClasspath>
                 </manifest>
+                <manifestEntries>
+                  <Class-Path>.</Class-Path>
+                </manifestEntries>
               </archive>
           </configuration>
         </plugin>
