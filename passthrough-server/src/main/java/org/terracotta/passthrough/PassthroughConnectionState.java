@@ -18,6 +18,8 @@
  */
 package org.terracotta.passthrough;
 
+import org.terracotta.entity.InvocationCallback;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,7 +33,7 @@ import java.util.Map;
  */
 public class PassthroughConnectionState {
   private PassthroughServerProcess serverProcess;
-  private final Map<Long, PassthroughWait> inFlightMessages;
+  private final Map<Long, PassthroughInvocationCallback> inFlightMessages;
   // We store the reconnecting server just to assert details of correct usage.
   private PassthroughServerProcess reconnectingServerProcess;
   
@@ -40,7 +42,7 @@ public class PassthroughConnectionState {
   
   public PassthroughConnectionState(PassthroughServerProcess initialServerProcess) {
     this.serverProcess = initialServerProcess;
-    this.inFlightMessages = new HashMap<Long, PassthroughWait>();
+    this.inFlightMessages = new HashMap<>();
     this.nextTransactionID = 1;
   }
   
@@ -48,7 +50,7 @@ public class PassthroughConnectionState {
     return serverProcess.isServerThread();
   }
 
-  public synchronized PassthroughWait sendNormal(PassthroughConnection sender, PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire, PassthroughMonitor monitor) {
+  public synchronized PassthroughInvocationCallback sendNormal(PassthroughConnection sender, PassthroughMessage message, InvocationCallback<byte[]> callback) {
     // This uses the normal server process so wait for it to become available.
     while (null == this.serverProcess) {
       try {
@@ -64,70 +66,57 @@ public class PassthroughConnectionState {
         oldestTransactionID = oneID;
       }
     }
-    return createAndSend(this.serverProcess, this.inFlightMessages, sender, message, 
-        oldestTransactionID, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, 
-        shouldWaitForRetired, forceGetToBlockOnRetire, monitor);
+    return createAndSend(this.serverProcess, inFlightMessages, sender, message,
+            oldestTransactionID, callback);
   }
 
-  private PassthroughWait createAndSend(PassthroughServerProcess target, Map<Long, PassthroughWait> tracker, 
-      PassthroughConnection sender, PassthroughMessage message, long oldestTransactionID, 
-      boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, 
-      boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire,
-      PassthroughMonitor monitor
-  ) {
-    PassthroughWait waiter = new PassthroughWait(shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire, monitor);
-    long transactionID = this.nextTransactionID;
-    this.nextTransactionID += 1;
+  private PassthroughInvocationCallback createAndSend(PassthroughServerProcess target, Map<Long, PassthroughInvocationCallback> tracker,
+                                                      PassthroughConnection sender, PassthroughMessage message, long oldestTransactionID, InvocationCallback<byte[]> callback) {
+    long transactionID = this.nextTransactionID++;
     message.setTransactionTracking(transactionID, oldestTransactionID);
-    tracker.put(transactionID, waiter);
-    if (shouldWaitForSent) {
-      waiter.sent();
-    }
-    byte[] raw = message.asSerializedBytes();
-    waiter.saveRawMessageForResend(raw);
-    target.sendMessageToServer(sender, raw);
-    return waiter;
+    PassthroughInvocationCallback invocation = new PassthroughInvocationCallback(message.asSerializedBytes(), callback);
+    tracker.put(transactionID, invocation);
+    invocation.sent();
+    target.sendMessageToServer(sender, invocation.getMessage());
+    return invocation;
   }
 
   public synchronized boolean isConnected(PassthroughServerProcess sender) {
     return (sender == this.serverProcess) || (sender == this.reconnectingServerProcess);
   }
 
-  public synchronized PassthroughWait sendAsReconnect(PassthroughConnection sender, PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire) {
+  public synchronized PassthroughInvocationCallback sendAsReconnect(PassthroughConnection sender, PassthroughMessage message, InvocationCallback<byte[]> callback) {
     // This is similar to the normal send but only happens in the reconnect state and creates a waiter in that in-flight set.
     Assert.assertTrue(null != this.reconnectingServerProcess);
     // We won't bother clearing transactions on re-send.
     long oldestTransactionID = 0;
-    return createAndSend(this.reconnectingServerProcess, this.inFlightMessages, sender, message, oldestTransactionID, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire, null);
+    return createAndSend(this.reconnectingServerProcess, this.inFlightMessages, sender, message, oldestTransactionID, callback);
   }
 
-  public synchronized Map<Long, PassthroughWait> enterReconnectState(PassthroughServerProcess newServerProcess) {
+  public synchronized Map<Long, PassthroughInvocationCallback> enterReconnectState(PassthroughServerProcess newServerProcess) {
     Assert.assertTrue(null == this.serverProcess);
     Assert.assertTrue(null == this.reconnectingServerProcess);
-    Assert.assertTrue(null != this.inFlightMessages);
-    
+
     this.reconnectingServerProcess = newServerProcess;
     return this.inFlightMessages;
   }
 
-  public synchronized void sendAsResend(PassthroughConnection sender, long transactionID, PassthroughWait waiter) {
+  public synchronized void sendAsResend(PassthroughConnection sender, long transactionID, PassthroughInvocationCallback invocation) {
     // This is similar to the normal send but only happens in the reconnect state and creates a waiter in that in-flight set.
     Assert.assertTrue(null != this.reconnectingServerProcess);
-    byte[] raw = waiter.resetAndGetMessageForResend();
-    this.inFlightMessages.put(transactionID, waiter);
-    // We always want to block on retire, when doing a re-send.
-    waiter.blockGetOnRetire();
+    byte[] raw = invocation.getMessage();
+    this.inFlightMessages.put(transactionID, invocation);
     this.reconnectingServerProcess.sendMessageToServer(sender, raw);
   }
 
-  public synchronized PassthroughWait getWaiterForTransaction(PassthroughServerProcess sender, long transactionID) {
-    PassthroughWait waiter = this.inFlightMessages.get(transactionID);
+  public synchronized PassthroughInvocationCallback getInvocationForTransaction(PassthroughServerProcess sender, long transactionID) {
+    PassthroughInvocationCallback waiter = this.inFlightMessages.get(transactionID);
     Assert.assertTrue(null != waiter);
     return waiter;
   }
 
-  public synchronized PassthroughWait removeWaiterForTransaction(PassthroughServerProcess sender, long transactionID) {
-    PassthroughWait waiter = this.inFlightMessages.remove(transactionID);
+  public synchronized PassthroughInvocationCallback removeInvocationForTransaction(PassthroughServerProcess sender, long transactionID) {
+    PassthroughInvocationCallback waiter = this.inFlightMessages.remove(transactionID);
     Assert.assertTrue(null != waiter);
     return waiter;
   }
@@ -143,14 +132,12 @@ public class PassthroughConnectionState {
 
   public synchronized void enterDisconnectedState() {
     Assert.assertTrue(null != this.serverProcess);
-    Assert.assertTrue(null != this.inFlightMessages);
-    
+
     this.serverProcess = null;
   }
 
   public synchronized void forceClose() {
-    Assert.assertTrue(null != this.inFlightMessages);
-    for (PassthroughWait waiter : this.inFlightMessages.values()) {
+    for (PassthroughInvocationCallback waiter : this.inFlightMessages.values()) {
       waiter.forceDisconnect();
     }
   }

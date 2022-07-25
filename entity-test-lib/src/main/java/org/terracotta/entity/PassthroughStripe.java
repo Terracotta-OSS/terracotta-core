@@ -22,8 +22,6 @@ import com.tc.classloader.BuiltinService;
 import com.tc.classloader.OverrideService;
 import com.tc.classloader.OverrideServiceType;
 import org.junit.Assert;
-import org.terracotta.exception.EntityException;
-import org.terracotta.exception.EntityServerException;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,13 +29,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 
 /**
@@ -60,7 +56,6 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
   private int consumerID = 1;
   private AtomicLong txIdGenerator=new AtomicLong(0);
   private long eldestTxid=-1;
-  private InvokeMonitor<R> monitor;
 
   public PassthroughStripe(EntityServerService<M, R> service, Class<?> clazz) {
     Assert.assertTrue(service.handlesEntityType(clazz.getName()));
@@ -278,9 +273,10 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     }
 
     @Override
-    public InvocationBuilder<M, R> beginInvoke() {
-      return new StripeInvocationBuilder(
+    public Invocation<R> message(M message) {
+      return new StripeInvocation(
           this.clientDescriptor,
+          message,
           currentId.incrementAndGet(),
           eldestid,
           PassthroughStripe.this.activeMap.get(this.entityName),
@@ -342,7 +338,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     }
   }
 
-  private class StripeInvocationBuilder implements InvocationBuilder<M, R> {
+  private class StripeInvocation implements Invocation<R> {
     private final ClientDescriptor clientDescriptor;
     private final ActiveServerEntity<M, R> activeServerEntity;
     private final MessageCodec<M, R> codec;
@@ -352,16 +348,16 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     private final long eldestid;
     private final long currentId;
     private final ConcurrencyStrategy<M> concurrency;
-    private M request = null;
-    private InvokeMonitor<R> monitor;
+    private final M request;
 
-    public StripeInvocationBuilder(ClientDescriptor clientDescriptor,
+    public StripeInvocation(ClientDescriptor clientDescriptor, M request,
                                    long currentId,
                                    long eldestid,
                                    ActiveServerEntity<M, R> activeServerEntity,
                                    PassiveServerEntity<M, R> passiveServerEntity,
                                    MessageCodec<M, R> codec,
                                    ConcurrencyStrategy<M> concurrency) {
+      this.request = request;
       this.clientDescriptor = clientDescriptor;
       this.currentId=currentId;
       this.eldestid=eldestid;
@@ -372,97 +368,8 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     }
 
     @Override
-    public InvocationBuilder<M, R> ackSent() {
-      // ACKs ignored in this implementation.
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<M, R> ackReceived() {
-      // ACKs ignored in this implementation.
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<M, R> ackCompleted() {
-      // ACKs ignored in this implementation.
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<M, R> ackRetired() {
-      // ACKs ignored in this implementation.
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<M, R> replicate(boolean requiresReplication) {
-      // Replication ignored in this implementation.
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<M, R> message(M message) {
-      this.request = message;
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<M, R> blockGetOnRetire(boolean shouldBlock) {
-      // ACKs ignored in this implementation.
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<M, R> monitor(InvokeMonitor<R> consumer) {
-      monitor = consumer;
-      return this;
-    }
-
-    @Override
-    public InvokeFuture<R> invoke() throws MessageCodecException {
-      byte[] result = null;
-      EntityException error = null;
-      try {
-        result = sendInvocation(currentId, eldestid, activeServerEntity, codec);
-      } catch (EntityException e) {
-        error = e;
-      }
-      monitor = null;
-      return new ImmediateInvokeFuture<>(codec.decodeResponse(result), error);
-    }
-
-    @Override
-    public InvokeFuture<R> invokeWithTimeout(long time, TimeUnit units) throws InterruptedException, TimeoutException, MessageCodecException {
-      return invoke();
-    }
-
-    @Override
-    public InvocationBuilder<M, R> withExecutor(Executor exctr) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Deprecated @Override
-    public InvocationBuilder<M, R> asDeferredResponse() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    private byte[] sendInvocation(long currentId, long eldestId, ActiveServerEntity<M, R> entity, MessageCodec<M, R>
-      codec) throws EntityException {
-      byte[] result = null;
-
-      int requestConcurrencyKey = concurrency.concurrencyKey(request);
-      try {
-        R response = entity.invokeActive(new PassThroughEntityActiveInvokeContext<>(clientDescriptor,
-                                                                                  requestConcurrencyKey,
-                                                                                  currentId,
-                                                                                  eldestId, monitor),
-                                         request);
-        result = codec.encodeResponse(response);
-      } catch (Exception e) {
-        throw new EntityServerException(null, null, null, e);
-      }
-      return result;
+    public Task invoke(InvocationCallback<R> callback, Set<InvocationCallback.Types> callbacks) {
+      throw new UnsupportedOperationException();
     }
   }
 }

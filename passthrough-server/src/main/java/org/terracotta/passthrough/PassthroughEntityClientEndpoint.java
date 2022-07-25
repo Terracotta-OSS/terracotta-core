@@ -20,10 +20,8 @@ package org.terracotta.passthrough;
 
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
-import org.terracotta.entity.InvocationBuilder;
-import org.terracotta.entity.InvokeFuture;
+import org.terracotta.entity.Invocation;
 import org.terracotta.entity.MessageCodecException;
-import org.terracotta.exception.EntityException;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
@@ -78,10 +76,10 @@ public class PassthroughEntityClientEndpoint<M extends EntityMessage, R extends 
   }
 
   @Override
-  public InvocationBuilder<M, R> beginInvoke() {
+  public Invocation<R> message(M message) {
     // We can't create new invocations when the endpoint is closed.
     checkEndpointOpen();
-    return new PassthroughInvocationBuilder<M, R>(this.connection, this.entityClass.getCanonicalName(), this.entityName, this.clientInstanceID, messageCodec);
+    return new PassthroughInvocation<>(this.connection, this.entityClass.getCanonicalName(), this.entityName, this.clientInstanceID, messageCodec, message);
   }
 
   @Override
@@ -91,12 +89,9 @@ public class PassthroughEntityClientEndpoint<M extends EntityMessage, R extends 
     this.isOpen = false;
     // We need to release this entity.
     PassthroughMessage releaseMessage = PassthroughMessageCodec.createReleaseMessage(this.entityClass.getCanonicalName(), this.entityName, this.clientInstanceID);
-    Future<byte[]> received = this.connection.sendInternalMessageAfterAcks(releaseMessage);
     try {
-      received.get();
-    } catch (InterruptedException e) {
-      Assert.unexpected(e);
-    } catch (ExecutionException e) {
+      this.connection.invokeAndRetire(releaseMessage);
+    } catch (InterruptedException | ExecutionException e) {
       Assert.unexpected(e);
     }
     onClose.run();

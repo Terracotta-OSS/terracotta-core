@@ -66,12 +66,11 @@ public class PassthroughEntityRef<T extends Entity, C, U> implements EntityRef<T
   public T fetchEntity(U userData) throws EntityNotFoundException, EntityVersionMismatchException {
     long clientInstanceID = this.passthroughConnection.getNewInstanceID();
     PassthroughMessage getMessage = PassthroughMessageCodec.createFetchMessage(this.clazz, this.name, clientInstanceID, this.version);
-    PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
-    received.blockGetOnRetire();
     // Wait for the config on the response.
     byte[] rawConfig = null;
     try {
-      rawConfig = received.get();
+      rawConfig = passthroughConnection.invokeAndRetire(getMessage);
+
     } catch (ExecutionException b) {
       EntityException e = (EntityException)b.getCause();
       // Check that this is the correct type.
@@ -106,11 +105,9 @@ public class PassthroughEntityRef<T extends Entity, C, U> implements EntityRef<T
       // assumes that the entity already exists.
       byte[] serializedConfiguration = this.service.serializeConfiguration(configuration);
       PassthroughMessage getMessage = PassthroughMessageCodec.createCreateMessage(this.clazz, this.name, this.version, serializedConfiguration);
-      PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
-      received.blockGetOnRetire();
       try {
-        received.get();
-    } catch (ExecutionException b) {
+        passthroughConnection.invokeAndRetire(getMessage);
+      } catch (ExecutionException b) {
         EntityException e = (EntityException)b.getCause();
         // Check that this is the correct type.
         if (e instanceof EntityNotProvidedException) {
@@ -140,12 +137,10 @@ public class PassthroughEntityRef<T extends Entity, C, U> implements EntityRef<T
     if (null != this.service) {
       byte[] serializedConfiguration = this.service.serializeConfiguration(configuration);
       PassthroughMessage reconfig = PassthroughMessageCodec.createReconfigureMessage(this.clazz, this.name, this.version, serializedConfiguration);
-      PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(reconfig);
-      received.blockGetOnRetire();
       try {
-        result = this.service.deserializeConfiguration(received.get());
-    } catch (ExecutionException b) {
-      EntityException e = (EntityException)b.getCause();        // Check that this is the correct type.
+        result = this.service.deserializeConfiguration(passthroughConnection.invokeAndRetire(reconfig));
+      } catch (ExecutionException b) {
+        EntityException e = (EntityException)b.getCause();        // Check that this is the correct type.
         if (e instanceof EntityNotFoundException) {
           throw (EntityNotFoundException) e;
         } else if (e instanceof EntityNotProvidedException) {
@@ -172,10 +167,8 @@ public class PassthroughEntityRef<T extends Entity, C, U> implements EntityRef<T
 
   private boolean destroyEntity() throws EntityNotProvidedException, EntityNotFoundException {
     PassthroughMessage getMessage = PassthroughMessageCodec.createDestroyMessage(this.clazz, this.name);
-    PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
-    received.blockGetOnRetire();
     try {
-      return received.get()[0] != 0;
+      return passthroughConnection.invokeAndRetire(getMessage)[0] != 0;
     } catch (ExecutionException b) {
       EntityException e = (EntityException)b.getCause();      // Check that this is the correct type.
       if (e instanceof EntityNotProvidedException) {

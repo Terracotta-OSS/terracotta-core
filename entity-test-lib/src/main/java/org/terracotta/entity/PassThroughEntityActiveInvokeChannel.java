@@ -1,37 +1,34 @@
 package org.terracotta.entity;
 
 import org.terracotta.exception.EntityException;
-import org.terracotta.exception.EntityServerException;
 
 public class PassThroughEntityActiveInvokeChannel<R extends EntityResponse> implements ActiveInvokeChannel<R> {
   
-  private final InvokeMonitor<R> monitor;
   private volatile boolean closed = false;
 
-  public PassThroughEntityActiveInvokeChannel(InvokeMonitor<R> monitor) {
-    this.monitor = monitor;
+  public PassThroughEntityActiveInvokeChannel() {
   }
 
   @Override
   public synchronized void sendResponse(R r) {
     checkClosed();
-    monitor.accept(r);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public synchronized void sendException(Exception ee) {
     checkClosed();
     if (ee instanceof EntityException) {
-      monitor.exception((EntityException)ee);
+      throw new UnsupportedOperationException();
     } else {
-      monitor.exception(new EntityServerException(null, null, null, ee));
+      throw new UnsupportedOperationException();
     }
   }
 
   @Override
   public synchronized void close() {
     if (attemptClose()) {
-      monitor.close();
+      throw new UnsupportedOperationException();
     }
   }
   // serialized gating should be enough due to thread interaction at upper layers
