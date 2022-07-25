@@ -16,6 +16,7 @@
 
 <modules>
     <module>concurrent-map-entity</module>
+    <module>extended-server</module>
 </modules>
 
     <dependencies>

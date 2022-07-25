@@ -166,7 +166,12 @@ limitations under the License.
                   <version>${project.version}</version>
                   <classifier>jar-with-dependencies</classifier>
                   <outputDirectory>${kitUnzipLocation}/terracotta-${project.version}/server/plugins/lib/</outputDirectory>
-                  
+                </artifactItem>
+                 <artifactItem>
+                  <groupId>org.terracotta</groupId>
+                  <artifactId>extended-server</artifactId>
+                  <version>${project.version}</version>
+                  <outputDirectory>${kitUnzipLocation}/terracotta-${project.version}/server/lib/</outputDirectory>
                 </artifactItem>
               </artifactItems>
             </configuration>

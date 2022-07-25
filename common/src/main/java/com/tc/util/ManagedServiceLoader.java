@@ -260,6 +260,8 @@ public class ManagedServiceLoader implements TCServiceLoader.Provider {
     try {
       ClassLoader l2 = new URLClassLoader(new URL[] {new URL(location)}, loader);
       return Class.forName(className, true, l2);
+    } catch (NoClassDefFoundError e) {
+      LOG.warn("Loading implementation failed for " + className +". Check entity classpath and packaging", e);
     } catch (ClassNotFoundException c) {
       LOG.warn("No implementations found for " + className, c);
     } catch (MalformedURLException m) {
