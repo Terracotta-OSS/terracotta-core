@@ -23,7 +23,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Vector;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -35,11 +37,17 @@ import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.EntityServerService;
+import org.terracotta.entity.Invocation;
+import org.terracotta.entity.InvocationCallback;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.passthrough.PassthroughMessage.Type;
+
+import static java.util.EnumSet.of;
+import static org.terracotta.entity.InvocationCallback.Types.FAILURE;
+import static org.terracotta.entity.InvocationCallback.Types.RESULT;
+import static org.terracotta.entity.InvocationCallback.Types.RETIRED;
 
 
 /**
@@ -73,7 +81,7 @@ public class PassthroughConnection implements Connection {
   private final List<Waiter> clientResponseWaitQueue;
   
   // This is only used during reconnect.
-  private Map<Long, PassthroughWait> waitersToResend;
+  private Map<Long, PassthroughInvocationCallback> invocationsToResend;
 
   public PassthroughConnection(String connectionName, String readerThreadName, PassthroughServerProcess serverProcess, List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?>> entityClientServices, Runnable onClose, long uniqueConnectionID) {
     this(connectionName, readerThreadName, serverProcess, entityClientServices, onClose, uniqueConnectionID, new PassthroughEndpointConnectorImpl());
@@ -129,32 +137,32 @@ public class PassthroughConnection implements Connection {
     return this.uniqueConnectionID;
   }
 
-  /**
-   * This entry-point is for any of our internal message types.  They ack and complete before returning.
-   * @param message
-   * @return
-   */
-  public PassthroughWait sendInternalMessageAfterAcks(PassthroughMessage message) {
-    boolean shouldWaitForSent = true;
-    boolean shouldWaitForReceived = true;
-    boolean shouldWaitForCompleted = true;
-    // We won't block the invoke on retired but internal messages do need to block the get().
-    // Note that the cases where we want to block get() aren't because we want the "final answer" but because we want to
-    // know that the message won't be re-sent (matters for locks, etc, where the reconnect message must agree with what is
-    // going to be re-sent - otherwise, we may double-release or double-acquire).
-    boolean shouldWaitForRetired = false;
-    boolean forceGetToBlockOnRetire = true;
-    return invokeAndWait(message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire, null);
+  public byte[] invokeAndRetire(PassthroughMessage message) throws ExecutionException, InterruptedException {
+    CompletableFuture<byte[]> future = new CompletableFuture<>();
+    invoke(message, new InvocationCallback<byte[]>() {
+
+      private volatile byte[] response;
+
+      @Override
+      public void result(byte[] response) {
+        this.response = response;
+      }
+
+      @Override
+      public void retired() {
+        future.complete(response);
+      }
+
+      @Override
+      public void failure(Throwable failure) {
+        future.completeExceptionally(failure);
+      }
+    }, of(RESULT, FAILURE, RETIRED));
+
+    return future.get();
   }
 
-  /**
-   * This entry-point is specifically used for entity-defined action messages.
-   */
-  public Future<byte[]> invokeActionAndWaitForAcks(PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire, PassthroughMonitor monitor) {
-    return invokeAndWait(message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire, monitor);
-  }
-
-  private PassthroughWait invokeAndWait(PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire, PassthroughMonitor monitor) {
+  public <R extends EntityResponse> Invocation.Task invoke(PassthroughMessage message, InvocationCallback<byte[]> callback, Set<InvocationCallback.Types> callbacks) {
     // If we have already disconnected, fail with IllegalStateException (this is consistent with the double-close case).
     if(state == State.INIT) {
       throw new IllegalStateException("Connection is not in " + State.RUNNING + " state");
@@ -162,20 +170,10 @@ public class PassthroughConnection implements Connection {
     if (state == State.CLOSED) {
       throw new ConnectionClosedException("Connection already closed");
     }
-    PassthroughWait waiter = this.connectionState.sendNormal(this, message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire, monitor);
-    if (Thread.currentThread() == clientThread) {
-//  this check is kind of horrible but if this is the client thread as the result of being invoked from within 
-//  message handling (server originated), then just do message completion locally.
-      while (!waiter.isDone()) {
-        if (!handleNextMessage()) {
-  //  what happend?
-          break;
-        }
-      }
-    } else {
-      waiter.waitForAck();      
-    }
-    return waiter;
+    this.connectionState.sendNormal(this, message, callback);
+
+    //cannot cancel passthrough messages (atm)
+    return () -> false;
   }
 
   @SuppressWarnings({ "unchecked" })
@@ -318,34 +316,43 @@ public class PassthroughConnection implements Connection {
   }
 
   private void handleAck(PassthroughServerProcess sender, long transactionID) {
-    PassthroughWait waiter = this.connectionState.getWaiterForTransaction(sender, transactionID);
+    PassthroughInvocationCallback invocation = this.connectionState.getInvocationForTransaction(sender, transactionID);
     // Note that we may fail because this server may be dead.
-    if (null != waiter) {
-      waiter.handleAck();
+    if (null != invocation) {
+      invocation.received();
     }
   }
 
   private void handleComplete(PassthroughServerProcess sender, long transactionID, byte[] result, EntityException error) {
-    PassthroughWait waiter = this.connectionState.getWaiterForTransaction(sender, transactionID);
+    PassthroughInvocationCallback invocation = this.connectionState.getInvocationForTransaction(sender, transactionID);
     // Note that we may fail because this server may be dead.
-    if (null != waiter) {
-      waiter.handleComplete(result, error);
+    if (null != invocation) {
+      try {
+        if (result != null) {
+          invocation.result(result);
+        }
+        if (error != null) {
+          invocation.failure(error);
+        }
+      } finally {
+        invocation.complete();
+      }
     }
   }
   
   private void handleMonitor(PassthroughServerProcess sender, long transactionID, byte[] result) {
-    PassthroughWait waiter = this.connectionState.getWaiterForTransaction(sender, transactionID);
+    PassthroughInvocationCallback invocation = this.connectionState.getInvocationForTransaction(sender, transactionID);
     // Note that we may fail because this server may be dead.
-    if (null != waiter) {
-      waiter.handleMonitor(result);
+    if (null != invocation) {
+      invocation.result(result);
     }
   }
   
   private void handleRetire(PassthroughServerProcess sender, long transactionID) {
-    PassthroughWait waiter = this.connectionState.removeWaiterForTransaction(sender, transactionID);
+    PassthroughInvocationCallback invocation = this.connectionState.removeInvocationForTransaction(sender, transactionID);
     // Note that we may fail because this server may be dead.
-    if (null != waiter) {
-      waiter.handleRetire();
+    if (null != invocation) {
+      invocation.retired();
     }
   }
 
@@ -403,16 +410,8 @@ public class PassthroughConnection implements Connection {
   }
 
   private void sendUnexpectedCloseMessage(PassthroughMessage message) {
-    // We block on the release only to make the execution order easier to follow but this isn't required.
-    // To signify this, we will push the entire blocking operation into the get() call.
-    boolean shouldWaitForSent = false;
-    boolean shouldWaitForReceived = false;
-    boolean shouldWaitForCompleted = false;
-    boolean shouldWaitForRetired = false;
-    boolean forceGetToBlockOnRetire = false;
-    Future<byte[]> received = invokeAndWait(message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire, null);
     try {
-      received.get();
+      invokeAndRetire(message);
     } catch (InterruptedException e) {
       Assert.unexpected(e);
     } catch (ExecutionException e) {
@@ -517,22 +516,41 @@ public class PassthroughConnection implements Connection {
    * the clients, in this way, is far simpler and more obvious.
    */
   public void startReconnect(PassthroughServerProcess serverProcess) {
-    Assert.assertTrue(null == this.waitersToResend);
+    Assert.assertTrue(null == this.invocationsToResend);
     // Duplicate the map to avoid ConcurrentModificationException.
-    this.waitersToResend = new HashMap<Long, PassthroughWait>(this.connectionState.enterReconnectState(serverProcess));
+    this.invocationsToResend = new HashMap<>(this.connectionState.enterReconnectState(serverProcess));
     
     // Tell all of our still-open end-points to reconnect to the server.
     for (PassthroughEntityClientEndpoint<?, ?> endpoint : this.localEndpoints.values()) {
       byte[] extendedData = endpoint.getExtendedReconnectData();
       PassthroughMessage message = endpoint.buildReconnectMessage(extendedData);
       // Send the message directly to the new process, waiting for all acks.
-      boolean shouldWaitForSent = true;
-      boolean shouldWaitForReceived = true;
-      boolean shouldWaitForCompleted = true;
-      boolean shouldWaitForRetired = true;
-      boolean forceGetToBlockOnRetire = true;
-      PassthroughWait waiter = this.connectionState.sendAsReconnect(this, message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire);
-      waiter.waitForAck();
+      CompletableFuture<byte[]> future = new CompletableFuture<>();
+      this.connectionState.sendAsReconnect(this, message, new InvocationCallback<byte[]>() {
+
+        private volatile byte[] response;
+
+        @Override
+        public void result(byte[] response) {
+          this.response = response;
+        }
+
+        @Override
+        public void retired() {
+          future.complete(response);
+        }
+
+        @Override
+        public void failure(Throwable failure) {
+          future.completeExceptionally(failure);
+        }
+      });
+
+      try {
+        future.get();
+      } catch (InterruptedException | ExecutionException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
@@ -540,20 +558,18 @@ public class PassthroughConnection implements Connection {
    * The second phase of the reconnect - re-send in-flight messages and exit the reconnecting state.
    */
   public void finishReconnect() {
-    Assert.assertTrue(null != this.waitersToResend);
+    Assert.assertTrue(null != this.invocationsToResend);
     
     // Re-send the existing in-flight messages - note that we need to take a snapshot of these instead of walking the map since it will change as the responses come back.
-    for (Map.Entry<Long, PassthroughWait> entry : this.waitersToResend.entrySet()) {
+    for (Map.Entry<Long, PassthroughInvocationCallback> entry : this.invocationsToResend.entrySet()) {
       long transactionID = entry.getKey();
-      PassthroughWait waiter = entry.getValue();
-      this.connectionState.sendAsResend(this, transactionID, waiter);
-      // NOTE:  We cannot block on the get since the server won't send any acks until ALL re-sent messages are
-      // received.
+      PassthroughInvocationCallback invocation = entry.getValue();
+      this.connectionState.sendAsResend(this, transactionID, invocation);
     }
     
     // Now that we send the reconnect handshake and the re-sent transactions, we can install the new serverProcess and permit the new messages to go through.
     this.connectionState.finishReconnectState();
-    this.waitersToResend = null;
+    this.invocationsToResend = null;
   }
 
   public void disconnect() {

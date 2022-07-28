@@ -2,6 +2,7 @@ package org.terracotta.passthrough;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.terracotta.entity.InvocationCallback;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -25,20 +26,19 @@ public class PassthroughConnectionStateTest {
 
     //clear some messages from in-flight messages and verify
     for(int i = 1; i <= 5L; i++) {
-      passthroughConnectionState.removeWaiterForTransaction(null, i);
+      passthroughConnectionState.removeInvocationForTransaction(null, i);
     }
     sendOneMessageAndVerify(passthroughConnectionState, byteArgumentCaptor, 6, 21);
 
     //clear all in-flight messages and verify
     for(int i = 6; i <= 21; i++) {
-      passthroughConnectionState.removeWaiterForTransaction(null, i);
+      passthroughConnectionState.removeInvocationForTransaction(null, i);
     }
     sendOneMessageAndVerify(passthroughConnectionState, byteArgumentCaptor, 22, 22);
   }
 
   private static void sendOneMessageAndVerify(PassthroughConnectionState passthroughConnectionState, ArgumentCaptor<byte[]> byteArgumentCaptor, long expectedOldTxnID, long expectedCurTxnID) {
-    passthroughConnectionState.sendNormal(mock(PassthroughConnection.class), PassthroughMessageCodec.createAckMessage(),
-        false, false, false, false, false, mock(PassthroughMonitor.class));
+    passthroughConnectionState.sendNormal(mock(PassthroughConnection.class), PassthroughMessageCodec.createAckMessage(), mock(InvocationCallback.class));
     TestTxnInfo testTxnInfo = PassthroughMessageCodec.decodeRawMessage((type, shouldReplicate, transactionID, oldestTransactionID, input) -> new TestTxnInfo(oldestTransactionID, transactionID), byteArgumentCaptor
         .getValue());
     assertThat(testTxnInfo.oldestTransactionID <= testTxnInfo.currentTransactionID, is(true));

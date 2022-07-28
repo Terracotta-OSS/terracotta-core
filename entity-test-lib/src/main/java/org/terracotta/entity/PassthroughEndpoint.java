@@ -19,16 +19,12 @@
 package org.terracotta.entity;
 
 import org.junit.Assert;
-import org.terracotta.exception.EntityException;
-import org.terracotta.exception.EntityServerException;
 
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 
 /**
@@ -46,7 +42,6 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
   private AtomicLong idGenerator = new AtomicLong(0);
   private volatile long eldest = -1L;
   private ConcurrencyStrategy<M> concurrencyStrategy;
-  private InvokeMonitor monitor;
 
   public PassthroughEndpoint() {
     // We start in the open state.
@@ -80,10 +75,10 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
   }
 
   @Override
-  public InvocationBuilder<M, R> beginInvoke() {
+  public Invocation<R> message(M message) {
     // We can't create new invocations when the endpoint is closed.
     checkEndpointOpen();
-    return new InvocationBuilderImpl();
+    return new InvocationImpl(message);
   }
 
   private class FakeClientDescriptor implements ClientDescriptor {
@@ -98,107 +93,18 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
     }
   }
 
-  private class InvocationBuilderImpl implements InvocationBuilder<M, R> {
-    private M request = null;
+  private class InvocationImpl<M, R> implements Invocation<R> {
+    private final M request;
 
-    @Override
-    public InvocationBuilder<M, R> ackSent() {
-      // ACKs ignored in this implementation.
-      return this;
+    private InvocationImpl(M request) {
+      this.request = request;
     }
 
     @Override
-    public InvocationBuilder<M, R> ackReceived() {
-      // ACKs ignored in this implementation.
-      return this;
+    public Task invoke(InvocationCallback<R> callback, Set<InvocationCallback.Types> callbacks) {
+      return null;
     }
 
-    @Override
-    public InvocationBuilder<M, R> ackCompleted() {
-      // ACKs ignored in this implementation.
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<M, R> ackRetired() {
-      // ACKs ignored in this implementation.
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<M, R> replicate(boolean requiresReplication) {
-      // Replication ignored in this implementation.
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<M, R> message(M message) {
-      this.request = message;
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<M, R> blockGetOnRetire(boolean shouldBlock) {
-      // ACKs ignored in this implementation.
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<M, R> monitor(InvokeMonitor<R> consumer) {
-      monitor = consumer;
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<M, R> withExecutor(Executor exctr) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Deprecated @Override
-    public InvocationBuilder<M, R> asDeferredResponse() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public InvokeFuture<R> invoke() throws MessageCodecException {
-      // Note that the passthrough end-point wants to preserve the semantics of a single-threaded server, no matter how
-      // complicated the caller is (since multiple threads often are used to simulate multiple clients or multiple threads
-      // using one client).
-      // We will synchronize on the entity instance so it will only ever see one caller at a time, no matter how many
-      // end-points connect to it.
-      synchronized (entity) {
-        byte[] result = null;
-        EntityException error = null;
-        try {
-          result = sendInvocation(codec.encodeMessage(request), monitor);
-        } catch (EntityException ee) {
-          error = ee;
-        }
-        monitor = null;
-        return new ImmediateInvokeFuture<>(codec.decodeResponse(result), error);
-      }
-    }
-
-    @Override
-    public InvokeFuture<R> invokeWithTimeout(long time, TimeUnit units) throws InterruptedException, TimeoutException, MessageCodecException {
-      return invoke();
-    }
-
-    private byte[] sendInvocation(byte[] payload, InvokeMonitor<R> monitor) throws EntityException {
-      byte[] result = null;
-      try {
-        M message = codec.decodeMessage(payload);
-        int key = concurrencyStrategy.concurrencyKey(message);
-        R response = entity.invokeActive(new PassThroughEntityActiveInvokeContext<R>(clientDescriptor,
-                                                                                  key,
-                                                                                  idGenerator.incrementAndGet(),
-                                                                                  eldest, monitor), message);
-        result = codec.encodeResponse(response);
-      } catch (Exception e) {
-        throw new EntityServerException(null, null, null, e);
-      }
-      return result;
-    }
   }
 
   public ClientCommunicator clientCommunicator() {
