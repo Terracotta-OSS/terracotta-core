@@ -23,50 +23,22 @@ import java.io.IOException;
 
 public interface MapOperation extends EntityMessage {
   enum Type {
-    GET {
-      @Override
-      public boolean replicate() { return false; }
-    },
+    GET,
     PUT,
     REMOVE,
-    SIZE {
-      @Override
-      public boolean replicate() { return false; }
-    },
-    CONTAINS_KEY {
-      @Override
-      public boolean replicate() { return false; }
-    },
-    CONTAINS_VALUE {
-      @Override
-      public boolean replicate() { return false; }
-    },
+    SIZE,
+    CONTAINS_KEY,
+    CONTAINS_VALUE,
     CLEAR,
     PUT_ALL,
-    KEY_SET {
-      @Override
-      public boolean replicate() { return false; }
-    },
-    VALUES {
-      @Override
-      public boolean replicate() { return false; }
-    },
-    ENTRY_SET {
-      @Override
-      public boolean replicate() { return false; }
-    },
-    SYNC_OP {
-      @Override
-      public boolean replicate() { return false; }
-    },
+    KEY_SET,
+    VALUES,
+    ENTRY_SET,
+    SYNC_OP,
     PUT_IF_ABSENT,
     PUT_IF_PRESENT,
     CONDITIONAL_REMOVE,
     CONDITIONAL_REPLACE;
-
-    public boolean replicate() {
-      return true;
-    }
   }
 
   Type operationType();

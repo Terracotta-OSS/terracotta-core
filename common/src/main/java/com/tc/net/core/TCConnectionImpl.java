@@ -417,27 +417,29 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     int batchSize = 0;
     int batchMsgCount = 0;
     for (final TCNetworkMessage element : messagesToWrite) {
-      if (element instanceof WireProtocolMessage) {
-        // we don't want to group already constructed Transport Handshake WireProtocolMessages
-        final WireProtocolMessage ms = finalizeWireProtocolMessage((WireProtocolMessage) element, 1);
-        this.writeContexts.add(new WriteContext(ms));
-      } else if (WireProtocolHeader.PROTOCOL_UNKNOWN == WireProtocolHeader.getProtocolForMessageClass(element)) {
-        // GenericNetwork messages are used for testing
-        this.writeContexts.add(new WriteContext(element));
-      } else if (MSG_GROUPING_ENABLED) {
-        int realMessageSize = element.getTotalLength();
-        if (!canBatch(realMessageSize, batchSize, batchMsgCount)) {
-          // We can't add this to the current batch so seal the current batch as a write context and create a new one.
-          this.writeContexts.add(new WriteContext(buildWireProtocolMessageGroup(currentBatch)));
-          batchSize = 0;
-          batchMsgCount = 0;
-          currentBatch = new ArrayList<TCNetworkMessage>();
+      if (element.commit()) {
+        if (element instanceof WireProtocolMessage) {
+          // we don't want to group already constructed Transport Handshake WireProtocolMessages
+          final WireProtocolMessage ms = finalizeWireProtocolMessage((WireProtocolMessage) element, 1);
+          this.writeContexts.add(new WriteContext(ms));
+        } else if (WireProtocolHeader.PROTOCOL_UNKNOWN == WireProtocolHeader.getProtocolForMessageClass(element)) {
+          // GenericNetwork messages are used for testing
+          this.writeContexts.add(new WriteContext(element));
+        } else if (MSG_GROUPING_ENABLED) {
+          int realMessageSize = element.getTotalLength();
+          if (!canBatch(realMessageSize, batchSize, batchMsgCount)) {
+            // We can't add this to the current batch so seal the current batch as a write context and create a new one.
+            this.writeContexts.add(new WriteContext(buildWireProtocolMessageGroup(currentBatch)));
+            batchSize = 0;
+            batchMsgCount = 0;
+            currentBatch = new ArrayList<TCNetworkMessage>();
+          }
+          batchSize += realMessageSize;
+          batchMsgCount++;
+          currentBatch.add(element);
+        } else {
+          this.writeContexts.add(new WriteContext(buildWireProtocolMessage(element)));
         }
-        batchSize += realMessageSize;
-        batchMsgCount++;
-        currentBatch.add(element);
-      } else {
-        this.writeContexts.add(new WriteContext(buildWireProtocolMessage(element)));
       }
     }
 

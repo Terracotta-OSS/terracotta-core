@@ -25,7 +25,6 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
-import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
@@ -80,7 +79,7 @@ public class LazyHandshakeTest extends TCTestCase {
 
   private void lazySetUp(int proxyPort) {
     serverConn = new TCConnectionManagerImpl("Server-Connections",  0, new ClearTextBufferManagerFactory());
-    clientConn = new BasicConnectionManager("", new ClearTextBufferManagerFactory());
+    clientConn = new TCConnectionManagerImpl("Client-Connections", 0, new ClearTextBufferManagerFactory());
     serverComms = new CommunicationsManagerImpl(new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
                                                 serverConn,
                                                 new NullConnectionPolicy());

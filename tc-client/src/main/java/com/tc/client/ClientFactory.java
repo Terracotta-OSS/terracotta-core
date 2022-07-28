@@ -30,7 +30,7 @@ public class ClientFactory {
   //  we can verify that it won't be used here.
   public static DistributedObjectClient createClient(Iterable<InetSocketAddress> serverAddresses, ClientBuilder builder,
                                                      TCThreadGroup threadGroup,
-                                                     String uuid, String name, boolean async) {
-    return new DistributedObjectClient(serverAddresses, builder, threadGroup, uuid, name, async);
+                                                     String uuid, String name) {
+    return new DistributedObjectClient(serverAddresses, builder, threadGroup, uuid, name);
   }
 }

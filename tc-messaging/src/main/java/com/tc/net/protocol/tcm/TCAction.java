@@ -19,6 +19,7 @@
 package com.tc.net.protocol.tcm;
 
 import com.tc.net.NodeID;
+import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.object.session.SessionID;
 
 import java.io.IOException;
@@ -35,7 +36,7 @@ public interface TCAction {
    */
   public void hydrate() throws IOException, UnknownNameException;
 
-  public boolean send();
+  public TCNetworkMessage send();
 
   public MessageChannel getChannel();
 

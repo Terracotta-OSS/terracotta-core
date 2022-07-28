@@ -38,7 +38,6 @@ import com.tc.object.ClientEntityManager;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityID;
 import com.tc.util.Assert;
-import com.tc.util.Throwables;
 import com.tc.util.Util;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -78,31 +77,20 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
 
   @Override
   public synchronized T fetchEntity(U userData) throws EntityNotFoundException, EntityVersionMismatchException {
-    EntityClientEndpoint endpoint = null;
+    EntityClientEndpoint endpoint;
     try {
       final ClientInstanceID clientInstanceID = new ClientInstanceID(this.nextClientInstanceID.getAndIncrement());
       endpoint = entityManager.get().fetchEntity(this.getEntityID(), this.version, clientInstanceID, entityClientService.getMessageCodec());
+    } catch (EntityNotFoundException | EntityVersionMismatchException e) {
+      throw e;
     } catch (EntityException e) {
-      // In this case, we want to close the endpoint but still throw back the exception.
-      // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
-      // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
-      if (e instanceof EntityNotFoundException) {
-        throw (EntityNotFoundException)e;
-      } else if (e instanceof EntityVersionMismatchException) {
-        throw (EntityVersionMismatchException)e;
-      } else {
-        throw Assert.failure("Unsupported exception type returned to fetch", e);
-      }
+      throw Assert.failure("Unsupported exception type returned to fetch", e);
     } catch (ConnectionClosedException closed) {
       // just rethrow
       throw closed;
     } catch (final Throwable t) {
       Util.printLogAndRethrowError(t, logger);
-    }
-    
-    // Note that a failure to resolve the endpoint would have thrown so this can't be null.
-    if (endpoint == null) {
-      Assert.assertNotNull(endpoint);
+      throw t;
     }
 
     return (T) endpointConnector.connect(endpoint, entityClientService, userData);
@@ -122,21 +110,10 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
     final EntityID entityID = getEntityID();
     try {
       entityManager.get().createEntity(entityID, version, entityClientService.serializeConfiguration(configuration));
+    } catch (EntityNotProvidedException | EntityAlreadyExistsException | EntityVersionMismatchException | EntityConfigurationException e) {
+      throw e;
     } catch (EntityException e) {
-      // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
-      // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
-      if (e instanceof EntityNotProvidedException) {
-        throw (EntityNotProvidedException)e;
-      } else if (e instanceof EntityAlreadyExistsException) {
-        throw (EntityAlreadyExistsException)e;
-      } else if (e instanceof EntityVersionMismatchException) {
-        throw (EntityVersionMismatchException)e;
-      } else if (e instanceof EntityConfigurationException) {
-        throw (EntityConfigurationException) e;
-      } else {
-        // WARNING:  Assert.failure returns an exception, instead of throwing one.
-        throw Assert.failure("Unsupported exception type returned to create", e);
-      }
+      throw Assert.failure("Unsupported exception type returned to create", e);
     }
   }
 
@@ -144,21 +121,11 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
   public C reconfigure(final C configuration) throws EntityNotProvidedException, EntityNotFoundException, EntityConfigurationException {
     final EntityID entityID = getEntityID();
     try {
-      return entityClientService.deserializeConfiguration(
-            entityManager.get().reconfigureEntity(entityID, version, entityClientService.serializeConfiguration(configuration)));
+      return entityClientService.deserializeConfiguration(entityManager.get().reconfigureEntity(entityID, version, entityClientService.serializeConfiguration(configuration)));
+    } catch (EntityNotFoundException | EntityNotProvidedException | EntityConfigurationException e) {
+      throw e;
     } catch (EntityException e) {
-      // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
-      // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
-      if (e instanceof EntityNotFoundException) {
-        throw (EntityNotFoundException)e;
-      } else if (e instanceof EntityNotProvidedException) {
-        throw (EntityNotProvidedException)e;
-      } else if (e instanceof EntityConfigurationException) {
-        throw (EntityConfigurationException) e;
-      } else {
-        // WARNING:  Assert.failure returns an exception, instead of throwing one.
-        throw Assert.failure("Unsupported exception type returned to reconfigure", e);
-      }
+      throw Assert.failure("Unsupported exception type returned to reconfigure", e);
     }
   }
   
@@ -168,19 +135,10 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
     
     try {
       return entityManager.get().destroyEntity(entityID, this.version);
+    } catch (EntityNotProvidedException | EntityNotFoundException e) {
+      throw e;
     } catch (EntityException e) {
-      // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
-      // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
-      // NOTE: PermanentEntityException is thrown by this method.
-      if (e instanceof EntityNotProvidedException) {
-        throw (EntityNotProvidedException)e;
-      } else if (e instanceof EntityNotFoundException) {
-        throw (EntityNotFoundException)e;
-      } else {
-        // This is something unsupported so there is probably some wire-level corruption so throw it as runtime so we can
-        //  examine what went wrong, at a higher level.
-        throw Throwables.propagate(e);
-      }
-    }    
+      throw Assert.failure("Unsupported exception type returned to destroy", e);
+    }
   }
 }

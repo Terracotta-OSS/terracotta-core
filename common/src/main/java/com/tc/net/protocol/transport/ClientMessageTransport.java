@@ -305,9 +305,7 @@ public class ClientMessageTransport extends MessageTransportBase {
           handleHandshakeError(new TransportHandshakeErrorContext(synAck.getErrorContext() + " " + message,
                                                                   synAck.getErrorType()));
         }
-      }
-
-      if (!getConnectionID().isNewConnection() && getConnectionID().isValid()) {
+      } else if (!getConnectionID().isNewConnection() && getConnectionID().isValid()) {
         // This is a reconnect
         Assert.eval(getConnectionID().equals(synAck.getConnectionId()));
       }

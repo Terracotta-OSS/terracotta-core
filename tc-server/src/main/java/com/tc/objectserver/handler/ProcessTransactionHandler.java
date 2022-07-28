@@ -25,6 +25,7 @@ import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Stage;
 import com.tc.async.impl.MonitoringEventCreator;
 import com.tc.bytes.TCByteBuffer;
+import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
@@ -135,8 +136,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
         // only applied messages should be sent back to the client except on resent messages
         // that path is unoptimized so regular received messages can hit this path
       }
-      boolean didSend = response.send();
-      if (!didSend) {
+      TCNetworkMessage networkMessage = response.send();
+      if (networkMessage == null) {
         // It is possible for this send to fail.  Typically, it means that the client has disconnected.
         LOGGER.warn("Failed to send message to: " + destinationID);
       } else if (LOGGER.isDebugEnabled()) {

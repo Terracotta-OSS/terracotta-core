@@ -94,19 +94,42 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   public boolean isShutdown() {
     try {
       return getHandle().isShutdown();
-    } catch (ConnectionClosedException closed) {
-      return true;
+    } catch (Throwable t) {
+      if (containsCause(t, ConnectionClosedException.class)) {
+        return true;
+      } else {
+        throw t;
+      }
     }
   }
+
+
+
+
+
 
   @Override
   public void shutdown() {
     try {
       getHandle().shutdown();
-    } catch (ConnectionClosedException closed) {
-      // silent
+    } catch (Throwable t) {
+      if (!containsCause(t, ConnectionClosedException.class)) {
+        throw t;
+      }
     }
   }
+
+  private boolean containsCause(Throwable failure, Class<? extends Throwable> cause) {
+    Throwable intermediate = failure;
+
+    while(!cause.isInstance(intermediate)) {
+      if ((intermediate = intermediate.getCause()) == null) {
+        return false;
+      }
+    }
+    return true;
+  }
+
 
 // connection destroyed from below
   private void destroy() {

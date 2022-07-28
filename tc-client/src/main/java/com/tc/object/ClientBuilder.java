@@ -22,7 +22,6 @@ import com.tc.net.protocol.transport.ClientConnectionErrorListener;
 import org.slf4j.Logger;
 
 import com.tc.async.api.StageManager;
-import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.ProductID;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
@@ -65,8 +64,8 @@ public interface ClientBuilder {
   ClientEntityManager createClientEntityManager(ClientMessageChannel channel, StageManager stages);
 
   void setClientConnectionErrorListener(ClientConnectionErrorListener listener);
-  
-  BufferManagerFactory createBufferManagerFactory();
 
   ProductID getTypeOfClient();
+
+  TCConnectionManager createConnectionManager(String uuid, String name);
 }

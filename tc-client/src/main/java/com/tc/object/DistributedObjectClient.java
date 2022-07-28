@@ -20,6 +20,7 @@ package com.tc.object;
 
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
+import com.tc.net.ClientID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,10 +86,8 @@ import com.tc.entity.DiagnosticResponse;
 import com.tc.entity.LinearVoltronEntityMultiResponse;
 import com.tc.entity.ReplayVoltronEntityMultiResponse;
 import com.tc.logging.CallbackOnExitState;
-import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.core.ProductID;
 import com.tc.net.core.TCConnectionManager;
-import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.tcm.TCMessageHydrateAndConvertSink;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
@@ -106,6 +105,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -144,25 +144,21 @@ public class DistributedObjectClient {
   private ClientEntityManager clientEntityManager;
   private final StageManager communicationStageManager;
   
-  private final boolean isAsync;
-
-  
   public DistributedObjectClient(Iterable<InetSocketAddress> serverAddresses, TCThreadGroup threadGroup,
                                  Properties properties) {
     this(serverAddresses, new StandardClientBuilderFactory("terracotta").create(properties), threadGroup,
-         UUID.NULL_ID.toString(), "", false);
+         UUID.NULL_ID.toString(), "");
   }
 
   public DistributedObjectClient(Iterable<InetSocketAddress> serverAddresses, ClientBuilder builder, TCThreadGroup threadGroup,
-                                 String uuid, String name, boolean asyncDrive) {
+                                 String uuid, String name) {
     Assert.assertNotNull(serverAddresses);
     this.serverAddresses = serverAddresses;
     this.threadGroup = threadGroup;
     this.clientBuilder = builder;
     this.uuid = uuid;
     this.name = name;
-    this.isAsync = asyncDrive;
-    
+
     // We need a StageManager to create the SEDA stages used for handling the messages.
     final SEDA seda = new SEDA(threadGroup);
     communicationStageManager = seda.getStageManager();
@@ -244,12 +240,8 @@ public class DistributedObjectClient {
     final HealthCheckerConfig hc = new HealthCheckerConfigClientImpl(tcProperties
                                          .getPropertiesFor(TCPropertiesConsts.L1_L2_HEALTH_CHECK_CATEGORY), "TC Client");
 
-    this.connectionManager = (isAsync) ?
-            new TCConnectionManagerImpl(CommunicationsManager.COMMSMGR_CLIENT, 0, this.clientBuilder.createBufferManagerFactory())
-            :
-            new BasicConnectionManager(name + "/" + uuid, this.clientBuilder.createBufferManagerFactory());
-    this.communicationsManager = this.clientBuilder
-        .createCommunicationsManager(mm,
+    this.connectionManager = this.clientBuilder.createConnectionManager(uuid, name);
+    this.communicationsManager = this.clientBuilder.createCommunicationsManager(mm,
                                      messageRouter,
                                      networkStackHarnessFactory,
                                      new NullConnectionPolicy(),
@@ -264,7 +256,9 @@ public class DistributedObjectClient {
                                                                  socketTimeout);
 
 
-    final ClientIDLoggerProvider cidLoggerProvider = new ClientIDLoggerProvider(clientChannel::getClientID);
+    WeakReference<ClientMessageChannel> channelRef = new WeakReference<>(clientChannel);
+
+    final ClientIDLoggerProvider cidLoggerProvider = new ClientIDLoggerProvider(() -> Optional.ofNullable(channelRef.get()).map(ClientMessageChannel::getClientID).orElse(ClientID.NULL_ID));
     this.communicationStageManager.setLoggerProvider(cidLoggerProvider);
 
     DSO_LOGGER.debug("Created channel.");
@@ -306,19 +300,14 @@ public class DistributedObjectClient {
     final ClientConfigurationContext cc = new ClientConfigurationContext(clientChannel.getClientID().toString(), this.communicationStageManager);
     // DO NOT create any stages after this call
     
-    String[] exclusion = clientChannel.getProductID() == ProductID.DIAGNOSTIC || !isAsync ? 
-      new String[] {
-        ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE
-      } 
-              :
-      new String[] {
-      };
+    String[] exclusion = clientChannel.getProductID() == ProductID.DIAGNOSTIC ?
+            new String[] { ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE } : new String[] {};
 
     this.communicationStageManager.startAll(cc, Collections.<PostInit> emptyList(), exclusion);
 
     EventHandler<ClientHandshakeResponse> handshake = new ClientCoordinationHandler(this.clientHandshakeManager);
 
-    initChannelMessageRouter(messageRouter, EventHandler.directSink(handshake), isAsync ? multiResponseStage.getSink() : EventHandler.directSink(mutil),
+    initChannelMessageRouter(messageRouter, EventHandler.directSink(handshake), multiResponseStage.getSink(),
             clientEntityManager, singleMessageReceiver);
 
     return clientChannel;

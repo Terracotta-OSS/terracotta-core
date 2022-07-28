@@ -20,8 +20,6 @@ package com.tc.net.core;
 
 
 import com.tc.net.ServerID;
-import com.tc.net.TCSocketAddress;
-import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ChannelEvent;
@@ -83,7 +81,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
   }
 
   private ClientMessageChannel createClientMsgCh() {
-    BasicConnectionManager connMgr = new BasicConnectionManager("", new ClearTextBufferManagerFactory());
+    TCConnectionManager connMgr = new TCConnectionManagerImpl("TestCommMgr-Client", 0, new ClearTextBufferManagerFactory());
     clientConnectionMgrs.add(connMgr);
     CommunicationsManager clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                       getNetworkStackHarnessFactory(),

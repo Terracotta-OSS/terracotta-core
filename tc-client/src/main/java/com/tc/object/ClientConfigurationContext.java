@@ -20,15 +20,10 @@ package com.tc.object;
 
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.ConfigurationContextImpl;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
-
 
 public class ClientConfigurationContext extends ConfigurationContextImpl {
   public static final String             VOLTRON_ENTITY_MULTI_RESPONSE_STAGE                      = "multi_request_ack_stage";
 
-  public static final int                MAX_PENDING_REQUESTS                        = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.CLIENT_MAX_PENDING_REQUESTS, 5000);
-  
   public ClientConfigurationContext(String identifier, StageManager stageManager) {
     super(identifier, stageManager);
   }

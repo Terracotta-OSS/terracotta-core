@@ -21,7 +21,6 @@ package com.tc.net.protocol.tcm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
@@ -109,7 +108,7 @@ try {
     clientMessageRouter = new TCMessageRouterImpl();
     serverMessageRouter = new TCMessageRouterImpl();
     MessageMonitor mm = new NullMessageMonitor();
-    clientConns = new BasicConnectionManager("", new ClearTextBufferManagerFactory());
+    clientConns = new TCConnectionManagerImpl("TestCommMgr-client", 0, new ClearTextBufferManagerFactory());
     clientComms = new CommunicationsManagerImpl(mm, clientMessageRouter,
                                                 clientStackHarnessFactory, clientConns, new NullConnectionPolicy(),
                                                 new DisabledHealthCheckerConfigImpl(), new TransportHandshakeErrorHandlerForL1(), 
@@ -282,7 +281,7 @@ try {
 
     MessageMonitor mm = new NullMessageMonitor();
     
-    clientConns = new BasicConnectionManager("", new ClearTextBufferManagerFactory());
+    clientConns = new TCConnectionManagerImpl("TestCommMgr-client-1", 0, new ClearTextBufferManagerFactory());
     clientComms = new CommunicationsManagerImpl(mm, new PlainNetworkStackHarnessFactory(),
                                                 clientConns, 
                                                 new NullConnectionPolicy());
@@ -303,7 +302,7 @@ try {
     addCommsMappingAndRouting(clientWatcher, serverWatcher, serverComms2);
     NetworkListener lsnr2 = getListener(clientWatcher, serverWatcher, false, serverComms2);
 
-    TCConnectionManager clientConns2 = new BasicConnectionManager("", new ClearTextBufferManagerFactory());
+    TCConnectionManager clientConns2 = new TCConnectionManagerImpl("TestCommMgr-client-2", 0, new ClearTextBufferManagerFactory());
     CommunicationsManager clComms = new CommunicationsManagerImpl(mm,
                                                                   new PlainNetworkStackHarnessFactory(),
                                                                   clientConns2, new NullConnectionPolicy());

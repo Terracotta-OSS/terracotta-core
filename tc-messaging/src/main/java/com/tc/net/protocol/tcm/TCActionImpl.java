@@ -318,12 +318,12 @@ public abstract class TCActionImpl implements TCAction {
    * @see com.tc.net.protocol.tcm.ApplicationMessage#send()
    */
   @Override
-  public boolean send() {
+  public TCNetworkMessage send() {
     if (isSent.attemptSet()) {
       TCNetworkMessage msg = convertToNetworkMessage();
       try {
         basicSend(msg);
-        return true;
+        return msg;
       } catch (IOException ioe) {
 //  suppress some warnings when the channel is closed as this is expected, client is not
 //  there anymore
@@ -332,7 +332,7 @@ public abstract class TCActionImpl implements TCAction {
         }
       }
     }
-    return false;
+    return null;
   }
 
   private void basicSend(TCNetworkMessage msg) throws IOException {

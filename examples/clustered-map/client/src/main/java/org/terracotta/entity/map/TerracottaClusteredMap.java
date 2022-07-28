@@ -136,9 +136,7 @@ public class TerracottaClusteredMap<K, V> implements ConcurrentClusteredMap<K, V
 
   private MapResponse invokeWithReturn(MapOperation operation) {
     try {
-      return endpoint.beginInvoke()
-          .message(operation)
-          .replicate(operation.operationType().replicate())
+      return endpoint.message(operation)
           .invoke()
           .get();
     } catch (Exception e) {

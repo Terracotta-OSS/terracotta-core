@@ -19,35 +19,25 @@
 
 package com.tc.object;
 
-import org.terracotta.entity.AsyncInvocationBuilder;
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
-import org.terracotta.entity.InvocationBuilder;
+import org.terracotta.entity.Invocation;
 import org.terracotta.entity.InvocationCallback;
-import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodecException;
 
-import com.tc.entity.VoltronEntityMessage;
-import com.tc.text.MapListPrettyPrint;
 import com.tc.util.Assert;
-import org.terracotta.exception.EntityException;
 
-import java.util.EnumSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.entity.InvokeMonitor;
 
 
 public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityResponse> implements EntityClientEndpoint<M, R> {
@@ -130,242 +120,35 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
   }
     
   @Override
-  public InvocationBuilder<M, R> beginInvoke() {
+  public Invocation<R> message(M message) {
     // We can't create new invocations when the endpoint is closed.
     checkEndpointOpen();
-    return new InvocationBuilderImpl();
+    return new InvocationImpl(message);
   }
 
-  @Override
-  public AsyncInvocationBuilder<M, R> beginAsyncInvoke() {
-    // We can't create new invocations when the endpoint is closed.
-    checkEndpointOpen();
-    return new AsyncInvocationBuilderImpl();
-  }
-
-  private class AsyncInvocationBuilderImpl implements AsyncInvocationBuilder<M, R> {
+  private class InvocationImpl implements Invocation<R> {
     private boolean invoked = false;
-    private M request;
-    private boolean requiresReplication = true;
-    private long time;
-    private TimeUnit unit;
+    private final M request;
 
-    @Override
-    public AsyncInvocationBuilder<M, R> replicate(boolean requiresReplication) {
-      this.requiresReplication = requiresReplication;
-      return this;
-    }
-
-    @Override
-    public AsyncInvocationBuilder<M, R> message(M request) {
-      checkInvoked();
+    private InvocationImpl(M request) {
       this.request = request;
-      return this;
     }
-
-    @Override
-    public AsyncInvocationBuilder<M, R> blockEnqueuing(long time, TimeUnit unit) {
-      this.time = time;
-      this.unit = unit;
-      return this;
-    }
-
-    private void checkInvoked() {
-      if (invoked) {
-        throw new IllegalStateException("Already invoked");
-      }
-    }
-
-    @Override
-    public void invoke(InvocationCallback<R> callback) throws RejectedExecutionException {
-      try {
-        checkInvoked();
-        invoked = true;
-        InvokeMonitor<R> monitor = new AsyncInvokeMonitor<>(callback);
-        InFlightMonitor<R> ifm = new InFlightMonitor<>(codec, monitor, null);
-        //TODO make requested acks configurable and only invoke callback methods of specified ones
-        invocationHandler.asyncInvokeAction(entityID, invokeDescriptor, EnumSet.allOf(VoltronEntityMessage.Acks.class), ifm, this.requiresReplication, codec.encodeMessage(request), time, unit);
-      } catch (IllegalStateException | MessageCodecException ex) {
-        callback.failure(ex);
-      }
-    }
-  }
-
-  static class AsyncInvokeMonitor<R extends EntityResponse> implements InvokeMonitor<R>, AckMonitor {
-    private final InvocationCallback<R> callback;
-
-    AsyncInvokeMonitor(InvocationCallback<R> callback) {
-      this.callback = callback;
-    }
-
-    @Override
-    public void ackDelivered(VoltronEntityMessage.Acks ack) {
-      switch (ack) {
-        case SENT:
-          callback.sent();
-          break;
-        case RETIRED:
-          callback.retired();
-          break;
-        case RECEIVED:
-          callback.received();
-          break;
-        case COMPLETED:
-          callback.complete();
-          break;
-        default:
-          callback.failure(new IllegalArgumentException("unknown ack : " + ack));
-      }
-    }
-
-    @Override
-    public void exception(EntityException ee) {
-      callback.failure(ee);
-    }
-
-    @Override
-    public void accept(R r) {
-      callback.result(r);
-    }
-  }
-
-  private class InvocationBuilderImpl implements InvocationBuilder<M, R> {
-    private boolean invoked = false;
-    private M request;
-    private final Set<VoltronEntityMessage.Acks> acks = EnumSet.noneOf(VoltronEntityMessage.Acks.class);
-    private boolean requiresReplication = true;
-    // By default, we block the get() on the RETIRE ack.
-    private boolean shouldBlockGetOnRetire = true;
-    private InvokeMonitor<R> monitor;
-    private Executor executor;
 
     // TODO: fill in durability/consistency options here.
 
     @Override
-    public synchronized InvocationBuilderImpl message(M request) {
-      checkInvoked();
-      this.request = request;
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<M, R> ackSent() {
-      acks.add(VoltronEntityMessage.Acks.SENT);
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<M, R> ackReceived() {
-      acks.add(VoltronEntityMessage.Acks.RECEIVED);
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<M, R> ackCompleted() {
-      acks.add(VoltronEntityMessage.Acks.COMPLETED);
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<M, R> ackRetired() {
-      acks.add(VoltronEntityMessage.Acks.RETIRED);
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<M, R> monitor(InvokeMonitor<R> consumer) {
-      this.monitor = consumer;
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<M, R> withExecutor(Executor useForDelivery) {
-      this.executor = useForDelivery;
-      return this;
-    }
-    
-    @Deprecated @Override
-    public InvocationBuilder<M, R> asDeferredResponse() {
-      return this;
-    }    
-
-    @Override
-    public InvocationBuilder<M, R> replicate(boolean requiresReplication) {
-      this.requiresReplication = requiresReplication;
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<M, R> blockGetOnRetire(boolean shouldBlock) {
-      this.shouldBlockGetOnRetire = shouldBlock;
-      return this;
-    }
-    
-    private InvokeFuture<R> returnTypedInvoke(long startTime, final InFlightMessage result) {
-      return new InvokeFuture<R>() {
-        @Override
-        public boolean isDone() {
-          return result.isDone();
-        }
-
-        @Override
-        public R get() throws InterruptedException, EntityException {
-          try {
-            return codec.decodeResponse(result.get());
-          } catch (MessageCodecException e) {
-            throw new RuntimeException(e);
-          } finally {
-            collectStats(startTime, result);
-          }
-        }
-
-        @Override
-        public R getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
-          try {
-            return codec.decodeResponse(result.getWithTimeout(timeout, unit));
-          } catch (MessageCodecException e) {
-            throw new RuntimeException(e);
-          } finally {
-            collectStats(startTime, result);
-          }
-        }
-
-        @Override
-        public void interrupt() {
-          result.interrupt();
-        }
-
-        @Override
-        public String toString() {
-          return result.prettyPrint(new MapListPrettyPrint()).toString();
-        }
-      };
-    }
-    
-    @Override
-    public synchronized InvokeFuture<R> invokeWithTimeout(long time, TimeUnit units) throws MessageCodecException, InterruptedException, TimeoutException {
+    public Task invoke(InvocationCallback<R> callback, Set<InvocationCallback.Types> callbacks) {
       checkInvoked();
       invoked = true;
-      InFlightMonitor<R> ifm = (this.monitor != null) ? new InFlightMonitor<>(codec, this.monitor, executor) : null;
-      long start = System.nanoTime();
-      return returnTypedInvoke(start, invocationHandler.invokeActionWithTimeout(entityID, invokeDescriptor, this.acks, ifm, this.requiresReplication, this.shouldBlockGetOnRetire, time, units, codec.encodeMessage(request)));
-    }
-    
-    private void collectStats(long startTime, InFlightMessage msg) {
-      long now = System.nanoTime();
-      msg.setStatisticsBoundries(startTime, now);
-      msg.runOnRetire(()->{
-        stats.collect(msg.collect());
-      });
-    }
-
-    @Override
-    public synchronized InvokeFuture<R> invoke() throws MessageCodecException {
-      checkInvoked();
-      invoked = true;
-      InFlightMonitor<R> ifm = (this.monitor != null) ? new InFlightMonitor<>(codec, this.monitor, executor) : null;
-      long startTime = System.nanoTime();
-      return returnTypedInvoke(startTime, invocationHandler.invokeAction(entityID, invokeDescriptor, this.acks, ifm, this.requiresReplication, this.shouldBlockGetOnRetire, codec.encodeMessage(request)));
+      InvocationCallback<byte[]> binaryCallback = new BinaryInvocationCallback(codec, callback);
+      try {
+        return invocationHandler.invokeAction(entityID, invokeDescriptor, callbacks, binaryCallback, true, codec.encodeMessage(request));
+      } catch (MessageCodecException e) {
+        callback.failure(e);
+        callback.complete();
+        callback.retired();
+        return () -> false;
+      }
     }
 
     private void checkInvoked() {
