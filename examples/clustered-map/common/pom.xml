@@ -26,7 +26,7 @@
     <version>5.9-SNAPSHOT</version>
     <relativePath>../../../build-parent</relativePath>
   </parent>
-  <groupId>org.terracotta.entities</groupId>
+  <groupId>org.terracotta.internal</groupId>
   <artifactId>clustered-map-common</artifactId>
 
   <dependencies>

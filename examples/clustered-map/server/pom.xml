@@ -28,12 +28,12 @@
     <relativePath>../../../build-parent</relativePath>
   </parent>
 
-  <groupId>org.terracotta.entities</groupId>
+  <groupId>org.terracotta.internal</groupId>
   <artifactId>clustered-map-server</artifactId>
 
   <dependencies>
     <dependency>
-      <groupId>org.terracotta.entities</groupId>
+      <groupId>org.terracotta.internal</groupId>
       <artifactId>clustered-map-common</artifactId>
       <version>${project.version}</version>
     </dependency>
