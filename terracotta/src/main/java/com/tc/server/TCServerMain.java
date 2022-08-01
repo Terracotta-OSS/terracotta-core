@@ -29,7 +29,8 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import org.terracotta.server.Server;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class TCServerMain {
   
@@ -42,24 +43,28 @@ public class TCServerMain {
   }
 
   private static boolean startServer(String[] args) {
-    Server s = createServer(Arrays.asList(args), null);
+    Future<Boolean> s = createServer(Arrays.asList(args), null);
     if (s == null) {
       return false;
     } else {
-      return s.waitUntilShutdown();
+      try {
+        return s.get();
+      } catch (ExecutionException | InterruptedException e) {
+        return false;
+      }
     }
   }
 
-  public static Server createServer(List<String> args) {
+  public static Future<Boolean> createServer(List<String> args) {
     return createServer(args, System.out);
   }
 
-  public static Server createServer(List<String> args, OutputStream console) {
+  public static Future<Boolean> createServer(List<String> args, OutputStream console) {
     try {
       if (Files.isDirectory(Directories.getServerLibFolder())) {
-        Optional<Path> p = Files.list(Directories.getServerLibFolder()).filter(f->f.getFileName().toString().startsWith("tc-server")).findFirst();
-
-        ClassLoader serverClassLoader = new URLClassLoader(new URL[] {p.get().toUri().toURL()}, TCServerMain.class.getClassLoader());
+        Path serverJar = Directories.getServerJar();
+        
+        ClassLoader serverClassLoader = new URLClassLoader(new URL[] {serverJar.toUri().toURL()}, TCServerMain.class.getClassLoader());
 
         return ServerFactory.createServer(args, console, serverClassLoader);
       }

@@ -16,15 +16,27 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.server;
+package org.terracotta.internal;
 
-import java.io.OutputStream;
-import java.util.List;
-import java.util.concurrent.Future;
+import com.tc.productinfo.BaseBuildInfo;
+import java.io.IOException;
 
 /**
  *
  */
-public interface BootstrapService {
-  Future<Boolean> createServer(List<String> args, OutputStream console, ClassLoader loader) throws Exception;
+public class ExtendedServer extends BaseBuildInfo {
+
+  public ExtendedServer() throws IOException {
+    super(ExtendedServer.class.getResourceAsStream("/build-data.txt"));
+  }
+
+  @Override
+  public String getVersionMessage() {
+    return "Extended Server Example";
+  }
+
+  @Override
+  public String getMonkier() {
+    return "Extended Server Example";
+  }
 }

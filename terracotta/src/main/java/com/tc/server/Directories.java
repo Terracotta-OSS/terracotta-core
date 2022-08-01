@@ -19,9 +19,12 @@
 package com.tc.server;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 /**
  * Knows how to find certain directories. You should try <em>everything</em> you can to avoid using this class; using it
@@ -47,14 +50,13 @@ public class Directories {
    */
   public static final String TC_SERVER_LIB_PROPERTY_NAME               = "tc.server-lib";
   /**
+   */
+  public static final String TC_SERVER_JAR_PROPERTY_NAME               = "tc.server-jar";
+  /**
    * The property "tc.install-root.ignore-checks", which is used for testing to ignore checks for the installation root
    * directory.
    */
   public static final String TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME = "tc.install-root.ignore-checks";
-  /**
-   * Relative location for default configuration file under Terracotta installation directory
-   */
-  public static final String DEFAULT_CONFIG_FILE_LOCATION                    = "conf/tc-config.xml";
 
   /**
    * Get installation root directory.
@@ -64,7 +66,7 @@ public class Directories {
    * @throws FileNotFoundException If {@link #TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME} has not been set,
    *         this exception may be thrown if the installation root directory is not a directory
    */
-  static Path getInstallationRoot() throws FileNotFoundException {
+  public static Path getInstallationRoot() throws FileNotFoundException {
     boolean ignoreCheck = Boolean.getBoolean(TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME);
     if (ignoreCheck) {
       return Paths.get(System.getProperty("user.dir"));
@@ -87,14 +89,36 @@ public class Directories {
     }
   }
 
-  public static Path getDefaultConfigFile() throws FileNotFoundException {
-    return getInstallationRoot().resolve(DEFAULT_CONFIG_FILE_LOCATION);
+  public static Path getServerJar() throws FileNotFoundException {
+    String jar = System.getProperty(TC_SERVER_JAR_PROPERTY_NAME);
+    if (jar == null) {
+      jar = "tc-server";
+    }
+    Path jarFile = searchForServerJar(getServerLibFolder(), jar);
+    if (jarFile == null) {
+      jarFile = searchForServerJar(getInstallationRoot(), jar);
+    }
+    
+    return jarFile;
+  }
+  
+  private static Path searchForServerJar(Path directory, String name) {
+    try {
+      Optional<Path> p = Files.list(directory).filter(f->f.getFileName().toString().startsWith(name)).findFirst();
+      Path option = p.get();
+      if (Files.exists(option) && Files.isRegularFile(option)) {
+        return option;
+      }
+      return null;
+    } catch (IOException | NoSuchElementException io) {
+      return null;
+    }
   }
 
   public static Path getServerLibFolder() throws FileNotFoundException {
-    String installRoot = System.getProperty(TC_INSTALL_ROOT_PROPERTY_NAME, System.getProperty("user.dir"));
-    String serverLib = System.getProperty(TC_PLUGINS_LIB_PROPERTY_NAME, "lib");
-    Path f = Paths.get(installRoot, serverLib);
+    Path installRoot = getInstallationRoot();
+    String serverLib = System.getProperty(TC_SERVER_LIB_PROPERTY_NAME, "lib");
+    Path f = installRoot.resolve(serverLib);
     if (!Files.isDirectory(f)) {
       throw new FileNotFoundException("server library folder at " + f.toAbsolutePath() + " is not valid");
     }
@@ -102,10 +126,10 @@ public class Directories {
   }
 
   public static Path getServerPluginsApiDir() throws FileNotFoundException {
-    String installRoot = System.getProperty(TC_INSTALL_ROOT_PROPERTY_NAME, System.getProperty("user.dir"));
+    Path installRoot = getInstallationRoot();
     String pluginsRoot = System.getProperty(TC_PLUGINS_ROOT_PROPERTY_NAME, "plugins");
     String pluginsApi = System.getProperty(TC_PLUGINS_API_PROPERTY_NAME, "api");
-    Path f = Paths.get(installRoot, pluginsRoot, pluginsApi);
+    Path f = installRoot.resolve(pluginsRoot).resolve(pluginsApi);
     if (!Files.isDirectory(f)) {
       throw new FileNotFoundException("server plugins api folder at " + f.toAbsolutePath() + " is not valid");
     }
@@ -113,10 +137,10 @@ public class Directories {
   }
 
   public static Path getServerPluginsLibDir() throws FileNotFoundException {
-    String installRoot = System.getProperty(TC_INSTALL_ROOT_PROPERTY_NAME, System.getProperty("user.dir"));
+    Path installRoot = getInstallationRoot();
     String pluginsRoot = System.getProperty(TC_PLUGINS_ROOT_PROPERTY_NAME, "plugins");
     String pluginsLib = System.getProperty(TC_PLUGINS_LIB_PROPERTY_NAME, "lib");
-    Path f = Paths.get(installRoot, pluginsRoot, pluginsLib);
+    Path f = installRoot.resolve(pluginsRoot).resolve(pluginsLib);
     if (!Files.isDirectory(f)) {
       throw new FileNotFoundException("server plugins implementations folder at " + f.toAbsolutePath() + " is not valid");
     }

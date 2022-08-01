@@ -38,6 +38,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.AbstractExecutorService;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
@@ -60,7 +68,7 @@ public class Bootstrap implements BootstrapService {
   private static final Logger CONSOLE = LoggerFactory.getLogger(TCLogbackLogging.CONSOLE);
   
   @Override
-  public Server createServer(List<String> args, OutputStream out, ClassLoader loader) {
+  public Future<Boolean> createServer(List<String> args, OutputStream out, ClassLoader loader) {
     TCLogbackLogging.bootstrapLogging(out);
     ServiceLocator locator = ServiceLocator.createPlatformServiceLoader(loader);
 
@@ -105,7 +113,58 @@ public class Bootstrap implements BootstrapService {
         TCLogbackLogging.redirectLogging(null);
       }
     }
-    return server;
+    return new Future<Boolean>() {
+      @Override
+      public boolean cancel(boolean mayInterruptIfRunning) {
+       if (server.isStopped()) {
+         return false;
+       } else {
+         server.stop();
+         return true;
+       }
+      }
+
+      @Override
+      public boolean isCancelled() {
+        return !server.isStopped();
+      }
+
+      @Override
+      public boolean isDone() {
+        return server.isStopped();
+      }
+
+      @Override
+      public Boolean get() throws InterruptedException, ExecutionException {
+        return server.waitUntilShutdown();
+      }
+
+      @Override
+      public Boolean get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+        //  for completeness , do not use
+        long end = System.currentTimeMillis() + unit.toMillis(timeout);
+        while (System.currentTimeMillis() < end) {
+          if (!server.isStopped()) {
+            Thread.sleep(500);
+          } else {
+            return server.waitUntilShutdown();
+          }
+        }
+        throw new TimeoutException();
+      }
+      // for galvan compatiblity
+      public boolean waitUntilShutdown() {
+        try {
+          return get();
+        } catch (ExecutionException | InterruptedException e) {
+          return false;
+        }
+      }
+      
+      public Object getManagement() {
+        return server.getManagement();
+      }
+    };
   }
 
   private static void writeVersion(ProductInfo info) {
@@ -323,7 +382,11 @@ public class Bootstrap implements BootstrapService {
         try {
           return impl.waitUntilShutdown();
         } finally {
-          TCLogbackLogging.resetLogging();
+          try {
+            TCLogbackLogging.resetLogging();
+          } catch (Exception e) {
+            // Ignore
+          }
         }
       }
 
