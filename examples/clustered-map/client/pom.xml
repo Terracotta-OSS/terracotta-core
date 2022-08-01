@@ -27,24 +27,25 @@
     <version>5.9-SNAPSHOT</version>
     <relativePath>../../../build-parent</relativePath>
   </parent>
-  <groupId>org.terracotta.entities</groupId>
-  <artifactId>clustered-map-integration-tests</artifactId>
+
+  <groupId>org.terracotta.internal</groupId>
+  <artifactId>clustered-map-client</artifactId>
 
   <dependencies>
     <dependency>
-      <groupId>org.terracotta.entities</groupId>
-      <artifactId>clustered-map-server</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.entities</groupId>
-      <artifactId>clustered-map-client</artifactId>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>clustered-map-common</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>passthrough-server</artifactId>
-      <scope>test</scope>
+      <artifactId>entity-common-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>entity-client-api</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>

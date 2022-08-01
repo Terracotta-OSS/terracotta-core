@@ -11,15 +11,15 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>concurrent-map-entity</artifactId>
+  <groupId>org.terracotta.internal</groupId>
+    <artifactId>clustered-map</artifactId>
     <packaging>pom</packaging>
-    <name>concurrent-map-entity</name>
+    <name>clustered-map</name>
 
 <modules>
-    <module>client</module>
     <module>common</module>
+    <module>client</module>
     <module>server</module>
-    <module>integration-tests</module>
 </modules>
 
     <dependencies>
