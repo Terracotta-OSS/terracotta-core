@@ -28,6 +28,7 @@ import com.tc.util.HexDump;
 import com.tc.util.concurrent.SetOnceFlag;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Base class for network messages
@@ -243,6 +244,16 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
     callbacks.add(r);
   }
 
+  @Override
+  public boolean commit() {
+    return state.compareAndSet(State.PENDING, State.COMMITTED) || State.COMMITTED.equals(state.get());
+  }
+
+  @Override
+  public boolean cancel() {
+    return state.compareAndSet(State.PENDING, State.CANCELLED) || State.CANCELLED.equals(state.get());
+  }
+
   private void checkSealed() {
     if (!isSealed()) { throw new IllegalStateException("Message is not sealed"); }
   }
@@ -253,6 +264,7 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
 
   private final SetOnceFlag           sealed             = new SetOnceFlag();
   private final SetOnceFlag           callbackFired  = new SetOnceFlag();
+  private final AtomicReference<State> state = new AtomicReference<>(State.PENDING);
   private static final TCByteBuffer[] EMPTY_BUFFER_ARRAY = {};
   private final TCNetworkHeader       header;
   private TCByteBuffer[]              payloadData;
@@ -262,4 +274,9 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   private int                         headerLength;
   private final List<Runnable>        callbacks       = new LinkedList<>();
 
+  enum State {
+    PENDING,
+    COMMITTED,
+    CANCELLED;
+  }
 }

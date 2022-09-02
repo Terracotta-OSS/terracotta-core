@@ -20,7 +20,10 @@ package com.tc.net.protocol.tcm;
 
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.object.session.SessionID;
+
+import static org.mockito.Mockito.mock;
 
 public class TestTCMessage implements TCAction {
 
@@ -45,8 +48,8 @@ public class TestTCMessage implements TCAction {
   }
 
   @Override
-  public boolean send() {
-    return true;
+  public TCNetworkMessage send() {
+    return mock(TCNetworkMessage.class);
   }
 
   @Override

@@ -31,7 +31,7 @@
 
   <groupId>org.terracotta.internal</groupId>
   <artifactId>terracotta-core-root</artifactId>
-  <version>5.9-SNAPSHOT</version>
+  <version>5.10-SNAPSHOT</version>
   <name>terracotta-core-root</name>
   <packaging>pom</packaging>
 
@@ -41,13 +41,13 @@
     <spotbugs.skip>true</spotbugs.skip>
     <exclude-spotbugs-dependency>true</exclude-spotbugs-dependency>
 
-    <terracotta-apis.version>1.8.2</terracotta-apis.version>
-    <terracotta-configuration.version>10.7.3</terracotta-configuration.version>
+    <terracotta-apis.version>1.9.0</terracotta-apis.version>
+    <terracotta-configuration.version>10.7.4</terracotta-configuration.version>
     <galvan.version>1.6.5</galvan.version>
     <tc-tripwire.version>1.0.4</tc-tripwire.version>
     <terracotta-utilities.base.version>0.0.14</terracotta-utilities.base.version>
     <terracotta-utilities.range.version>[${terracotta-utilities.base.version},)</terracotta-utilities.range.version>
-    <passthrough-testing.version>1.8.2</passthrough-testing.version>
+    <passthrough-testing.version>1.9.0</passthrough-testing.version>
   </properties>
 
   <modules>

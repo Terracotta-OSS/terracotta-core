@@ -115,8 +115,6 @@ public interface TCPropertiesConsts {
    * </code>
    ********************************************************************************************************************/  
 
-  public static final String CLIENT_MAX_PENDING_REQUESTS                                    = "client.requests.pending.max";
-
   public static final String TC_TRANSPORT_HANDSHAKE_TIMEOUT                                 = "tc.transport.handshake.timeout";
   public static final String TC_CONFIG_SOURCEGET_TIMEOUT                                    = "tc.config.getFromSource.timeout";
   public static final String TC_CONFIG_TOTAL_TIMEOUT                                        = "tc.config.total.timeout";
@@ -306,7 +304,6 @@ public interface TCPropertiesConsts {
       L2_SEDA_STAGE_STALL_WARNING,
       L2_SEDA_STAGE_ALWAYS_HYDRATE,
       L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT,
-      CLIENT_MAX_PENDING_REQUESTS,
   };
 
 }

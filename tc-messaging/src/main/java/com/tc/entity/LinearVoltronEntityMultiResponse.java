@@ -20,6 +20,7 @@ package com.tc.entity;
 
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
+import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -165,7 +166,7 @@ public class LinearVoltronEntityMultiResponse extends DSOMessageBase implements 
   }
   
   @Override
-  public synchronized boolean send() {
+  public synchronized TCNetworkMessage send() {
     return super.send();
   }
 

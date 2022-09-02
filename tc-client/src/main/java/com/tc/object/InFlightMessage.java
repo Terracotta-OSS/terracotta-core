@@ -18,8 +18,7 @@
  */
 package com.tc.object;
 
-import org.terracotta.exception.EntityException;
-
+import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.object.tx.TransactionID;
@@ -39,20 +38,19 @@ import static com.tc.object.StatType.SERVER_ENDINVOKE;
 import static com.tc.object.StatType.SERVER_RECEIVED;
 import static com.tc.object.StatType.SERVER_RETIRED;
 import static com.tc.object.StatType.SERVER_SCHEDULE;
+import static java.util.Objects.requireNonNull;
+
 import com.tc.text.PrettyPrintable;
 import java.util.ArrayList;
 
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import com.tc.net.protocol.tcm.TCAction;
+import org.terracotta.entity.InvocationCallback;
 
 
 /**
@@ -64,53 +62,34 @@ import com.tc.net.protocol.tcm.TCAction;
 public class InFlightMessage implements PrettyPrintable {
   private final VoltronEntityMessage message;
   private final EntityID eid;
-  private final InFlightMonitor monitor;
-  private final boolean asyncMode;
-  /**
-   * The set of pending ACKs determines when the caller returns from the send, in order to preserve ordering in the
-   * client code.  This is different from being "done" which specifically means that the COMPLETED has happened,
-   * potentially returning a value or exception.
-   * ACKs are removed from this pending set, as they arrive.
-   */
-  private final Set<VoltronEntityMessage.Acks> pendingAcks;
-  // set of all acks for bookkeeping
+  private final InvocationCallback<byte[]> callback;
+
   private final EnumSet<VoltronEntityMessage.Acks> outstandingAcks = EnumSet.allOf(VoltronEntityMessage.Acks.class);
-  // Note that the point where we wait for acks isn't exposed outside the InvokeFuture interface so this set of waiting
-  // threads only applies to those threads waiting to get a response.
-  private final Set<Thread> waitingThreads;
 
   private boolean isSent;
   private Exception exception;
   private byte[] value;
-  private boolean getCanComplete;
-  private final boolean blockGetOnRetired;
   private final Trace trace;
-  
-  private Runnable runOnRetire;
-    
-  private long start;
-  private long send;
-  private long notifySent;
-  private long sent;
-  private long received;
-  private long got;
-  private long complete;
-  private long retired;
-  private long end;
-  
+
+  private final AtomicReference<State> state = new AtomicReference<>(State.PENDING);
+
+  private volatile long start;
+  private volatile long send;
+  private volatile long notifySent;
+  private volatile long sent;
+  private volatile long received;
+  private volatile long complete;
+  private volatile long retired;
+  private volatile long end;
+
   private long[] serverStats;
-  
-  public InFlightMessage(EntityID eid, Supplier<? extends VoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean shouldBlockGetOnRetire, boolean asyncMode) {
-    this.eid = eid;
-    this.message = message.get();
-    this.monitor = monitor;
-    this.asyncMode = asyncMode;
-    Assert.assertNotNull(eid);
-    Assert.assertNotNull(message);
-    this.pendingAcks = EnumSet.noneOf(VoltronEntityMessage.Acks.class);
-    this.pendingAcks.addAll(acks);
-    this.waitingThreads = new HashSet<>();
-    this.blockGetOnRetired = shouldBlockGetOnRetire;
+
+  private TCNetworkMessage networkMessage;
+
+  public InFlightMessage(EntityID eid, Supplier<? extends VoltronEntityMessage> message, InvocationCallback<byte[]> callback) {
+    this.eid = requireNonNull(eid);
+    this.message = requireNonNull(message.get());
+    this.callback = callback;
     this.trace = Trace.newTrace(this.message, "InFlightMessage");
   }
   
@@ -125,7 +104,6 @@ public class InFlightMessage implements PrettyPrintable {
       stats[StatType.CLIENT_ENCODE.ordinal()] = start;
       stats[StatType.CLIENT_SEND.ordinal()] = send;
       stats[StatType.CLIENT_SENT.ordinal()] = sent;
-      stats[StatType.CLIENT_GOT.ordinal()] = got;
       stats[StatType.CLIENT_COMPLETE.ordinal()] = complete;
       stats[StatType.CLIENT_RECEIVED.ordinal()] = received;
       stats[StatType.CLIENT_RETIRED.ordinal()] = retired;
@@ -143,14 +121,6 @@ public class InFlightMessage implements PrettyPrintable {
     return stats;
   }
   
-  synchronized void runOnRetire(Runnable r) {
-    if (retired != 0) {
-      r.run();
-    } else {
-      this.runOnRetire = r;
-    }
-  }
-
   @Override
   public Map<String, ?> getStateMap() {
     List<InFlightStats.Combo> values = new ArrayList<>(20);
@@ -178,7 +148,6 @@ public class InFlightMessage implements PrettyPrintable {
     timing.put("notifySent", notifySent);
     timing.put("received", received);
     timing.put("complete", complete);
-    timing.put("got", got);
     timing.put("retired", retired);
     map.put("marks", timing);
     Map<String, Object> offset = new LinkedHashMap<>();
@@ -208,204 +177,110 @@ public class InFlightMessage implements PrettyPrintable {
     this.isSent = true;
     this.send = System.nanoTime();
     try {
-      return ((TCAction)this.message).send();
+      return (this.networkMessage = ((TCAction) this.message).send()) != null;
     } finally {
       this.sent = System.nanoTime();
     }
   }
   
-  public void waitForAcks() {
-    boolean interrupted = false;
-    boolean complete = false;
-    try {
-      while (!complete) {
-        try {
-          waitForAcks(0, TimeUnit.MILLISECONDS);
-          complete = true;
-        } catch (InterruptedException ie) {
-          interrupted = true;
-        } catch (TimeoutException te) {
-          throw new AssertionError(te);
-        }
-      }
-    } finally {
-      if (interrupted) {
-        Thread.currentThread().interrupt();
-      }
-    }
-  }
-  
-  public void waitForAcks(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
-    Trace.activeTrace().log("InFlightMessage.waitForAcks");
-    timedWait(() -> pendingAcks.isEmpty(), timeout, unit);
-  }
-  
   public synchronized void sent() {
     if (ackDelivered(VoltronEntityMessage.Acks.SENT)) {
       this.notifySent = System.nanoTime();
-      if (this.pendingAcks.isEmpty()) {
-        notifyAll();
-      }
     }
   }
 
   public synchronized void received() {
     if (ackDelivered(VoltronEntityMessage.Acks.RECEIVED)) {
       this.received = System.nanoTime();
-      if (this.pendingAcks.isEmpty()) {
-        notifyAll();
-      }
     }
-  }
-
-  public synchronized void interrupt() {
-    for (Thread waitingThread : this.waitingThreads) {
-      waitingThread.interrupt();
-    }
-  }
-
-  public synchronized boolean isDone() {
-    return this.getCanComplete;
   }
 
   public synchronized boolean isSent() {
     return this.isSent;
   }
   
-  public synchronized byte[] get() throws InterruptedException, EntityException {
-    try {
-      return getWithTimeout(0, TimeUnit.MILLISECONDS);
-    } catch (TimeoutException to) {
-    // should not happpen with zero timeout
-      throw new AssertionError(to);
-    }
-  }
-  
-  private synchronized void timedWait(Callable<Boolean> predicate, long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
-   Thread callingThread = Thread.currentThread();
-    boolean didAdd = this.waitingThreads.add(callingThread);
-    // We can't have already been waiting.
-    Assert.assertTrue(didAdd);
-    
-    long end = (timeout > 0) ? System.nanoTime() + unit.toNanos(timeout) : 0;
-    try {
-      while (!predicate.call()) {
-        long timing = (end > 0) ? end - System.nanoTime() : 0;
-        if (timing < 0) {
-          throw new TimeoutException();
-        } else {
-          wait(timing / TimeUnit.MILLISECONDS.toNanos(1), (int)(timing % TimeUnit.MILLISECONDS.toNanos(1)));
-        }
-      }
-    } catch (InterruptedException | TimeoutException ie) {
-      throw ie;
-    } catch (Exception exp) {
-      throw new AssertionError(exp);
-    } finally {
-      this.waitingThreads.remove(callingThread);
-    }
-  }
-
-  public byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
-    trace.log("getWithTimeout()");
-    timedWait(() -> getCanComplete, timeout, unit);
-    this.got = System.nanoTime();
-    if (exception != null) {
-      ExceptionUtils.throwEntityException(exception);
-      throw new AssertionError("exception conversion failed", exception);
-    } else {
-      if (this.message.getVoltronType() == VoltronEntityMessage.Type.INVOKE_ACTION) {
-        Assert.assertNotNull(value);
-      }
-      return value;
-    }
-  }
-
-  public synchronized void setResult(byte[] value, Exception error) {
+  public void setResult(byte[] value, Exception error) {
     if (Trace.isTraceEnabled()) {
       trace.log("Received Result: " + value + " ; Exception: " + (error != null ? error.getLocalizedMessage() : "None"));
     }
     if (ackDelivered(VoltronEntityMessage.Acks.RECEIVED)) {
       this.received = System.nanoTime();
     }
-    if (ackDelivered(VoltronEntityMessage.Acks.COMPLETED)) {
-      this.complete = System.nanoTime();
-      if (pendingAcks.isEmpty()) {
-        notifyAll();
-      }
-
-      if (error != null) {
-        Assert.assertNull(value);
-        this.pendingAcks.clear();
-        this.exception = error;
-        this.getCanComplete = true;
-        if (asyncMode) {
+    if (outstandingAcks.contains(VoltronEntityMessage.Acks.COMPLETED)) {
+      try {
+        if (error != null) {
+          Assert.assertNull(value);
+          this.exception = error;
           handleException(this.exception);
+        } else {
+          Assert.assertNotNull(value);
+          this.value = value;
+          handleMessage(value);
         }
-        notifyAll();
-      } else {
-        Assert.assertNotNull(value);
-        this.value = value;
-        if (!this.blockGetOnRetired) {
-          this.getCanComplete = true;
-          if (asyncMode) {
-            handleMessage(value);
-          }
-          notifyAll();
-        }
+      } finally {
+        this.complete = System.nanoTime();
+        ackDelivered(VoltronEntityMessage.Acks.COMPLETED);
       }
     }
   }
   
-  synchronized void handleException(Exception ee) {
-    if (monitor != null) {
-      monitor.exception(ExceptionUtils.convert(ee));
-    }
+  void handleException(Exception ee) {
+    callback.failure(ExceptionUtils.convert(ee));
   }
 
-  synchronized void handleMessage(byte[] raw) {
-    if (monitor != null) {
-      monitor.accept(raw);
-    }
+  void handleMessage(byte[] raw) {
+    callback.result(raw);
   }
 
   private boolean ackDelivered(VoltronEntityMessage.Acks ack) {
     if (Trace.isTraceEnabled()) {
       trace.log("Received ACK: " + ack);
     }
-    if (this.pendingAcks.remove(ack) && monitor != null) {
-      monitor.ackDelivered(ack);
-    }
-    return this.outstandingAcks.remove(ack);
-  }
-  
-  private synchronized Runnable retiredBookeeping() {
-    if (ackDelivered(VoltronEntityMessage.Acks.RETIRED)) {
-      this.retired = System.nanoTime();
-      if (this.blockGetOnRetired) {
-        this.getCanComplete = true;
-        if (message.getVoltronType() == VoltronEntityMessage.Type.INVOKE_ACTION) {
-          Assert.assertTrue("failed " + this.message.getTransactionID(), value != null || exception != null);
-        }
+    if (this.outstandingAcks.remove(ack)) {
+      switch (ack) {
+        case SENT:
+          callback.sent();
+          break;
+        case RECEIVED:
+          callback.received();
+          break;
+        case COMPLETED:
+          callback.complete();
+          break;
+        case RETIRED:
+          callback.retired();
+          break;
       }
-      notifyAll();
-      return this.runOnRetire;
+      return true;
     } else {
-      return null;
+      return false;
     }
   }
 
   public void retired() {
-    Runnable runAfter = retiredBookeeping();
-    if (monitor != null) {
-      monitor.close();
-    }
-    if (runAfter != null) {
-      runAfter.run();
+    if (ackDelivered(VoltronEntityMessage.Acks.RETIRED)) {
+      this.retired = System.nanoTime();
+      if (message.getVoltronType() == VoltronEntityMessage.Type.INVOKE_ACTION) {
+        Assert.assertTrue("failed " + this.message.getTransactionID(), value != null || exception != null);
+      }
     }
   }
-  
+
   void addServerStatistics(long[] stats) {
     this.serverStats = stats;
+  }
+
+  public boolean commit() {
+    return state.compareAndSet(State.PENDING, State.COMMITTED) || State.COMMITTED.equals(state.get());
+  }
+
+  public boolean cancel() {
+    return (networkMessage == null || networkMessage.cancel()) && (state.compareAndSet(State.PENDING, State.CANCELLED) || State.CANCELLED.equals(state.get()));
+  }
+
+  enum State {
+    PENDING,
+    COMMITTED,
+    CANCELLED;
   }
 }

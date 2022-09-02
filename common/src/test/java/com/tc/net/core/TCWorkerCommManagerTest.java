@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.net.ServerID;
-import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
@@ -77,7 +76,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
   }
 
   private synchronized ClientMessageTransport createClient(String clientName) {
-    TCConnectionManager connection = new BasicConnectionManager("", new ClearTextBufferManagerFactory());
+    TCConnectionManager connection = new TCConnectionManagerImpl("Client-TestCommMgr", 0, new ClearTextBufferManagerFactory());
     clientConnectionMgrs.add(connection);
     CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                    new TransportNetworkStackHarnessFactory(),
@@ -288,7 +287,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
   }
 
   private ClientMessageChannel createClientMsgCh() {
-    TCConnectionManager connection = new BasicConnectionManager("", new ClearTextBufferManagerFactory());
+    TCConnectionManager connection = new TCConnectionManagerImpl("Client-TestCommMgr", 0, new ClearTextBufferManagerFactory());
     clientConnectionMgrs.add(connection);
     CommunicationsManager clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                       getNetworkStackHarnessFactory(),

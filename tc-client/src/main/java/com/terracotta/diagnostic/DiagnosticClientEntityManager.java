@@ -19,8 +19,6 @@
 package com.terracotta.diagnostic;
 
 import com.tc.entity.DiagnosticMessage;
-import com.tc.entity.VoltronEntityMessage;
-import com.tc.entity.VoltronEntityMessage.Acks;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientEntityManager;
@@ -29,7 +27,6 @@ import com.tc.object.EntityClientEndpointImpl;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.InFlightMessage;
-import com.tc.object.InFlightMonitor;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
@@ -37,13 +34,12 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.Invocation;
+import org.terracotta.entity.InvocationCallback;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityException;
@@ -128,7 +124,7 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
 
   @Override
   public void failed(TransactionID id, Exception e) {
-
+    waitingForAnswer.remove(id).setResult(null, e);
   }
 
   @Override
@@ -158,26 +154,24 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
   }
 
   @Override
-  public InFlightMessage invokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean requiresReplication, boolean shouldBlockGetOnRetire, byte[] payload) {
+  public Invocation.Task invokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<InvocationCallback.Types> callbacks, InvocationCallback<byte[]> callback, boolean requiresReplication, byte[] payload) {
     DiagnosticMessage network = createMessage(payload);
-    InFlightMessage message = new InFlightMessage(eid, ()->network, Collections.<Acks>emptySet(), null, false, false);
+    InFlightMessage message = new InFlightMessage(eid, ()->network, callback);
     waitingForAnswer.put(network.getTransactionID(), message);
     if (!message.send()) {
       message.setResult(null, new ConnectionClosedException("message failed to send"));
       waitingForAnswer.remove(network.getTransactionID());
+      return () -> false;
+    } else {
+      return () -> {
+        if (message.cancel()) {
+          waitingForAnswer.remove(message.getTransactionID(), message);
+          return true;
+        } else {
+          return false;
+        }
+      };
     }
-    return message;
-  }
-
-  @Override
-  public void asyncInvokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<Acks> requestedAcks, InFlightMonitor monitor, boolean requiresReplication, byte[] payload, long timeout, TimeUnit unit) throws RejectedExecutionException {
-    // TODO implement?
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public InFlightMessage invokeActionWithTimeout(EntityID eid, EntityDescriptor entityDescriptor, Set<Acks> acks, InFlightMonitor monitor, boolean requiresReplication, boolean shouldBlockGetOnRetire, long invokeTimeout, TimeUnit units, byte[] payload) throws InterruptedException, TimeoutException {
-    return invokeAction(eid, entityDescriptor, acks, monitor, false, false, payload);
   }
 
   private DiagnosticMessage createMessage(byte[] config) {

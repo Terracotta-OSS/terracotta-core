@@ -111,7 +111,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
       notifyCallbackOnHandshake(handshakeMessage);
 
       this.logger.debug("Sending handshake message");
-      if (!handshakeMessage.send()) {
+      if (handshakeMessage.send() == null) {
         if (handshakeMessage.getChannel().isConnected()) {
           LOGGER.error("handshake not sent but channel is connected", new Exception("FATAL HANDSHAKE ERROR"));
         } else {

@@ -21,7 +21,6 @@ package com.tc.object;
 import com.tc.exception.EntityBusyException;
 import com.tc.exception.EntityReferencedException;
 import com.tc.exception.ServerException;
-import com.tc.exception.WrappedEntityException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -44,7 +43,14 @@ public class ExceptionUtils {
     } else if (exp instanceof RuntimeException) {
       throw addCallerStackTraceToRuntime((RuntimeException)exp);
     } else {
-      throw convert(exp);
+      Exception converted = convert(exp);
+      if (converted instanceof EntityException) {
+        throw (EntityException) converted;
+      } else if (converted instanceof RuntimeException) {
+        throw (RuntimeException) converted;
+      } else {
+        throw new RuntimeException(converted);
+      }
     }
   }
 
@@ -69,22 +75,20 @@ public class ExceptionUtils {
     return runtime;
   }
   
-  public static EntityException convert(Exception server) {
+  public static Exception convert(Exception server) {
     if (server instanceof ServerException) {
       return convertServerException((ServerException)server);
-    } else if (server instanceof EntityException) {
-      server.addSuppressed(new RuntimeException("caller local trace"));
-      return (EntityException)server;
     } else {
-      return new WrappedEntityException("", "", server.getMessage(), server);
+      server.addSuppressed(new RuntimeException("caller local trace"));
+      return server;
     }
   }
   
-  private static EntityException convertServerException(ServerException exp) {
+  private static Exception convertServerException(ServerException exp) {
     switch (exp.getType()) {
       case CONNECTION_CLOSED:
       case CONNECTION_SHUTDOWN:
-        return new WrappedEntityException(new ConnectionClosedException(exp.getClassName(), exp.getEntityName(), exp.getDescription(), true, exp));
+        return new ConnectionClosedException(exp.getClassName(), exp.getEntityName(), exp.getDescription(), true, exp);
       case ENTITY_ALREADY_EXISTS:
         return new EntityAlreadyExistsException(exp.getClassName(), exp.getEntityName(), exp.getCause());
       case ENTITY_BUSY_EXCEPTION:
@@ -100,7 +104,7 @@ public class ExceptionUtils {
       case ENTITY_SERVER:
         return new EntityServerException(exp.getClassName(), exp.getEntityName(), exp.getDescription(), exp.getCause());
       case ENTITY_SERVER_UNCAUGHT:
-        return new WrappedEntityException(new EntityServerUncaughtException(exp.getClassName(), exp.getEntityName(), exp.getDescription(), exp.getCause()));
+        return new EntityServerUncaughtException(exp.getClassName(), exp.getEntityName(), exp.getDescription(), exp.getCause());
       case ENTITY_USER_EXCEPTION:
         return new EntityServerException(exp.getClassName(), exp.getEntityName(), exp.getDescription(), exp.getCause());
       case ENTITY_VERSION_MISMATCH:
@@ -108,7 +112,7 @@ public class ExceptionUtils {
       case MESSAGE_CODEC:
         return new EntityServerException(exp.getClassName(), exp.getEntityName(), exp.getDescription(), exp.getCause());
       case PERMANENT_ENTITY:
-        return new WrappedEntityException(new PermanentEntityException(exp.getClassName(), exp.getEntityName(), exp.getCause()));
+        return new PermanentEntityException(exp.getClassName(), exp.getEntityName(), exp.getCause());
       case PERMISSION_DENIED:
         return new EntityServerException(exp.getClassName(), exp.getEntityName(), exp.getDescription(), exp.getCause());
       case RECONNECT_REJECTED:

@@ -18,12 +18,10 @@
  */
 package com.tc.object;
 
-import com.tc.entity.VoltronEntityMessage;
+import org.terracotta.entity.Invocation;
+import org.terracotta.entity.InvocationCallback;
 
 import java.util.Set;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 
 
@@ -31,7 +29,5 @@ import java.util.concurrent.TimeoutException;
  * The minimal interface, provided to the EntityClientEndpoint, to handle invocations to send to the server.
  */
 public interface InvocationHandler {
-  InFlightMessage invokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean requiresReplication, boolean shouldBlockGetOnRetire, byte[] payload);
-  void asyncInvokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor, boolean requiresReplication, byte[] payload, long timeout, TimeUnit unit) throws RejectedExecutionException;
-  InFlightMessage invokeActionWithTimeout(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean requiresReplication, boolean shouldBlockGetOnRetire, long invokeTimeout, TimeUnit units, byte[] payload) throws InterruptedException, TimeoutException;
+  Invocation.Task invokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<InvocationCallback.Types> callbacks, InvocationCallback<byte[]> callback, boolean requiresReplication, byte[] payload);
 }

@@ -98,9 +98,7 @@ public class DistributedObjectClientTest extends TestCase {
           builder,
           threadGroup,
           null,
-          null,
-          false
-      );
+          null);
       long start = System.currentTimeMillis();
       try {
         client.connectFor(10, TimeUnit.SECONDS);

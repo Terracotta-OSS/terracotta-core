@@ -44,4 +44,8 @@ public interface TCNetworkMessage {
   public void complete();
 
   void addCompleteCallback(Runnable r);
+
+  boolean commit();
+
+  boolean cancel();
 }

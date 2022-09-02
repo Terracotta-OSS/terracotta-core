@@ -18,6 +18,7 @@
  */
 package com.tc.object;
 
+import com.tc.net.core.TCConnectionManagerImpl;
 import org.slf4j.Logger;
 import org.terracotta.connection.ConnectionPropertyNames;
 
@@ -113,10 +114,10 @@ public class StandardClientBuilder implements ClientBuilder {
 
     return product;
   }
-  
+
   @Override
-  public BufferManagerFactory createBufferManagerFactory() {
-    return getBufferManagerFactory();
+  public TCConnectionManager createConnectionManager(String uuid, String name) {
+    return new TCConnectionManagerImpl(name + "/" + uuid, 0, getBufferManagerFactory());
   }
 
   protected BufferManagerFactory getBufferManagerFactory() {

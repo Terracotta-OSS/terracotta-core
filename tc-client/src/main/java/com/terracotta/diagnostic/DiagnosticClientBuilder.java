@@ -20,6 +20,7 @@ package com.terracotta.diagnostic;
 
 
 import com.tc.async.api.StageManager;
+import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -61,5 +62,10 @@ public class DiagnosticClientBuilder extends StandardClientBuilder {
   @Override
   public ProductID getTypeOfClient() {
     return ProductID.DIAGNOSTIC;
+  }
+
+  @Override
+  public TCConnectionManager createConnectionManager(String uuid, String name) {
+    return new BasicConnectionManager(name + "/" + uuid, getBufferManagerFactory());
   }
 }

@@ -20,6 +20,7 @@ package com.tc.object.msg;
 
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
+import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCActionImpl;
@@ -54,7 +55,7 @@ public abstract class DSOMessageBase extends TCActionImpl {
   }
 
   @Override
-  public boolean send() {
+  public TCNetworkMessage send() {
     if (!localSessionID.equals(getChannel().getSessionID())) {
       LOG.debug("not same connection {} != {}", localSessionID, getChannel().getSessionID());
     }
