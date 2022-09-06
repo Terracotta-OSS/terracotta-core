@@ -496,36 +496,44 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   private Invocation.Task queueInFlightMessage(EntityID eid, Supplier<NetworkVoltronEntityMessage> message, InvocationCallback<byte[]> callback) {
     boolean queued;
-    InFlightMessage inFlight = new InFlightMessage(eid, message, callback);
     try {
-      msgCount.increment();
-      inflights.add(inFlightMessages.size());
-      // NOTE:  If we are already stop, the handler in outbound will fail this message for us.
-      queued = enqueueMessage(inFlight);
-    } catch (Throwable t) {
-      transactionSource.retire(inFlight.getTransactionID());
-      throw t;
-    }
+      InFlightMessage inFlight = new InFlightMessage(eid, message, callback);
+      try {
+        msgCount.increment();
+        inflights.add(inFlightMessages.size());
+        // NOTE:  If we are already stop, the handler in outbound will fail this message for us.
+        queued = enqueueMessage(inFlight);
+      } catch (Throwable t) {
+        transactionSource.retire(inFlight.getTransactionID());
+        throw t;
+      }
 
-    if (queued && !stateManager.isShutdown()) {
-      inFlight.sent();
-      if (!inFlight.send()) {
-        logger.debug("message not sent.  Make sure resend happens " + inFlight);
-        if (channel().map(c -> !c.getProductID().isReconnectEnabled()).orElse(false)) {
-          throwClosedExceptionOnMessage(inFlight, "connection not capable of resend");
+      if (queued && !stateManager.isShutdown()) {
+        inFlight.sent();
+        if (!inFlight.send()) {
+          logger.debug("message not sent.  Make sure resend happens " + inFlight);
+          if (channel().map(c -> !c.getProductID().isReconnectEnabled()).orElse(false)) {
+            throwClosedExceptionOnMessage(inFlight, "connection not capable of resend");
+          }
         }
-      }
-    } else {
-      throwClosedExceptionOnMessage(inFlight, "Connection closed before sending message");
-    }
-    return () -> {
-      if (inFlight.cancel()) {
-        inFlightMessages.remove(inFlight.getTransactionID(), inFlight);
-        return true;
       } else {
-        return false;
+        throwClosedExceptionOnMessage(inFlight, "Connection closed before sending message");
       }
-    };
+      return () -> {
+        if (inFlight.cancel()) {
+          inFlightMessages.remove(inFlight.getTransactionID(), inFlight);
+          return true;
+        } else {
+          return false;
+        }
+      };
+    } catch (ConnectionClosedException e) {
+      callback.sent();
+      callback.failure(e);
+      callback.complete();
+      callback.retired();
+      return () -> false;
+    }
   }
 
   private NetworkVoltronEntityMessage createMessageWithoutClientInstance(EntityID entityID, long version, boolean requiresReplication, byte[] config, VoltronEntityMessage.Type type, Set<VoltronEntityMessage.Acks> acks) {
