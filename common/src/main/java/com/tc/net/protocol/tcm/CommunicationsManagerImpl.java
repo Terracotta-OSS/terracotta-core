@@ -60,6 +60,8 @@ import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;
+import java.lang.ref.PhantomReference;
+import java.lang.ref.ReferenceQueue;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashSet;
@@ -176,7 +178,10 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
 
     Assert.eval(healthCheckerConfig != null);
     if (healthCheckerConfig.isHealthCheckerEnabled()) {
-      connectionHealthChecker = new ConnectionHealthCheckerImpl(healthCheckerConfig, connectionManager);
+// reference this manager.  If it not reachable, all connections and threads associated need to be cleaned up.
+      ReferenceQueue<Object> gc = new ReferenceQueue<>();
+      PhantomReference<Object> ref = new PhantomReference<>(this, gc);
+      connectionHealthChecker = new ConnectionHealthCheckerImpl(healthCheckerConfig, connectionManager, ()->gc.poll() != ref);
     } else {
       connectionHealthChecker = new ConnectionHealthCheckerEchoImpl();
     }

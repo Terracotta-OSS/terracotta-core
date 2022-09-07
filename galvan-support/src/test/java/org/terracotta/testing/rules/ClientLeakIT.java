@@ -19,12 +19,18 @@
 package org.terracotta.testing.rules;
 
 
+import java.util.Properties;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
+import org.terracotta.connection.ConnectionFactory;
+import org.terracotta.connection.ConnectionPropertyNames;
 
 
 /**
@@ -35,6 +41,8 @@ import org.terracotta.connection.ConnectionException;
 // XXX: Currently ignored since this test depends on restartability of the server, which now requires a persistence service
 //  to be plugged in (and there isn't one available, in open source).
 public class ClientLeakIT {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ClientLeakIT.class);
+  
   @ClassRule
   public static final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(1).build(); //logConfigExtensionResourceName("custom-logback-ext.xml").build();
 
@@ -117,26 +125,46 @@ public class ClientLeakIT {
       assertFalse(maker.isAlive());
     }
   }
-  
-  private static Thread lookForConnectionMaker() {
+    
+  @Test
+  public void testSEDADiesWithNoRef() throws Exception {
+    CLUSTER.getClusterControl().startAllServers();
+    CLUSTER.getClusterControl().waitForActive();
+
+    String connectionName = "LEAKTESTCLIENT";
+    Properties props = new Properties();
+    props.setProperty(ConnectionPropertyNames.CONNECTION_NAME, connectionName);
+    Connection leak = ConnectionFactory.connect(CLUSTER.getConnectionURI(), props);
+    String cid = leak.toString();
+
+    assertNotNull(leak);
+    assertNotNull(lookForThreadWithName(connectionName));
+
+    leak = null;
+    
+    while (lookForThreadWithName(connectionName) != null) {
+      LOGGER.info(cid);
+      System.gc();
+      Thread.sleep(1_000);
+    }
+  }
+
+  private static Thread lookForThreadWithName(String name) {
     Thread[] list = new Thread[Thread.activeCount()];
     Thread.enumerate(list);
     for (Thread t : list) {
-      if (t != null && t.getName().startsWith("Connection Maker")) {
+      if (t != null && t.getName().startsWith(name)) {
         return t;
       }
     }
     return null;
+  } 
+  
+  private static Thread lookForConnectionMaker() {
+    return lookForThreadWithName("Connection Maker");
   }  
   
   private static Thread lookForConnectionEstablisher() {
-    Thread[] list = new Thread[Thread.activeCount()];
-    Thread.enumerate(list);
-    for (Thread t : list) {
-      if (t != null && t.getName().startsWith("ConnectionEstablisher")) {
-        return t;
-      }
-    }
-    return null;
+    return lookForThreadWithName("ConnectionEstablisher");
   }
 }

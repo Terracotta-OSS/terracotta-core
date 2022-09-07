@@ -33,6 +33,7 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 /**
  * The Engine which does the peer health checking work. Based on the config passed, it probes the peer once in specified
@@ -48,20 +49,30 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
 
   private final SetOnceFlag                      shutdown = new SetOnceFlag();
   private final SetOnceFlag                      started  = new SetOnceFlag();
-
-  public ConnectionHealthCheckerImpl(HealthCheckerConfig healthCheckerConfig, TCConnectionManager connManager) {
+  
+  public ConnectionHealthCheckerImpl(HealthCheckerConfig healthCheckerConfig, TCConnectionManager connManager, Supplier<Boolean> reachable) {
     Assert.assertNotNull(healthCheckerConfig);
     Assert.eval(healthCheckerConfig.isHealthCheckerEnabled());
     logger = LoggerFactory.getLogger(ConnectionHealthCheckerImpl.class.getName() + ": "
                                      + healthCheckerConfig.getHealthCheckerName());
     monitorThread = new Timer(healthCheckerConfig.getHealthCheckerName() + " - HealthCheck-Timer", true);
-    monitorThreadEngine = getHealthMonitorThreadEngine(healthCheckerConfig, connManager, logger);
+    monitorThreadEngine = getHealthMonitorThreadEngine(healthCheckerConfig, connManager, reachable, logger);
   }
 
-  protected HealthCheckerMonitorThreadEngine getHealthMonitorThreadEngine(HealthCheckerConfig config,
+  private HealthCheckerMonitorThreadEngine getHealthMonitorThreadEngine(HealthCheckerConfig config,
                                                                           TCConnectionManager connectionManager,
-                                                                          Logger loger) {
-    return new HealthCheckerMonitorThreadEngine(config, connectionManager, loger);
+                                                                          Supplier<Boolean> reachable,
+                                                                          Logger logger) {
+    return new HealthCheckerMonitorThreadEngine(config, connectionManager, ()-> {
+      if (reachable.get()) {
+        return true;
+      } else {
+        stop();
+        connectionManager.asynchCloseAllConnections();
+        connectionManager.shutdown();
+        return false;
+      }
+    }, logger);
   }
 
   @Override
@@ -149,19 +160,20 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     private final long                pingInterval;
     private final int                 pingProbes;
     private final long                checkTimeInterval;
-    private final SetOnceFlag         stop          = new SetOnceFlag();
     private final HealthCheckerConfig config;
     private final Logger logger;
     private final TCConnectionManager connectionManager;
+    private final Supplier<Boolean>   reachable;
     private final AtomicLong          lastCheckTime = new AtomicLong(System.currentTimeMillis());
 
     public HealthCheckerMonitorThreadEngine(HealthCheckerConfig healthCheckerConfig,
-                                            TCConnectionManager connectionManager, Logger logger) {
+                                            TCConnectionManager connectionManager, Supplier<Boolean> reachable, Logger logger) {
       this.pingIdleTime = healthCheckerConfig.getPingIdleTimeMillis();
       this.pingInterval = healthCheckerConfig.getPingIntervalMillis();
       this.pingProbes = healthCheckerConfig.getPingProbes();
       this.checkTimeInterval = healthCheckerConfig.getCheckTimeInterval();
       this.connectionManager = connectionManager;
+      this.reachable = reachable;
       this.config = healthCheckerConfig;
 
       Assert.assertNotNull(logger);
@@ -193,7 +205,6 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     }
 
     public void stop() {
-      stop.attemptSet();
       this.cancel();
     }
 
@@ -202,42 +213,44 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
       // same interval for all connections
       final boolean canCheckTime = canCheckTime();
 
-      Iterator<MessageTransportBase> connectionIterator = connectionMap.values().iterator();
-      while (connectionIterator.hasNext()) {
-        MessageTransportBase mtb = connectionIterator.next();
+      if (reachable.get()) {
+        Iterator<MessageTransportBase> connectionIterator = connectionMap.values().iterator();
+        while (connectionIterator.hasNext()) {
+          MessageTransportBase mtb = connectionIterator.next();
 
-        TCConnection conn = mtb.getConnection();
-        if (conn == null || !mtb.isConnected()) {
-          logger.info("[" + (conn == null ? null : conn.getRemoteAddress().toString())
-                      + "] is not connected. Health Monitoring for this node is now disabled.");
-          connectionIterator.remove();
-          continue;
-        }
+          TCConnection conn = mtb.getConnection();
+          if (conn == null || !mtb.isConnected()) {
+            logger.info("[" + (conn == null ? null : conn.getRemoteAddress().toString())
+                        + "] is not connected. Health Monitoring for this node is now disabled.");
+            connectionIterator.remove();
+            continue;
+          }
 
-        if (mtb.getReceiveLayer() == null) {
-          logger.info("[" + (conn == null ? null : conn.getRemoteAddress().toString())
-                      + "] is no longer referenced.  Closing the connection");
-          mtb.disconnect();
-          connectionIterator.remove();
-          continue;
-        }
-
-        ConnectionHealthCheckerContext connContext = mtb.getHealthCheckerContext();
-        if ((conn.getIdleReceiveTime() >= this.pingIdleTime)) {
-
-          if (!connContext.probeIfAlive()) {
-            // Connection is dead. Disconnect the transport.
-            logger.error("Declared connection dead " + mtb.getConnectionID() + " idle time "
-                         + conn.getIdleReceiveTime() + "ms");
+          if (mtb.getReceiveLayer() == null) {
+            logger.info("[" + (conn == null ? null : conn.getRemoteAddress().toString())
+                        + "] is no longer referenced.  Closing the connection");
             mtb.disconnect();
             connectionIterator.remove();
+            continue;
           }
-        } else {
-          connContext.refresh();
-        }
-        // is there any significant time difference between hosts ?
-        if (canCheckTime) {
-          connContext.checkTime();
+
+          ConnectionHealthCheckerContext connContext = mtb.getHealthCheckerContext();
+          if ((conn.getIdleReceiveTime() >= this.pingIdleTime)) {
+
+            if (!connContext.probeIfAlive()) {
+              // Connection is dead. Disconnect the transport.
+              logger.error("Declared connection dead " + mtb.getConnectionID() + " idle time "
+                           + conn.getIdleReceiveTime() + "ms");
+              mtb.disconnect();
+              connectionIterator.remove();
+            }
+          } else {
+            connContext.refresh();
+          }
+          // is there any significant time difference between hosts ?
+          if (canCheckTime) {
+            connContext.checkTime();
+          }
         }
       }
 

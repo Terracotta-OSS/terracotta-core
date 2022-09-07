@@ -46,7 +46,7 @@ public class HealthCheckerMonitorThreadEngineTest {
     // ignore interval
     props.setProperty("checkTime.interval", "-1");
     HealthCheckerConfigImpl config = new HealthCheckerConfigImpl(props, "test-config");
-    final HealthCheckerMonitorThreadEngine engine = new HealthCheckerMonitorThreadEngine(config, null, logger);
+    final HealthCheckerMonitorThreadEngine engine = new HealthCheckerMonitorThreadEngine(config, null, ()->Boolean.TRUE, logger);
 
     assertTrue(engine.canCheckTime());
   }
@@ -57,7 +57,7 @@ public class HealthCheckerMonitorThreadEngineTest {
     // disable time checking
     props.setProperty("checkTime.enabled", "false");
     HealthCheckerConfigImpl config = new HealthCheckerConfigImpl(props, "test-config");
-    final HealthCheckerMonitorThreadEngine engine = new HealthCheckerMonitorThreadEngine(config, null, logger);
+    final HealthCheckerMonitorThreadEngine engine = new HealthCheckerMonitorThreadEngine(config, null, ()->Boolean.TRUE, logger);
 
     assertFalse(engine.canCheckTime());
   }
@@ -68,7 +68,7 @@ public class HealthCheckerMonitorThreadEngineTest {
     // set short interval
     props.setProperty("checkTime.interval", "900000");
     HealthCheckerConfigImpl config = new HealthCheckerConfigImpl(props, "test-config");
-    final HealthCheckerMonitorThreadEngine engine = new HealthCheckerMonitorThreadEngine(config, null, logger);
+    final HealthCheckerMonitorThreadEngine engine = new HealthCheckerMonitorThreadEngine(config, null, ()->Boolean.TRUE, logger);
 
     assertFalse(engine.canCheckTime());
   }
