@@ -61,7 +61,7 @@ public interface ClientBuilder {
                                                       String clientRevision,
                                                       ClientEntityManager entity);
 
-  ClientEntityManager createClientEntityManager(ClientMessageChannel channel, StageManager stages);
+  ClientEntityManager createClientEntityManager(ClientMessageChannel channel);
 
   void setClientConnectionErrorListener(ClientConnectionErrorListener listener);
 

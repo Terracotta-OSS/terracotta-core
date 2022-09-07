@@ -46,12 +46,13 @@ public class ConnectionWatcher implements MessageTransportListener {
 
   private boolean checkForStop() {
     Reference<? extends ClientMessageChannel> target = stopQueue.poll();
-    if (target != null) {
+    while (target != null) {
       if (target == targetHolder) {
         stopped.set();
         LOGGER.warn("unreferenced connection left open {} {}", targetHolder.get(), connection);
         cce.shutdown();
       }
+      target = stopQueue.poll();
     }
     return stopped.isSet();
   }

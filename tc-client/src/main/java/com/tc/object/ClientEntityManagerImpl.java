@@ -18,8 +18,6 @@
  */
 package com.tc.object;
 
-import com.tc.async.api.Stage;
-import com.tc.async.api.StageManager;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.exception.EntityBusyException;
 import com.tc.exception.EntityReferencedException;
@@ -61,14 +59,12 @@ import com.tc.text.PrettyPrintable;
 import com.tc.util.Assert;
 import com.tc.util.Util;
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -76,7 +72,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 
@@ -91,38 +86,31 @@ import static org.terracotta.entity.Invocation.uninterruptiblyGet;
 public class ClientEntityManagerImpl implements ClientEntityManager {
   private final Logger logger;
 
-  private final WeakReference<ClientMessageChannel> channel;
+  private final ClientMessageChannel channel;
   private final ConcurrentMap<TransactionID, InFlightMessage> inFlightMessages;
   private final TransactionSource transactionSource;
 
   private final ClientEntityStateManager stateManager;
   private final ConcurrentMap<ClientInstanceID, EntityClientEndpointImpl<?, ?>> objectStoreMap;
-    
-  private final StageManager stages;
-  
+
   private final ExecutorService endpointCloser = Executors.newWorkStealingPool();
 
   private final LongAdder msgCount = new LongAdder();
   private final LongAdder inflights = new LongAdder();
   private final LongAdder addWindow = new LongAdder();
 
-  public ClientEntityManagerImpl(ClientMessageChannel channel, StageManager mgr) {
-    this.channel = new WeakReference<>(channel);
-    this.logger = new ClientIDLogger(() -> channel().map(ClientMessageChannel::getClientID).orElse(ClientID.NULL_ID), LoggerFactory.getLogger(ClientEntityManager.class));
+  public ClientEntityManagerImpl(ClientMessageChannel channel) {
+    this.channel = channel;
+    this.logger = new ClientIDLogger(() -> channel.getClientID(), LoggerFactory.getLogger(ClientEntityManager.class));
     this.inFlightMessages = new ConcurrentHashMap<>();
     this.transactionSource = new TransactionSource();
     this.stateManager = new ClientEntityStateManager();
     this.objectStoreMap = new ConcurrentHashMap<>(10240, 0.75f, 128);
-    this.stages = mgr;
-  }
-
-  private Optional<ClientMessageChannel> channel() {
-    return Optional.ofNullable(channel.get());
   }
 
   @Override
   public synchronized boolean isValid() {
-    return !stateManager.isShutdown() && channel().map(ClientMessageChannel::isOpen).orElse(false);
+    return !stateManager.isShutdown() && channel.isOpen();
   }
 
   private boolean enqueueMessage(InFlightMessage msg) throws RejectedExecutionException {
@@ -261,24 +249,24 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       map.put("averagePending", inflights.sum()/msgCount.sum());
       map.put("averageServerWindow", addWindow.sum()/msgCount.sum());
     }
-    channel().ifPresent(channel -> {
-      Object stats = channel().map(c -> c.getAttachment("ChannelStats")).orElse(null);
-      Map<String, Object> sub = new LinkedHashMap<>();
-      sub.put("connection", channel().map(ClientMessageChannel::getConnectionID));
-      sub.put("local", channel.getLocalAddress());
-      sub.put("remote", channel.getRemoteAddress());
-      sub.put("product", channel.getProductID());
-      sub.put("client", channel.getClientID());
-      if (stateManager.isShutdown()) {
-        sub.put("pendingMessages", "<shutdown>");
-      } else {
-        sub.put("pendingMessages", inFlightMessages.size());
-      }
-      map.put("channel", sub);
-      if (stats instanceof PrettyPrintable) {
-        sub.put("stats", ((PrettyPrintable)stats).getStateMap());
-      }
-    });
+
+    Object stats = channel.getAttachment("ChannelStats");
+    Map<String, Object> sub = new LinkedHashMap<>();
+    sub.put("connection", channel.getConnectionID());
+    sub.put("local", channel.getLocalAddress());
+    sub.put("remote", channel.getRemoteAddress());
+    sub.put("product", channel.getProductID());
+    sub.put("client", channel.getClientID());
+    if (stateManager.isShutdown()) {
+      sub.put("pendingMessages", "<shutdown>");
+    } else {
+      sub.put("pendingMessages", inFlightMessages.size());
+    }
+    map.put("channel", sub);
+    if (stats instanceof PrettyPrintable) {
+      sub.put("stats", ((PrettyPrintable)stats).getStateMap());
+    }
+
     return map;
   }
 
@@ -359,12 +347,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       handshakeMessage.addReconnectReference(context);
     }
     
-    Stage<VoltronEntityMultiResponse> responderMulti = stages.getStage(ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE, VoltronEntityMultiResponse.class);
-    if (!responderMulti.isEmpty()) {
-      FlushResponse flush = new FlushResponse();
-      responderMulti.getSink().addToSink(flush);
-      flush.waitForAccess();
-    }
     // Walk the inFlightMessages, adding them all to the handshake, since we need them to be replayed.
     for (InFlightMessage inFlight : this.inFlightMessages.values()) {
       if (inFlight.commit()) {
@@ -512,12 +494,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         inFlight.sent();
         if (!inFlight.send()) {
           logger.debug("message not sent.  Make sure resend happens " + inFlight);
-          if (channel().map(c -> !c.getProductID().isReconnectEnabled()).orElse(false)) {
+          if (!channel.getProductID().isReconnectEnabled()) {
             throwClosedExceptionOnMessage(inFlight, "connection not capable of resend");
           }
+        } else {
+          throwClosedExceptionOnMessage(inFlight, "Connection closed before sending message");
         }
-      } else {
-        throwClosedExceptionOnMessage(inFlight, "Connection closed before sending message");
       }
       return () -> {
         if (inFlight.cancel()) {
@@ -543,7 +525,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   private NetworkVoltronEntityMessage createMessageWithDescriptor(EntityID entityID, EntityDescriptor entityDescriptor, boolean requiresReplication, byte[] config, VoltronEntityMessage.Type type, Set<VoltronEntityMessage.Acks> acks) {
-    ClientMessageChannel channel = channel().orElseThrow(() -> new ConnectionClosedException("Connection closed"));
     NetworkVoltronEntityMessage message = (NetworkVoltronEntityMessage) channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE);
     ClientID clientID = channel.getClientID();
     TransactionID transactionID = transactionSource.create();

@@ -87,7 +87,6 @@ import com.tc.net.protocol.tcm.TCAction;
 public class ClientEntityManagerTest extends TestCase {
   private ClientMessageChannel channel;
   private ClientEntityManager manager;
-  private StageManager stageMgr;
   
   private EntityID entityID;
   private ClientInstanceID instance;
@@ -98,24 +97,7 @@ public class ClientEntityManagerTest extends TestCase {
   public void setUp() throws Exception {
     this.channel = mock(ClientMessageChannel.class);
     when(this.channel.getProductID()).thenReturn(ProductID.STRIPE);
-    this.stageMgr = mock(StageManager.class);
-    when(this.stageMgr.createStage(any(String.class), any(Class.class), any(EventHandler.class), anyInt(), anyInt())).then(new Answer() {
-      @Override
-      public Object answer(InvocationOnMock invocation) throws Throwable {
-        Stage stage = mock(Stage.class);
-        when(stage.getSink()).thenReturn(new FakeSink((EventHandler)invocation.getArguments()[2]));
-        return stage;
-      }
-    });
-    when(this.stageMgr.getStage(any(String.class), any(Class.class))).then(new Answer() {
-      @Override
-      public Object answer(InvocationOnMock invocation) throws Throwable {
-        Stage stage = mock(Stage.class);
-        when(stage.getSink()).thenReturn(new FakeSink(null));
-        return stage;
-      }
-    });
-    this.manager = new ClientEntityManagerImpl(this.channel, stageMgr);
+    this.manager = new ClientEntityManagerImpl(this.channel);
     
     String entityClassName = "Class Name";
     String entityInstanceName = "Instance Name";

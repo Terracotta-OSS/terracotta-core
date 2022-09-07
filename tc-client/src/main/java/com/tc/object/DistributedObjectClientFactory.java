@@ -24,6 +24,8 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.net.core.ProductID;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.UUID;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
@@ -72,6 +74,16 @@ public class DistributedObjectClientFactory {
 
     DistributedObjectClient client = ClientFactory.createClient(serverAddresses, builder, group, uuid, name);
     client.addShutdownHook(shutdown);
+    Reference<DistributedObjectClient> ref = new WeakReference<>(client);
+    
+    throwableHandler.addCallbackOnExitDefaultHandler(state->{
+      DistributedObjectClient err = ref.get();
+      LOGGER.error("FATAL error in the client", state.getThrowable());
+      if (err != null) {
+        err.dump();
+        err.shutdown();
+      }
+    });
     
     ProductID type = builder.getTypeOfClient();
     boolean reconnect = !type.isReconnectEnabled();

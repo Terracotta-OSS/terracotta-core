@@ -55,7 +55,7 @@ public class DiagnosticClientBuilder extends StandardClientBuilder {
   }
   
   @Override
-  public ClientEntityManager createClientEntityManager(ClientMessageChannel channel, StageManager stages) {
+  public ClientEntityManager createClientEntityManager(ClientMessageChannel channel) {
     return new DiagnosticClientEntityManager(channel);
   }
 
