@@ -50,7 +50,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import com.tc.net.protocol.tcm.TCAction;
-import org.terracotta.entity.InvocationCallback;
 
 
 /**
@@ -62,7 +61,7 @@ import org.terracotta.entity.InvocationCallback;
 public class InFlightMessage implements PrettyPrintable {
   private final VoltronEntityMessage message;
   private final EntityID eid;
-  private final InvocationCallback<byte[]> callback;
+  private final SafeInvocationCallback<byte[]> callback;
 
   private final EnumSet<VoltronEntityMessage.Acks> outstandingAcks = EnumSet.allOf(VoltronEntityMessage.Acks.class);
 
@@ -86,7 +85,7 @@ public class InFlightMessage implements PrettyPrintable {
 
   private TCNetworkMessage networkMessage;
 
-  public InFlightMessage(EntityID eid, Supplier<? extends VoltronEntityMessage> message, InvocationCallback<byte[]> callback) {
+  public InFlightMessage(EntityID eid, Supplier<? extends VoltronEntityMessage> message, SafeInvocationCallback<byte[]> callback) {
     this.eid = requireNonNull(eid);
     this.message = requireNonNull(message.get());
     this.callback = callback;

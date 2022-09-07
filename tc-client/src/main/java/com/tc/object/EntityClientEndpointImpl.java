@@ -39,6 +39,8 @@ import java.util.concurrent.RejectedExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.tc.object.SafeInvocationCallback.safe;
+
 
 public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityResponse> implements EntityClientEndpoint<M, R> {
 
@@ -140,13 +142,13 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     public Task invoke(InvocationCallback<R> callback, Set<InvocationCallback.Types> callbacks) {
       checkInvoked();
       invoked = true;
-      InvocationCallback<byte[]> binaryCallback = new BinaryInvocationCallback(codec, callback);
+      SafeInvocationCallback<byte[]> binaryCallback = new BinaryInvocationCallback<>(codec, safe(callback));
       try {
         return invocationHandler.invokeAction(entityID, invokeDescriptor, callbacks, binaryCallback, true, codec.encodeMessage(request));
       } catch (MessageCodecException e) {
-        callback.failure(e);
-        callback.complete();
-        callback.retired();
+        binaryCallback.failure(e);
+        binaryCallback.complete();
+        binaryCallback.retired();
         return () -> false;
       }
     }
