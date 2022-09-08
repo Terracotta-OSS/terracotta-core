@@ -39,6 +39,7 @@ public class ConnectionWatcher implements MessageTransportListener {
    * Listens to events from a MessageTransport, acts on them, and passes events through to target
    */
   public ConnectionWatcher(ClientMessageChannel target, ClientConnectionEstablisher cce) {
+  // this the channel is no longer reachable, make sure all the the connection threads are cleaned up
     this.targetHolder = new WeakReference<>(target, stopQueue);
     this.cce = cce;
     this.connection = target.getConnectionID();

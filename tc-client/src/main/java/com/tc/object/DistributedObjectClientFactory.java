@@ -74,6 +74,9 @@ public class DistributedObjectClientFactory {
 
     DistributedObjectClient client = ClientFactory.createClient(serverAddresses, builder, group, uuid, name);
     client.addShutdownHook(shutdown);
+    
+    //  weak reference to make sure threads associated with the client aren't preventing 
+    //  garbage collection of the client
     Reference<DistributedObjectClient> ref = new WeakReference<>(client);
     
     throwableHandler.addCallbackOnExitDefaultHandler(state->{
