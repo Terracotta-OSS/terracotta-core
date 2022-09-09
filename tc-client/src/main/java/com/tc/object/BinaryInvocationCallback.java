@@ -19,15 +19,14 @@
 package com.tc.object;
 
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.InvocationCallback;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 
-public class BinaryInvocationCallback<R extends EntityResponse> implements InvocationCallback<byte[]> {
+public class BinaryInvocationCallback<R extends EntityResponse> implements SafeInvocationCallback<byte[]> {
   private final MessageCodec<?, R> codec;
-  private final InvocationCallback<R> callback;
+  private final SafeInvocationCallback<R> callback;
 
-  public BinaryInvocationCallback(MessageCodec<?, R> codec, InvocationCallback<R> callback) {
+  public BinaryInvocationCallback(MessageCodec<?, R> codec, SafeInvocationCallback<R> callback) {
     this.codec = codec;
     this.callback = callback;
   }

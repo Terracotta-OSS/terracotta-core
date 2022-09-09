@@ -27,6 +27,7 @@ import com.tc.object.EntityClientEndpointImpl;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.InFlightMessage;
+import com.tc.object.SafeInvocationCallback;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
@@ -154,7 +155,7 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
   }
 
   @Override
-  public Invocation.Task invokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<InvocationCallback.Types> callbacks, InvocationCallback<byte[]> callback, boolean requiresReplication, byte[] payload) {
+  public Invocation.Task invokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<InvocationCallback.Types> callbacks, SafeInvocationCallback<byte[]> callback, boolean requiresReplication, byte[] payload) {
     DiagnosticMessage network = createMessage(payload);
     InFlightMessage message = new InFlightMessage(eid, ()->network, callback);
     waitingForAnswer.put(network.getTransactionID(), message);

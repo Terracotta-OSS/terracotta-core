@@ -29,5 +29,5 @@ import java.util.Set;
  * The minimal interface, provided to the EntityClientEndpoint, to handle invocations to send to the server.
  */
 public interface InvocationHandler {
-  Invocation.Task invokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<InvocationCallback.Types> callbacks, InvocationCallback<byte[]> callback, boolean requiresReplication, byte[] payload);
+  Invocation.Task invokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<InvocationCallback.Types> callbacks, SafeInvocationCallback<byte[]> callback, boolean requiresReplication, byte[] payload);
 }

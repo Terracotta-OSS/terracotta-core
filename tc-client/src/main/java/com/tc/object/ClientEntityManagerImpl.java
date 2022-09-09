@@ -79,6 +79,7 @@ import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityServerUncaughtException;
 
 import static com.tc.object.EntityDescriptor.createDescriptorForLifecycle;
+import static com.tc.object.SafeInvocationCallback.safe;
 import static java.util.stream.Collectors.toCollection;
 import static org.terracotta.entity.Invocation.uninterruptiblyGet;
 
@@ -196,7 +197,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   private Invocation<byte[]> lifecycle(EntityID entityID, EntityDescriptor entityDescriptor, VoltronEntityMessage.Type type, byte[] message) {
-    return (callback, callbacks) -> ClientEntityManagerImpl.this.invoke(entityID, entityDescriptor, callbacks, callback, true, type, message);
+    return (callback, callbacks) -> ClientEntityManagerImpl.this.invoke(entityID, entityDescriptor, callbacks, safe(callback), true, type, message);
   }
 
   @Override
@@ -228,12 +229,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   @Override
   public Invocation.Task invokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<InvocationCallback.Types> requestedCallbacks,
-                                      InvocationCallback<byte[]> callback, boolean requiresReplication, byte[] payload) {
+                                      SafeInvocationCallback<byte[]> callback, boolean requiresReplication, byte[] payload) {
     return invoke(eid, entityDescriptor, requestedCallbacks, callback, requiresReplication, VoltronEntityMessage.Type.INVOKE_ACTION, payload);
   }
 
   private Invocation.Task invoke(EntityID eid, EntityDescriptor entityDescriptor, Set<InvocationCallback.Types> requestedCallbacks,
-                                             InvocationCallback<byte[]> callback, boolean requiresReplication, VoltronEntityMessage.Type type, byte[] payload) {
+                                 SafeInvocationCallback<byte[]> callback, boolean requiresReplication, VoltronEntityMessage.Type type, byte[] payload) {
     Set<VoltronEntityMessage.Acks> requestedAcks = makeServerAcks(requestedCallbacks);
     return queueInFlightMessage(eid, () -> createMessageWithDescriptor(eid, entityDescriptor, requiresReplication, payload, type, requestedAcks), callback);
   }
@@ -476,7 +477,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     return lifecycleAndComplete(entityDescriptor.getEntityID(), entityDescriptor, VoltronEntityMessage.Type.FETCH_ENTITY);
   }
 
-  private Invocation.Task queueInFlightMessage(EntityID eid, Supplier<NetworkVoltronEntityMessage> message, InvocationCallback<byte[]> callback) {
+  private Invocation.Task queueInFlightMessage(EntityID eid, Supplier<NetworkVoltronEntityMessage> message, SafeInvocationCallback<byte[]> callback) {
     boolean queued;
     try {
       InFlightMessage inFlight = new InFlightMessage(eid, message, callback);

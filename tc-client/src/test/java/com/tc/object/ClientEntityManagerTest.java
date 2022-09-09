@@ -549,7 +549,7 @@ public class ClientEntityManagerTest extends TestCase {
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
 
     CompletableFuture<byte[]> result = new CompletableFuture<>();
-    InvocationCallback<byte[]> callback = new InvocationCallback<byte[]>() {
+    SafeInvocationCallback<byte[]> callback = new SafeInvocationCallback<byte[]>() {
       @Override
       public void result(byte[] response) {
         result.complete(response);
@@ -570,7 +570,7 @@ public class ClientEntityManagerTest extends TestCase {
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
 
     CompletableFuture<byte[]> result = new CompletableFuture<>();
-    InvocationCallback<byte[]> callback = new InvocationCallback<byte[]>() {
+    SafeInvocationCallback<byte[]> callback = new SafeInvocationCallback<byte[]>() {
       @Override
       public void result(byte[] response) {
         result.complete(response);
