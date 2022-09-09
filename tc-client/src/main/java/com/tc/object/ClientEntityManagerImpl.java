@@ -497,9 +497,9 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
           if (!channel.getProductID().isReconnectEnabled()) {
             throwClosedExceptionOnMessage(inFlight, "connection not capable of resend");
           }
-        } else {
-          throwClosedExceptionOnMessage(inFlight, "Connection closed before sending message");
         }
+      } else {
+        throwClosedExceptionOnMessage(inFlight, "Connection closed before sending message");
       }
       return () -> {
         if (inFlight.cancel()) {
