@@ -93,8 +93,8 @@ public class StandardClientBuilder implements ClientBuilder {
   }
 
   @Override
-  public ClientEntityManager createClientEntityManager(ClientMessageChannel channel, StageManager stages) {
-    return new ClientEntityManagerImpl(channel, stages);
+  public ClientEntityManager createClientEntityManager(ClientMessageChannel channel) {
+    return new ClientEntityManagerImpl(channel);
   }
 
   @Override

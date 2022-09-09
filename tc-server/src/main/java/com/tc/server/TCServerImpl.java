@@ -501,9 +501,4 @@ public class TCServerImpl extends SEDA implements TCServer {
   public Map<String, ?> getStateMap() {
     return this.getStageManager().getStateMap();
   }  
-
-  @Override
-  public void stageWarning(Object description) {
-    super.stageWarning(description);
-  }
 }

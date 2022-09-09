@@ -20,15 +20,10 @@ package com.tc.object;
 
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
-import com.tc.net.ClientID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.async.api.PostInit;
-import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
-import com.tc.async.api.Stage;
-import com.tc.async.api.StageManager;
 import com.tc.entity.DiagnosticMessageImpl;
 import com.tc.entity.DiagnosticResponseImpl;
 import com.tc.entity.NetworkVoltronEntityMessageImpl;
@@ -38,7 +33,6 @@ import com.tc.entity.VoltronEntityReceivedResponseImpl;
 import com.tc.entity.VoltronEntityResponse;
 import com.tc.entity.VoltronEntityRetiredResponseImpl;
 import com.tc.lang.TCThreadGroup;
-import com.tc.logging.ClientIDLogger;
 import com.tc.logging.ClientIDLoggerProvider;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
@@ -85,8 +79,6 @@ import com.tc.util.concurrent.SetOnceRef;
 import com.tc.entity.DiagnosticResponse;
 import com.tc.entity.LinearVoltronEntityMultiResponse;
 import com.tc.entity.ReplayVoltronEntityMultiResponse;
-import com.tc.logging.CallbackOnExitState;
-import com.tc.net.core.ProductID;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.tcm.TCMessageHydrateAndConvertSink;
 import com.tc.object.msg.ClientHandshakeMessage;
@@ -97,20 +89,17 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import com.tc.net.protocol.tcm.TCAction;
 import com.tc.productinfo.ProductInfo;
+import com.tc.util.runtime.ThreadDumpUtil;
 
 
 /**
@@ -142,7 +131,6 @@ public class DistributedObjectClient {
   private final SetOnceRef<Exception>                exceptionMade                       = new SetOnceRef<>();
  
   private ClientEntityManager clientEntityManager;
-  private final StageManager communicationStageManager;
   
   public DistributedObjectClient(Iterable<InetSocketAddress> serverAddresses, TCThreadGroup threadGroup,
                                  Properties properties) {
@@ -158,20 +146,8 @@ public class DistributedObjectClient {
     this.clientBuilder = builder;
     this.uuid = uuid;
     this.name = name;
-
-    // We need a StageManager to create the SEDA stages used for handling the messages.
-    final SEDA seda = new SEDA(threadGroup);
-    communicationStageManager = seda.getStageManager();
-    Reference<DistributedObjectClient> ref = new WeakReference<>(this);
-    threadGroup.addCallbackOnExitDefaultHandler((state)->{
-      DistributedObjectClient ce = ref.get();
-      if (ce != null) {
-        ce.dump();
-        ce.shutdown();
-      }
-    });
   }
-
+  
   public boolean isShutdown() {
     return this.clientStopped.isSet();
   }
@@ -222,16 +198,6 @@ public class DistributedObjectClient {
     final TCProperties tcProperties = TCPropertiesImpl.getProperties();
     final int maxSize = tcProperties.getInt(TCPropertiesConsts.L1_SEDA_STAGE_SINK_CAPACITY);
 
-//  weak reference to allow garbage collection if ref is dropped    
-    Reference<DistributedObjectClient> ref = new WeakReference<>(this);
-    this.threadGroup.addCallbackOnExitDefaultHandler((CallbackOnExitState state) -> {
-      DistributedObjectClient client = ref.get();
-      if (client != null) {
-        DSO_LOGGER.info(client.getClientState());
-      }
-      Thread.dumpStack();
-    });
-
     final NetworkStackHarnessFactory networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
 
     this.counterManager = new CounterManagerImpl();
@@ -256,18 +222,15 @@ public class DistributedObjectClient {
                                                                  socketTimeout);
 
 
-    WeakReference<ClientMessageChannel> channelRef = new WeakReference<>(clientChannel);
-
-    final ClientIDLoggerProvider cidLoggerProvider = new ClientIDLoggerProvider(() -> Optional.ofNullable(channelRef.get()).map(ClientMessageChannel::getClientID).orElse(ClientID.NULL_ID));
-    this.communicationStageManager.setLoggerProvider(cidLoggerProvider);
+    final ClientIDLoggerProvider cidLoggerProvider = new ClientIDLoggerProvider(() -> clientChannel.getClientID());
 
     DSO_LOGGER.debug("Created channel.");
 
 
-    clientEntityManager = this.clientBuilder.createClientEntityManager(clientChannel, this.communicationStageManager);
+    clientEntityManager = this.clientBuilder.createClientEntityManager(clientChannel);
     RequestReceiveHandler singleMessageReceiver = new RequestReceiveHandler(clientEntityManager);
     MultiRequestReceiveHandler mutil = new MultiRequestReceiveHandler(clientEntityManager);
-    Stage<VoltronEntityMultiResponse> multiResponseStage = this.communicationStageManager.createStage(ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE, VoltronEntityMultiResponse.class, mutil, 1, maxSize);
+    Sink<VoltronEntityMultiResponse> multiResponseSink = EventHandler.directSink(mutil);
     clientChannel.addAttachment("ChannelStats", (PrettyPrintable)() -> {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("messageHandler", mutil.getStateMap());
@@ -292,22 +255,14 @@ public class DistributedObjectClient {
     };
     
     this.clientHandshakeManager = this.clientBuilder
-        .createClientHandshakeManager(new ClientIDLogger(clientChannel, LoggerFactory
-                                          .getLogger(ClientHandshakeManagerImpl.class)), chmf,
+        .createClientHandshakeManager(cidLoggerProvider.getLogger(ClientHandshakeManagerImpl.class), chmf,
                                           this.uuid, this.name, pInfo.version(), pInfo.buildRevision(), clientEntityManager);
 
     ClientChannelEventController.connectChannelEventListener(clientChannel, clientHandshakeManager);
-    final ClientConfigurationContext cc = new ClientConfigurationContext(clientChannel.getClientID().toString(), this.communicationStageManager);
-    // DO NOT create any stages after this call
-    
-    String[] exclusion = clientChannel.getProductID() == ProductID.DIAGNOSTIC ?
-            new String[] { ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE } : new String[] {};
-
-    this.communicationStageManager.startAll(cc, Collections.<PostInit> emptyList(), exclusion);
 
     EventHandler<ClientHandshakeResponse> handshake = new ClientCoordinationHandler(this.clientHandshakeManager);
 
-    initChannelMessageRouter(messageRouter, EventHandler.directSink(handshake), multiResponseStage.getSink(),
+    initChannelMessageRouter(messageRouter, EventHandler.directSink(handshake), multiResponseSink,
             clientEntityManager, singleMessageReceiver);
 
     return clientChannel;
@@ -473,13 +428,13 @@ public class DistributedObjectClient {
 
   public String getClientState() {
     PrettyPrinter printer = new MapListPrettyPrint();
-    this.communicationStageManager.prettyPrint(printer);
     this.clientEntityManager.prettyPrint(printer);
     return printer.toString();
   }
 
   public void dump() {
     DSO_LOGGER.info(getClientState());
+    DSO_LOGGER.info(ThreadDumpUtil.getThreadDump());
   }
 
   void shutdownResources() {
@@ -528,12 +483,6 @@ public class DistributedObjectClient {
       } finally {
         this.connectionManager = null;
       }
-    }
-
-    try {
-      this.communicationStageManager.stopAll();
-    } catch (final Throwable t) {
-      logger.error("Error stopping stage manager", t);
     }
     
     CommonShutDownHook.shutdown();
