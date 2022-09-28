@@ -19,6 +19,7 @@
 package org.terracotta.tripwire;
 
 import java.nio.file.Path;
+import java.util.function.Supplier;
 
 /**
  *
@@ -30,7 +31,7 @@ public class TripwireFactory {
     boolean hasJFR = false;
     try {
       Class<?> jfr = Class.forName("jdk.jfr.Event");
-      hasJFR = (jfr != null);
+      hasJFR = (jfr != null) && !Boolean.getBoolean("tripwire.logging.disable");
     } catch (ClassNotFoundException c) {
       
     }
@@ -61,6 +62,10 @@ public class TripwireFactory {
     return (ENABLED) ? new SyncEvent(name, uid, session) : new NullEvent();
   }
   
+  public static org.terracotta.tripwire.Event createClusterInfo(String info) {
+    return (ENABLED) ? new ClusterInfoEvent(info) : new NullEvent();
+  }
+  
   public static org.terracotta.tripwire.StageMonitor createStageMonitor(String stage, int threads) {
     return (ENABLED) ? new StageMonitorImpl(stage, threads) : new StageMonitor() {
       @Override
@@ -76,7 +81,19 @@ public class TripwireFactory {
       }
     };
   }
-  
+ 
+  public static org.terracotta.tripwire.ClusterInfoMonitor createClusterInfoMonitor(Supplier<String> info) {
+    return (ENABLED) ? new ClusterInfoMonitorImpl(info) : new org.terracotta.tripwire.ClusterInfoMonitor() {
+      @Override
+      public void register() {
+      }
+
+      @Override
+      public void unregister() {
+      }
+    };
+  }
+ 
   public static org.terracotta.tripwire.DiskMonitor createDiskMonitor(Path path) {
     return (ENABLED) ? new DiskMonitorImpl(path) : new org.terracotta.tripwire.DiskMonitor() {
       @Override
