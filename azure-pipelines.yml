@@ -17,6 +17,13 @@
 # See shared code location for steps and parameters:
 # https://dev.azure.com/TerracottaCI/_git/terracotta
 
+
+trigger:
+  branches:
+    include:
+    - master
+    - release/*
+    
 resources:
   repositories:
     - repository: templates
