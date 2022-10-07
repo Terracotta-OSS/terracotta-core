@@ -363,6 +363,7 @@ System.out.println("STARTING LATER #2");
     NodeID active = mock(NodeID.class);
     when(winner.getNodeID()).thenReturn(active);
     when(winner.wins(any(Enrollment.class))).thenReturn(Boolean.TRUE);
+    when(winner.getWeights()).thenReturn(new long[0]);
     when(sw.messageFrom()).thenReturn(active);
     try {
       mgr.handleClusterStateMessage(sw);
