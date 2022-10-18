@@ -73,6 +73,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Communications manager for setting up listeners and creating client connections
@@ -96,7 +97,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   protected final ConcurrentHashMap<TCMessageType, Class<? extends TCAction>> messageTypeClassMapping   = new ConcurrentHashMap<TCMessageType, Class<? extends TCAction>>();
   protected final ConcurrentHashMap<TCMessageType, GeneratedMessageFactory>    messageTypeFactoryMapping = new ConcurrentHashMap<TCMessageType, GeneratedMessageFactory>();
 
-  private ConnectionHealthChecker                                              connectionHealthChecker;
+  private final ConnectionHealthChecker                                              connectionHealthChecker;
   private ServerID                                                             serverID                  = ServerID.NULL_ID;
   private int                                                                  callbackPort              = TransportHandshakeMessage.NO_CALLBACK_PORT;
   private final TransportHandshakeErrorHandler                                 handshakeErrHandler;
@@ -177,15 +178,22 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     this.connectionManager = connMgr;
 
     Assert.eval(healthCheckerConfig != null);
-    if (healthCheckerConfig.isHealthCheckerEnabled()) {
+    connectionHealthChecker = healthCheckerConfig.isHealthCheckerEnabled() ?
+            new ConnectionHealthCheckerImpl(healthCheckerConfig, connectionManager, createReferenceCheck()) :
+            new ConnectionHealthCheckerEchoImpl();
+  }
+  
+  private Supplier<Boolean> createReferenceCheck() {
 // reference this manager.  If it not reachable, all connections and threads associated need to be cleaned up.
-      ReferenceQueue<Object> gc = new ReferenceQueue<>();
-      PhantomReference<Object> ref = new PhantomReference<>(this, gc);
-      connectionHealthChecker = new ConnectionHealthCheckerImpl(healthCheckerConfig, connectionManager, ()->gc.poll() != ref);
-    } else {
-      connectionHealthChecker = new ConnectionHealthCheckerEchoImpl();
-    }
-    connectionHealthChecker.start();
+    ReferenceQueue<Object> gc = new ReferenceQueue<>();
+    PhantomReference<Object> ref = new PhantomReference<>(this, gc);
+    SetOnceFlag gcd = new SetOnceFlag();
+    return ()-> {
+      if (gc.poll() == ref) {
+        gcd.set();
+      }
+      return !gcd.isSet();
+    };
   }
   
   @Override
@@ -390,12 +398,6 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   /* Following routines are strictly for testing only */
   public ConnectionHealthChecker getConnHealthChecker() {
     return this.connectionHealthChecker;
-  }
-
-  public void setConnHealthChecker(ConnectionHealthChecker checker) {
-    this.connectionHealthChecker.stop();
-    this.connectionHealthChecker = checker;
-    this.connectionHealthChecker.start();
   }
 
   public TCMessageRouter getMessageRouter() {

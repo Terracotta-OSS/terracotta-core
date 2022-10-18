@@ -19,6 +19,7 @@
 package org.terracotta.testing.rules;
 
 
+import java.net.InetSocketAddress;
 import java.util.Properties;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -31,6 +32,8 @@ import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
+import org.terracotta.connection.Diagnostics;
+import org.terracotta.connection.DiagnosticsFactory;
 
 
 /**
@@ -147,8 +150,54 @@ public class ClientLeakIT {
       System.gc();
       Thread.sleep(1_000);
     }
-  }
+    
+    String[] hp = CLUSTER.getClusterHostPorts();
+    String[] server = hp[0].split(":");
+    Diagnostics diag = DiagnosticsFactory.connect(InetSocketAddress.createUnresolved(server[0], Integer.parseInt(server[1])), props);
 
+    assertNotNull(diag);
+    assertNotNull(lookForThreadWithName(connectionName));
+    
+    diag = null;
+    
+    while (lookForThreadWithName(connectionName) != null) {
+      LOGGER.info(cid);
+      System.gc();
+      Thread.sleep(1_000);
+    }    
+  }
+    
+  @Test
+  public void testHealthCheckThreadDies() throws Exception {
+    CLUSTER.getClusterControl().startAllServers();
+    CLUSTER.getClusterControl().waitForActive();
+
+    String connectionName = "LEAKTESTCLIENT";
+    Properties props = new Properties();
+    props.setProperty(ConnectionPropertyNames.CONNECTION_NAME, connectionName);
+    Connection leak = ConnectionFactory.connect(CLUSTER.getConnectionURI(), props);
+    String cid = leak.toString();
+
+    assertNotNull(leak);
+    assertNotNull(lookForThreadWithName(connectionName));
+
+    leak = null;
+    
+    while (lookForThreadWithName(connectionName) != null) {
+      LOGGER.info(cid);
+      System.gc();
+      Thread.sleep(1_000);
+    }
+    
+    CLUSTER.getClusterControl().terminateAllServers();
+    
+    while (lookForThreadWithName("HealthCheck") != null) {
+      LOGGER.info(cid);
+      System.gc();
+      Thread.sleep(1_000);
+    }
+  }
+  
   private static Thread lookForThreadWithName(String name) {
     Thread[] list = new Thread[Thread.activeCount()];
     Thread.enumerate(list);

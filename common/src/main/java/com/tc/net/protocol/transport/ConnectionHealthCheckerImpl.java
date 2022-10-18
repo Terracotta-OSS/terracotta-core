@@ -18,20 +18,22 @@
  */
 package com.tc.net.protocol.transport;
 
+import com.tc.lang.TCThreadGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.util.Assert;
-import com.tc.util.concurrent.SetOnceFlag;
 import java.net.InetSocketAddress;
 
 import java.util.Iterator;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
@@ -44,19 +46,34 @@ import java.util.function.Supplier;
 public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
 
   private final Logger logger;
-  private final Timer                           monitorThread;
+  private static final ScheduledExecutorService monitorThread = createHealthCheckExecutor();
   private final HealthCheckerMonitorThreadEngine monitorThreadEngine;
 
-  private final SetOnceFlag                      shutdown = new SetOnceFlag();
-  private final SetOnceFlag                      started  = new SetOnceFlag();
+  private Future<?>                      task;
   
   public ConnectionHealthCheckerImpl(HealthCheckerConfig healthCheckerConfig, TCConnectionManager connManager, Supplier<Boolean> reachable) {
     Assert.assertNotNull(healthCheckerConfig);
     Assert.eval(healthCheckerConfig.isHealthCheckerEnabled());
     logger = LoggerFactory.getLogger(ConnectionHealthCheckerImpl.class.getName() + ": "
                                      + healthCheckerConfig.getHealthCheckerName());
-    monitorThread = new Timer(healthCheckerConfig.getHealthCheckerName() + " - HealthCheck-Timer", true);
     monitorThreadEngine = getHealthMonitorThreadEngine(healthCheckerConfig, connManager, reachable, logger);
+  }
+  
+  private static ScheduledExecutorService createHealthCheckExecutor() {
+    ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1, (r) -> {
+      ThreadGroup grp = Thread.currentThread().getThreadGroup();
+      String id = "";
+      while (grp instanceof TCThreadGroup) {
+        id = "-" + grp.getName();
+        grp = grp.getParent();
+      }
+      Thread t = new Thread(grp, r, "HealthCheck" + id);
+      t.setDaemon(true);
+      return t;
+    });
+    exec.setKeepAliveTime(5, TimeUnit.SECONDS);
+    exec.allowCoreThreadTimeOut(true);
+    return exec;
   }
 
   private HealthCheckerMonitorThreadEngine getHealthMonitorThreadEngine(HealthCheckerConfig config,
@@ -69,6 +86,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
       } else {
         stop();
         connectionManager.asynchCloseAllConnections();
+        connectionManager.closeAllListeners();
         connectionManager.shutdown();
         return false;
       }
@@ -76,10 +94,10 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
   }
 
   @Override
-  public void start() {
-    if (started.attemptSet() && !shutdown.isSet()) {
+  public synchronized void start() {
+    if (task == null) {
       try {
-        monitorThread.scheduleAtFixedRate(monitorThreadEngine, 0L, monitorThreadEngine.pingInterval);
+        task = monitorThread.scheduleAtFixedRate(monitorThreadEngine, 0L, monitorThreadEngine.pingInterval, TimeUnit.MILLISECONDS);
       } catch (IllegalStateException state) {
         logger.warn("HealthChecker cannot start");
         return;
@@ -91,20 +109,13 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
   }
 
   @Override
-  public void stop() {
-    if (shutdown.attemptSet()) {
-      monitorThreadEngine.stop();
-      monitorThread.cancel();
-// don't bother to join the monitorThread here.  shutdown should take care of all the
-// threads in the thread group
+  public synchronized void stop() {
+    if (task != null && !task.isCancelled()) {
+      task.cancel(true);
       logger.debug("HealthChecker STOP requested");
     } else {
       logger.warn("HealthChecker STOP already requested");
     }
-  }
-
-  public boolean isRunning() {
-    return started.isSet() && !shutdown.isSet();
   }
 
   @Override
@@ -129,6 +140,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
 
   @Override
   public void notifyTransportConnected(MessageTransport transport) {
+    start();
     monitorThreadEngine.addConnection(transport);
   }
 
@@ -153,7 +165,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     // NOP
   }
 
-  static class HealthCheckerMonitorThreadEngine extends TimerTask {
+  static class HealthCheckerMonitorThreadEngine implements Runnable {
     private final ConcurrentMap<ConnectionID, MessageTransportBase> connectionMap =
         new ConcurrentHashMap<>();
     private final long                pingIdleTime;
@@ -202,10 +214,6 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
                                                                      HealthCheckerConfig conf,
                                                                      TCConnectionManager connManager) {
       return new ConnectionHealthCheckerContextImpl(transport, conf, connManager);
-    }
-
-    public void stop() {
-      this.cancel();
     }
 
     @Override
