@@ -39,7 +39,6 @@
               <configuration>
                   <archive>
                     <manifest>
-                      <addClasspath>true</addClasspath>
                       <mainClass>com.tc.server.TCServerMain</mainClass>
                     </manifest>
                   </archive>

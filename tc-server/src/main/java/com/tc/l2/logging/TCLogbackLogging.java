@@ -104,6 +104,11 @@ public class TCLogbackLogging {
     ch.qos.logback.classic.Logger silent = loggerContext.getLogger(TCLogging.SILENT_LOGGER_NAME);
     silent.setAdditive(false);
     silent.setLevel(Level.OFF);
+    
+    if (!loggerContext.isStarted()) {
+      root.setLevel(Level.INFO);
+      loggerContext.start();
+    }
   }
 
   public static void redirectLogging(File logDirFile) {
