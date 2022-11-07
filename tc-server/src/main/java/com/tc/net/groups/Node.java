@@ -86,7 +86,9 @@ public class Node {
   }
 
   private String getName() {
-    return host + DELIMITER + port;
+    // The node name is passed when constructing a new ServerID()
+    // Other callers of new ServerID() are using getStringForm#getStringForm()
+    return (host.contains(":") ? ("[" + host + "]") : host) + DELIMITER + port;
   }
 
   private static String getHost(String hostPort) {
