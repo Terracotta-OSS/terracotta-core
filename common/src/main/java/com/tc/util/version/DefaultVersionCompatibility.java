@@ -27,42 +27,16 @@ public class DefaultVersionCompatibility implements VersionCompatibility {
 
   @Override
   public boolean isCompatibleClientServer(String clientVersion, String serverVersion) {
-    return isCompatibleClientServer(new Version(clientVersion), new Version(serverVersion));
+    return true;
   }
 
   @Override
   public boolean isCompatibleServerServer(String v1, String v2) {
-    return isCompatibleServerServer(new Version(v1), new Version(v2));
+    return true;
   }
 
   @Override
   public boolean isCompatibleServerPersistence(String persisted, String current) {
-    return isCompatibleServerServer(new Version(persisted), new Version(current));
-  }
-
-  private boolean isCompatibleClientServer(Version clientVersion, Version serverVersion) {
-    return isCompatible(clientVersion, serverVersion) && !clientVersion.isNewer(serverVersion, 3);
-  }
-
-  private boolean isCompatibleServerServer(Version v1, Version v2) {
-    return isCompatible(v1, v2);
-  }
-
-  private boolean isCompatibleServerPersistence(Version persisted, Version current) {
-    if (persisted.major() == current.major() && persisted.minor() == current.minor()) {
-      return true;
-    } else {
-      return current.compareTo(persisted) >= 0;
-    }
-  }
-
-  private static boolean isCompatible(Version v1, Version v2) {
-    if (v1 == null || v2 == null) { throw new NullPointerException(); }
-    return ((v1.major() == v2.major()) && (v1.minor() == v2.minor()));
-  }
-
-  public static boolean isNewer(Version v1, Version v2, int depth) {
-    if (v1 == null || v2 == null) { throw new NullPointerException(); }
-    return v1.isNewer(v2, depth);
+    return true;
   }
 }

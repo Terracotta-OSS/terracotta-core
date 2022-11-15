@@ -21,7 +21,6 @@ package com.tc.objectserver.persistence;
 import com.tc.l2.state.StateManager;
 import com.tc.net.StripeID;
 import com.tc.util.State;
-import com.tc.util.version.Version;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -83,13 +82,12 @@ public class ClusterStatePersistor {
     return s == null || Boolean.valueOf(s);
   }
 
-  public Version getVersion() {
-    String v = map.get(VERSION_KEY);
-    return v == null ? null : new Version(v);
+  public String getVersion() {
+    return map.get(VERSION_KEY);
   }
 
-  public void setVersion(Version v) {
-    putAndStore(VERSION_KEY, v.major() + "." + v.minor() + "." + v.micro());
+  public void setVersion(String v) {
+    putAndStore(VERSION_KEY, v);
   }
 
   public void setDBClean(boolean dbClean) {

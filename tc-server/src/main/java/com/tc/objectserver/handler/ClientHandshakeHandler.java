@@ -33,7 +33,6 @@ import com.tc.net.core.ProductID;
 import com.tc.productinfo.ProductInfo;
 import com.tc.productinfo.VersionCompatibility;
 import com.tc.spi.Guardian;
-import com.tc.util.version.Version;
 
 public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshakeMessage> {
 
@@ -41,27 +40,26 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
   private StateManager                 stateManager;
   private final EntityManager          entityManager;
   private final ProcessTransactionHandler transactionHandler;
-  private final Version               serverVersion;
+  private final String               serverVersion;
   private final VersionCompatibility versionCheck;
 
   public ClientHandshakeHandler(EntityManager entityManager, ProcessTransactionHandler transactionHandler, VersionCompatibility versionCheck) {
     this.entityManager = entityManager;
     this.transactionHandler = transactionHandler;
-    this.serverVersion = new Version(ProductInfo.getInstance().version());
+    this.serverVersion =ProductInfo.getInstance().version();
     this.versionCheck = versionCheck;
   }
 
   @Override
   public void handleEvent(ClientHandshakeMessage clientMsg) {
     String cid = clientMsg.getClientVersion() + ":" + clientMsg.getName() + ":" + clientMsg.getUUID() + ":" + clientMsg.getClientPID();
-    String version = clientMsg.getClientVersion();
-    Version client = new Version(version);
+    String client = clientMsg.getClientVersion();
 
     try {
       if (!GuardianContext.validate(Guardian.Op.CONNECT_CLIENT, cid, clientMsg.getChannel())) {
         this.handshakeManager.notifyClientRefused(clientMsg, "new connections not allowed");
-      } else if (!versionCheck.isCompatibleClientServer(client.toString(), serverVersion.toString())) {
-        this.handshakeManager.notifyClientRefused(clientMsg, "client version is not compatible than the server.  client version:" + client.toString() + " server version:" + serverVersion);
+      } else if (!versionCheck.isCompatibleClientServer(client, serverVersion)) {
+        this.handshakeManager.notifyClientRefused(clientMsg, "client version is not compatible with the server version.  client version:" + client + " server version:" + serverVersion);
       } else if (clientMsg.getChannel().getProductID() == ProductID.DIAGNOSTIC) {
         this.handshakeManager.notifyDiagnosticClient(clientMsg);
       } else if (stateManager.isActiveCoordinator()) {

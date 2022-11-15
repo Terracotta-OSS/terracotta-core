@@ -543,8 +543,6 @@ public class DistributedObjectServer {
       persistor.getClusterStatePersistor().setDBClean(!wasZapped);
     }
 
-    new ServerPersistenceVersionChecker(pInfo).checkAndBumpPersistedVersion(persistor.getClusterStatePersistor());
-
     this.threadGroup
         .addCallbackOnExitExceptionHandler(ZapDirtyDbServerNodeException.class,
                                            new CallbackZapDirtyDbExceptionAdapter(logger, consoleLogger, this.persistor
