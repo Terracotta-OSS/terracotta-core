@@ -39,6 +39,7 @@ import com.tc.util.CallableWaiter;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
+import com.tc.util.version.DefaultVersionCompatibility;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -115,7 +116,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
       for (int i = 0; i < nodes; ++i) {
         TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                       allNodes[i].getPort(), allNodes[i].getGroupPort(),
+                                                       allNodes[i].getPort(), allNodes[i].getGroupPort(), "TEST", new DefaultVersionCompatibility(),
                                                        stages.createStageManager(),
                                                        RandomWeightGenerator.createTestingFactory(2),
                                                        mock(TopologyManager.class));
@@ -177,7 +178,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
       for (int i = 0; i < nodes; ++i) {
         TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                       allNodes[i].getPort(), allNodes[i].getGroupPort(),
+                                                       allNodes[i].getPort(), allNodes[i].getGroupPort(), "TEST", new DefaultVersionCompatibility(),
                                                        stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2),
                                                        mock(TopologyManager.class));
         gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, allNodes[i]));

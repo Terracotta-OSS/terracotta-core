@@ -43,10 +43,10 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
   private final String               serverVersion;
   private final VersionCompatibility versionCheck;
 
-  public ClientHandshakeHandler(EntityManager entityManager, ProcessTransactionHandler transactionHandler, VersionCompatibility versionCheck) {
+  public ClientHandshakeHandler(EntityManager entityManager, ProcessTransactionHandler transactionHandler, String serverVersion, VersionCompatibility versionCheck) {
     this.entityManager = entityManager;
     this.transactionHandler = transactionHandler;
-    this.serverVersion =ProductInfo.getInstance().version();
+    this.serverVersion = serverVersion;
     this.versionCheck = versionCheck;
   }
 

@@ -37,12 +37,14 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.session.SessionID;
 import com.tc.objectserver.impl.TopologyManager;
+import com.tc.productinfo.VersionCompatibility;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.State;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.runtime.ThreadDump;
+import com.tc.util.version.DefaultVersionCompatibility;
 
 import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
@@ -80,8 +82,8 @@ public class TCGroupManagerImplTest extends TCTestCase {
   private Node                     nodes[];
   private AtomicReference<Throwable> error;
   private MockStageManagerFactory  stages;
-
-  private void setupGroups(int n) throws Exception {
+  
+  private void setupGroups(int n, String version, VersionCompatibility versioning) throws Exception {
     ServerEnv.setDefaultServer(mock(Server.class));
     groups = new TCGroupManagerImpl[n];
     listeners = new TestGroupMessageListener[n];
@@ -98,14 +100,19 @@ public class TCGroupManagerImplTest extends TCTestCase {
     }
     for (int i = 0; i < n; ++i) {
       groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports.get(i).port(), groupPorts.get(i).port(),
-                                         stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2),
-                                         mock(TopologyManager.class));
+                                        version, versioning,
+                                        stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2),
+                                        mock(TopologyManager.class));
       groups[i].setDiscover(new TCGroupMemberDiscoveryStatic(groups[i], nodes[i]));
       groupEventListeners[i] = new TestGroupEventListener(groups[i]);
       groups[i].registerForGroupEvents(groupEventListeners[i]);
       System.out.println("Starting " + groups[i]);
       listeners[i] = new TestGroupMessageListener(2000);
     }
+  }
+  
+  private void setupGroups(int n) throws Exception {
+    setupGroups(n, "TEST_VERSION-1.0", new DefaultVersionCompatibility());
   }
 
   private void tearGroups() throws Exception {
@@ -267,158 +274,50 @@ public class TCGroupManagerImplTest extends TCTestCase {
       throw e;
     }
   }
-//
-//  public void testSendTo() throws Exception {
-//    setupGroups(2);
-//
-//    TestGroupMessageListener listener1 = new TestGroupMessageListener(2000);
-//    TestGroupMessageListener listener2 = new TestGroupMessageListener(2000);
-//    groups[0].registerForMessages(ObjectSyncMessage.class, listener1);
-//    groups[1].registerForMessages(ObjectSyncMessage.class, listener2);
-//
-//    groups[0].setDiscover(new NullTCGroupMemberDiscovery());
-//    groups[1].setDiscover(new NullTCGroupMemberDiscovery());
-//
-//    Set<Node> nodeSet = new HashSet<>();
-//    Collections.addAll(nodeSet, nodes);
-//    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
-//    groups[0].join(nodes[0], nodeStore);
-//    groups[1].join(nodes[1], nodeStore);
-//
-//    groups[0].openChannel(LOCALHOST, groupPorts[1], new NullChannelEventListener());
-//    Thread.sleep(1000);
-//    TCGroupMember member0 = getMember(groups[0], 0);
-//    TCGroupMember member1 = getMember(groups[1], 0);
-//
-//    ObjectSyncMessage sMesg = createTestObjectSyncMessage();
-//    groups[0].sendTo(member0.getPeerNodeID(), sMesg);
-//    ObjectSyncMessage rMesg = (ObjectSyncMessage) listener2.getNextMessageFrom(groups[0].getLocalNodeID());
-//    assertTrue(cmpObjectSyncMessage(sMesg, rMesg));
-//
-//    sMesg = createTestObjectSyncMessage();
-//    groups[1].sendTo(member1.getPeerNodeID(), sMesg);
-//    rMesg = (ObjectSyncMessage) listener1.getNextMessageFrom(groups[1].getLocalNodeID());
-//    assertTrue(cmpObjectSyncMessage(sMesg, rMesg));
-//
-//    tearGroups();
-//  }
-//
-//  private ObjectSyncMessage createTestObjectSyncMessage() {
-//    ObjectIDSet dnaOids = new BitSetObjectIDSet();
-//    for (long i = 1; i <= 100; ++i) {
-//      dnaOids.add(new ObjectID(i));
-//    }
-//    int count = 10;
-//    TCByteBuffer[] serializedDNAs = new TCByteBuffer[] {};
-//    ObjectStringSerializer objectSerializer = new ObjectStringSerializerImpl();
-//    Map<String, ObjectID> roots = new HashMap<>();
-//    long sID = 10;
-//    ObjectSyncMessage message = new ObjectSyncMessage(new ServerTransactionID(new ServerID("hello", new byte[] { 34, 33, (byte) 234 }),
-//                                               new TransactionID(342)), dnaOids, count, serializedDNAs,
-//                       objectSerializer, roots, sID, ObjectIDSet.EMPTY_OBJECT_ID_SET);
-//    return (message);
-//  }
-//
-//  private boolean cmpObjectSyncMessage(ObjectSyncMessage o1, ObjectSyncMessage o2) {
-//    return ((o1.getDnaCount() == o2.getDnaCount()) && o1.getOids().equals(o2.getOids())
-//            && o1.getRootsMap().equals(o2.getRootsMap()) && (o1.getType() == o2.getType())
-//            && o1.getMessageID().equals(o2.getMessageID()) && o1.getServerTransactionID()
-//        .equals(o2.getServerTransactionID()));
-//  }
+  
+  public void testVersionControl() throws Exception {
+    try {
+      TCPropertiesImpl.getProperties().overwriteTcPropertiesFromConfig(new HashMap<>());
+      VersionCompatibility versioning = mock(VersionCompatibility.class);
+      when(versioning.isCompatibleServerServer(anyString(), anyString())).thenReturn(false);
+      setupGroups(2, "TEST-Version-1.0", versioning);
+
+      groups[0].setDiscover(new NullTCGroupMemberDiscovery());
+      groups[1].setDiscover(new NullTCGroupMemberDiscovery());
+
+      Set<Node> nodeSet = new HashSet<>();
+      Collections.addAll(nodeSet, nodes);
+
+      GroupConfiguration groupConfiguration1 = getGroupConfiguration(nodeSet, nodes[0]);
+      GroupConfiguration groupConfiguration2 = getGroupConfiguration(nodeSet, nodes[1]);
+
+      groups[0].join(groupConfiguration1);
+      groups[1].join(groupConfiguration2);
+
+      groups[0].openChannel(LOCALHOST, groupPorts.get(1).port(), new ChannelEventListener() {
+        @Override
+        public void notifyChannelEvent(ChannelEvent event) {
+          System.out.println(event);
+        }
+      });
+      groups[1].openChannel(LOCALHOST, groupPorts.get(0).port(), new ChannelEventListener() {
+        @Override
+        public void notifyChannelEvent(ChannelEvent event) {
+          System.out.println(event);
+        }
+      });
+      
+      assertTrue(groups[0].size() == 0);
+      assertTrue(groups[1].size() == 0);
+    } catch (Throwable e) {
+      e.printStackTrace();
+      throw e;
+    }
+  }
 
   private TCGroupMember getMember(TCGroupManagerImpl mgr, int idx) {
     return new ArrayList<>(mgr.getMembers()).get(idx);
   }
-//
-//  public void testJoin() throws Exception {
-//    int nGrp = 2;
-//    setupGroups(nGrp);
-//
-//    groups[0].registerForMessages(ObjectSyncMessage.class, listeners[0]);
-//    groups[1].registerForMessages(ObjectSyncMessage.class, listeners[1]);
-//
-//    Set<Node> nodeSet = new HashSet<>();
-//    Collections.addAll(nodeSet, nodes);
-//    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
-//    groups[0].join(nodes[0], nodeStore);
-//    groups[1].join(nodes[1], nodeStore);
-//    waitForMembersToJoin();
-//
-//    GroupMessage sMesg = createTestObjectSyncMessage();
-//    TCGroupMember member = getMember(groups[0], 0);
-//    groups[0].sendTo(member.getPeerNodeID(), sMesg);
-//    GroupMessage rMesg = listeners[1].getNextMessageFrom(groups[0].getLocalNodeID());
-//    assertTrue(cmpObjectSyncMessage((ObjectSyncMessage) sMesg, (ObjectSyncMessage) rMesg));
-//
-//    sMesg = createTestObjectSyncMessage();
-//    member = getMember(groups[1], 0);
-//    groups[1].sendTo(member.getPeerNodeID(), sMesg);
-//    rMesg = listeners[0].getNextMessageFrom(groups[1].getLocalNodeID());
-//    assertTrue(cmpObjectSyncMessage((ObjectSyncMessage) sMesg, (ObjectSyncMessage) rMesg));
-//
-//    tearGroups();
-//  }
-//
-//  private GCResultMessage createGCResultMessage() {
-//    ObjectIDSet oidSet = new BitSetObjectIDSet();
-//    for (long i = 1; i <= 100; ++i) {
-//      oidSet.add(new ObjectID(i));
-//    }
-//    GCResultMessage message = new GCResultMessage(new GarbageCollectionInfo(), oidSet);
-//    return (message);
-//  }
-//
-//  private boolean cmpGCResultMessage(GCResultMessage o1, GCResultMessage o2) {
-//    return (o1.getType() == o2.getType() && o1.getMessageID().equals(o2.getMessageID())
-//            && o1.getGCedObjectIDs().equals(o2.getGCedObjectIDs()) && o1.getGCInfo().getGarbageCollectionID().toLong() == o2
-//        .getGCInfo().getGarbageCollectionID().toLong());
-//  }
-//
-//  public void testSendToAll() throws Exception {
-//    int nGrp = 5;
-//    setupGroups(nGrp);
-//    HashMap<NodeID, TestGroupMessageListener> listenerMap = new HashMap<>();
-//
-//    for (int i = 0; i < nGrp; ++i) {
-//      groups[i].registerForMessages(GCResultMessage.class, listeners[i]);
-//      listenerMap.put(groups[i].getLocalNodeID(), listeners[i]);
-//    }
-//    Set<Node> nodeSet = new HashSet<>();
-//    Collections.addAll(nodeSet, nodes);
-//    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
-//    for (int i = 0; i < nGrp; ++i) {
-//      groups[i].join(nodes[i], nodeStore);
-//    }
-//    waitForMembersToJoin();
-//
-//    // test with one to one first
-//    GroupMessage sMesg = createGCResultMessage();
-//    TCGroupMember member = getMember(groups[0], 0);
-//    groups[0].sendTo(member.getPeerNodeID(), sMesg);
-//    TestGroupMessageListener listener = listenerMap.get(member.getPeerNodeID());
-//    GroupMessage rMesg = listener.getNextMessageFrom(groups[0].getLocalNodeID());
-//    assertTrue(cmpGCResultMessage((GCResultMessage) sMesg, (GCResultMessage) rMesg));
-//
-//    sMesg = createGCResultMessage();
-//    member = getMember(groups[1], 0);
-//    groups[1].sendTo(member.getPeerNodeID(), sMesg);
-//    listener = listenerMap.get(member.getPeerNodeID());
-//    rMesg = listener.getNextMessageFrom(groups[1].getLocalNodeID());
-//    assertTrue(cmpGCResultMessage((GCResultMessage) sMesg, (GCResultMessage) rMesg));
-//
-//    // test with broadcast
-//    sMesg = createGCResultMessage();
-//    groups[0].sendAll(sMesg);
-//    for (int i = 0; i < groups[0].size(); ++i) {
-//      TCGroupMember m = getMember(groups[0], i);
-//      TestGroupMessageListener l = listenerMap.get(m.getPeerNodeID());
-//      rMesg = l.getNextMessageFrom(groups[0].getLocalNodeID());
-//      assertTrue(cmpGCResultMessage((GCResultMessage) sMesg, (GCResultMessage) rMesg));
-//    }
-//
-//    ThreadUtil.reallySleep(200);
-//    tearGroups();
-//  }
 
   private L2StateMessage createL2StateMessage() {
     long weights[] = new long[] { 1, 23, 44, 78 };

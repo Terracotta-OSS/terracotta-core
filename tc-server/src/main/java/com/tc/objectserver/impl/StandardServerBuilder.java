@@ -44,6 +44,7 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.persistence.Persistor;
+import com.tc.productinfo.VersionCompatibility;
 import com.tc.util.Assert;
 
 import org.terracotta.persistence.IPlatformPersistence;
@@ -61,10 +62,10 @@ public class StandardServerBuilder implements ServerBuilder {
 
   @Override
   public GroupManager<AbstractGroupMessage> createGroupCommManager(ServerConfigurationManager configManager,
-                                                                   StageManager stageManager, ServerID serverNodeID,
+                                                                   StageManager stageManager, ServerID serverNodeID, VersionCompatibility versioning,
                                                                    StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
                                                                    BufferManagerFactory bufferManagerFactory, TopologyManager topologyManager) {
-    return new TCGroupManagerImpl(configManager, stageManager, serverNodeID, this.groupConfiguration.getCurrentNode(),
+    return new TCGroupManagerImpl(configManager, stageManager, serverNodeID, this.groupConfiguration.getCurrentNode(), versioning, 
                                   weightGeneratorFactory, bufferManagerFactory, topologyManager);
   }
 

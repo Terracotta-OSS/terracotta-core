@@ -542,7 +542,16 @@ public class DistributedObjectServer {
       //  if the DB was zapped and not started in diagnostic mode, reset the flag until the server has finished sync
       persistor.getClusterStatePersistor().setDBClean(!wasZapped);
     }
-
+    
+    VersionCompatibility versioning = getVersionCompatibility();
+    
+    if (!versioning.isCompatibleServerPersistence(persistor.getClusterStatePersistor().getVersion(), pInfo.version())) {
+      consoleLogger.error("This server version is not compatible with the persisted data.  Please clear the existing persistent store");
+      throw new RuntimeException("not compatible persisted data");
+    } else {
+      persistor.getClusterStatePersistor().setVersion(pInfo.version());
+    }
+    
     this.threadGroup
         .addCallbackOnExitExceptionHandler(ZapDirtyDbServerNodeException.class,
                                            new CallbackZapDirtyDbExceptionAdapter(logger, consoleLogger, this.persistor
@@ -686,7 +695,7 @@ public class DistributedObjectServer {
     entityManager.setMessageSink(fast.getSink());
 
     this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
-                                                                      this.thisServerNodeID,
+                                                                      this.thisServerNodeID, versioning, 
                                                                       this.stripeIDStateManager, this.globalWeightGeneratorFactory,
                                                                       bufferManagerFactory, this.topologyManager);
 
@@ -694,7 +703,7 @@ public class DistributedObjectServer {
       this.groupCommManager.registerForGroupEvents((GroupEventsListener)consistencyMgr);
     }
     
-    final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler, getVersionCompatibility()), 1, maxStageSize);
+    final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler, pInfo.version(), versioning), 1, maxStageSize);
 
     Stage<HydrateContext> hydrator = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_STAGE, HydrateContext.class, new HydrateHandler(), L2Utils.getOptimalCommWorkerThreads(), maxStageSize);
     Stage<TCAction> diagStage = stageManager.createStage(ServerConfigurationContext.MONITOR_STAGE, TCAction.class, new DiagnosticsHandler(this, this.server.getJMX()), 1, 1);
@@ -1324,8 +1333,8 @@ public class DistributedObjectServer {
     return configSetupManager;
   }
 
-  protected ClientHandshakeHandler createHandShakeHandler(EntityManager entities, ProcessTransactionHandler processTransactionHandler, VersionCompatibility versionCheck) {
-    return new ClientHandshakeHandler(entities, processTransactionHandler, versionCheck);
+  protected ClientHandshakeHandler createHandShakeHandler(EntityManager entities, ProcessTransactionHandler processTransactionHandler, String serverVersion, VersionCompatibility versionCheck) {
+    return new ClientHandshakeHandler(entities, processTransactionHandler, serverVersion, versionCheck);
   }
 
   // for tests only

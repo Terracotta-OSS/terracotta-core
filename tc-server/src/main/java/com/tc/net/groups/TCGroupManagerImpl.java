@@ -105,6 +105,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static java.util.stream.Collectors.toSet;
 import org.terracotta.server.ServerEnv;
 import com.tc.net.protocol.tcm.TCAction;
+import com.tc.productinfo.VersionCompatibility;
 
 
 public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, ChannelManagerEventListener, TopologyListener {
@@ -115,6 +116,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private final int                                         serverCount;
   
   private final String                                      version;
+  private final VersionCompatibility                        versioning;
   private final ServerID                                    thisNodeID;
   private final int                                         groupPort;
   private final ConnectionPolicy                            connectionPolicy;
@@ -148,14 +150,14 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
    * Setup a communication manager which can establish channel from either sides.
    */
   public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, StageManager stageManager,
-                            ServerID thisNodeID, Node thisNode,
+                            ServerID thisNodeID, Node thisNode, VersionCompatibility versioning,
                             WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory, TopologyManager topologyManager) {
-    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, thisNode, weightGenerator,
+    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, thisNode, versioning, weightGenerator,
          bufferManagerFactory, topologyManager);
   }
 
   public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, ConnectionPolicy connectionPolicy,
-                            StageManager stageManager, ServerID thisNodeID, Node thisNode,
+                            StageManager stageManager, ServerID thisNodeID, Node thisNode, VersionCompatibility versioning, 
                             WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory,
                             TopologyManager topologyManager) {
     this.connectionPolicy = connectionPolicy;
@@ -164,6 +166,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.bufferManagerFactory = bufferManagerFactory;
     this.topologyManager = topologyManager;
     this.version = configSetupManager.getProductInfo().version();
+    this.versioning = versioning;
 
     ServerConfiguration l2DSOConfig = configSetupManager.getServerConfiguration();
     serverCount = configSetupManager.allCurrentlyKnownServers().length;
@@ -197,14 +200,15 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   /*
    * for testing purpose only. Tester needs to do setDiscover().
    */
-  public TCGroupManagerImpl(ConnectionPolicy connectionPolicy, String hostname, int port, int groupPort,
+  public TCGroupManagerImpl(ConnectionPolicy connectionPolicy, String hostname, int port, int groupPort, String version, VersionCompatibility versioning,
                             StageManager stageManager, WeightGeneratorFactory weightGenerator, TopologyManager topologyManager) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     this.bufferManagerFactory = new ClearTextBufferManagerFactory();
     this.topologyManager = topologyManager;
     this.groupPort = groupPort;
-    this.version = getVersion();
+    this.version = version;
+    this.versioning = versioning;
     this.weightGeneratorFactory = weightGenerator;
     this.serverCount = 0;
     thisNodeID = new ServerID(new Node(hostname, port).getServerNodeName(), UUID.getUUID().toString().getBytes());
@@ -954,7 +958,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       if (isDebugLogging()) {
         debugInfo("Creating handshake state machine for channel: " + channel);
       }
-      stateMachine = new TCGroupHandshakeStateMachine(this, channel, getNodeID(), weightGeneratorFactory, version);
+      stateMachine = new TCGroupHandshakeStateMachine(this, channel, getNodeID(), weightGeneratorFactory, version, versioning);
       channel.addAttachment(HANDSHAKE_STATE_MACHINE_TAG, stateMachine, false);
       channel.addListener(new HandshakeChannelEventListener(stateMachine));
       if (channel.isOpen()) {
@@ -1016,6 +1020,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     private final ServerID           localNodeID;
     private final WeightGeneratorFactory weightGeneratorFactory;
     private final String               version;
+    private final VersionCompatibility versioning;
 
     private HandshakeMonitor         current;
     private ServerID                 peerNodeID;
@@ -1023,12 +1028,13 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     private TCGroupMember            member;
 
     public TCGroupHandshakeStateMachine(TCGroupManagerImpl manager, MessageChannel channel, ServerID localNodeID,
-                                        WeightGeneratorFactory weightGeneratorFactory, String version) {
+                                        WeightGeneratorFactory weightGeneratorFactory, String version, VersionCompatibility versioning) {
       this.manager = manager;
       this.channel = channel;
       this.localNodeID = localNodeID;
       this.weightGeneratorFactory = weightGeneratorFactory;
       this.version = version;
+      this.versioning = versioning;
       this.current = STATE_NEW.createMonitor();
       this.current.complete();
     }
@@ -1241,6 +1247,11 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
         setPeerNodeID(msg);
         if (!manager.getDiscover().isValidClusterNode(peerNodeID)) {
           logger.warn("Drop connection from non-member node " + peerNodeID);
+          switchToState(STATE_FAILURE);
+          return;
+        }
+        if (!versioning.isCompatibleServerServer(msg.getVersion(), version)) {
+          logger.warn("Drop a connection from a server version that is not compatible. peer version: {} local version: {} node: {}", msg.getVersion(), version, peerNodeID);
           switchToState(STATE_FAILURE);
           return;
         }
