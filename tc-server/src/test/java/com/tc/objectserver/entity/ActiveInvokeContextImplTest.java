@@ -27,6 +27,8 @@ import org.junit.Test;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import org.terracotta.entity.ActiveInvokeChannel;
 import org.terracotta.entity.EntityResponse;
@@ -77,4 +79,48 @@ public class ActiveInvokeContextImplTest {
       // expected
     }
   }
+
+  @Test
+  public void testMultipleActiveInvokeChannels() {
+    Runnable open = mock(Runnable.class);
+    Consumer response = mock(Consumer.class);
+    Consumer exception = mock(Consumer.class);
+    Runnable close = mock(Runnable.class);
+    
+    ActiveInvokeContextImpl ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(), 1, 1, 2, 
+        open, response, exception, close);
+    ActiveInvokeChannel chan1 = ctx.openInvokeChannel();
+    verify(open).run();
+    ActiveInvokeChannel chan2 = ctx.openInvokeChannel();
+    verify(open, times(1)).run();
+
+    chan1.sendResponse(mock(EntityResponse.class));
+    verify(response).accept(any(EntityResponse.class));
+    chan2.sendResponse(mock(EntityResponse.class));
+    verify(response, times(2)).accept(any(EntityResponse.class));
+
+    chan1.close();
+    verify(close, never()).run();
+//  check closed
+    try {
+      chan1.sendResponse(mock(EntityResponse.class));
+      Assert.fail();
+    } catch (IllegalStateException state) {
+      // expected
+    }
+// check still open
+    chan2.sendResponse(mock(EntityResponse.class));
+    verify(response, times(3)).accept(any(EntityResponse.class));
+    
+    chan2.close();
+    verify(close).run();
+
+    try {
+      chan2.sendResponse(mock(EntityResponse.class));
+      Assert.fail();
+    } catch (IllegalStateException state) {
+      // expected
+    }
+  }
+
 }
