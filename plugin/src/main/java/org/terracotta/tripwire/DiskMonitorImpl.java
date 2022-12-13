@@ -40,7 +40,7 @@ class DiskMonitorImpl implements DiskMonitor {
   
   @Override
   public void register() {
-    FlightRecorder.addPeriodicEvent(StageEvent.class, runnable);
+    FlightRecorder.addPeriodicEvent(DiskEvent.class, runnable);
   }
 
   @Override
