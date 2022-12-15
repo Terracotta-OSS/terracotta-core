@@ -248,7 +248,6 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     Assert.assertEquals(1, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1));
     Assert.assertEquals(1, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2));
 
-    ((TCConnectionImpl)conns[0]).addWeight(MessageTransport.CONNWEIGHT_TX_HANDSHAKED);
     ClientMessageChannel client4 = createClientMsgCh();
     ClientMessageChannel client5 = createClientMsgCh();
 
@@ -276,7 +275,6 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     Assert.assertEquals(3, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1));
     Assert.assertEquals(3, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2));
 
-    ((TCConnectionImpl)conns[0]).addWeight(MessageTransport.CONNWEIGHT_TX_HANDSHAKED);
     Assert.assertEquals(4, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0));
     client1.close();
 

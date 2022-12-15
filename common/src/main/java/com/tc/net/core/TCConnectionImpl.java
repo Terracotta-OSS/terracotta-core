@@ -54,7 +54,6 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -64,6 +63,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import com.tc.net.protocol.TCProtocolException;
+import com.tc.net.protocol.transport.WireProtocolHeaderFormatException;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Semaphore;
 
 /**
  * The {@link TCConnection} implementation. SocketChannel read/write happens here.
@@ -85,7 +91,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private final BufferManagerFactory            bufferManagerFactory;
   private final boolean                         clientConnection;              
   private final AtomicBoolean                   transportEstablished        = new AtomicBoolean(false);
-  private final LinkedList<TCNetworkMessage>    writeMessages               = new LinkedList<TCNetworkMessage>();
+  private final BlockingQueue<TCNetworkMessage>    writeMessages               = new ArrayBlockingQueue<>(1024);
   private final TCConnectionManagerImpl         parent;
   private final TCDirectByteBufferCache         buffers;
   private final TCConnectionEventCaller         eventCaller                 = new TCConnectionEventCaller(logger);
@@ -94,7 +100,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private final AtomicLong                      lastDataReceiveTime         = new AtomicLong(System.currentTimeMillis());
   private final LongAdder                      messagesRead           = new LongAdder();
   private final AtomicLong                      connectTime                 = new AtomicLong(NO_CONNECT_TIME);
-  private final List<TCConnectionEventListener> eventListeners              = new CopyOnWriteArrayList<TCConnectionEventListener>();
+  private final List<TCConnectionEventListener> eventListeners              = new CopyOnWriteArrayList<>();
   private final TCProtocolAdaptor               protocolAdaptor;
   private final AtomicBoolean                   isSocketEndpoint            = new AtomicBoolean(false);
   private final SetOnceFlag                     closed                      = new SetOnceFlag();
@@ -104,7 +110,8 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private final SocketParams                    socketParams;
   private final AtomicLong                      totalRead                   = new AtomicLong(0);
   private final AtomicLong                      totalWrite                  = new AtomicLong(0);
-  private final ArrayList<WriteContext>         writeContexts               = new ArrayList<WriteContext>();
+  private final Queue<WriteContext>     writeContexts               = new ConcurrentLinkedQueue<>();
+  private final Semaphore               writeContextControl         = new Semaphore(1);
   private final Object                          pipeSocketWriteInterestLock = new Object();
   private boolean                               hasPipeSocketWriteInterest  = false;
   private int                                   writeBufferSize             = 0;
@@ -212,9 +219,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         callback.run();
       }
     } finally {
-      synchronized (this.writeMessages) {
-        this.writeMessages.clear();
-      }
+      this.writeMessages.clear();
     }
     try {
       if (pipeSocket != null) {
@@ -402,50 +407,73 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     }
   }
 
-  private void buildWriteContextsFromMessages() {
-    TCNetworkMessage messagesToWrite[];
-    synchronized (this.writeMessages) {
-      if (this.closed.isSet()) { return; }
-      messagesToWrite = this.writeMessages.toArray(new TCNetworkMessage[this.writeMessages.size()]);
-      this.writeMessages.clear();
-    }
-    ArrayList<TCNetworkMessage> currentBatch = (MSG_GROUPING_ENABLED
-        ? new ArrayList<>()
-        : null);
-    
-
-    int batchSize = 0;
-    int batchMsgCount = 0;
-    for (final TCNetworkMessage element : messagesToWrite) {
-      if (element.commit()) {
-        if (element instanceof WireProtocolMessage) {
-          // we don't want to group already constructed Transport Handshake WireProtocolMessages
-          final WireProtocolMessage ms = finalizeWireProtocolMessage((WireProtocolMessage) element, 1);
-          this.writeContexts.add(new WriteContext(ms));
-        } else if (WireProtocolHeader.PROTOCOL_UNKNOWN == WireProtocolHeader.getProtocolForMessageClass(element)) {
-          // GenericNetwork messages are used for testing
-          this.writeContexts.add(new WriteContext(element));
-        } else if (MSG_GROUPING_ENABLED) {
-          int realMessageSize = element.getTotalLength();
-          if (!canBatch(realMessageSize, batchSize, batchMsgCount)) {
-            // We can't add this to the current batch so seal the current batch as a write context and create a new one.
-            this.writeContexts.add(new WriteContext(buildWireProtocolMessageGroup(currentBatch)));
-            batchSize = 0;
-            batchMsgCount = 0;
-            currentBatch = new ArrayList<TCNetworkMessage>();
-          }
-          batchSize += realMessageSize;
-          batchMsgCount++;
-          currentBatch.add(element);
-        } else {
-          this.writeContexts.add(new WriteContext(buildWireProtocolMessage(element)));
+  private boolean buildWriteContextsFromMessages(boolean failfast) {
+    try {
+      if (failfast) {
+        if (!writeContextControl.tryAcquire()) {
+          return false;
         }
+      } else {
+        writeContextControl.acquire();
       }
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+      return false;
     }
+    
+    this.writeContexts.removeIf(WriteContext::isCancelled);
 
-    if (MSG_GROUPING_ENABLED && batchMsgCount > 0) {
-      final WireProtocolMessage ms = buildWireProtocolMessageGroup(currentBatch);
-      this.writeContexts.add(new WriteContext(ms));
+    try {
+      if (!this.writeMessages.isEmpty()) {
+        ArrayList<TCNetworkMessage> currentBatch = new ArrayList<>();    
+        int batchSize = 0;
+        int batchMsgCount = 0;
+        TCNetworkMessage element = this.writeMessages.poll();
+
+        while (element != null) {
+          if (this.closed.isSet()) { return false; }
+          if (element.load()) {
+            int bytesToWrite = element.getTotalLength();
+            if (bytesToWrite >= TCConnectionImpl.WARN_THRESHOLD) {
+              logger.warn("Warning: Attempting to send a message (" + element.getClass().getName() + ") of size "
+                          + bytesToWrite + " bytes");
+            }
+            if (element instanceof WireProtocolMessage) {
+                // we don't want to group already constructed Transport Handshake WireProtocolMessages
+                final WireProtocolMessage ms = finalizeWireProtocolMessage((WireProtocolMessage) element, 1);
+                this.writeContexts.add(new WriteContext(ms));
+            } else if (WireProtocolHeader.PROTOCOL_UNKNOWN == WireProtocolHeader.getProtocolForMessageClass(element)) {
+              // GenericNetwork messages are used for testing
+              this.writeContexts.add(new WriteContext(element));
+            } else if (MSG_GROUPING_ENABLED) {
+              if (!canBatch(bytesToWrite, batchSize, batchMsgCount)) {
+                // We can't add this to the current batch so seal the current batch as a write context and create a new one.
+                this.writeContexts.add(new WriteContext(buildWireProtocolMessageGroup(currentBatch)));
+                batchSize = 0;
+                currentBatch = new ArrayList<>(batchMsgCount);
+                batchMsgCount = 0;
+              }
+              batchSize += bytesToWrite;
+              batchMsgCount++;
+              currentBatch.add(element);
+            } else {
+              this.writeContexts.add(new WriteContext(buildWireProtocolMessage(element)));
+            }
+
+            element = this.writeMessages.poll();
+          }
+        }
+
+        if (MSG_GROUPING_ENABLED && batchMsgCount > 0) {
+          final WireProtocolMessage ms = buildWireProtocolMessageGroup(currentBatch);
+          this.writeContexts.add(new WriteContext(ms));
+        }
+        return true;
+      } else {
+        return false;
+      }
+    } finally {
+      writeContextControl.release();
     }
   }
 
@@ -499,54 +527,34 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     return bytesRead;
   }
 
-  public int doWriteToBufferInternal() {
+  public int doWriteToBufferInternal() throws IOException {
     final boolean debug = logger.isDebugEnabled();
     int totalBytesWritten = 0;
-
-    // get a copy of the current write contexts. Since we call out to event/error handlers in the write
-    // loop below, we don't want to be holding the lock on the writeContexts queue
-    if (this.writeContexts.size() <= 0) {
-      buildWriteContextsFromMessages();
+    
+    WriteContext context = this.writeContexts.peek();
+    
+    if (context == null) {
+      if (buildWriteContextsFromMessages(true)) {
+        context = this.writeContexts.peek();
+      }
     }
-    while (!this.writeContexts.isEmpty()) {
-      WriteContext context = this.writeContexts.get(0);
-      final TCByteBuffer[] bufs = context.entireMessageData;
 
-      long bytesWritten = 0;
-      // Do the write in a loop, instead of calling write(ByteBuffer[]).
-      // This seems to avoid memory leaks and faster
-      for (int i = context.index, nn = bufs.length; i < nn; i++) {
-        ByteBuffer buf = bufs[i].getNioBuffer();
-        try {
-          final int written = bufferManager.forwardToWriteBuffer(buf);
-          if (written == 0) {
-            break;
-          }
-
-          bytesWritten += written;
-        } finally {
-          bufs[i].returnNioBuffer(buf);
+    while (context != null) {
+      if (context.start()) {
+        long bytesWritten = context.writeBuffers();
+        if (debug) {
+          logger.debug("Wrote " + bytesWritten + " bytes on connection " + this.channel.toString());
         }
-
-
-        if (bufs[i].hasRemaining()) {
-          break;
-        } else {
-          context.incrementIndexAndCleanOld();
-        }
+        totalBytesWritten += bytesWritten;
       }
-
-      if (debug) {
-        logger.debug("Wrote " + bytesWritten + " bytes on connection " + this.channel.toString());
-      }
-      totalBytesWritten += bytesWritten;
 
       if (context.done()) {
         if (debug) {
           logger.debug("Complete message sent on connection " + this.channel.toString());
         }
         context.writeComplete();
-        this.writeContexts.remove(context);
+        writeContexts.remove();
+        context = writeContexts.peek();
       } else {
         if (debug) {
           logger.debug("Message not yet completely sent on connection " + this.channel.toString());
@@ -555,13 +563,12 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       }
     }
 
-    synchronized (this.writeMessages) {
-      if (this.closed.isSet()) { return totalBytesWritten; }
-
-      if (this.writeMessages.isEmpty() && this.writeContexts.isEmpty()) {
-        this.commWorker.removeWriteInterest(this, this.channel);
-      }
+    if (this.closed.isSet()) { return totalBytesWritten; }
+    
+    if (context == null && !buildWriteContextsFromMessages(false)) {
+      this.commWorker.removeWriteInterest(this, this.channel);
     }
+
     return totalBytesWritten;
   }
 
@@ -569,26 +576,21 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     // ??? Does the message queue and the WriteContext belong in the base connection class?
     final boolean debug = logger.isDebugEnabled();
 
-    long bytesToWrite = 0;
-    bytesToWrite = message.getTotalLength();
-    if (bytesToWrite >= TCConnectionImpl.WARN_THRESHOLD) {
-      logger.warn("Warning: Attempting to send a message (" + message.getClass().getName() + ") of size "
-                  + bytesToWrite + " bytes");
-    }
-
-    // TODO: outgoing queue should not be unbounded size!
-    final boolean newData;
-    final int msgCount;
-
-    synchronized (this.writeMessages) {
+    boolean placed = false;
+    boolean newData = false;
+    
+    while (!placed) {
       if (this.closed.isSet()) { return; }
-      this.writeMessages.addLast(message);
-      msgCount = this.writeMessages.size();
-      newData = (msgCount == 1);
+      placed = this.writeMessages.offer(message);
+      if (!placed) {
+        buildWriteContextsFromMessages(true);
+      } else {
+        newData = this.writeMessages.peek() == message;
+      }
     }
 
     if (debug) {
-      logger.debug("Connection (" + this.channel.toString() + ") has " + msgCount + " messages queued");
+      logger.debug("Connection (" + this.channel.toString() + ") has " + this.writeMessages.size() + " messages queued");
     }
 
     if (newData) {
@@ -848,7 +850,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         tcByteBuffer.clear();
       }
       this.eventCaller.fireErrorEvent(this.eventListeners, this, e, null);
-      return;
     }
   }
 
@@ -884,7 +885,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
   private WireProtocolMessage buildWireProtocolMessage(TCNetworkMessage message) {
     Assert.eval(!(message instanceof WireProtocolMessage));
-    final TCNetworkMessage payload = message;
 
     WireProtocolMessage wireMessage = WireProtocolMessageImpl.wrapMessage(message, this);
 
@@ -898,7 +898,10 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     hdr.setDestinationAddress(getLocalAddress().getAddress().getAddress());
     hdr.setDestinationPort(getRemoteAddress().getPort());
     hdr.setMessageCount(messageCount);
-    hdr.computeChecksum();
+
+    if (logger.isDebugEnabled()) {
+      logger.debug("finalize header " + hdr);
+    }
     return message;
   }
 
@@ -976,20 +979,30 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   protected class WriteContext {
     private final TCNetworkMessage message;
     private int                    index = 0;
-    private final TCByteBuffer[]   entireMessageData;
+    private TCByteBuffer[]   entireMessageData;
 
     WriteContext(TCNetworkMessage message) {
-      // either WireProtocolMessage or WireProtocolMessageGroup
       this.message = message;
-
-      this.entireMessageData = getClonedMessage(message.getEntireMessageData());
+    }
+    
+    boolean start() {
+      if (entireMessageData == null) {
+        if (message.commit()) {
+          entireMessageData = getClonedMessage(message.getEntireMessageData());
+          return true;
+        }
+        return false;
+      } else {
+        return true;
+      }
     }
 
     boolean done() {
-      for (int i = index, n = entireMessageData.length; i < n; i++) {
-        if (entireMessageData[i].hasRemaining()) { return false; }
+      if (entireMessageData != null) {
+        for (int i = index, n = entireMessageData.length; i < n; i++) {
+          if (entireMessageData[i].hasRemaining()) { return false; }
+        }
       }
-
       return true;
     }
 
@@ -1000,20 +1013,41 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     void writeComplete() {
       this.message.complete();
     }
+    
+    boolean isCancelled() {
+      return message.isCancelled();
+    }
+    
+    long writeBuffers() {
+      long bytesWritten = 0;
+      // Do the write in a loop, instead of calling write(ByteBuffer[]).
+      // This seems to avoid memory leaks and faster
+      for (int i = index; i < entireMessageData.length; i++) {
+        ByteBuffer buf = entireMessageData[i].getNioBuffer();
+
+        final int written = bufferManager.forwardToWriteBuffer(buf);
+
+        bytesWritten += written;
+        
+        entireMessageData[i].returnNioBuffer(buf);
+
+        if (written == 0 || entireMessageData[i].hasRemaining()) {
+          break;
+        } else {
+          incrementIndexAndCleanOld();
+        }
+      }
+
+      return bytesWritten;
+    }
 
     private TCByteBuffer[] getClonedMessage(TCByteBuffer[] sourceMessageByteBuffers) {
-      final TCByteBuffer[] msgData = sourceMessageByteBuffers;
-      TCByteBuffer[] clonedMessageData = new TCByteBuffer[msgData.length];
-      for (int i = 0; i < msgData.length; i++) {
-        clonedMessageData[i] = msgData[i].asReadOnlyBuffer();
+      TCByteBuffer[] clonedMessageData = new TCByteBuffer[sourceMessageByteBuffers.length];
+      for (int i = 0; i < sourceMessageByteBuffers.length; i++) {
+        clonedMessageData[i] = sourceMessageByteBuffers[i].asReadOnlyBuffer();
       }
       return clonedMessageData;
     }
-  }
-  
-  // for testing
-  void addWeight(int addWeightBy) {
-    throw new UnsupportedOperationException();
   }
 
   @Override

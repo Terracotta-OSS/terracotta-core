@@ -29,4 +29,6 @@ public interface ConcurrentClusteredMap<K, V> extends ConcurrentMap<K, V>, Entit
    * @param valueClass the value class
    */
   void setTypes(Class<K> keyClass, Class<V> valueClass);
+  
+  void insert(K key, V value);
 }

@@ -220,7 +220,9 @@ public class TCConnectionTransportTest extends TestCase {
   }
 
   private TCNetworkMessage getDSOMessage(MessageMonitor monitor, TCByteBuffer[] bufs) {
-    return new MyMessage(monitor, seq.getNextSequence(), bufs).convertToNetworkMessage();
+    TCNetworkMessage nmsg = new MyMessage(monitor, seq.getNextSequence(), bufs).convertToNetworkMessage();
+    nmsg.load();
+    return nmsg;
   }
 
   class MyMessage extends DSOMessageBase {

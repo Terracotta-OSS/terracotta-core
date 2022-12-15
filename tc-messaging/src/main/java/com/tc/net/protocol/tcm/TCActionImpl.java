@@ -115,7 +115,7 @@ public abstract class TCActionImpl implements TCAction {
   protected abstract void dehydrateValues();
 
   public TCNetworkMessage convertToNetworkMessage() {
-    TCNetworkMessageImpl msg = new TCNetworkMessageImpl(new TCMessageHeaderImpl(type), getDataBuffers());
+    TCNetworkMessageImpl msg = new TCNetworkMessageImpl(new TCMessageHeaderImpl(type), ()->getDataBuffers());
     msg.addCompleteCallback(this::notifyProcessedCallbacks);
     msg.addCompleteCallback(out::reset);
     return msg;

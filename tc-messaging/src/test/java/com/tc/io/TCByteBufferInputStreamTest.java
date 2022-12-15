@@ -688,6 +688,21 @@ public class TCByteBufferInputStreamTest {
     }
   }
 
+  @Test
+  public void testGetBytesOptimization() {
+    TCByteBuffer[] data = new TCByteBuffer[] {TCByteBufferFactory.wrap("the quick brown fox jumped over the cow".getBytes())};
+
+    TCByteBufferInputStream bbis = new TCByteBufferInputStream(data);
+    try {
+      TCByteBuffer buf = bbis.read(9);
+      for (byte b : "the quick".getBytes()) {
+        assertEquals(b, buf.get());
+      }
+    } finally {
+      bbis.close();
+    }
+  }
+  
   private long length(TCByteBuffer[] data) {
     long rv = 0;
     for (TCByteBuffer element : data) {

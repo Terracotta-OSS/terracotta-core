@@ -47,6 +47,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.terracotta.entity.InvocationCallback;
 
 import static org.terracotta.entity.map.ValueCodecFactory.getCodecForClass;
 
@@ -124,6 +125,11 @@ public class TerracottaClusteredMap<K, V> implements ConcurrentClusteredMap<K, V
     MapValueResponse response = (MapValueResponse) invokeWithReturn(new PutOperation(keyValueCodec.encode(key), valueValueCodec.encode(value)));
     return valueValueCodec.decode(response.getValue());
   }
+  
+  @Override
+  public void insert(K key, V value) {
+    fireAndForget(new PutOperation(keyValueCodec.encode(key), valueValueCodec.encode(value)));
+  }
 
   @Override
   public V remove(Object key) {
@@ -132,6 +138,15 @@ public class TerracottaClusteredMap<K, V> implements ConcurrentClusteredMap<K, V
     }
     MapValueResponse mapValueResponse = (MapValueResponse) invokeWithReturn(new RemoveOperation(keyValueCodec.encode((K) key)));
     return valueValueCodec.decode(mapValueResponse.getValue());
+  }
+  
+  private void fireAndForget(MapOperation operation) {
+    try {
+      endpoint.message(operation)
+          .invokeAnd(InvocationCallback.Types.SENT).get();
+    } catch (Exception e) {
+      throw new RuntimeException("Exception while processing map operation " + operation, e);
+    }
   }
 
   private MapResponse invokeWithReturn(MapOperation operation) {

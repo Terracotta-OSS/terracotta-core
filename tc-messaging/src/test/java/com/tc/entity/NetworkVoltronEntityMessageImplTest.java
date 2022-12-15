@@ -68,8 +68,9 @@ public class NetworkVoltronEntityMessageImplTest {
     message.setContents(clientID, transactionID, EntityID.NULL_ID, entityDescriptor, messageType, 
             requiresReplication, extendedData, oldestTransactionPending, EnumSet.of(Acks.RECEIVED));
     TCNetworkMessage msg = message.convertToNetworkMessage();
-    
+
     TCMessageHeader header = (TCMessageHeader) msg.getHeader();
+    msg.load();
     TCByteBuffer[] payload = msg.getPayload();
     outputStream.close();
     NetworkVoltronEntityMessageImpl decodingMessage = new NetworkVoltronEntityMessageImpl(SessionID.NULL_ID, monitor, null, header, new TCByteBufferInputStream(payload));

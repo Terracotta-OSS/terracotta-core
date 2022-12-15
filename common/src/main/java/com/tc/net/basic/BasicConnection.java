@@ -94,6 +94,9 @@ public class BasicConnection implements TCConnection {
     this.bufferManagerFactory = buffers;
     Object writeMutex = new Object();
     this.write = (message)->{
+      if (!message.commit()) {
+        return;
+      }
       synchronized (writeMutex) {
         try {
           if (this.src != null) {
@@ -423,6 +426,7 @@ public class BasicConnection implements TCConnection {
   private WireProtocolMessage buildWireProtocolMessage(TCNetworkMessage message) {
     Assert.eval(!(message instanceof WireProtocolMessage));
 
+    message.load();
     WireProtocolMessage wireMessage = WireProtocolMessageImpl.wrapMessage(message, this);
 
     return finalizeWireProtocolMessage(wireMessage, 1);

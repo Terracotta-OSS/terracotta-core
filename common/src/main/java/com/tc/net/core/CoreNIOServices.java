@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.exception.TCInternalError;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionErrorEvent;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;

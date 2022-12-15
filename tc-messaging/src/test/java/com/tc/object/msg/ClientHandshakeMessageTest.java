@@ -64,7 +64,8 @@ public class ClientHandshakeMessageTest {
     msg.addReconnectReference(ref1);
     msg.addReconnectReference(ref2);
     TCNetworkMessage nmsg = msg.convertToNetworkMessage();
-
+    nmsg.load();
+    
     ClientHandshakeMessageImpl msg2 = new ClientHandshakeMessageImpl(SessionID.NULL_ID, mock(MessageMonitor.class), channel,
                                                                      (TCMessageHeader)nmsg.getHeader(), new TCByteBufferInputStream(nmsg.getPayload()));
     msg2.hydrate();

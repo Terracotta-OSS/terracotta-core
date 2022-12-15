@@ -23,6 +23,7 @@ import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.TCNetworkHeader;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.TCNetworkMessageImpl;
+import java.util.Optional;
 
 /**
  * Wire protocol message. All network communications in the TC world are conducted with wire protocol messages. Wire
@@ -33,6 +34,7 @@ import com.tc.net.protocol.TCNetworkMessageImpl;
  */
 public class WireProtocolMessageImpl extends TCNetworkMessageImpl implements WireProtocolMessage {
   private final TCConnection sourceConnection;
+  private final Optional<TCNetworkMessage> message;
 
   /**
    * Wrap the given network message with a wire protocol message instance. The header for the returned instance will
@@ -45,22 +47,43 @@ public class WireProtocolMessageImpl extends TCNetworkMessageImpl implements Wir
     WireProtocolHeader header = new WireProtocolHeader();
     header.setProtocol(WireProtocolHeader.getProtocolForMessageClass(msgPayload));
 
-    // seal the message if necessary
-    if (!msgPayload.isSealed()) {
-      msgPayload.seal();
-    }
-
-    WireProtocolMessage rv = new WireProtocolMessageImpl(source, header, msgPayload.getEntireMessageData());
-    rv.addCompleteCallback(msgPayload::complete);
+    WireProtocolMessage rv = new WireProtocolMessageImpl(source, header, msgPayload);
     return rv;
   }
-
+  
   protected WireProtocolMessageImpl(TCConnection source, TCNetworkHeader header, TCByteBuffer[] data) {
     super(header, data);
-    recordLength();
     this.sourceConnection = source;
+    message = Optional.empty();
+  }
+  
+  protected WireProtocolMessageImpl(TCConnection source, TCNetworkHeader header, TCNetworkMessage msg) {
+    super(header, ()->msg.getEntireMessageData());
+    this.sourceConnection = source;
+    this.message = Optional.of(msg);
   }
 
+  @Override
+  public boolean isCancelled() {
+    return message.map(TCNetworkMessage::isCancelled).orElse(Boolean.FALSE);
+  }
+
+  @Override
+  public boolean load() {
+    // load will happen at commit
+    return true;
+  }
+
+  @Override
+  public boolean commit() {
+    if (super.commit() && message.map(TCNetworkMessage::commit).orElse(Boolean.TRUE) && super.load()) {
+      getWireProtocolHeader().finalizeHeader(getTotalLength());
+      return true;
+    } else {
+      return false;
+    }
+  }
+  
   @Override
   public short getMessageProtocol() {
     return ((WireProtocolHeader) getHeader()).getProtocol();
@@ -76,11 +99,11 @@ public class WireProtocolMessageImpl extends TCNetworkMessageImpl implements Wir
     return sourceConnection;
   }
 
-  protected void recordLength() {
-    // if the payload is null, then we need to record our own length as the packet length. Otherwise, we need to add the
-    // our header length + the length of the our payload message length.
-    int packetLength = getTotalLength();
-
-    ((WireProtocolHeader) getHeader()).setTotalPacketLength(packetLength);
+  @Override
+  public void complete() {
+    this.message.ifPresent(TCNetworkMessage::complete);
+    super.complete();
   }
+  
+  
 }

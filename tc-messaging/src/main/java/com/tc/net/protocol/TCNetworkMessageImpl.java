@@ -29,6 +29,7 @@ import com.tc.util.concurrent.SetOnceFlag;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 /**
  * Base class for network messages
@@ -39,22 +40,24 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   protected static final Logger logger = LoggerFactory.getLogger(TCNetworkMessage.class);
   private static final int        MESSAGE_DUMP_MAXBYTES = 4 * 1024;
 
-  protected TCNetworkMessageImpl(TCNetworkHeader header, boolean seal) {
-    this(header, null, seal);
-  }
+  private final Supplier<TCByteBuffer[]> payloadSupplier;
 
   public TCNetworkMessageImpl(TCNetworkHeader header, TCByteBuffer[] payload) {
-    this(header, payload, true);
+    this(header, ()->payload, true);
+  }
+  
+  public TCNetworkMessageImpl(TCNetworkHeader header, Supplier<TCByteBuffer[]> payloadSupplier) {
+    this(header, payloadSupplier, false);
   }
 
-  private TCNetworkMessageImpl(TCNetworkHeader header, TCByteBuffer[] payload,
+  private TCNetworkMessageImpl(TCNetworkHeader header, Supplier<TCByteBuffer[]> payload,
                                    boolean seal) {
     Assert.eval(header != null);
 
     this.header = header;
-    this.payloadData = (payload == null) ? EMPTY_BUFFER_ARRAY : payload;
-
+    this.payloadSupplier = payload;
     if (seal) {
+      setPayload(payload.get());
       seal();
     }
   }
@@ -84,6 +87,9 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
 
   @Override
   public final TCByteBuffer[] getPayload() {
+    if (payloadData == null) {
+      throw new RuntimeException("message not loaded");
+    }
     return payloadData;
   }
 
@@ -120,7 +126,7 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   }
 
   protected final String toString0() {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     buf.append("Message Class: ").append(getClass().getName()).append("\n");
     buf.append("Sealed: ").append(sealed.isSet()).append(", ");
     buf.append("Header Length: ").append(getHeaderLength()).append(", ");
@@ -150,7 +156,7 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
 
   // override this method to add more description to your payload data
   protected String messageBytes() {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     int totalBytesDumped = 0;
     if ((payloadData != null) && (payloadData.length != 0)) {
       for (int i = 0; i < payloadData.length; i++) {
@@ -196,13 +202,11 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
     return toRet.toString();
   }
 
-  @Override
-  public final boolean isSealed() {
+  protected final boolean isSealed() {
     return sealed.isSet();
   }
 
-  @Override
-  public final void seal() {
+  protected final void seal() {
     if (sealed.attemptSet()) {
       final int size = 1 + payloadData.length;
       entireMessageData = new TCByteBuffer[size];
@@ -245,17 +249,39 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   }
 
   @Override
+  public boolean load() {
+    if (!isSealed() && !isCancelled() && payloadSupplier != null) {
+      setPayload(payloadSupplier.get());
+      seal();
+      return true;
+    } else {
+      return !isCancelled();
+    }
+  }
+
+  @Override
   public boolean commit() {
     return state.compareAndSet(State.PENDING, State.COMMITTED) || State.COMMITTED.equals(state.get());
   }
 
   @Override
   public boolean cancel() {
-    return state.compareAndSet(State.PENDING, State.CANCELLED) || State.CANCELLED.equals(state.get());
+    if (state.compareAndSet(State.PENDING, State.CANCELLED) || State.CANCELLED.equals(state.get())) {
+      setPayload(null);
+      complete();
+      return true;
+    } else {
+      return false;
+    }
+  }
+  
+  @Override
+  public boolean isCancelled() {
+    return state.get() == State.CANCELLED;
   }
 
   private void checkSealed() {
-    if (!isSealed()) { throw new IllegalStateException("Message is not sealed"); }
+    if (!isSealed()) throw new IllegalStateException("Message is not sealed");
   }
 
   private void checkNotSealed() {
