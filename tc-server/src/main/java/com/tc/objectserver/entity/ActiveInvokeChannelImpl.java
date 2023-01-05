@@ -19,29 +19,28 @@
 package com.tc.objectserver.entity;
 
 import com.tc.util.concurrent.SetOnceFlag;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import org.terracotta.entity.ActiveInvokeChannel;
 import org.terracotta.entity.EntityResponse;
 
 /**
  *
  */
-public class ActiveInvokeChannelImpl<R extends EntityResponse> implements ActiveInvokeChannel<R> {
+public class ActiveInvokeChannelImpl {
   
-  private final Consumer<R> account;
+  private final Consumer<EntityResponse> account;
   private final Consumer<Exception> exception;
   private final Runnable retirementTrigger;
   private final SetOnceFlag closed = new SetOnceFlag();
+  private final AtomicInteger references = new AtomicInteger(1);
 
-  public ActiveInvokeChannelImpl(Consumer<R> account, Consumer<Exception> exception, Runnable retirementTrigger) {
+  public ActiveInvokeChannelImpl(Consumer<EntityResponse> account, Consumer<Exception> exception, Runnable retirementTrigger) {
     this.account = account;
     this.exception = exception;
     this.retirementTrigger = retirementTrigger;
   }
 
-
-  @Override
-  public void sendResponse(R response) {
+  public void sendResponse(EntityResponse response) {
     if (!closed.isSet()) {
       account.accept(response);
     } else {
@@ -49,7 +48,6 @@ public class ActiveInvokeChannelImpl<R extends EntityResponse> implements Active
     }
   }
 
-  @Override
   public void sendException(Exception response) {
     if (closed.attemptSet()) {
       exception.accept(response);
@@ -58,11 +56,17 @@ public class ActiveInvokeChannelImpl<R extends EntityResponse> implements Active
     }
   }
 
-  @Override
   public void close() {
-    if (closed.attemptSet()) {
-      retirementTrigger.run();
+    if (references.decrementAndGet() == 0) {
+      if (closed.attemptSet()) {
+        retirementTrigger.run();
+      }
+    } else {
+      
     }
   }
   
+  public boolean reference() {
+    return (references.getAndIncrement() != 0);
+  }
 }
