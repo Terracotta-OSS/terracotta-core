@@ -22,7 +22,6 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;
-import com.tc.net.protocol.TCNetworkMessage;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.ByteBuffer;
@@ -42,6 +41,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import com.tc.net.protocol.transport.WireProtocolHeader;
+import com.tc.net.protocol.transport.WireProtocolMessage;
 import java.net.InetSocketAddress;
 
 /**
@@ -116,7 +117,10 @@ public class TCConnectionImplTest {
         InetSocketAddress addr = new InetSocketAddress("localhost", port);
         conn.connect(addr, 0);
 
-        TCNetworkMessage msg = mock(TCNetworkMessage.class);
+        WireProtocolMessage msg = mock(WireProtocolMessage.class);
+        when(msg.prepareToSend()).thenReturn(Boolean.TRUE);
+        when(msg.getHeader()).thenReturn(mock(WireProtocolHeader.class));
+        when(msg.getWireProtocolHeader()).thenReturn(mock(WireProtocolHeader.class));
         when(msg.getEntireMessageData()).thenReturn(new TCByteBuffer[] { TCByteBufferFactory.wrap(new byte[512]) });
         when(msg.getDataLength()).thenReturn(512);
 

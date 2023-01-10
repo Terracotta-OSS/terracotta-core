@@ -23,6 +23,7 @@ import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.TCNetworkHeader;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.TCNetworkMessageImpl;
+import com.tc.net.protocol.tcm.TCActionNetworkMessage;
 import java.util.Optional;
 
 /**
@@ -34,7 +35,7 @@ import java.util.Optional;
  */
 public class WireProtocolMessageImpl extends TCNetworkMessageImpl implements WireProtocolMessage {
   private final TCConnection sourceConnection;
-  private final Optional<TCNetworkMessage> message;
+  private final Optional<TCActionNetworkMessage> message;
 
   /**
    * Wrap the given network message with a wire protocol message instance. The header for the returned instance will
@@ -43,7 +44,7 @@ public class WireProtocolMessageImpl extends TCNetworkMessageImpl implements Wir
    * @param msgPayload the network message to wrap
    * @return a new wire protocol message instance that contains the given message as it's payload.
    */
-  public static WireProtocolMessage wrapMessage(TCNetworkMessage msgPayload, TCConnection source) {
+  public static WireProtocolMessage wrapMessage(TCActionNetworkMessage msgPayload, TCConnection source) {
     WireProtocolHeader header = new WireProtocolHeader();
     header.setProtocol(WireProtocolHeader.getProtocolForMessageClass(msgPayload));
 
@@ -57,27 +58,21 @@ public class WireProtocolMessageImpl extends TCNetworkMessageImpl implements Wir
     message = Optional.empty();
   }
   
-  protected WireProtocolMessageImpl(TCConnection source, TCNetworkHeader header, TCNetworkMessage msg) {
-    super(header, ()->msg.getEntireMessageData());
+  protected WireProtocolMessageImpl(TCConnection source, TCNetworkHeader header, TCActionNetworkMessage msg) {
+    super(header);
     this.sourceConnection = source;
     this.message = Optional.of(msg);
   }
 
   @Override
-  public boolean isCancelled() {
-    return message.map(TCNetworkMessage::isCancelled).orElse(Boolean.FALSE);
-  }
-
-  @Override
-  public boolean load() {
-    // load will happen at commit
-    return true;
-  }
-
-  @Override
-  public boolean commit() {
-    if (super.commit() && message.map(TCNetworkMessage::commit).orElse(Boolean.TRUE) && super.load()) {
-      getWireProtocolHeader().finalizeHeader(getTotalLength());
+  public boolean prepareToSend() {
+    if (!this.message.isPresent()) {
+      getWireProtocolHeader().finalizeHeader(this.getTotalLength());
+      return true;
+    } else if (this.message.get().commit()) {
+      setPayload(this.message.get().getEntireMessageData());
+      seal();
+      getWireProtocolHeader().finalizeHeader(this.getTotalLength());
       return true;
     } else {
       return false;
@@ -104,6 +99,9 @@ public class WireProtocolMessageImpl extends TCNetworkMessageImpl implements Wir
     this.message.ifPresent(TCNetworkMessage::complete);
     super.complete();
   }
-  
-  
+
+  @Override
+  public boolean isValid() {
+    return !this.message.map(TCActionNetworkMessage::isCancelled).orElse(Boolean.FALSE);
+  }
 }

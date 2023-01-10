@@ -20,9 +20,9 @@ package com.tc.object.msg;
 
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
+import com.tc.net.protocol.tcm.TCActionNetworkMessage;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientInstanceID;
@@ -63,7 +63,7 @@ public class ClientHandshakeMessageTest {
     Assert.assertNotEquals(ref1, ref2);
     msg.addReconnectReference(ref1);
     msg.addReconnectReference(ref2);
-    TCNetworkMessage nmsg = msg.convertToNetworkMessage();
+    TCActionNetworkMessage nmsg = msg.convertToNetworkMessage();
     nmsg.load();
     
     ClientHandshakeMessageImpl msg2 = new ClientHandshakeMessageImpl(SessionID.NULL_ID, mock(MessageMonitor.class), channel,

@@ -28,8 +28,6 @@ import com.tc.util.HexDump;
 import com.tc.util.concurrent.SetOnceFlag;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 
 /**
  * Base class for network messages
@@ -40,26 +38,15 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   protected static final Logger logger = LoggerFactory.getLogger(TCNetworkMessage.class);
   private static final int        MESSAGE_DUMP_MAXBYTES = 4 * 1024;
 
-  private final Supplier<TCByteBuffer[]> payloadSupplier;
-
   public TCNetworkMessageImpl(TCNetworkHeader header, TCByteBuffer[] payload) {
-    this(header, ()->payload, true);
-  }
-  
-  public TCNetworkMessageImpl(TCNetworkHeader header, Supplier<TCByteBuffer[]> payloadSupplier) {
-    this(header, payloadSupplier, false);
+    this(header);
+    setPayload(payload);
+    seal();
   }
 
-  private TCNetworkMessageImpl(TCNetworkHeader header, Supplier<TCByteBuffer[]> payload,
-                                   boolean seal) {
+  protected TCNetworkMessageImpl(TCNetworkHeader header) {
     Assert.eval(header != null);
-
     this.header = header;
-    this.payloadSupplier = payload;
-    if (seal) {
-      setPayload(payload.get());
-      seal();
-    }
   }
 
   @Override
@@ -248,38 +235,6 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
     callbacks.add(r);
   }
 
-  @Override
-  public boolean load() {
-    if (!isSealed() && !isCancelled() && payloadSupplier != null) {
-      setPayload(payloadSupplier.get());
-      seal();
-      return true;
-    } else {
-      return !isCancelled();
-    }
-  }
-
-  @Override
-  public boolean commit() {
-    return state.compareAndSet(State.PENDING, State.COMMITTED) || State.COMMITTED.equals(state.get());
-  }
-
-  @Override
-  public boolean cancel() {
-    if (state.compareAndSet(State.PENDING, State.CANCELLED) || State.CANCELLED.equals(state.get())) {
-      setPayload(null);
-      complete();
-      return true;
-    } else {
-      return false;
-    }
-  }
-  
-  @Override
-  public boolean isCancelled() {
-    return state.get() == State.CANCELLED;
-  }
-
   private void checkSealed() {
     if (!isSealed()) throw new IllegalStateException("Message is not sealed");
   }
@@ -290,7 +245,6 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
 
   private final SetOnceFlag           sealed             = new SetOnceFlag();
   private final SetOnceFlag           callbackFired  = new SetOnceFlag();
-  private final AtomicReference<State> state = new AtomicReference<>(State.PENDING);
   private static final TCByteBuffer[] EMPTY_BUFFER_ARRAY = {};
   private final TCNetworkHeader       header;
   private TCByteBuffer[]              payloadData;
@@ -299,10 +253,4 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   private int                         dataLength;
   private int                         headerLength;
   private final List<Runnable>        callbacks       = new LinkedList<>();
-
-  enum State {
-    PENDING,
-    COMMITTED,
-    CANCELLED;
-  }
 }

@@ -18,9 +18,18 @@
  */
 package com.tc.net.protocol.tcm;
 
+import com.tc.net.protocol.TCNetworkMessage;
+
 /**
  *
  */
-public interface TCActionMessage {
+public interface TCActionNetworkMessage extends TCNetworkMessage {
+  boolean load();
+
+  boolean commit();
+
+  boolean cancel();
+  
+  boolean isCancelled();
 
 }

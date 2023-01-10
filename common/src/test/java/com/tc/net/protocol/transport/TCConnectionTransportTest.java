@@ -47,6 +47,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import junit.framework.TestCase;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import com.tc.net.protocol.tcm.TCActionNetworkMessage;
 import java.net.InetSocketAddress;
 import java.util.Objects;
 
@@ -220,7 +221,7 @@ public class TCConnectionTransportTest extends TestCase {
   }
 
   private TCNetworkMessage getDSOMessage(MessageMonitor monitor, TCByteBuffer[] bufs) {
-    TCNetworkMessage nmsg = new MyMessage(monitor, seq.getNextSequence(), bufs).convertToNetworkMessage();
+    TCActionNetworkMessage nmsg = new MyMessage(monitor, seq.getNextSequence(), bufs).convertToNetworkMessage();
     nmsg.load();
     return nmsg;
   }

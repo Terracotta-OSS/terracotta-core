@@ -19,8 +19,8 @@
 package com.tc.entity;
 
 import com.tc.net.NodeID;
-import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.tcm.NetworkRecall;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnknownNameException;
 import com.tc.object.ClientInstanceID;
@@ -83,7 +83,7 @@ public abstract class ReplayVoltronEntityMultiResponse implements VoltronEntityM
   }
 
   @Override
-  public TCNetworkMessage send() {
+  public NetworkRecall send() {
     throw new UnsupportedOperationException("Not supported yet.");
   }
 

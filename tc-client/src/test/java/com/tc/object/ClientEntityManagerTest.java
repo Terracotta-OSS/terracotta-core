@@ -21,11 +21,8 @@ package com.tc.object;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
-import com.tc.async.api.Stage;
-import com.tc.async.api.StageManager;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.entity.MessageCodecSupplier;
-import com.tc.net.protocol.TCNetworkMessage;
 import org.junit.Assert;
 import org.junit.Test;
 import org.terracotta.entity.EntityClientEndpoint;
@@ -50,6 +47,7 @@ import com.tc.net.protocol.tcm.UnknownNameException;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.net.core.ProductID;
+import com.tc.net.protocol.tcm.NetworkRecall;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
@@ -73,8 +71,6 @@ import org.hamcrest.Matchers;
 
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import org.mockito.Mockito;
 
 import static org.mockito.Mockito.mock;
@@ -745,7 +741,7 @@ public class ClientEntityManagerTest extends TestCase {
 
     boolean sent = false;
     @Override
-    public TCNetworkMessage send() {
+    public NetworkRecall send() {
       assertFalse(sent);
       sent = true;
       if (this.autoComplete) {
@@ -760,7 +756,7 @@ public class ClientEntityManagerTest extends TestCase {
         }
         this.clientEntityManager.retired(this.transactionID);
       }
-      return mock(TCNetworkMessage.class);
+      return mock(NetworkRecall.class);
     }
 
     @Override

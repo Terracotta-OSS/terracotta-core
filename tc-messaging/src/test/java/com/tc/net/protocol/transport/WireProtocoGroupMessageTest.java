@@ -19,14 +19,18 @@
 package com.tc.net.protocol.transport;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.net.core.TCConnection;
-import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.tcm.TCActionNetworkMessage;
+import com.tc.net.protocol.tcm.TCMessageHeader;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  */
@@ -38,10 +42,15 @@ public class WireProtocoGroupMessageTest {
     TransportMessageFactoryImpl factory = new TransportMessageFactoryImpl();
     ConnectionID id = new ConnectionID("JVM", 1);
     TCConnection src = mock(TCConnection.class);
+
+    TCActionNetworkMessage msg = mock(TCActionNetworkMessage.class);
+    when(msg.commit()).thenReturn(Boolean.TRUE);
+    when(msg.getTotalLength()).thenReturn(TCMessageHeader.HEADER_LENGTH + 32);
+    when(msg.getEntireMessageData()).thenReturn(new TCByteBuffer[] {TCByteBufferFactory.getInstance(TCMessageHeader.HEADER_LENGTH + 32)});
     
-    TCNetworkMessage[] msgs = new TCNetworkMessage[2];
-    msgs[0] = factory.createPing(id, src);
-    msgs[1] = factory.createSyn(id, src, (short)2, 4);
+    TCActionNetworkMessage[] msgs = new TCActionNetworkMessage[2];
+    msgs[0] = msg;
+    msgs[1] = msg;
     WireProtocolGroupMessageImpl grp = WireProtocolGroupMessageImpl.wrapMessages(Arrays.asList(msgs), src);
     finalizeWireProtocolMessage(grp, 2);
     
@@ -58,7 +67,7 @@ public class WireProtocoGroupMessageTest {
   }
   
   private WireProtocolMessage finalizeWireProtocolMessage(WireProtocolMessage message, int messageCount) {
-    message.commit();
+    assertTrue(message.prepareToSend());
     InetSocketAddress address = new InetSocketAddress(999);
     final WireProtocolHeader hdr = (WireProtocolHeader) message.getHeader();
     hdr.setSourceAddress(address.getAddress().getAddress());

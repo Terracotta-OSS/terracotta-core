@@ -41,7 +41,6 @@ public class TransportHandshakeMessageTest {
     int maxConnections = 13;
     ConnectionID connectionId = new ConnectionID("abc", 1L);
     message = factory.createSynAck(connectionId, null, isMaxConnectionsExceeded, maxConnections, 43);
-    message.load();
     TCByteBuffer payload[] = message.getPayload();
 
     WireProtocolHeader header = new WireProtocolHeader();

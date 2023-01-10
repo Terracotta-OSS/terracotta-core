@@ -40,6 +40,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.TCProtocolException;
+import com.tc.net.protocol.tcm.TCActionNetworkMessage;
 import com.tc.text.PrettyPrintable;
 import java.io.Closeable;
 import java.io.EOFException;
@@ -94,7 +95,7 @@ public class BasicConnection implements TCConnection {
     this.bufferManagerFactory = buffers;
     Object writeMutex = new Object();
     this.write = (message)->{
-      if (!message.commit()) {
+      if (!message.prepareToSend()) {
         return;
       }
       synchronized (writeMutex) {
@@ -353,7 +354,7 @@ public class BasicConnection implements TCConnection {
     if (message instanceof WireProtocolMessage) {
       this.write.accept(finalizeWireProtocolMessage((WireProtocolMessage)message, 1));
     } else {
-      this.write.accept(buildWireProtocolMessage(message));
+      this.write.accept(buildWireProtocolMessage((TCActionNetworkMessage)message));
     }
   }
   
@@ -423,7 +424,7 @@ public class BasicConnection implements TCConnection {
     });
   }
     
-  private WireProtocolMessage buildWireProtocolMessage(TCNetworkMessage message) {
+  private WireProtocolMessage buildWireProtocolMessage(TCActionNetworkMessage message) {
     Assert.eval(!(message instanceof WireProtocolMessage));
 
     message.load();

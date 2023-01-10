@@ -40,12 +40,4 @@ public interface TCNetworkMessage {
   public void complete();
 
   void addCompleteCallback(Runnable r);
-
-  boolean load();
-
-  boolean commit();
-
-  boolean cancel();
-  
-  boolean isCancelled();
 }

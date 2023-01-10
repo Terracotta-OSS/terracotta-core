@@ -16,20 +16,9 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.net.protocol.transport;
+package com.tc.net.protocol.tcm;
 
-import com.tc.net.core.TCConnection;
-import com.tc.net.protocol.TCNetworkMessage;
 
-public interface WireProtocolMessage extends TCNetworkMessage {
-
-  public short getMessageProtocol();
-
-  public WireProtocolHeader getWireProtocolHeader();
-
-  public TCConnection getSource();
-  
-  boolean prepareToSend();
-
-  boolean isValid();
+public interface NetworkRecall {
+  boolean recall();
 }

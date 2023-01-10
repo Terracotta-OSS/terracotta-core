@@ -18,9 +18,9 @@
  */
 package com.tc.object;
 
-import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.net.protocol.tcm.NetworkRecall;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 import static com.tc.object.StatType.CLIENT_COMPLETE;
@@ -83,7 +83,7 @@ public class InFlightMessage implements PrettyPrintable {
 
   private long[] serverStats;
 
-  private TCNetworkMessage networkMessage;
+  private NetworkRecall networkMessage;
 
   public InFlightMessage(EntityID eid, Supplier<? extends VoltronEntityMessage> message, SafeInvocationCallback<byte[]> callback) {
     this.eid = requireNonNull(eid);
@@ -274,7 +274,7 @@ public class InFlightMessage implements PrettyPrintable {
   }
 
   public boolean cancel() {
-    return (networkMessage == null || networkMessage.cancel()) && (state.compareAndSet(State.PENDING, State.CANCELLED) || State.CANCELLED.equals(state.get()));
+    return (networkMessage == null || networkMessage.recall()) && (state.compareAndSet(State.PENDING, State.CANCELLED) || State.CANCELLED.equals(state.get()));
   }
 
   enum State {

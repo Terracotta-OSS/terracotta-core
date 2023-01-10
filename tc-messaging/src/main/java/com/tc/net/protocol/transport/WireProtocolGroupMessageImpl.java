@@ -53,20 +53,20 @@ import com.tc.io.TCByteBufferInputStream;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.TCNetworkMessageImpl;
+import com.tc.net.protocol.tcm.TCActionNetworkMessage;
 import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Predicate;
 
 public class WireProtocolGroupMessageImpl extends TCNetworkMessageImpl implements WireProtocolGroupMessage {
 
   private final TCConnection                sourceConnection;
-  private final List<TCNetworkMessage> messagePayloads;
+  private final List<TCActionNetworkMessage> messagePayloads;
 
-  public static WireProtocolGroupMessageImpl wrapMessages(List<TCNetworkMessage> msgPayloads,
+  public static WireProtocolGroupMessageImpl wrapMessages(List<TCActionNetworkMessage> msgPayloads,
                                                           TCConnection source) {
     WireProtocolHeader header = new WireProtocolHeader();
     header.setProtocol(WireProtocolHeader.PROTOCOL_MSGGROUP);
@@ -79,49 +79,30 @@ public class WireProtocolGroupMessageImpl extends TCNetworkMessageImpl implement
                                          TCByteBuffer[] messagePayloadByteBuffers) {
     super(header, messagePayloadByteBuffers);
     this.sourceConnection = source;
-    messagePayloads = getMessagesFromByteBuffers();
+    messagePayloads = null;
   }
   // used by the writer
   protected WireProtocolGroupMessageImpl(TCConnection source, WireProtocolHeader header,
-                                         List<TCNetworkMessage> messagePayloads) {
-    super(header, ()->generatePayload(messagePayloads));
+                                         List<TCActionNetworkMessage> messagePayloads) {
+    super(header);
     this.sourceConnection = source;
     this.messagePayloads = messagePayloads;
   }
 
   @Override
-  public boolean commit() {
-    // package bytes with super.load
-    if (super.commit() && iterate(TCNetworkMessage::commit) && super.load()) {
+  public boolean prepareToSend() {
+      setPayload(generatePayload());
+      seal();
       getWireProtocolHeader().setMessageCount(messagePayloads.size());
       getWireProtocolHeader().finalizeHeader(getTotalLength());
       return getWireProtocolHeader().getMessageCount() > 0;
-    } else {
-      return false;
-    }
-  }
-
-  @Override
-  public boolean load() {
-    // load will happen at commit time
-    return true;
-  }
-
-  private boolean iterate(Predicate<TCNetworkMessage> check) {
-    Iterator<TCNetworkMessage> msg = getMessageIterator();
-    while (msg.hasNext()) {
-      if (!check.test(msg.next())) {
-        msg.remove();
-      }
-    }
-    return !messagePayloads.isEmpty();
   }
   
-  private static TCByteBuffer[] generatePayload(List<TCNetworkMessage> messagePayloads) {
+  private TCByteBuffer[] generatePayload() {
     List<TCByteBuffer> msgs = new ArrayList<>(messagePayloads.size() * 2);
-    Iterator<TCNetworkMessage> msgI = messagePayloads.iterator();
+    Iterator<TCActionNetworkMessage> msgI = messagePayloads.iterator();
     while (msgI.hasNext()) {
-      TCNetworkMessage msg = msgI.next();
+      TCActionNetworkMessage msg = msgI.next();
       if (msg.commit()) {
         TCByteBuffer tcb = TCByteBufferFactory.getInstance((Integer.SIZE + Short.SIZE) / 8);
         tcb.putInt(msg.getTotalLength());
@@ -166,7 +147,7 @@ public class WireProtocolGroupMessageImpl extends TCNetworkMessageImpl implement
 
   @Override
   public Iterator<TCNetworkMessage> getMessageIterator() {
-    return this.messagePayloads.iterator();
+    return getMessagesFromByteBuffers().iterator();
   }
 
   @Override
@@ -191,12 +172,12 @@ public class WireProtocolGroupMessageImpl extends TCNetworkMessageImpl implement
 
   @Override
   public void complete() {
-    this.getMessageIterator().forEachRemaining(TCNetworkMessage::complete);
+    this.messagePayloads.iterator().forEachRemaining(TCNetworkMessage::complete);
     super.complete();
   }
 
   @Override
-  public boolean isCancelled() {
-    return messagePayloads.stream().allMatch(TCNetworkMessage::isCancelled);
+  public boolean isValid() {
+    return !this.messagePayloads.stream().allMatch(TCActionNetworkMessage::isCancelled);
   }
 }
