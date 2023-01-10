@@ -68,6 +68,7 @@ import static com.tc.l2.state.StateManager.PASSIVE_UNINITIALIZED;
 import com.tc.net.ServerID;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.version.DefaultVersionCompatibility;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.junit.Ignore;
@@ -139,7 +140,7 @@ public class StateManagerImplTest {
       when(clusterStatePersistorMock.isDBClean()).thenReturn(Boolean.TRUE);
 //      tcServers[i] = mock(TCServer.class);
       stageManagers[i] = new StageManagerImpl(new ThreadGroup("test"), new QueueFactory());
-      groupManagers[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports.get(i).port(), groupPorts.get(i).port(),
+      groupManagers[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports.get(i).port(), groupPorts.get(i).port(), "TEST", new DefaultVersionCompatibility(),
                                                 stageManagers[i], wgf, topologyManager);
 
       stateManagers[i] = new StateManagerImpl(tcLogger, groupManagers[i], stageControllers[i], mgmt[i], stageManagers[i], NUM_OF_SERVERS, 5, wgf, mgr,

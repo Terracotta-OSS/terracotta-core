@@ -38,13 +38,14 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.persistence.Persistor;
+import com.tc.productinfo.VersionCompatibility;
 
 import java.io.IOException;
 
 
 public interface ServerBuilder extends PostInit {
   GroupManager<AbstractGroupMessage> createGroupCommManager(ServerConfigurationManager configManager,
-                                                            StageManager stageManager, ServerID serverNodeID,
+                                                            StageManager stageManager, ServerID serverNodeID, VersionCompatibility versioning, 
                                                             StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
                                                             BufferManagerFactory bufferManagerFactory, TopologyManager topologyManager);
 
