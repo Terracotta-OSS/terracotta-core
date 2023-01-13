@@ -41,7 +41,6 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   public TCNetworkMessageImpl(TCNetworkHeader header, TCByteBuffer[] payload) {
     this(header);
     setPayload(payload);
-    seal();
   }
 
   protected TCNetworkMessageImpl(TCNetworkHeader header) {
@@ -74,28 +73,24 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
 
   @Override
   public final TCByteBuffer[] getPayload() {
-    if (payloadData == null) {
-      throw new RuntimeException("message not loaded");
-    }
+    Assert.eval(payloadData != null);
+
     return payloadData;
   }
 
   protected final void setPayload(TCByteBuffer[] newPayload) {
-    checkNotSealed();
-
-    entireMessageData = null;
-
+    // this array should have already been set in seal()
+    Assert.eval(payloadData == null);
     if (newPayload == null) {
       payloadData = EMPTY_BUFFER_ARRAY;
     } else {
       payloadData = newPayload;
     }
+    seal();
   }
 
   @Override
   public final TCByteBuffer[] getEntireMessageData() {
-    checkSealed();
-
     // this array should have already been set in seal()
     Assert.eval(entireMessageData != null);
 
@@ -115,7 +110,7 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   protected final String toString0() {
     StringBuilder buf = new StringBuilder();
     buf.append("Message Class: ").append(getClass().getName()).append("\n");
-    buf.append("Sealed: ").append(sealed.isSet()).append(", ");
+    buf.append("Sealed: ").append((payloadData != null)).append(", ");
     buf.append("Header Length: ").append(getHeaderLength()).append(", ");
     buf.append("Data Length: ").append(getDataLength()).append(", ");
     buf.append("Total Length: ").append(getTotalLength()).append("\n");
@@ -173,7 +168,7 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   }
 
   protected String dump() {
-    StringBuffer toRet = new StringBuffer(toString());
+    StringBuilder toRet = new StringBuilder(toString());
     toRet.append("\n\n");
     if (entireMessageData != null) {
       for (int i = 0; i < entireMessageData.length; i++) {
@@ -189,30 +184,22 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
     return toRet.toString();
   }
 
-  protected final boolean isSealed() {
-    return sealed.isSet();
-  }
+  private final void seal() {
+    final int size = 1 + payloadData.length;
+    entireMessageData = new TCByteBuffer[size];
+    entireMessageData[0] = header.getDataBuffer();
+    System.arraycopy(payloadData, 0, entireMessageData, 1, payloadData.length);
 
-  protected final void seal() {
-    if (sealed.attemptSet()) {
-      final int size = 1 + payloadData.length;
-      entireMessageData = new TCByteBuffer[size];
-      entireMessageData[0] = header.getDataBuffer();
-      System.arraycopy(payloadData, 0, entireMessageData, 1, payloadData.length);
-
-      long dataLen = 0;
-      for (int i = 1; i < entireMessageData.length; i++) {
-        dataLen += entireMessageData[i].remaining();
-      }
-
-      if (dataLen > Integer.MAX_VALUE) { throw new TCInternalError("Message too big"); }
-
-      this.dataLength = (int) dataLen;
-      this.headerLength = header.getHeaderByteLength();
-      this.totalLength = this.headerLength + this.dataLength;
-    } else {
-      throw new IllegalStateException("Message is sealed");
+    long dataLen = 0;
+    for (int i = 1; i < entireMessageData.length; i++) {
+      dataLen += entireMessageData[i].remaining();
     }
+
+    if (dataLen > Integer.MAX_VALUE) { throw new TCInternalError("Message too big"); }
+
+    this.dataLength = (int) dataLen;
+    this.headerLength = header.getHeaderByteLength();
+    this.totalLength = this.headerLength + this.dataLength;
   }
 
   @Override
@@ -234,16 +221,11 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   public void addCompleteCallback(Runnable r) {
     callbacks.add(r);
   }
-
   private void checkSealed() {
-    if (!isSealed()) throw new IllegalStateException("Message is not sealed");
+    // this check is not thread safe
+    if (payloadData == null) throw new IllegalStateException("Message is not sealed");
   }
-
-  private void checkNotSealed() {
-    if (sealed.isSet()) { throw new IllegalStateException("Message is sealed"); }
-  }
-
-  private final SetOnceFlag           sealed             = new SetOnceFlag();
+  
   private final SetOnceFlag           callbackFired  = new SetOnceFlag();
   private static final TCByteBuffer[] EMPTY_BUFFER_ARRAY = {};
   private final TCNetworkHeader       header;

@@ -71,7 +71,6 @@ public class WireProtocolMessageImpl extends TCNetworkMessageImpl implements Wir
       return true;
     } else if (this.message.get().commit()) {
       setPayload(this.message.get().getEntireMessageData());
-      seal();
       getWireProtocolHeader().finalizeHeader(this.getTotalLength());
       return true;
     } else {

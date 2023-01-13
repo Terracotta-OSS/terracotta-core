@@ -24,6 +24,8 @@ import com.tc.net.protocol.TCNetworkHeader;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import com.tc.net.protocol.TCNetworkMessageImpl;
+import java.util.EnumSet;
+import java.util.Objects;
 
 /**
  */
@@ -34,34 +36,38 @@ public class TCActionNetworkMessageImpl extends TCNetworkMessageImpl implements 
 
   public TCActionNetworkMessageImpl(TCNetworkHeader header, Supplier<TCByteBuffer[]> payloadSupplier) {
     super(header);
+    Objects.requireNonNull(payloadSupplier);
     this.payloadSupplier = payloadSupplier;
   }
 
   @Override
   public boolean load() {
-    if (!isSealed() && !isCancelled() && payloadSupplier != null) {
+    if (updateState(State.SEALED, EnumSet.of(State.PENDING))) {
       setPayload(payloadSupplier.get());
-      seal();
       return true;
     } else {
-      return !isCancelled();
+      return false;
     }
   }
 
   @Override
   public boolean commit() {
-    return state.compareAndSet(State.PENDING, State.COMMITTED) || State.COMMITTED.equals(state.get());
+    return updateState(State.COMMITTED, EnumSet.of(State.SEALED));
   }
 
   @Override
   public boolean cancel() {
-    if (state.compareAndSet(State.PENDING, State.CANCELLED) || State.CANCELLED.equals(state.get())) {
-      setPayload(null);
-      complete();
-      return true;
-    } else {
-      return false;
-    }
+    return updateState(State.CANCELLED, EnumSet.of(State.PENDING, State.SEALED));
+  }
+  
+  private boolean updateState(State to, EnumSet<State> ifCurrentIs) {
+    return state.accumulateAndGet(to, (current, update)->{
+      if (ifCurrentIs.contains(current)) {
+        return update;
+      } else {
+        return current;
+      }
+    }) == to;
   }
   
   @Override
@@ -71,6 +77,7 @@ public class TCActionNetworkMessageImpl extends TCNetworkMessageImpl implements 
 
   enum State {
     PENDING,
+    SEALED,
     COMMITTED,
     CANCELLED;
   }

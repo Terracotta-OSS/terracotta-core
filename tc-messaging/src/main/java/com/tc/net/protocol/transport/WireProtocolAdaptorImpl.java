@@ -97,7 +97,7 @@ public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implement
     if (wph.isHandshakeOrHealthCheckMessage()) {
       rv = new TransportMessageImpl(source, wph, data);
     } else {
-      if (wph.getMessageCount() == 1) {
+      if (!wph.isMessagesGrouped()) {
         rv = new WireProtocolMessageImpl(source, wph, data);
       } else {
         rv = new WireProtocolGroupMessageImpl(source, wph, data);

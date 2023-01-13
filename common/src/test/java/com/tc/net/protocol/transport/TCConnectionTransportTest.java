@@ -152,14 +152,15 @@ public class TCConnectionTransportTest extends TestCase {
 
       TCNetworkMessage message = getMessages(bufCount);
       clientConn.putMessage(message);
+      message.addCompleteCallback(()->{
+        sentMessagesTotalLength.addAndGet(message.getTotalLength());
 
-      sentMessagesTotalLength.addAndGet(message.getTotalLength());
-
-      synchronized (fullySent) {
-        System.out.println("XXX total msgs sent " + sentMessagesTotalLength);
-        fullySent.set(true);
-        fullySent.notify();
-      }
+        synchronized (fullySent) {
+          System.out.println("XXX total msgs sent " + sentMessagesTotalLength);
+          fullySent.set(true);
+          fullySent.notify();
+        }
+      });
 
       endBarrier.await();
       endBarrier.reset();
@@ -222,7 +223,6 @@ public class TCConnectionTransportTest extends TestCase {
 
   private TCNetworkMessage getDSOMessage(MessageMonitor monitor, TCByteBuffer[] bufs) {
     TCActionNetworkMessage nmsg = new MyMessage(monitor, seq.getNextSequence(), bufs).convertToNetworkMessage();
-    nmsg.load();
     return nmsg;
   }
 

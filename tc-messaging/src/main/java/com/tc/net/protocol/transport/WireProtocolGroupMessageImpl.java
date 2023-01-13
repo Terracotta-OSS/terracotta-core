@@ -92,7 +92,6 @@ public class WireProtocolGroupMessageImpl extends TCNetworkMessageImpl implement
   @Override
   public boolean prepareToSend() {
       setPayload(generatePayload());
-      seal();
       getWireProtocolHeader().setMessageCount(messagePayloads.size());
       getWireProtocolHeader().finalizeHeader(getTotalLength());
       return getWireProtocolHeader().getMessageCount() > 0;

@@ -90,7 +90,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private final BufferManagerFactory            bufferManagerFactory;
   private final boolean                         clientConnection;              
   private final AtomicBoolean                   transportEstablished        = new AtomicBoolean(false);
-  private final BlockingQueue<TCNetworkMessage>    writeMessages               = new ArrayBlockingQueue<>(1024);
+  private final BlockingQueue<TCNetworkMessage>    writeMessages               = new ArrayBlockingQueue<>(MSG_GROUPING_MAX_COUNT);
   private final TCConnectionManagerImpl         parent;
   private final TCDirectByteBufferCache         buffers;
   private final TCConnectionEventCaller         eventCaller                 = new TCConnectionEventCaller(logger);
@@ -122,6 +122,10 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
                                                                                 .getProperties()
                                                                                 .getInt(TCPropertiesConsts.TC_MESSAGE_GROUPING_MAXSIZE_KB,
                                                                                         128) * 1024;
+  private static final int                      MSG_GROUPING_MAX_COUNT = TCPropertiesImpl
+                                                                                .getProperties()
+                                                                                .getInt(TCPropertiesConsts.TC_MESSAGE_GROUPING_MAX_COUNT,
+                                                                                        1024);
   private static final boolean                  MESSAGE_PACKUP             = TCPropertiesImpl
                                                                                 .getProperties()
                                                                                 .getBoolean(TCPropertiesConsts.TC_MESSAGE_PACKUP_ENABLED,
@@ -457,6 +461,8 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
               } else {
                 this.writeContexts.add(new WriteContext(buildWireProtocolMessage(batchable)));
               }
+            } else {
+              batchable.complete();
             }
           }
 
@@ -526,7 +532,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     return bytesRead;
   }
 
-  public int doWriteToBufferInternal() throws IOException {
+  private int doWriteToBufferInternal() throws IOException {
     final boolean debug = logger.isDebugEnabled();
     int totalBytesWritten = 0;
     

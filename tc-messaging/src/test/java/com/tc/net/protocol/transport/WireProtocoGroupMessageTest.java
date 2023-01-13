@@ -25,6 +25,7 @@ import com.tc.net.protocol.tcm.TCActionNetworkMessage;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -38,9 +39,6 @@ public class WireProtocoGroupMessageTest {
 
   @Test
   public void testGoodHeader() throws Exception {
-    
-    TransportMessageFactoryImpl factory = new TransportMessageFactoryImpl();
-    ConnectionID id = new ConnectionID("JVM", 1);
     TCConnection src = mock(TCConnection.class);
 
     TCActionNetworkMessage msg = mock(TCActionNetworkMessage.class);
@@ -64,6 +62,27 @@ public class WireProtocoGroupMessageTest {
       m.put(buffer);
     }
     adaptor.addReadData(src, new TCByteBuffer[] {m}, grp.getDataLength());    
+  }
+  
+  @Test
+  public void testCancellation() throws Exception {
+    TCConnection src = mock(TCConnection.class);
+
+    TCActionNetworkMessage msg = mock(TCActionNetworkMessage.class);
+    when(msg.commit()).thenReturn(Boolean.TRUE);
+    when(msg.getTotalLength()).thenReturn(TCMessageHeader.HEADER_LENGTH + 32);
+    when(msg.getEntireMessageData()).thenReturn(new TCByteBuffer[] {TCByteBufferFactory.getInstance(TCMessageHeader.HEADER_LENGTH + 32)});
+    
+    TCActionNetworkMessage[] msgs = new TCActionNetworkMessage[2];
+    msgs[0] = msg;
+    msgs[1] = msg;
+    WireProtocolGroupMessageImpl grp = WireProtocolGroupMessageImpl.wrapMessages(Arrays.asList(msgs), src);
+    finalizeWireProtocolMessage(grp, 2);
+    assertTrue(grp.isValid());
+    
+    when(msg.isCancelled()).thenReturn(Boolean.TRUE);
+
+    assertFalse(grp.isValid());
   }
   
   private WireProtocolMessage finalizeWireProtocolMessage(WireProtocolMessage message, int messageCount) {

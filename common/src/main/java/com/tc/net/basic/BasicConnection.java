@@ -354,7 +354,10 @@ public class BasicConnection implements TCConnection {
     if (message instanceof WireProtocolMessage) {
       this.write.accept(finalizeWireProtocolMessage((WireProtocolMessage)message, 1));
     } else {
-      this.write.accept(buildWireProtocolMessage((TCActionNetworkMessage)message));
+      WireProtocolMessage msg = buildWireProtocolMessage((TCActionNetworkMessage)message);
+      if (msg != null) {
+        this.write.accept(msg);
+      }
     }
   }
   
@@ -427,10 +430,18 @@ public class BasicConnection implements TCConnection {
   private WireProtocolMessage buildWireProtocolMessage(TCActionNetworkMessage message) {
     Assert.eval(!(message instanceof WireProtocolMessage));
 
-    message.load();
-    WireProtocolMessage wireMessage = WireProtocolMessageImpl.wrapMessage(message, this);
-
-    return finalizeWireProtocolMessage(wireMessage, 1);
+    if (message.load()) {
+      if (message.commit()) {
+        WireProtocolMessage wireMessage = WireProtocolMessageImpl.wrapMessage(message, this);
+        return finalizeWireProtocolMessage(wireMessage, 1);
+      } else {
+        message.complete();
+      }
+    } else {
+      message.complete();
+    }
+    
+    return null;
   }
 
   private WireProtocolMessage finalizeWireProtocolMessage(WireProtocolMessage message, int messageCount) {
