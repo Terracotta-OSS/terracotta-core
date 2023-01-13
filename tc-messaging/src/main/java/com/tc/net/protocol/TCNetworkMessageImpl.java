@@ -219,7 +219,11 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
 
   @Override
   public void addCompleteCallback(Runnable r) {
-    callbacks.add(r);
+    if (callbackFired.isSet()) {
+      r.run();
+    } else {
+      callbacks.add(r);
+    }
   }
   private void checkSealed() {
     // this check is not thread safe

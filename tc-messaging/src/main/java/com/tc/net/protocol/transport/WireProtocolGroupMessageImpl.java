@@ -53,8 +53,10 @@ import com.tc.io.TCByteBufferInputStream;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.TCNetworkMessageImpl;
+import com.tc.net.protocol.TCProtocolException;
 import com.tc.net.protocol.tcm.TCActionNetworkMessage;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -119,34 +121,34 @@ public class WireProtocolGroupMessageImpl extends TCNetworkMessageImpl implement
     return msgs.toArray(new TCByteBuffer[msgs.size()]);
   }
   
-  private List<TCNetworkMessage> getMessagesFromByteBuffers() {
+  private List<TCNetworkMessage> getMessagesFromByteBuffers() throws IOException {
     ArrayList<TCNetworkMessage> messages = new ArrayList<>();
 
     TCByteBufferInputStream msgs = new TCByteBufferInputStream(getPayload());
 
     for (int i = 0; i < getWireProtocolHeader().getMessageCount(); i++) {
-      try {
-        int msgLen = msgs.readInt();
-        short msgProto = msgs.readShort();
-        
-        WireProtocolHeader hdr;
-        hdr = (WireProtocolHeader) getWireProtocolHeader().clone();
-        hdr.setTotalPacketLength(hdr.getHeaderByteLength() + msgLen);
-        hdr.setProtocol(msgProto);
-        hdr.setMessageCount(1);
-        hdr.computeChecksum();
-        WireProtocolMessage msg = new WireProtocolMessageImpl(this.sourceConnection, hdr, new TCByteBuffer[] {msgs.read(msgLen)});
-        messages.add(msg);
-      } catch (IOException ioe) {
-        
-      }
+      int msgLen = msgs.readInt();
+      short msgProto = msgs.readShort();
+
+      WireProtocolHeader hdr;
+      hdr = (WireProtocolHeader) getWireProtocolHeader().clone();
+      hdr.setTotalPacketLength(hdr.getHeaderByteLength() + msgLen);
+      hdr.setProtocol(msgProto);
+      hdr.setMessageCount(1);
+      hdr.computeChecksum();
+      WireProtocolMessage msg = new WireProtocolMessageImpl(this.sourceConnection, hdr, new TCByteBuffer[] {msgs.read(msgLen)});
+      messages.add(msg);
     }
     return messages;
   }
 
   @Override
-  public Iterator<TCNetworkMessage> getMessageIterator() {
-    return getMessagesFromByteBuffers().iterator();
+  public Iterator<TCNetworkMessage> getMessageIterator() throws TCProtocolException {
+    try {
+      return getMessagesFromByteBuffers().iterator();
+    } catch (IOException ioe) {
+      throw new TCProtocolException(ioe);
+    }
   }
 
   @Override

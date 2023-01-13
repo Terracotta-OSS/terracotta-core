@@ -65,7 +65,6 @@ public class InFlightMessage implements PrettyPrintable {
 
   private final EnumSet<VoltronEntityMessage.Acks> outstandingAcks = EnumSet.allOf(VoltronEntityMessage.Acks.class);
 
-  private boolean isSent;
   private Exception exception;
   private byte[] value;
   private final Trace trace;
@@ -172,8 +171,6 @@ public class InFlightMessage implements PrettyPrintable {
 
   public boolean send() {
     Trace.activeTrace().log("InFlightMessage.send()");
-    Assert.assertFalse(this.isSent);
-    this.isSent = true;
     this.send = System.nanoTime();
     try {
       return (this.networkMessage = ((TCAction) this.message).send()) != null;
@@ -182,20 +179,16 @@ public class InFlightMessage implements PrettyPrintable {
     }
   }
   
-  public synchronized void sent() {
+  synchronized void sent() {
     if (ackDelivered(VoltronEntityMessage.Acks.SENT)) {
       this.notifySent = System.nanoTime();
     }
   }
 
-  public synchronized void received() {
+  synchronized void received() {
     if (ackDelivered(VoltronEntityMessage.Acks.RECEIVED)) {
       this.received = System.nanoTime();
     }
-  }
-
-  public synchronized boolean isSent() {
-    return this.isSent;
   }
   
   public void setResult(byte[] value, Exception error) {

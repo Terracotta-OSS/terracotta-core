@@ -19,12 +19,13 @@
 package com.tc.net.protocol.transport;
 
 import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.TCProtocolException;
 
 import java.util.Iterator;
 
 public interface WireProtocolGroupMessage extends WireProtocolMessage {
 
-  public Iterator<TCNetworkMessage> getMessageIterator();
+  public Iterator<TCNetworkMessage> getMessageIterator() throws TCProtocolException;
 
   public int getTotalMessageCount();
 

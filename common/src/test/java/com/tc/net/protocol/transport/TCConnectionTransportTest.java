@@ -151,7 +151,6 @@ public class TCConnectionTransportTest extends TestCase {
       startBarrier.reset();
 
       TCNetworkMessage message = getMessages(bufCount);
-      clientConn.putMessage(message);
       message.addCompleteCallback(()->{
         sentMessagesTotalLength.addAndGet(message.getTotalLength());
 
@@ -161,6 +160,7 @@ public class TCConnectionTransportTest extends TestCase {
           fullySent.notify();
         }
       });
+      clientConn.putMessage(message);
 
       endBarrier.await();
       endBarrier.reset();

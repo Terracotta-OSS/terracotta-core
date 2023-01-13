@@ -151,7 +151,7 @@ public abstract class TCActionImpl implements TCAction {
       } finally {
         this.bbis.reset();
         this.bbis = null;
-        notifyProcessedCallbacks();
+        callbacks.forEach(Runnable::run);
       }
       monitor.newIncomingMessage(this);
     }
@@ -350,11 +350,17 @@ public abstract class TCActionImpl implements TCAction {
 
   @Override
   public void addProcessedCallback(Runnable r) {
-    callbacks.add(r);
+    if (processed.isSet()) {
+      r.run();
+    } else {
+      callbacks.add(r);
+    }
   }
 
   private void notifyProcessedCallbacks() {
-    callbacks.forEach(Runnable::run);
+    if (processed.attemptSet()) {
+      callbacks.forEach(Runnable::run);
+    }
   }
 
   @Override

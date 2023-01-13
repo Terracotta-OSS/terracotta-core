@@ -67,8 +67,8 @@ import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Semaphore;
 import com.tc.net.protocol.tcm.TCActionNetworkMessage;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * The {@link TCConnection} implementation. SocketChannel read/write happens here.
@@ -78,60 +78,60 @@ import com.tc.net.protocol.tcm.TCActionNetworkMessage;
  */
 final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannelWriter {
 
-  private static final long                     NO_CONNECT_TIME             = -1L;
+  private static final long NO_CONNECT_TIME = -1L;
   private static final Logger logger = LoggerFactory.getLogger(TCConnection.class);
-  private static final long                     WARN_THRESHOLD              = 0x800000L;                                                    // 4MB
+  private static final long WARN_THRESHOLD = 0x800000L;                                                    // 4MB
 
-  private volatile CoreNIOServices              commWorker;
-  private volatile SocketChannel                channel;
-  private volatile BufferManager                bufferManager;
-  private volatile PipeSocket                   pipeSocket;
+  private volatile CoreNIOServices commWorker;
+  private volatile SocketChannel channel;
+  private volatile BufferManager bufferManager;
+  private volatile PipeSocket pipeSocket;
 
-  private final BufferManagerFactory            bufferManagerFactory;
-  private final boolean                         clientConnection;              
-  private final AtomicBoolean                   transportEstablished        = new AtomicBoolean(false);
-  private final BlockingQueue<TCNetworkMessage>    writeMessages               = new ArrayBlockingQueue<>(MSG_GROUPING_MAX_COUNT);
-  private final TCConnectionManagerImpl         parent;
-  private final TCDirectByteBufferCache         buffers;
-  private final TCConnectionEventCaller         eventCaller                 = new TCConnectionEventCaller(logger);
-  private final AtomicLong                      lastDataWriteTime           = new AtomicLong(System.currentTimeMillis());
-  private final LongAdder                      messagesWritten           = new LongAdder();
-  private final AtomicLong                      lastDataReceiveTime         = new AtomicLong(System.currentTimeMillis());
-  private final LongAdder                      messagesRead           = new LongAdder();
-  private final AtomicLong                      connectTime                 = new AtomicLong(NO_CONNECT_TIME);
-  private final List<TCConnectionEventListener> eventListeners              = new CopyOnWriteArrayList<>();
-  private final TCProtocolAdaptor               protocolAdaptor;
-  private final AtomicBoolean                   isSocketEndpoint            = new AtomicBoolean(false);
-  private final SetOnceFlag                     closed                      = new SetOnceFlag();
-  private final AtomicBoolean                   connected                   = new AtomicBoolean(false);
-  private final SetOnceRef<InetSocketAddress>     localSocketAddress          = new SetOnceRef<>();
-  private final SetOnceRef<InetSocketAddress>     remoteSocketAddress         = new SetOnceRef<>();
-  private final SocketParams                    socketParams;
-  private final AtomicLong                      totalRead                   = new AtomicLong(0);
-  private final AtomicLong                      totalWrite                  = new AtomicLong(0);
-  private final Queue<WriteContext>     writeContexts               = new ConcurrentLinkedQueue<>();
-  private final Semaphore               writeContextControl         = new Semaphore(1);
-  private final Object                          pipeSocketWriteInterestLock = new Object();
-  private boolean                               hasPipeSocketWriteInterest  = false;
-  private int                                   writeBufferSize             = 0;
+  private final BufferManagerFactory bufferManagerFactory;
+  private final boolean clientConnection;              
+  private final AtomicBoolean transportEstablished = new AtomicBoolean(false);
+  private final BlockingQueue<TCNetworkMessage> writeMessages = new ArrayBlockingQueue<>(MSG_GROUPING_MAX_COUNT);
+  private final TCConnectionManagerImpl parent;
+  private final TCDirectByteBufferCache buffers;
+  private final TCConnectionEventCaller eventCaller = new TCConnectionEventCaller(logger);
+  private final AtomicLong lastDataWriteTime = new AtomicLong(System.currentTimeMillis());
+  private final LongAdder messagesWritten = new LongAdder();
+  private final AtomicLong lastDataReceiveTime = new AtomicLong(System.currentTimeMillis());
+  private final LongAdder messagesRead = new LongAdder();
+  private final AtomicLong connectTime = new AtomicLong(NO_CONNECT_TIME);
+  private final List<TCConnectionEventListener> eventListeners = new CopyOnWriteArrayList<>();
+  private final TCProtocolAdaptor protocolAdaptor;
+  private final AtomicBoolean isSocketEndpoint = new AtomicBoolean(false);
+  private final SetOnceFlag closed = new SetOnceFlag();
+  private final AtomicBoolean connected = new AtomicBoolean(false);
+  private final SetOnceRef<InetSocketAddress> localSocketAddress = new SetOnceRef<>();
+  private final SetOnceRef<InetSocketAddress> remoteSocketAddress = new SetOnceRef<>();
+  private final SocketParams socketParams;
+  private final AtomicLong totalRead = new AtomicLong(0);
+  private final AtomicLong totalWrite = new AtomicLong(0);
+  private final Queue<WriteContext>  writeContexts = new ConcurrentLinkedQueue<>();
+  private final ReentrantLock writeContextControl = new ReentrantLock();
+  private final Object pipeSocketWriteInterestLock = new Object();
+  private boolean hasPipeSocketWriteInterest  = false;
+  private int writeBufferSize             = 0;
 
-  private static final boolean                  MSG_GROUPING_ENABLED        = TCPropertiesImpl
-                                                                                .getProperties()
-                                                                                .getBoolean(TCPropertiesConsts.TC_MESSAGE_GROUPING_ENABLED);
-  private static final int                      MSG_GROUPING_MAX_SIZE_BYTES = TCPropertiesImpl
-                                                                                .getProperties()
-                                                                                .getInt(TCPropertiesConsts.TC_MESSAGE_GROUPING_MAXSIZE_KB,
-                                                                                        128) * 1024;
-  private static final int                      MSG_GROUPING_MAX_COUNT = TCPropertiesImpl
-                                                                                .getProperties()
-                                                                                .getInt(TCPropertiesConsts.TC_MESSAGE_GROUPING_MAX_COUNT,
-                                                                                        1024);
-  private static final boolean                  MESSAGE_PACKUP             = TCPropertiesImpl
-                                                                                .getProperties()
-                                                                                .getBoolean(TCPropertiesConsts.TC_MESSAGE_PACKUP_ENABLED,
-                                                                                            false);
-  private final Object                          readerLock                  = new Object();
-  private final Object                          writerLock                  = new Object();
+  private static final boolean MSG_GROUPING_ENABLED = TCPropertiesImpl
+                          .getProperties()
+                          .getBoolean(TCPropertiesConsts.TC_MESSAGE_GROUPING_ENABLED);
+  private static final int MSG_GROUPING_MAX_SIZE_BYTES = TCPropertiesImpl
+                          .getProperties()
+                          .getInt(TCPropertiesConsts.TC_MESSAGE_GROUPING_MAXSIZE_KB,
+                                  128) * 1024;
+  private static final int MSG_GROUPING_MAX_COUNT = TCPropertiesImpl
+                          .getProperties()
+                          .getInt(TCPropertiesConsts.TC_MESSAGE_GROUPING_MAX_COUNT,
+                                  1024);
+  private static final boolean MESSAGE_PACKUP = TCPropertiesImpl
+                          .getProperties()
+                          .getBoolean(TCPropertiesConsts.TC_MESSAGE_PACKUP_ENABLED,
+                                      false);
+  private final Object readerLock = new Object();
+  private final Object writerLock = new Object();
 
   static {
     logger.debug("Comms Message Batching " + (MSG_GROUPING_ENABLED ? "enabled" : "disabled"));
@@ -411,21 +411,16 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   }
 
   private boolean buildWriteContextsFromMessages(boolean failfast) {
-    try {
-      if (failfast) {
-        if (!writeContextControl.tryAcquire()) {
-          return false;
-        }
-      } else {
-        writeContextControl.acquire();
+    if (failfast) {
+      if (!writeContextControl.tryLock()) {
+        // take this opportunity to clear out any fully cancelled messages
+        this.writeContexts.removeIf(WriteContext::isNotValid);
+        return false;
       }
-    } catch (InterruptedException ie) {
-      Thread.currentThread().interrupt();
-      return false;
+    } else {
+      writeContextControl.lock();
     }
     
-    this.writeContexts.removeIf(WriteContext::isNotValid);
-
     try {
       if (!this.writeMessages.isEmpty()) {
         ArrayList<TCActionNetworkMessage> currentBatch = new ArrayList<>();    
@@ -478,7 +473,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         return false;
       }
     } finally {
-      writeContextControl.release();
+      writeContextControl.unlock();
     }
   }
 

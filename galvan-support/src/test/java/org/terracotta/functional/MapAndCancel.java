@@ -46,7 +46,7 @@ public class MapAndCancel {
           .withTcProperty("tc.messages.grouping.maxCount", "8196")
       .build();
 
-  @Test @Ignore("not suitable fpr CI")
+  @Test @Ignore("not suitable for CI")
   public void testClusterHostPorts() throws Exception {
     long millis = System.currentTimeMillis();
     LOGGER.info("starting test");
