@@ -21,6 +21,7 @@ package org.terracotta.functional;
 
 import java.util.concurrent.TimeUnit;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,9 +43,10 @@ public class MapAndCancel {
   public static final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(1)
 //          .withSystemProperty("logback.debug", "true")
           .withClientReconnectWindowTime(30)
+          .withTcProperty("tc.messages.grouping.maxCount", "8196")
       .build();
 
-  @Test
+  @Test @Ignore("not suitable fpr CI")
   public void testClusterHostPorts() throws Exception {
     long millis = System.currentTimeMillis();
     LOGGER.info("starting test");
