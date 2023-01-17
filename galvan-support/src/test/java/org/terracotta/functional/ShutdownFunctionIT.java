@@ -63,7 +63,7 @@ public class ShutdownFunctionIT {
           state = d.getState();
           System.out.println(state);
         } catch (ConnectionClosedException | ConnectionException ce) {
-          ce.printStackTrace();
+          Thread.sleep(500);
         }
       }
     }

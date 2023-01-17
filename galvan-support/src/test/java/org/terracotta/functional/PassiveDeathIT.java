@@ -72,12 +72,12 @@ public class PassiveDeathIT {
             } catch (ConnectionClosedException ce) {
               System.out.println("no connection");
             } catch (ConnectionException ce) {
-
+              Thread.sleep(500);
             }
           }
         }
       } catch (ConnectionException to) {
-
+        System.out.println("skip down server");
       }
 
     }
