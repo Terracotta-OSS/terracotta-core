@@ -221,7 +221,7 @@ public class StateInterlock implements IGalvanStateInterlock {
       this.logger.output("< safeStop " + server.toString());
       this.logger.output("Stopping " + server);
       server.stop();
-      server.waitForTermination();
+      server.waitForState(ServerMode.TERMINATED);
       this.logger.output("> safeStop " + server.toString() + " " + (System.currentTimeMillis() - start) + "ms");
     } catch (InterruptedException e) {
       // Not expected in this usage - we are shutting down.
