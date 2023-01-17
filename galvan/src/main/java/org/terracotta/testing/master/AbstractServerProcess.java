@@ -276,6 +276,13 @@ public abstract class AbstractServerProcess implements IGalvanServer {
   }
 
   @Override
+  public synchronized void waitForState(ServerMode mode) throws InterruptedException {
+    while (currentState != mode) {
+      wait();
+    }
+  }
+
+  @Override
   public String toString() {
     return "Server " + this.serverName + " (" + getCurrentState() + ")";
   }
