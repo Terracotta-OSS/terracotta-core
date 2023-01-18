@@ -678,12 +678,6 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
               int written = ((TCChannelWriter) key.attachment()).doWrite();
                 bytesMoved += written;
             }
-
-            TCConnection conn = (TCConnection) key.attachment();
-            if (conn != null && conn.isClosePending()) {
-              conn.asynchClose();
-            }
-
           } catch (CancelledKeyException cke) {
             logger.debug("selection key cancelled key@" + key.hashCode());
           } catch (Exception e) { // DEV-9369. Do not reconnect on fatal errors.

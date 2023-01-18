@@ -52,7 +52,6 @@ public class BasicConnectionManager implements TCConnectionManager {
       TCConnection basic = new BasicConnection(id, adaptor, buffers, (conn)->{
         synchronized (connections) {
           connections.remove(conn);
-          return null;
         }
       });
       connections.add(basic);

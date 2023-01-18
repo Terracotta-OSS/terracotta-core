@@ -72,13 +72,6 @@ public interface TCConnection extends NetworkMessageSink {
   public void asynchClose();
 
   /**
-   * Detatch this connection from it's connection manager
-   * 
-   * @throws IOException
-   */
-  public Socket detach() throws IOException;
-
-  /**
    * Close this connection, blocking for at most the given timeout value
    * 
    * @return true/false whether the connection closed in time
@@ -140,12 +133,6 @@ public interface TCConnection extends NetworkMessageSink {
   public void setTransportEstablished();
 
   public boolean isTransportEstablished();
-
-  /**
-   *
-   * @return true iff the connection as been marked for close but hasn't been closed yet
-   */
-  boolean isClosePending();
   
   Map<String, ?> getState();
 

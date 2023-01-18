@@ -85,7 +85,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private volatile CoreNIOServices commWorker;
   private volatile SocketChannel channel;
   private volatile BufferManager bufferManager;
-  private volatile PipeSocket pipeSocket;
 
   private final BufferManagerFactory bufferManagerFactory;
   private final boolean clientConnection;              
@@ -111,9 +110,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private final AtomicLong totalWrite = new AtomicLong(0);
   private final Queue<WriteContext>  writeContexts = new ConcurrentLinkedQueue<>();
   private final ReentrantLock writeContextControl = new ReentrantLock();
-  private final Object pipeSocketWriteInterestLock = new Object();
-  private boolean hasPipeSocketWriteInterest  = false;
-  private int writeBufferSize             = 0;
 
   private static final boolean MSG_GROUPING_ENABLED = TCPropertiesImpl
                           .getProperties()
@@ -187,7 +183,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     state.put("worker", commWorker.getName());
     state.put("closed", isClosed());
     state.put("connected", isConnected());
-    state.put("closePending", isClosePending());
     state.put("transportConnected", isTransportEstablished());
     state.put("buffers.cached", buffers.size());
     state.put("buffers.referenced", buffers.referenced());
@@ -223,16 +218,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       }
     } finally {
       this.writeMessages.clear();
-    }
-    try {
-      if (pipeSocket != null) {
-        synchronized (pipeSocketWriteInterestLock) {
-          writeBufferSize = 0;
-        }
-        pipeSocket.dispose();
-      }
-    } catch (IOException ioe) {
-      logger.warn("error closing pipesocket", ioe);
     }
   }
 
@@ -277,28 +262,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     final Socket s = rv.socket();
     this.socketParams.applySocketParams(s);
     return rv;
-  }
-
-  private Socket detachImpl() throws IOException {
-    this.pipeSocket = new PipeSocket(channel.socket()) {
-      @Override
-      public void onWrite() {
-        synchronized (pipeSocketWriteInterestLock) {
-          writeBufferSize++;
-          if (!hasPipeSocketWriteInterest) {
-            TCConnectionImpl.this.commWorker.requestWriteInterest(TCConnectionImpl.this, TCConnectionImpl.this.channel);
-            hasPipeSocketWriteInterest = true;
-          }
-        }
-      }
-
-      @Override
-      public synchronized void close() throws IOException {
-        super.close();
-        TCConnectionImpl.this.channel.socket().close();
-      }
-    };
-    return pipeSocket;
   }
 
   private boolean asynchConnectImpl(InetSocketAddress address) throws IOException {
@@ -351,11 +314,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   }
 
   public int doReadFromBuffer() throws IOException {
-    if (pipeSocket != null) {
-      return bufferManager.forwardFromReadBuffer(pipeSocket.getInputPipeSinkChannel());
-    } else {
-      return doReadFromBufferInternal();
-    }
+    return doReadFromBufferInternal();
   }
 
   @Override
@@ -383,7 +342,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         closeWriteOnException(ioe);
         break;
       }
-      if (this.isClosePending() || this.isClosed()) {
+      if (this.isClosed()) {
         logger.debug("stop write due to closed connection");
         break;
       }
@@ -394,20 +353,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   }
 
   private int doWriteToBuffer() throws IOException {
-    if (pipeSocket != null) {
-      synchronized (pipeSocketWriteInterestLock) {
-        int gotFromSendBuffer = bufferManager.forwardToWriteBuffer(pipeSocket.getOutputPipeSourceChannel());
-        writeBufferSize -= gotFromSendBuffer;
-
-        if (writeBufferSize == 0 && hasPipeSocketWriteInterest) {
-          TCConnectionImpl.this.commWorker.removeWriteInterest(TCConnectionImpl.this, TCConnectionImpl.this.channel);
-          hasPipeSocketWriteInterest = false;
-        }
-        return gotFromSendBuffer;
-      }
-    } else {
-      return doWriteToBufferInternal();
-    }
+    return doWriteToBufferInternal();
   }
 
   private boolean buildWriteContextsFromMessages(boolean failfast) {
@@ -866,12 +812,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     this.eventCaller.fireErrorEvent(this.eventListeners, this, e, context);
   }
 
-  @Override
-  public final Socket detach() throws IOException {
-    this.parent.removeConnection(this);
-    return detachImpl();
-  }
-
   private WireProtocolMessage buildWireProtocolMessageGroup(ArrayList<TCActionNetworkMessage> messages) {
     int messageGroupSize = messages.size();
     Assert.assertTrue("Messages count not ok to build WireProtocolMessageGroup : " + messageGroupSize,
@@ -906,49 +846,34 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   }
 
   public void closeReadOnException(IOException ioe) throws IOException {
-    if (pipeSocket != null) {
-      TCConnectionImpl.this.commWorker.removeReadInterest(TCConnectionImpl.this, TCConnectionImpl.this.channel);
-      pipeSocket.closeRead();
-    } else {
-      if (ioe instanceof EOFException) {
-        if (logger.isDebugEnabled()) {
-          logger.debug("EOF reading from channel " + this.channel.toString());
-        }
-        this.eventCaller.fireEndOfFileEvent(this.eventListeners, this);
-      } else {
-        if (!isClosed()) {
-          logger.info("error reading from channel " + this.channel.toString() + ": " + ioe.getMessage());
-        } else if  (logger.isDebugEnabled()) {
-          logger.debug("error reading from channel " + this.channel.toString() + ": " + ioe.getMessage());
-        }
-
-        this.eventCaller.fireErrorEvent(this.eventListeners, this, ioe, null);
+    if (ioe instanceof EOFException) {
+      if (logger.isDebugEnabled()) {
+        logger.debug("EOF reading from channel " + this.channel.toString());
       }
+      this.eventCaller.fireEndOfFileEvent(this.eventListeners, this);
+    } else {
+      if (!isClosed()) {
+        logger.info("error reading from channel " + this.channel.toString() + ": " + ioe.getMessage());
+      } else if  (logger.isDebugEnabled()) {
+        logger.debug("error reading from channel " + this.channel.toString() + ": " + ioe.getMessage());
+      }
+
+      this.eventCaller.fireErrorEvent(this.eventListeners, this, ioe, null);
     }
   }
 
-  @Override
-  public boolean isClosePending() {
-    return pipeSocket != null && pipeSocket.isClosed();
-  }
-
   public void closeWriteOnException(IOException ioe) throws IOException {
-    if (pipeSocket != null) {
-      TCConnectionImpl.this.commWorker.removeWriteInterest(TCConnectionImpl.this, TCConnectionImpl.this.channel);
-      pipeSocket.closeWrite();
-    } else {
-      if (ioe instanceof EOFException) {
-        if (logger.isDebugEnabled()) {
-          logger.debug("EOF writing to channel " + this.channel.toString());
-        }
-        this.eventCaller.fireEndOfFileEvent(this.eventListeners, this);
-      } else {
-        if (logger.isInfoEnabled()) {
-          logger.info("error writing to channel " + this.channel.toString() + ": " + ioe.getMessage());
-        }
-
-        this.eventCaller.fireErrorEvent(this.eventListeners, this, ioe, null);
+    if (ioe instanceof EOFException) {
+      if (logger.isDebugEnabled()) {
+        logger.debug("EOF writing to channel " + this.channel.toString());
       }
+      this.eventCaller.fireEndOfFileEvent(this.eventListeners, this);
+    } else {
+      if (logger.isInfoEnabled()) {
+        logger.info("error writing to channel " + this.channel.toString() + ": " + ioe.getMessage());
+      }
+
+      this.eventCaller.fireErrorEvent(this.eventListeners, this, ioe, null);
     }
   }
 
