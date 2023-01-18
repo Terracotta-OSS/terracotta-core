@@ -497,10 +497,10 @@ public class DistributedObjectClient {
                      + " in thread group " + this.threadGroup);
             threadGroup.printLiveThreads(logger::warn);
             ThreadUtil.executeInThread(threadGroup.getParent(), ()->{
-            if (!threadGroup.retire(timeout, e->interrupted.attemptSet())) {
-              threadGroup.interrupt();
-            }
-          }, name + " - Connection Reaper", true);
+              if (!threadGroup.retire(timeout, e->interrupted.attemptSet())) {
+                threadGroup.interrupt();
+              }
+            }, name + " - Connection Reaper", true);
         }
       } catch (final Throwable t) {
         logger.error("Error destroying TC thread group", t);

@@ -211,7 +211,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   @Override
   public boolean isConnected() {
     TCConnection conn = getConnection();
-    return (conn != null && conn.isConnected() && conn.isTransportEstablished() && !conn.isClosed() && !conn.isClosePending());
+    return (conn != null && conn.isConnected() && conn.isTransportEstablished() && !conn.isClosed());
   }
 
   @Override

@@ -19,7 +19,6 @@
 package com.tc.net.basic;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.BufferManager;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.TCConnection;
@@ -33,6 +32,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.channels.SocketChannel;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -96,7 +96,7 @@ public class BasicConnectionTest {
         TCProtocolAdaptor adapter = mock(TCProtocolAdaptor.class);
         BufferManagerFactory buffer = mock(BufferManagerFactory.class);
         when(buffer.createBufferManager(any(SocketChannel.class), any(boolean.class))).thenReturn(mock(BufferManager.class));
-        Function<TCConnection, Socket> close = s -> null;
+        Consumer<TCConnection> close = s -> {};
         BasicConnection instance = new BasicConnection("", adapter, buffer, close);
         long expResult = 0L;
         assertEquals(expResult, instance.getConnectTime());
@@ -119,7 +119,7 @@ public class BasicConnectionTest {
         BufferManagerFactory buffer = mock(BufferManagerFactory.class);
         BufferManager mgr = mock(BufferManager.class);
         when(buffer.createBufferManager(any(SocketChannel.class), any(boolean.class))).thenReturn(mgr);
-        Function<TCConnection, Socket> close = s -> null;
+        Consumer<TCConnection> close = s -> {};
         BasicConnection instance = new BasicConnection("", adapter, buffer, close);
         instance.connect(new InetSocketAddress(server.getLocalPort()), 0);
         long idleTime = instance.getIdleTime();
@@ -149,7 +149,7 @@ public class BasicConnectionTest {
         TCProtocolAdaptor adapter = mock(TCProtocolAdaptor.class);
         BufferManagerFactory buffer = mock(BufferManagerFactory.class);
         when(buffer.createBufferManager(any(SocketChannel.class), any(boolean.class))).thenReturn(mock(BufferManager.class));
-        Function<TCConnection, Socket> close = s -> null;
+        Consumer<TCConnection> close = s -> {};
         BasicConnection instance = new BasicConnection("", adapter, buffer, close);
         instance.connect(new InetSocketAddress(server.getLocalPort()), 0);
         long idleTime = instance.getIdleTime();
@@ -171,7 +171,7 @@ public class BasicConnectionTest {
         TCProtocolAdaptor adapter = mock(TCProtocolAdaptor.class);
         BufferManagerFactory buffer = mock(BufferManagerFactory.class);
         when(buffer.createBufferManager(any(SocketChannel.class), any(boolean.class))).thenReturn(mock(BufferManager.class));
-        Function<TCConnection, Socket> close = s -> null;
+        Consumer<TCConnection> close = s -> {};
         BasicConnection instance = new BasicConnection("", adapter, buffer, close);
         TCConnectionEventListener listener = mock(TCConnectionEventListener.class);
         instance.addListener(listener);

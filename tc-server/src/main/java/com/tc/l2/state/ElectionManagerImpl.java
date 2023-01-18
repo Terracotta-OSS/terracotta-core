@@ -51,6 +51,7 @@ public class ElectionManagerImpl implements ElectionManager {
   private static final State    ELECTION_COMPLETE    = new State("Election-Complete");
   private static final State    ELECTION_VOTED    = new State("Election-Votes-Are-In");
   private static final State    ELECTION_IN_PROGRESS = new State("Election-In-Progress");
+  private static final State    ELECTION_SHUTDOWN = new State("Election-Shutdown");
 
   private final GroupManager<L2StateMessage> groupManager;
   private final Map<NodeID, Enrollment> votes        = new HashMap<>();
@@ -84,8 +85,12 @@ public class ElectionManagerImpl implements ElectionManager {
   }
 
   public synchronized void shutdown() {
-    state = INIT;
+    state = ELECTION_SHUTDOWN;
     notifyAll();
+  }
+  
+  private synchronized boolean isShutdown() {
+    return state == ELECTION_SHUTDOWN;
   }
   
   public EventHandler<ElectionContext> getEventHandler() {
@@ -218,7 +223,7 @@ public class ElectionManagerImpl implements ElectionManager {
   private NodeID runElection(NodeID myNodeId, Set<String> servers, boolean isNew, WeightGeneratorFactory weightsFactory, State currentState) {
     NodeID winnerID = ServerID.NULL_ID;
     int count = 0;
-    while (winnerID.isNull()) {
+    while (winnerID.isNull() && !isShutdown()) {
       if (count++ > 0) {
         logger.info("Requesting Re-election !!! count = " + count);
       }
@@ -276,7 +281,7 @@ public class ElectionManagerImpl implements ElectionManager {
 
     // Step 2: Wait for election completion
     long waited = waitTillElectionComplete();
-    Assert.assertTrue(waited <= 0 || this.state == ELECTION_VOTED || this.state == INIT);
+    Assert.assertTrue(waited <= 0 || this.state == ELECTION_VOTED || this.state == INIT || this.state == ELECTION_SHUTDOWN);
     logger.info("Election took " + TimeUnit.MILLISECONDS.toSeconds(electionTime - waited) + " sec. ending in " + this.state);
     // Step 3: Compute Winner
     Enrollment lWinner = computeResult();

@@ -67,7 +67,7 @@ public class BasicConnection implements TCConnection {
   private volatile long last = System.currentTimeMillis();
   private volatile long received = System.currentTimeMillis();
   
-  private final Function<TCConnection, Socket> closeRunnable;
+  private final Consumer<TCConnection> closeRunnable;
   private final Consumer<WireProtocolMessage> write;
   private final TCProtocolAdaptor adaptor;
   private volatile BufferManager buffer;
@@ -80,18 +80,8 @@ public class BasicConnection implements TCConnection {
   private volatile ExecutorService readerExec;
   private final String id;
   
-
-  public BasicConnection(Socket src, Consumer<WireProtocolMessage> write, Function<TCConnection, Socket> close) {
-    this.src = src;
-    this.write = write;
-    this.closeRunnable = close;
-    this.adaptor = null;
-    this.bufferManagerFactory = null;
-    this.id = "";
-    this.connected = src.isConnected();
-  }
   
-  public BasicConnection(String id, TCProtocolAdaptor adapter, BufferManagerFactory buffers, Function<TCConnection, Socket> close) {
+  public BasicConnection(String id, TCProtocolAdaptor adapter, BufferManagerFactory buffers, Consumer<TCConnection> close) {
     this.id = id;
     this.bufferManagerFactory = buffers;
     Object writeMutex = new Object();
@@ -174,35 +164,23 @@ public class BasicConnection implements TCConnection {
   }
 
   @Override
-  public synchronized Socket detach() {
-    try {
-      this.established = false;
-      Socket socket = this.closeRunnable.apply(this);
-      return socket == null ? src : socket;
-    } catch (Exception e) {
-      return null;
-    } finally {
-      this.established = false;
-      this.connected = false;
-    }
-  }
-
-  @Override
   public boolean close(long timeout) {
     try {
-      Socket socket = detach();
-      if (socket != null) {
-        shutdownBuffer();
-        SocketChannel channel = socket.getChannel();
+      this.closeRunnable.accept(this);
+      shutdownBuffer();
+      if (src != null) {
+        SocketChannel channel = src.getChannel();
         tryOp(channel::shutdownInput);
         tryOp(channel::shutdownOutput);
         close(channel);
-        close(socket);
+        close(src);
         LOGGER.debug("CLOSING {} channel {} isConnected: {} isConnectionPending: {}", System.identityHashCode(this), channel, channel.isConnected(), channel.isConnectionPending());
-        shutdownAndAwaitTermination(timeout);
       }
+      shutdownAndAwaitTermination(timeout);
       return true;
     } finally {
+      this.established = false;
+      this.connected = false;
       fireClosed();
     }
   }
@@ -345,11 +323,6 @@ public class BasicConnection implements TCConnection {
   }
 
   @Override
-  public boolean isClosePending() {
-    return false;
-  }
-
-  @Override
   public void putMessage(TCNetworkMessage message) {
     last = System.currentTimeMillis();
     WireProtocolMessage msg = buildWireProtocolMessage(message);
@@ -461,7 +434,6 @@ public class BasicConnection implements TCConnection {
     state.put("idleTime", this.getIdleTime());
     state.put("closed", isClosed());
     state.put("connected", isConnected());
-    state.put("closePending", isClosePending());
     state.put("transportConnected", isTransportEstablished());
     if (buffer instanceof PrettyPrintable) {
       state.put("buffer", ((PrettyPrintable)this.buffer).getStateMap());

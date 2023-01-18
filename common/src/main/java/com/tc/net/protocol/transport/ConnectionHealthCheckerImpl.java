@@ -84,10 +84,12 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
       if (reachable.get()) {
         return true;
       } else {
-        stop();
-        connectionManager.asynchCloseAllConnections();
-        connectionManager.closeAllListeners();
-        connectionManager.shutdown();
+        if (!isStopped()) {
+          stop();
+          connectionManager.asynchCloseAllConnections();
+          connectionManager.closeAllListeners();
+          connectionManager.shutdown();
+        }
         return false;
       }
     }, logger);
@@ -113,9 +115,11 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     if (task != null && !task.isCancelled()) {
       task.cancel(true);
       logger.debug("HealthChecker STOP requested");
-    } else {
-      logger.warn("HealthChecker STOP already requested");
     }
+  }
+  
+  private synchronized boolean isStopped() {
+    return task == null || task.isCancelled();
   }
 
   @Override
