@@ -27,9 +27,9 @@ import com.tc.entity.VoltronEntityMessage.Type;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
-import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
+import com.tc.net.protocol.tcm.TCActionNetworkMessage;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnknownNameException;
@@ -67,9 +67,10 @@ public class NetworkVoltronEntityMessageImplTest {
     TransactionID oldestTransactionPending = new TransactionID(1);
     message.setContents(clientID, transactionID, EntityID.NULL_ID, entityDescriptor, messageType, 
             requiresReplication, extendedData, oldestTransactionPending, EnumSet.of(Acks.RECEIVED));
-    TCNetworkMessage msg = message.convertToNetworkMessage();
-    
+    TCActionNetworkMessage msg = message.convertToNetworkMessage();
+
     TCMessageHeader header = (TCMessageHeader) msg.getHeader();
+    msg.load();
     TCByteBuffer[] payload = msg.getPayload();
     outputStream.close();
     NetworkVoltronEntityMessageImpl decodingMessage = new NetworkVoltronEntityMessageImpl(SessionID.NULL_ID, monitor, null, header, new TCByteBufferInputStream(payload));

@@ -28,5 +28,8 @@ public interface WireProtocolMessage extends TCNetworkMessage {
   public WireProtocolHeader getWireProtocolHeader();
 
   public TCConnection getSource();
+  
+  boolean prepareToSend();
 
+  boolean isValid();
 }

@@ -164,6 +164,7 @@ public interface TCPropertiesConsts {
   public static final String TC_STAGE_MONITOR_DELAY                                         = "tc.stage.monitor.delay";
   public static final String TC_MESSAGE_GROUPING_ENABLED                                    = "tc.messages.grouping.enabled";
   public static final String TC_MESSAGE_GROUPING_MAXSIZE_KB                                 = "tc.messages.grouping.maxSizeKiloBytes";
+  public static final String TC_MESSAGE_GROUPING_MAX_COUNT                                  = "tc.messages.grouping.maxCount";
   public static final String TC_MESSAGE_PACKUP_ENABLED                                      = "tc.messages.packup.enabled";
 
   /*********************************************************************************************************************

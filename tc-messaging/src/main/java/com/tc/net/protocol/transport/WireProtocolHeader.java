@@ -24,9 +24,7 @@ import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.delivery.OOOProtocolMessage;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
-import com.tc.net.protocol.tcm.TCAction;
 import com.tc.net.protocol.tcm.TCMessageHeader;
-import com.tc.object.msg.DSOMessageBase;
 
 /**
  * This class models the header portion of a TC wire protocol message. NOTE: This class makes no attempt to be thread
@@ -218,6 +216,11 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
     computeAdler32Checksum(12, true);
   }
 
+  public void finalizeHeader(int totalLength) {
+    setTotalPacketLength(totalLength);
+    computeChecksum();
+  }
+
   public boolean isChecksumValid() {
     return getChecksum() == computeAdler32Checksum(12, false);
   }
@@ -278,11 +281,11 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
                                                                                                + ")"); }
 
     // validate the checksum
-    if (!isChecksumValid()) { throw new WireProtocolHeaderFormatException("Invalid Checksum"); }
+    if (!isChecksumValid()) { throw new WireProtocolHeaderFormatException(describe(false, "Invalid Checksum")); }
 
-    if (getSourcePort() == 0) { throw new WireProtocolHeaderFormatException("Source port cannot be zero"); }
+    if (getSourcePort() == 0) { throw new WireProtocolHeaderFormatException(describe(false, "Source port cannot be zero")); }
 
-    if (getDestinationPort() == 0) { throw new WireProtocolHeaderFormatException("Destination port cannot be zero"); }
+    if (getDestinationPort() == 0) { throw new WireProtocolHeaderFormatException(describe(false, "Destination port cannot be zero")); }
 
     // if (Arrays.equals(getDestinationAddress(), FOUR_ZERO_BYTES)) { throw new WireProtocolHeaderFormatException(
     // "Destination address cannot be 0.0.0.0"); }
@@ -295,7 +298,19 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
 
   @Override
   public String toString() {
-    StringBuffer buf = new StringBuffer();
+    String errMsg = "no message";
+    boolean valid = true;
+    try {
+      validate();
+    } catch (WireProtocolHeaderFormatException e) {
+      errMsg = e.getMessage();
+      valid = false;
+    }
+    return describe(valid, errMsg);
+  }
+
+  private String describe(boolean valid, String errMsg) {
+    StringBuilder buf = new StringBuilder();
     buf.append("Version: ").append(Conversion.byte2uint(getVersion())).append(", ");
     buf.append("Header Length: ").append(Conversion.byte2uint(getHeaderLength())).append(", ");
     buf.append("TOS: ").append(getTypeOfService()).append(", ");
@@ -332,22 +347,14 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
 
     buf.append("Total Msg Count: " + getMessageCount());
     buf.append("\n");
-
-    String errMsg = "no message";
-    boolean valid = true;
-    try {
-      validate();
-    } catch (WireProtocolHeaderFormatException e) {
-      errMsg = e.getMessage();
-      valid = false;
-    }
+    
     buf.append("Header Validity: ").append(valid).append(" (").append(errMsg).append(")\n");
 
     // TODO: display the options (if any)
 
     return buf.toString();
   }
-
+  
   private String getProtocolString() {
     final short protocol = getProtocol();
     switch (protocol) {

@@ -16,17 +16,9 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.net.protocol.transport;
+package com.tc.net.protocol.tcm;
 
-import com.tc.net.protocol.TCNetworkMessage;
-import com.tc.net.protocol.TCProtocolException;
 
-import java.util.Iterator;
-
-public interface WireProtocolGroupMessage extends WireProtocolMessage {
-
-  public Iterator<TCNetworkMessage> getMessageIterator() throws TCProtocolException;
-
-  public int getTotalMessageCount();
-
+public interface NetworkRecall {
+  boolean recall();
 }

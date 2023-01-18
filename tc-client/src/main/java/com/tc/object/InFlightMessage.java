@@ -18,9 +18,9 @@
  */
 package com.tc.object;
 
-import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.net.protocol.tcm.NetworkRecall;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 import static com.tc.object.StatType.CLIENT_COMPLETE;
@@ -65,7 +65,6 @@ public class InFlightMessage implements PrettyPrintable {
 
   private final EnumSet<VoltronEntityMessage.Acks> outstandingAcks = EnumSet.allOf(VoltronEntityMessage.Acks.class);
 
-  private boolean isSent;
   private Exception exception;
   private byte[] value;
   private final Trace trace;
@@ -83,7 +82,7 @@ public class InFlightMessage implements PrettyPrintable {
 
   private long[] serverStats;
 
-  private TCNetworkMessage networkMessage;
+  private NetworkRecall networkMessage;
 
   public InFlightMessage(EntityID eid, Supplier<? extends VoltronEntityMessage> message, SafeInvocationCallback<byte[]> callback) {
     this.eid = requireNonNull(eid);
@@ -172,8 +171,6 @@ public class InFlightMessage implements PrettyPrintable {
 
   public boolean send() {
     Trace.activeTrace().log("InFlightMessage.send()");
-    Assert.assertFalse(this.isSent);
-    this.isSent = true;
     this.send = System.nanoTime();
     try {
       return (this.networkMessage = ((TCAction) this.message).send()) != null;
@@ -182,20 +179,16 @@ public class InFlightMessage implements PrettyPrintable {
     }
   }
   
-  public synchronized void sent() {
+  synchronized void sent() {
     if (ackDelivered(VoltronEntityMessage.Acks.SENT)) {
       this.notifySent = System.nanoTime();
     }
   }
 
-  public synchronized void received() {
+  synchronized void received() {
     if (ackDelivered(VoltronEntityMessage.Acks.RECEIVED)) {
       this.received = System.nanoTime();
     }
-  }
-
-  public synchronized boolean isSent() {
-    return this.isSent;
   }
   
   public void setResult(byte[] value, Exception error) {
@@ -274,7 +267,7 @@ public class InFlightMessage implements PrettyPrintable {
   }
 
   public boolean cancel() {
-    return (networkMessage == null || networkMessage.cancel()) && (state.compareAndSet(State.PENDING, State.CANCELLED) || State.CANCELLED.equals(state.get()));
+    return (networkMessage == null || networkMessage.recall()) && (state.compareAndSet(State.PENDING, State.CANCELLED) || State.CANCELLED.equals(state.get()));
   }
 
   enum State {

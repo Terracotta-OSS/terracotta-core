@@ -22,7 +22,6 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;
-import com.tc.net.protocol.TCNetworkMessage;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.ByteBuffer;
@@ -42,7 +41,13 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import com.tc.net.protocol.tcm.TCActionNetworkMessage;
+import com.tc.net.protocol.transport.WireProtocolHeader;
+import com.tc.net.protocol.transport.WireProtocolMessage;
 import java.net.InetSocketAddress;
+import java.nio.channels.GatheringByteChannel;
+import java.nio.channels.SelectableChannel;
+import static junit.framework.TestCase.assertTrue;
 
 /**
  *
@@ -116,7 +121,10 @@ public class TCConnectionImplTest {
         InetSocketAddress addr = new InetSocketAddress("localhost", port);
         conn.connect(addr, 0);
 
-        TCNetworkMessage msg = mock(TCNetworkMessage.class);
+        WireProtocolMessage msg = mock(WireProtocolMessage.class);
+        when(msg.prepareToSend()).thenReturn(Boolean.TRUE);
+        when(msg.getHeader()).thenReturn(mock(WireProtocolHeader.class));
+        when(msg.getWireProtocolHeader()).thenReturn(mock(WireProtocolHeader.class));
         when(msg.getEntireMessageData()).thenReturn(new TCByteBuffer[] { TCByteBufferFactory.wrap(new byte[512]) });
         when(msg.getDataLength()).thenReturn(512);
 
@@ -163,6 +171,150 @@ public class TCConnectionImplTest {
         conn.close(100);
 
         verify(bufferManager).close();
+      }
+    }
+  }
+
+  @Test
+  public void testCancelledMessages() throws Exception {
+    try (PortManager.PortRef portRef = PortManager.getInstance().reservePort()) {
+      int port = portRef.port();
+      try (ServerSocket socket = new ServerSocket(port)) {
+        TCConnectionEventListener listener = mock(TCConnectionEventListener.class);
+        TCProtocolAdaptor adaptor = mock(TCProtocolAdaptor.class);
+        TCConnectionManagerImpl mgr = new TCConnectionManagerImpl();
+        final CoreNIOServices nioServiceThread = mock(CoreNIOServices.class);
+        SocketParams socketParams = new SocketParams();
+        BufferManagerFactory bufferManagerFactory = mock(BufferManagerFactory.class);
+
+        BufferManager bufferManager = mock(BufferManager.class);
+        when(bufferManager.sendFromBuffer()).thenReturn(0);
+        when(bufferManager.forwardToWriteBuffer(any(ByteBuffer.class))).thenAnswer((i) -> {
+          return ((ByteBuffer)i.getArguments()[0]).remaining();
+        });
+
+        when(bufferManagerFactory.createBufferManager(any(SocketChannel.class), anyBoolean())).thenReturn(bufferManager);
+
+        TCConnectionImpl conn = new TCConnectionImpl(listener, adaptor, mgr, nioServiceThread, socketParams,
+            bufferManagerFactory);
+        InetSocketAddress addr = new InetSocketAddress("localhost", port);
+        conn.connect(addr, 0);
+        
+        TCActionNetworkMessage[] msgs = new TCActionNetworkMessage[10];
+        
+        for (int x=0;x<msgs.length;x++) {
+          TCActionNetworkMessage action = mock(TCActionNetworkMessage.class);
+          when(action.commit()).thenReturn(Boolean.FALSE);
+          when(action.load()).thenReturn(Boolean.TRUE);
+          conn.putMessage(action);
+          msgs[x] = action;
+        }
+        
+        verify(nioServiceThread).requestWriteInterest(any(TCConnectionImpl.class), any(GatheringByteChannel.class));
+        assertTrue(conn.doWrite() == 0);
+        for (TCActionNetworkMessage msg : msgs) {
+          verify(msg).complete();
+        }
+        verify(nioServiceThread).removeWriteInterest(any(TCConnectionImpl.class), any(SelectableChannel.class));
+      }
+    }
+  }
+
+
+  @Test
+  public void testCancelledMessagesBeforeLoad() throws Exception {
+    try (PortManager.PortRef portRef = PortManager.getInstance().reservePort()) {
+      int port = portRef.port();
+      try (ServerSocket socket = new ServerSocket(port)) {
+        TCConnectionEventListener listener = mock(TCConnectionEventListener.class);
+        TCProtocolAdaptor adaptor = mock(TCProtocolAdaptor.class);
+        TCConnectionManagerImpl mgr = new TCConnectionManagerImpl();
+        final CoreNIOServices nioServiceThread = mock(CoreNIOServices.class);
+        SocketParams socketParams = new SocketParams();
+        BufferManagerFactory bufferManagerFactory = mock(BufferManagerFactory.class);
+
+        BufferManager bufferManager = mock(BufferManager.class);
+        when(bufferManager.sendFromBuffer()).thenReturn(0);
+        when(bufferManager.forwardToWriteBuffer(any(ByteBuffer.class))).thenAnswer((i) -> {
+          return ((ByteBuffer)i.getArguments()[0]).remaining();
+        });
+
+        when(bufferManagerFactory.createBufferManager(any(SocketChannel.class), anyBoolean())).thenReturn(bufferManager);
+
+        TCConnectionImpl conn = new TCConnectionImpl(listener, adaptor, mgr, nioServiceThread, socketParams,
+            bufferManagerFactory);
+        InetSocketAddress addr = new InetSocketAddress("localhost", port);
+        conn.connect(addr, 0);
+        
+        TCActionNetworkMessage[] msgs = new TCActionNetworkMessage[10];
+        
+        for (int x=0;x<msgs.length;x++) {
+          TCActionNetworkMessage action = mock(TCActionNetworkMessage.class);
+          when(action.commit()).thenReturn(Boolean.FALSE);
+          when(action.load()).thenReturn(Boolean.FALSE);
+          conn.putMessage(action);
+          msgs[x] = action;
+        }
+        
+        verify(nioServiceThread).requestWriteInterest(any(TCConnectionImpl.class), any(GatheringByteChannel.class));
+        assertTrue(conn.doWrite() == 0);
+        for (TCActionNetworkMessage msg : msgs) {
+          verify(msg).complete();
+          verify(msg, never()).commit();
+        }
+        verify(nioServiceThread).removeWriteInterest(any(TCConnectionImpl.class), any(SelectableChannel.class));
+      }
+    }
+  }
+
+
+  @Test
+  public void testBatchWhenFull() throws Exception {
+    try (PortManager.PortRef portRef = PortManager.getInstance().reservePort()) {
+      int port = portRef.port();
+      try (ServerSocket socket = new ServerSocket(port)) {
+        TCConnectionEventListener listener = mock(TCConnectionEventListener.class);
+        TCProtocolAdaptor adaptor = mock(TCProtocolAdaptor.class);
+        TCConnectionManagerImpl mgr = new TCConnectionManagerImpl();
+        final CoreNIOServices nioServiceThread = mock(CoreNIOServices.class);
+        SocketParams socketParams = new SocketParams();
+        BufferManagerFactory bufferManagerFactory = mock(BufferManagerFactory.class);
+
+        BufferManager bufferManager = mock(BufferManager.class);
+        when(bufferManager.sendFromBuffer()).thenReturn(0);
+        when(bufferManager.forwardToWriteBuffer(any(ByteBuffer.class))).thenAnswer((i) -> {
+          return ((ByteBuffer)i.getArguments()[0]).remaining();
+        });
+
+        when(bufferManagerFactory.createBufferManager(any(SocketChannel.class), anyBoolean())).thenReturn(bufferManager);
+
+        TCConnectionImpl conn = new TCConnectionImpl(listener, adaptor, mgr, nioServiceThread, socketParams,
+            bufferManagerFactory);
+        InetSocketAddress addr = new InetSocketAddress("localhost", port);
+        conn.connect(addr, 0);
+        
+        TCActionNetworkMessage[] msgs = new TCActionNetworkMessage[1024];
+        
+        for (int x=0;x<msgs.length;x++) {
+          TCActionNetworkMessage action = mock(TCActionNetworkMessage.class);
+          when(action.commit()).thenReturn(Boolean.FALSE);
+          when(action.load()).thenReturn(Boolean.FALSE);
+          conn.putMessage(action);
+          msgs[x] = action;
+        }
+        for (TCActionNetworkMessage msg : msgs) {
+          verify(msg, never()).complete();
+        }        
+        
+        TCActionNetworkMessage action = mock(TCActionNetworkMessage.class);
+        when(action.commit()).thenReturn(Boolean.FALSE);
+        when(action.load()).thenReturn(Boolean.FALSE);
+        conn.putMessage(action);
+
+        for (TCActionNetworkMessage msg : msgs) {
+          verify(msg).complete(); // batching called which calls complete
+        }       
+        verify(action, never()).complete(); // this one is queued but not batched
       }
     }
   }

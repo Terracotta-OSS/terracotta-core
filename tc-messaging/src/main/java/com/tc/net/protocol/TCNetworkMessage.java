@@ -31,10 +31,6 @@ public interface TCNetworkMessage {
 
   public TCByteBuffer[] getEntireMessageData();
 
-  public boolean isSealed();
-
-  public void seal();
-
   public int getDataLength();
 
   public int getHeaderLength();
@@ -44,8 +40,4 @@ public interface TCNetworkMessage {
   public void complete();
 
   void addCompleteCallback(Runnable r);
-
-  boolean commit();
-
-  boolean cancel();
 }

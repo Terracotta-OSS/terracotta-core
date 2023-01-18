@@ -40,6 +40,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.TCProtocolException;
+import com.tc.net.protocol.tcm.TCActionNetworkMessage;
 import com.tc.text.PrettyPrintable;
 import java.io.Closeable;
 import java.io.EOFException;
@@ -48,6 +49,7 @@ import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -94,6 +96,9 @@ public class BasicConnection implements TCConnection {
     this.bufferManagerFactory = buffers;
     Object writeMutex = new Object();
     this.write = (message)->{
+      if (!message.prepareToSend()) {
+        return;
+      }
       synchronized (writeMutex) {
         try {
           if (this.src != null) {
@@ -347,10 +352,9 @@ public class BasicConnection implements TCConnection {
   @Override
   public void putMessage(TCNetworkMessage message) {
     last = System.currentTimeMillis();
-    if (message instanceof WireProtocolMessage) {
-      this.write.accept(finalizeWireProtocolMessage((WireProtocolMessage)message, 1));
-    } else {
-      this.write.accept(buildWireProtocolMessage(message));
+    WireProtocolMessage msg = buildWireProtocolMessage(message);
+    if (msg != null) {
+      this.write.accept(msg);
     }
   }
   
@@ -421,20 +425,28 @@ public class BasicConnection implements TCConnection {
   }
     
   private WireProtocolMessage buildWireProtocolMessage(TCNetworkMessage message) {
-    Assert.eval(!(message instanceof WireProtocolMessage));
-
-    WireProtocolMessage wireMessage = WireProtocolMessageImpl.wrapMessage(message, this);
-
-    return finalizeWireProtocolMessage(wireMessage, 1);
+    Objects.requireNonNull(message);
+    if (message instanceof WireProtocolMessage) {
+      return finalizeWireProtocolMessage((WireProtocolMessage)message);
+    } else if (message instanceof TCActionNetworkMessage) {
+      TCActionNetworkMessage action = (TCActionNetworkMessage)message;
+      if (action.load() && action.commit()) {
+        WireProtocolMessage wireMessage = WireProtocolMessageImpl.wrapMessage(action, this);
+        return finalizeWireProtocolMessage(wireMessage);
+      } 
+    }
+    
+    message.complete();
+    return null;
   }
 
-  private WireProtocolMessage finalizeWireProtocolMessage(WireProtocolMessage message, int messageCount) {
+  private WireProtocolMessage finalizeWireProtocolMessage(WireProtocolMessage message) {
     final WireProtocolHeader hdr = (WireProtocolHeader) message.getHeader();
     hdr.setSourceAddress(getLocalAddress().getAddress().getAddress());
     hdr.setSourcePort(getLocalAddress().getPort());
     hdr.setDestinationAddress(getRemoteAddress().getAddress().getAddress());
     hdr.setDestinationPort(getRemoteAddress().getPort());
-    hdr.setMessageCount(messageCount);
+    hdr.setMessageCount(1);
     hdr.computeChecksum();
     return message;
   } 

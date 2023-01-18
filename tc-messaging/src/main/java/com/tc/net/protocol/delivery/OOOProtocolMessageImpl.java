@@ -28,7 +28,7 @@ class OOOProtocolMessageImpl extends TCNetworkMessageImpl implements OOOProtocol
    * Create a header-only message (no payload). Useful for ack and ack request messages.
    */
   OOOProtocolMessageImpl(OOOProtocolMessageHeader header) {
-    super(header, true);
+    super(header, new TCByteBuffer[0]);
   }
 
   /**

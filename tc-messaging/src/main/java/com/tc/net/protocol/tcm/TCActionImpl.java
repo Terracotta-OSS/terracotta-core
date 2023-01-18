@@ -27,8 +27,6 @@ import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCSerializable;
 import com.tc.net.NodeID;
 import com.tc.net.groups.NodeIDSerializer;
-import com.tc.net.protocol.TCNetworkMessage;
-import com.tc.net.protocol.TCNetworkMessageImpl;
 import com.tc.util.AbstractIdentifier;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -114,8 +112,8 @@ public abstract class TCActionImpl implements TCAction {
 
   protected abstract void dehydrateValues();
 
-  public TCNetworkMessage convertToNetworkMessage() {
-    TCNetworkMessageImpl msg = new TCNetworkMessageImpl(new TCMessageHeaderImpl(type), getDataBuffers());
+  public TCActionNetworkMessage convertToNetworkMessage() {
+    TCActionNetworkMessage msg = new TCActionNetworkMessageImpl(new TCMessageHeaderImpl(type), ()->getDataBuffers());
     msg.addCompleteCallback(this::notifyProcessedCallbacks);
     msg.addCompleteCallback(out::reset);
     return msg;
@@ -153,7 +151,7 @@ public abstract class TCActionImpl implements TCAction {
       } finally {
         this.bbis.reset();
         this.bbis = null;
-        notifyProcessedCallbacks();
+        callbacks.forEach(Runnable::run);
       }
       monitor.newIncomingMessage(this);
     }
@@ -318,12 +316,12 @@ public abstract class TCActionImpl implements TCAction {
    * @see com.tc.net.protocol.tcm.ApplicationMessage#send()
    */
   @Override
-  public TCNetworkMessage send() {
+  public NetworkRecall send() {
     if (isSent.attemptSet()) {
-      TCNetworkMessage msg = convertToNetworkMessage();
+      TCActionNetworkMessage msg = convertToNetworkMessage();
       try {
         basicSend(msg);
-        return msg;
+        return msg::cancel;
       } catch (IOException ioe) {
 //  suppress some warnings when the channel is closed as this is expected, client is not
 //  there anymore
@@ -335,7 +333,7 @@ public abstract class TCActionImpl implements TCAction {
     return null;
   }
 
-  private void basicSend(TCNetworkMessage msg) throws IOException {
+  private void basicSend(TCActionNetworkMessage msg) throws IOException {
     channel.send(msg);
     monitor.newOutgoingMessage(this);
   }
@@ -352,11 +350,17 @@ public abstract class TCActionImpl implements TCAction {
 
   @Override
   public void addProcessedCallback(Runnable r) {
-    callbacks.add(r);
+    if (processed.isSet()) {
+      r.run();
+    } else {
+      callbacks.add(r);
+    }
   }
 
   private void notifyProcessedCallbacks() {
-    callbacks.forEach(Runnable::run);
+    if (processed.attemptSet()) {
+      callbacks.forEach(Runnable::run);
+    }
   }
 
   @Override

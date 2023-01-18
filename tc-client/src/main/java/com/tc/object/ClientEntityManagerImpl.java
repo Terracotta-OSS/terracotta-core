@@ -22,7 +22,6 @@ import com.tc.bytes.TCByteBufferFactory;
 import com.tc.exception.EntityBusyException;
 import com.tc.exception.EntityReferencedException;
 import com.tc.exception.WrappedEntityException;
-import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.util.Throwables;
 
 import org.slf4j.Logger;
@@ -48,6 +47,7 @@ import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.tcm.NetworkRecall;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnknownNameException;
 import com.tc.object.msg.ClientEntityReferenceContext;
@@ -567,7 +567,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
     
     @Override
-    public TCNetworkMessage send() {
+    public NetworkRecall send() {
       return null;
     }
 

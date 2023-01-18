@@ -17,6 +17,7 @@ package org.terracotta.entity.map;
 
 
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
 import org.terracotta.connection.entity.Entity;
 
 public interface ConcurrentClusteredMap<K, V> extends ConcurrentMap<K, V>, Entity {
@@ -29,4 +30,6 @@ public interface ConcurrentClusteredMap<K, V> extends ConcurrentMap<K, V>, Entit
    * @param valueClass the value class
    */
   void setTypes(Class<K> keyClass, Class<V> valueClass);
+  
+  Future<?> insert(K key, V value);
 }

@@ -125,13 +125,15 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
       // message is printed for debugging
       message.complete();
       getLogger().info(message.toString());
-      throw new AssertionError("Wrong handshake message from: " + message.getSource());
+      // runtime exception disconnects the client, errors kill the server
+      throw new RuntimeException("Wrong handshake message from: " + message.getSource());
     } else if (message.getMessageProtocol() == WireProtocolHeader.PROTOCOL_HEALTHCHECK_PROBES) {
       if (this.healthCheckerContext.receiveProbe((HealthCheckerProbeMessage) message)) {
         message.complete();
         return;
       } else {
-        throw new AssertionError("Wrong HealthChecker Probe message from: " + message.getSource());
+      // runtime exception disconnects the client, errors kill the server
+        throw new RuntimeException("Wrong HealthChecker Probe message from: " + message.getSource());
       }
     }
     receiver.receive(message);

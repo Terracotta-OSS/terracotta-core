@@ -18,7 +18,6 @@
  */
 package com.tc.net.groups;
 
-import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ServerID;

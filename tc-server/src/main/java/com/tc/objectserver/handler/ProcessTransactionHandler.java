@@ -36,6 +36,7 @@ import com.tc.exception.ServerExceptionType;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.tcm.NetworkRecall;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.utils.L2Utils;
 import com.tc.object.ClientInstanceID;
@@ -136,7 +137,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
         // only applied messages should be sent back to the client except on resent messages
         // that path is unoptimized so regular received messages can hit this path
       }
-      TCNetworkMessage networkMessage = response.send();
+      NetworkRecall networkMessage = response.send();
       if (networkMessage == null) {
         // It is possible for this send to fail.  Typically, it means that the client has disconnected.
         LOGGER.warn("Failed to send message to: " + destinationID);

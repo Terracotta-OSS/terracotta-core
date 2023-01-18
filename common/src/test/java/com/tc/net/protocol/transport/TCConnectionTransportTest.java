@@ -47,6 +47,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import junit.framework.TestCase;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import com.tc.net.protocol.tcm.TCActionNetworkMessage;
 import java.net.InetSocketAddress;
 import java.util.Objects;
 
@@ -150,15 +151,16 @@ public class TCConnectionTransportTest extends TestCase {
       startBarrier.reset();
 
       TCNetworkMessage message = getMessages(bufCount);
+      message.addCompleteCallback(()->{
+        sentMessagesTotalLength.addAndGet(message.getTotalLength());
+
+        synchronized (fullySent) {
+          System.out.println("XXX total msgs sent " + sentMessagesTotalLength);
+          fullySent.set(true);
+          fullySent.notify();
+        }
+      });
       clientConn.putMessage(message);
-
-      sentMessagesTotalLength.addAndGet(message.getTotalLength());
-
-      synchronized (fullySent) {
-        System.out.println("XXX total msgs sent " + sentMessagesTotalLength);
-        fullySent.set(true);
-        fullySent.notify();
-      }
 
       endBarrier.await();
       endBarrier.reset();
@@ -220,7 +222,8 @@ public class TCConnectionTransportTest extends TestCase {
   }
 
   private TCNetworkMessage getDSOMessage(MessageMonitor monitor, TCByteBuffer[] bufs) {
-    return new MyMessage(monitor, seq.getNextSequence(), bufs).convertToNetworkMessage();
+    TCActionNetworkMessage nmsg = new MyMessage(monitor, seq.getNextSequence(), bufs).convertToNetworkMessage();
+    return nmsg;
   }
 
   class MyMessage extends DSOMessageBase {

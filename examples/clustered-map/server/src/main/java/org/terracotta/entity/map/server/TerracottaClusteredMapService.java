@@ -15,7 +15,6 @@
  */
 package org.terracotta.entity.map.server;
 
-import java.nio.ByteBuffer;
 import java.util.Map;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ConcurrencyStrategy;

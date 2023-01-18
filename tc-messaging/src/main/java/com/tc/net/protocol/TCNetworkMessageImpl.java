@@ -28,7 +28,6 @@ import com.tc.util.HexDump;
 import com.tc.util.concurrent.SetOnceFlag;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Base class for network messages
@@ -39,24 +38,14 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   protected static final Logger logger = LoggerFactory.getLogger(TCNetworkMessage.class);
   private static final int        MESSAGE_DUMP_MAXBYTES = 4 * 1024;
 
-  protected TCNetworkMessageImpl(TCNetworkHeader header, boolean seal) {
-    this(header, null, seal);
-  }
-
   public TCNetworkMessageImpl(TCNetworkHeader header, TCByteBuffer[] payload) {
-    this(header, payload, true);
+    this(header);
+    setPayload(payload);
   }
 
-  private TCNetworkMessageImpl(TCNetworkHeader header, TCByteBuffer[] payload,
-                                   boolean seal) {
+  protected TCNetworkMessageImpl(TCNetworkHeader header) {
     Assert.eval(header != null);
-
     this.header = header;
-    this.payloadData = (payload == null) ? EMPTY_BUFFER_ARRAY : payload;
-
-    if (seal) {
-      seal();
-    }
   }
 
   @Override
@@ -84,25 +73,24 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
 
   @Override
   public final TCByteBuffer[] getPayload() {
+    Assert.eval(payloadData != null);
+
     return payloadData;
   }
 
   protected final void setPayload(TCByteBuffer[] newPayload) {
-    checkNotSealed();
-
-    entireMessageData = null;
-
+    // this array should have already been set in seal()
+    Assert.eval(payloadData == null);
     if (newPayload == null) {
       payloadData = EMPTY_BUFFER_ARRAY;
     } else {
       payloadData = newPayload;
     }
+    seal();
   }
 
   @Override
   public final TCByteBuffer[] getEntireMessageData() {
-    checkSealed();
-
     // this array should have already been set in seal()
     Assert.eval(entireMessageData != null);
 
@@ -120,9 +108,9 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   }
 
   protected final String toString0() {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     buf.append("Message Class: ").append(getClass().getName()).append("\n");
-    buf.append("Sealed: ").append(sealed.isSet()).append(", ");
+    buf.append("Sealed: ").append((payloadData != null)).append(", ");
     buf.append("Header Length: ").append(getHeaderLength()).append(", ");
     buf.append("Data Length: ").append(getDataLength()).append(", ");
     buf.append("Total Length: ").append(getTotalLength()).append("\n");
@@ -150,7 +138,7 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
 
   // override this method to add more description to your payload data
   protected String messageBytes() {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     int totalBytesDumped = 0;
     if ((payloadData != null) && (payloadData.length != 0)) {
       for (int i = 0; i < payloadData.length; i++) {
@@ -180,7 +168,7 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   }
 
   protected String dump() {
-    StringBuffer toRet = new StringBuffer(toString());
+    StringBuilder toRet = new StringBuilder(toString());
     toRet.append("\n\n");
     if (entireMessageData != null) {
       for (int i = 0; i < entireMessageData.length; i++) {
@@ -196,32 +184,22 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
     return toRet.toString();
   }
 
-  @Override
-  public final boolean isSealed() {
-    return sealed.isSet();
-  }
+  private final void seal() {
+    final int size = 1 + payloadData.length;
+    entireMessageData = new TCByteBuffer[size];
+    entireMessageData[0] = header.getDataBuffer();
+    System.arraycopy(payloadData, 0, entireMessageData, 1, payloadData.length);
 
-  @Override
-  public final void seal() {
-    if (sealed.attemptSet()) {
-      final int size = 1 + payloadData.length;
-      entireMessageData = new TCByteBuffer[size];
-      entireMessageData[0] = header.getDataBuffer();
-      System.arraycopy(payloadData, 0, entireMessageData, 1, payloadData.length);
-
-      long dataLen = 0;
-      for (int i = 1; i < entireMessageData.length; i++) {
-        dataLen += entireMessageData[i].remaining();
-      }
-
-      if (dataLen > Integer.MAX_VALUE) { throw new TCInternalError("Message too big"); }
-
-      this.dataLength = (int) dataLen;
-      this.headerLength = header.getHeaderByteLength();
-      this.totalLength = this.headerLength + this.dataLength;
-    } else {
-      throw new IllegalStateException("Message is sealed");
+    long dataLen = 0;
+    for (int i = 1; i < entireMessageData.length; i++) {
+      dataLen += entireMessageData[i].remaining();
     }
+
+    if (dataLen > Integer.MAX_VALUE) { throw new TCInternalError("Message too big"); }
+
+    this.dataLength = (int) dataLen;
+    this.headerLength = header.getHeaderByteLength();
+    this.totalLength = this.headerLength + this.dataLength;
   }
 
   @Override
@@ -241,30 +219,18 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
 
   @Override
   public void addCompleteCallback(Runnable r) {
-    callbacks.add(r);
+    if (callbackFired.isSet()) {
+      r.run();
+    } else {
+      callbacks.add(r);
+    }
   }
-
-  @Override
-  public boolean commit() {
-    return state.compareAndSet(State.PENDING, State.COMMITTED) || State.COMMITTED.equals(state.get());
-  }
-
-  @Override
-  public boolean cancel() {
-    return state.compareAndSet(State.PENDING, State.CANCELLED) || State.CANCELLED.equals(state.get());
-  }
-
   private void checkSealed() {
-    if (!isSealed()) { throw new IllegalStateException("Message is not sealed"); }
+    // this check is not thread safe
+    if (payloadData == null) throw new IllegalStateException("Message is not sealed");
   }
-
-  private void checkNotSealed() {
-    if (sealed.isSet()) { throw new IllegalStateException("Message is sealed"); }
-  }
-
-  private final SetOnceFlag           sealed             = new SetOnceFlag();
+  
   private final SetOnceFlag           callbackFired  = new SetOnceFlag();
-  private final AtomicReference<State> state = new AtomicReference<>(State.PENDING);
   private static final TCByteBuffer[] EMPTY_BUFFER_ARRAY = {};
   private final TCNetworkHeader       header;
   private TCByteBuffer[]              payloadData;
@@ -273,10 +239,4 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   private int                         dataLength;
   private int                         headerLength;
   private final List<Runnable>        callbacks       = new LinkedList<>();
-
-  enum State {
-    PENDING,
-    COMMITTED,
-    CANCELLED;
-  }
 }
