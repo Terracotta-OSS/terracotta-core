@@ -105,6 +105,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static java.util.stream.Collectors.toSet;
 import org.terracotta.server.ServerEnv;
 import com.tc.net.protocol.tcm.TCAction;
+import java.util.Iterator;
 
 
 public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, ChannelManagerEventListener, TopologyListener {
@@ -123,6 +124,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private final Map<MessageID, GroupResponseImpl>               pendingRequests             = new ConcurrentHashMap<>();
   private final AtomicBoolean                               isStopped                   = new AtomicBoolean(false);
   private final ConcurrentHashMap<ServerID, TCGroupMember>  members                     = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<MessageChannel, ServerID>  memberReceiver                     = new ConcurrentHashMap<>();
   private final Timer                                       handshakeTimer              = new Timer(ServerEnv.getServer().getIdentifier() +
                                                                                                     " - TC Group Manager Handshake timer",
                                                                                                     true);
@@ -288,6 +290,22 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     MessageChannel channel = msg.getChannel();
     Assert.assertNotNull(channel);
     TCGroupHandshakeStateMachine stateMachine = getOrCreateHandshakeStateMachine(channel);
+    if (stateMachine.getCurrentState() == stateMachine.initialState()) {
+      ServerID node = msg.getNodeID();
+      channel.addListener((event) -> {
+        switch(event.getType()) {
+          case TRANSPORT_DISCONNECTED_EVENT:
+          case CHANNEL_CLOSED_EVENT:
+          case TRANSPORT_CLOSED_EVENT:
+            memberReceiver.remove(channel, node);
+            break;
+          default:
+            // ignore
+        }
+      });
+      // only add the channel if it is still open
+      memberReceiver.compute(channel, (target, rNode)->channel.isConnected() ? node : null);
+    }
     stateMachine.execute(msg);
   }
 
@@ -406,7 +424,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     if (isDebugLogging()) {
       debugInfo("Starting discover... thisNode: " + groupConfiguration.getCurrentNode() + ", otherNodes: " + groupConfiguration.getNodes());
     }
-//    discover = new TCGroupMemberDiscoveryStatic(this, thisNode);
     discover.setupNodes(groupConfiguration.getCurrentNode(), groupConfiguration.getNodes());
     discover.start();
     try {
@@ -645,13 +662,13 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   private TCGroupMember getMember(NodeID nodeID) {
-    return members.get((ServerID)nodeID);
+    return nodeID == null ? null : members.get((ServerID)nodeID);
   }
 
   public Collection<TCGroupMember> getMembers() {
     return Collections.unmodifiableCollection(members.values());
   }
-//  FOR TESTING ONLY
+
   public final void setDiscover(TCGroupMemberDiscovery discover) {
     this.discover = discover;
   }
@@ -927,6 +944,18 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
           if (!waitFor.isEmpty() && (end - start) > 5000) {
             logger.warn(sender + " Still waiting for response from " + waitFor + ". Waited for " + (end - start)
                         + " ms");
+            Iterator<ServerID> waiting = waitFor.iterator();
+            while (waiting.hasNext()) {
+              ServerID current = waiting.next();
+              TCGroupMember member = getMember(current);
+              if (member == null) {
+                logger.warn("server {} is missing from the group, no longer waiting for response message", current);
+                waiting.remove();
+              } else if(!memberReceiver.containsKey(member.getChannel())) {
+                logger.warn("closing {}, no receiver available for message", current);
+                closeMember(current);
+              }
+            }
           }
         } catch (InterruptedException e) {
           throw new GroupException(e);
