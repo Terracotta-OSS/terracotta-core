@@ -39,6 +39,9 @@ import com.tc.l2.state.ConsistencyManager.Transition;
 import com.tc.l2.state.ServerMode;
 import com.tc.net.NodeID;
 import com.tc.object.session.SessionID;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -90,16 +93,15 @@ public class ActiveToPassiveReplicationTest {
     when(activity.getActivityID()).thenReturn(SyncReplicationActivity.ActivityID.getNextID());
     replication.startPassiveSync(passive);
     ActivePassiveAckWaiter ack = replication.replicateActivity(activity, replication.passives());
-    Thread it = new Thread(()->{
+    Future<?> removal = Executors.newSingleThreadExecutor().submit(()->{
       try {
         TimeUnit.MILLISECONDS.sleep(100);
 // remove the passive that is about to be waited on
         replication.nodeLeft(passive);
       } catch (InterruptedException i) {
-        
+        throw new RuntimeException("node left failed", i);
       }
     });
-    it.start();
     ack.waitForCompleted();
     Assert.assertTrue(ack.isCompleted());
     // make sure adding more waiters don't include removed passive
@@ -109,6 +111,7 @@ public class ActiveToPassiveReplicationTest {
     ActivePassiveAckWaiter ack2 = replication.replicateActivity(nowait, replication.passives());
     Assert.assertTrue(ack2.isCompleted());
     replication.finishPassiveSync(10000);
+    removal.get();
     Assert.assertTrue(replication.getWaiters().isEmpty());
   }
 
