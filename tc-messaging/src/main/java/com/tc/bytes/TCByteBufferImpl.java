@@ -31,25 +31,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 // XXX: Should we wrap the native java.nio overflow, underflow and readOnly exceptions with the TC versions?
 // This would make the TCByteBuffer interface consistent w.r.t. exceptions (whilst being blind to JDK13 vs JDK14)
 public class TCByteBufferImpl implements TCByteBuffer {
+  private final TCByteBuffer        source;
   private final ByteBuffer          hiddenBuffer;
   private static final boolean ACCESS_CHECK = Boolean.getBoolean("buffer.access.check");
   private final AtomicBoolean lock =  ACCESS_CHECK ? new AtomicBoolean() : null;
   private final AtomicInteger references = ACCESS_CHECK ? new AtomicInteger() : null;
 
   TCByteBufferImpl(int capacity, boolean direct) {
-    if (direct) {
-      hiddenBuffer = ByteBuffer.allocateDirect(capacity);
-    } else {
-      hiddenBuffer = ByteBuffer.allocate(capacity);
-    }
+    this(null, direct ? ByteBuffer.allocateDirect(capacity) : ByteBuffer.allocate(capacity));
   }
 
-  private TCByteBufferImpl(ByteBuffer buf) {
+  private TCByteBufferImpl(TCByteBuffer src, ByteBuffer buf) {
+    source = src;
     hiddenBuffer = buf;
   }
 
   static TCByteBuffer wrap(byte[] data) {
-    return new TCByteBufferImpl(ByteBuffer.wrap(data));
+    return new TCByteBufferImpl(null, ByteBuffer.wrap(data));
   }
 
   protected ByteBuffer getBuffer() {
@@ -359,7 +357,7 @@ public class TCByteBufferImpl implements TCByteBuffer {
 
   @Override
   public TCByteBuffer duplicate() {
-    return new TCByteBufferImpl(accessBuffer().duplicate());
+    return new TCByteBufferImpl(this, accessBuffer().duplicate());
   }
 
   @Override
@@ -370,7 +368,7 @@ public class TCByteBufferImpl implements TCByteBuffer {
 
   @Override
   public TCByteBuffer slice() {
-    return new TCByteBufferImpl(accessBuffer().slice());
+    return new TCByteBufferImpl(this, accessBuffer().slice());
   }
 
   @Override
@@ -380,7 +378,7 @@ public class TCByteBufferImpl implements TCByteBuffer {
 
   @Override
   public TCByteBuffer asReadOnlyBuffer() {
-    return new TCByteBufferImpl(accessBuffer().asReadOnlyBuffer());
+    return new TCByteBufferImpl(this, accessBuffer().asReadOnlyBuffer());
   }
 
   @Override
