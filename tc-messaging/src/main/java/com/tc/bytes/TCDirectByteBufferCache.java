@@ -29,6 +29,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Stream;
 
 /**
  *
@@ -79,12 +80,12 @@ public class TCDirectByteBufferCache extends AbstractQueue<TCByteBuffer> {
 
   @Override
   public Iterator<TCByteBuffer> iterator() {
-    return localpool.iterator();
+    return Stream.concat(localpool.stream(), parent.stream()).iterator();
   }
 
   @Override
   public int size() {
-    return localpool.size();
+    return localpool.size() + parent.size();
   }
 
   @Override

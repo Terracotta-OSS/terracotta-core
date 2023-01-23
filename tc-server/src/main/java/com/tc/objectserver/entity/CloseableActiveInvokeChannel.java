@@ -55,8 +55,6 @@ public class CloseableActiveInvokeChannel<R extends EntityResponse> implements A
   public void close() {
     if (closed.attemptSet()) {
       delegate.close();
-    } else {
-      throw new IllegalStateException("already closed");
     }
   }
 }

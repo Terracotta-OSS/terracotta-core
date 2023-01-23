@@ -32,8 +32,6 @@ import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * @author teck
@@ -51,7 +49,6 @@ public abstract class TCActionImpl implements TCAction {
   private TCByteBufferOutputStream      out;
   private TCByteBufferInputStream       bbis;
   private int                           messageVersion;
-  private final List<Runnable>          callbacks = new LinkedList<>();
 
   /**
    * Creates a new TCMessage to write data into (ie. to send to the network)
@@ -112,10 +109,11 @@ public abstract class TCActionImpl implements TCAction {
 
   protected abstract void dehydrateValues();
 
-  public TCActionNetworkMessage convertToNetworkMessage() {
+  protected TCActionNetworkMessage convertToNetworkMessage() {
     TCActionNetworkMessage msg = new TCActionNetworkMessageImpl(new TCMessageHeaderImpl(type), ()->getDataBuffers());
-    msg.addCompleteCallback(this::notifyProcessedCallbacks);
-    msg.addCompleteCallback(out::reset);
+    if (this.isOutgoing) {
+      msg.addCompleteCallback(out::reset);
+    }
     return msg;
   }
 
@@ -151,7 +149,6 @@ public abstract class TCActionImpl implements TCAction {
       } finally {
         this.bbis.reset();
         this.bbis = null;
-        callbacks.forEach(Runnable::run);
       }
       monitor.newIncomingMessage(this);
     }
@@ -346,21 +343,6 @@ public abstract class TCActionImpl implements TCAction {
   @Override
   public NodeID getDestinationNodeID() {
     return isOutgoing ? channel.getRemoteNodeID() : channel.getLocalNodeID();
-  }
-
-  @Override
-  public void addProcessedCallback(Runnable r) {
-    if (processed.isSet()) {
-      r.run();
-    } else {
-      callbacks.add(r);
-    }
-  }
-
-  private void notifyProcessedCallbacks() {
-    if (processed.attemptSet()) {
-      callbacks.forEach(Runnable::run);
-    }
   }
 
   @Override

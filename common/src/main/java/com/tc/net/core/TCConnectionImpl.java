@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCDirectByteBufferCache;
-import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCDirectByteBufferOutputStream;
 import com.tc.net.core.event.TCConnectionEventCaller;
@@ -875,25 +874,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
       this.eventCaller.fireErrorEvent(this.eventListeners, this, ioe, null);
     }
-  }
-
-  public static TCByteBuffer[] packupMessage(TCByteBuffer[] sourceMessageByteBuffers) {
-    int len = 0;
-    for (TCByteBuffer sourceMessageByteBuffer : sourceMessageByteBuffers) {
-      len += sourceMessageByteBuffer.remaining();
-    }
-
-    TCByteBufferOutput dest = new TCByteBufferOutputStream();
-    dest.write(sourceMessageByteBuffers);
-    dest.close();
-    TCByteBuffer[] packedUpMessageByteBuffers = dest.toArray();
-    int available = 0;
-    for (TCByteBuffer bufs : packedUpMessageByteBuffers) {
-      available += bufs.remaining();
-    }
-    Assert.assertEquals("Comms Write: packed-up message length is different from original. ", len, available);
-
-    return packedUpMessageByteBuffers;
   }
 
   @Override

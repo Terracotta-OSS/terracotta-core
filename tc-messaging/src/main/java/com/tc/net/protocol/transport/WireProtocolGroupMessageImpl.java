@@ -56,7 +56,6 @@ import com.tc.net.protocol.TCNetworkMessageImpl;
 import com.tc.net.protocol.TCProtocolException;
 import com.tc.net.protocol.tcm.TCActionNetworkMessage;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -173,7 +172,9 @@ public class WireProtocolGroupMessageImpl extends TCNetworkMessageImpl implement
 
   @Override
   public void complete() {
-    this.messagePayloads.iterator().forEachRemaining(TCNetworkMessage::complete);
+    if (this.messagePayloads != null) {
+      this.messagePayloads.iterator().forEachRemaining(TCNetworkMessage::complete);
+    }
     super.complete();
   }
 

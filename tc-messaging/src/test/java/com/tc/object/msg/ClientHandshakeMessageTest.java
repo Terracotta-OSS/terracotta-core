@@ -63,7 +63,7 @@ public class ClientHandshakeMessageTest {
     Assert.assertNotEquals(ref1, ref2);
     msg.addReconnectReference(ref1);
     msg.addReconnectReference(ref2);
-    TCActionNetworkMessage nmsg = msg.convertToNetworkMessage();
+    TCActionNetworkMessage nmsg = msg.getNetworkMessage();
     nmsg.load();
     
     ClientHandshakeMessageImpl msg2 = new ClientHandshakeMessageImpl(SessionID.NULL_ID, mock(MessageMonitor.class), channel,
