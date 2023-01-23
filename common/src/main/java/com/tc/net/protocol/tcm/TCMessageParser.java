@@ -69,7 +69,6 @@ class TCMessageParser {
     }
 
     TCAction converted = factory.createMessage(source, type, hdr, new TCByteBufferInputStream(msgData));
-    converted.addProcessedCallback(msg::complete);
     
     return converted;
   }

@@ -26,6 +26,7 @@ import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
+import com.tc.net.protocol.tcm.TCActionNetworkMessage;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.EntityDescriptor;
@@ -241,5 +242,9 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   @Override
   public String toString() {
     return "NetworkVoltronEntityMessageImpl{" + "clientID=" + clientID + ", transactionID=" + transactionID + ", eid=" + eid + '}';
+  }
+  // for tests
+  TCActionNetworkMessage getNetworkMessage() {
+    return convertToNetworkMessage();
   }
 }

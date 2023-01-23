@@ -222,7 +222,7 @@ public class TCConnectionTransportTest extends TestCase {
   }
 
   private TCNetworkMessage getDSOMessage(MessageMonitor monitor, TCByteBuffer[] bufs) {
-    TCActionNetworkMessage nmsg = new MyMessage(monitor, seq.getNextSequence(), bufs).convertToNetworkMessage();
+    TCActionNetworkMessage nmsg = new MyMessage(monitor, seq.getNextSequence(), bufs).getNetworkMessage();
     return nmsg;
   }
 
@@ -243,6 +243,10 @@ public class TCConnectionTransportTest extends TestCase {
       Objects.requireNonNull(bufs);
       this.seqID = nextSequence;
       this.data = bufs;
+    }
+    
+    private TCActionNetworkMessage getNetworkMessage() {
+      return convertToNetworkMessage();
     }
 
     @Override

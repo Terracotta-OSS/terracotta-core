@@ -67,7 +67,7 @@ public class NetworkVoltronEntityMessageImplTest {
     TransactionID oldestTransactionPending = new TransactionID(1);
     message.setContents(clientID, transactionID, EntityID.NULL_ID, entityDescriptor, messageType, 
             requiresReplication, extendedData, oldestTransactionPending, EnumSet.of(Acks.RECEIVED));
-    TCActionNetworkMessage msg = message.convertToNetworkMessage();
+    TCActionNetworkMessage msg = message.getNetworkMessage();
 
     TCMessageHeader header = (TCMessageHeader) msg.getHeader();
     msg.load();

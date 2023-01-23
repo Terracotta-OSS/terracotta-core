@@ -119,17 +119,14 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     NetworkLayer receiver = this.getReceiveLayer();
     if (receiver == null) {
       disconnect();
-      message.complete();
       return;
     } else if (message.getMessageProtocol() == WireProtocolHeader.PROTOCOL_TRANSPORT_HANDSHAKE) {
       // message is printed for debugging
-      message.complete();
       getLogger().info(message.toString());
       // runtime exception disconnects the client, errors kill the server
       throw new RuntimeException("Wrong handshake message from: " + message.getSource());
     } else if (message.getMessageProtocol() == WireProtocolHeader.PROTOCOL_HEALTHCHECK_PROBES) {
       if (this.healthCheckerContext.receiveProbe((HealthCheckerProbeMessage) message)) {
-        message.complete();
         return;
       } else {
       // runtime exception disconnects the client, errors kill the server

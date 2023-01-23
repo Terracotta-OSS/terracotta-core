@@ -22,6 +22,8 @@ import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
+import com.tc.net.protocol.tcm.NetworkRecall;
+import com.tc.net.protocol.tcm.TCActionNetworkMessage;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.DSOMessageBase;
@@ -35,7 +37,8 @@ import java.lang.reflect.InvocationTargetException;
  */
 public class TCGroupMessageWrapper extends DSOMessageBase {
   private final static byte GROUP_MESSAGE_ID = 1;
-  private AbstractGroupMessage      message;
+  private AbstractGroupMessage message;
+  private Runnable sentCallback;
 
   public TCGroupMessageWrapper(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                MessageChannel channel, TCMessageType type) {
@@ -78,4 +81,20 @@ public class TCGroupMessageWrapper extends DSOMessageBase {
         return false;
     }
   }
+  
+  public NetworkRecall send(Runnable callback) {
+    sentCallback = callback;
+    return super.send();
+  }
+
+  @Override
+  public TCActionNetworkMessage convertToNetworkMessage() {
+    TCActionNetworkMessage msg = super.convertToNetworkMessage();
+    if (sentCallback != null) {
+      msg.addCompleteCallback(sentCallback);
+    }
+    return msg;
+  }
+  
+  
 }

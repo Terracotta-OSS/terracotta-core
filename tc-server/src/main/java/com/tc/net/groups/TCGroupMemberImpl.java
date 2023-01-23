@@ -88,10 +88,7 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
   private void sendMessage(AbstractGroupMessage msg, Runnable sentCallback) throws GroupException {
     TCGroupMessageWrapper wrapper = (TCGroupMessageWrapper) channel.createMessage(TCMessageType.GROUP_WRAPPER_MESSAGE);
     wrapper.setGroupMessage(msg);
-    if (null != sentCallback) {
-      wrapper.addProcessedCallback(sentCallback);
-    }
-    if (wrapper.send() == null) {
+    if (wrapper.send(sentCallback) == null) {
       throw new GroupException("message not sent:" + msg);
     }
   }

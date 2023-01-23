@@ -409,7 +409,6 @@ public class BasicConnection implements TCConnection {
       } 
     }
     
-    message.complete();
     return null;
   }
 

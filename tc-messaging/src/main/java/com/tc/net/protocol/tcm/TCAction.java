@@ -55,10 +55,4 @@ public interface TCAction {
   default int getMessageLength() {
     return 0;
   }
-
-//  public int getTotalLength();
-
-  default void addProcessedCallback(Runnable r) {
-    
-  }
 }

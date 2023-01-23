@@ -57,21 +57,25 @@ public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implement
       throw e;
     }
     if (msg != null) {
-      init();
-      if (logger.isDebugEnabled()) {
-        logger.debug("\nRECEIVE\n" + msg.toString());
-      }
-      if (msg.getWireProtocolHeader().isMessagesGrouped()) {
-        WireProtocolGroupMessage wpmg = (WireProtocolGroupMessage) msg;
-        int msgCount = wpmg.getWireProtocolHeader().getMessageCount();
-        Assert.eval(msgCount > 1);
-
-        for (Iterator<TCNetworkMessage> i = wpmg.getMessageIterator(); i.hasNext();) {
-          WireProtocolMessage wpm = (WireProtocolMessage) i.next();
-          sink.putMessage(wpm);
+      try {
+        init();
+        if (logger.isDebugEnabled()) {
+          logger.debug("\nRECEIVE\n" + msg.toString());
         }
-      } else {
-        sink.putMessage(msg);
+        if (msg.getWireProtocolHeader().isMessagesGrouped()) {
+          WireProtocolGroupMessage wpmg = (WireProtocolGroupMessage) msg;
+          int msgCount = wpmg.getWireProtocolHeader().getMessageCount();
+          Assert.eval(msgCount > 1);
+
+          for (Iterator<TCNetworkMessage> i = wpmg.getMessageIterator(); i.hasNext();) {
+            WireProtocolMessage wpm = (WireProtocolMessage) i.next();
+            sink.putMessage(wpm);
+          }
+        } else {
+          sink.putMessage(msg);
+        }
+      } finally {
+        msg.complete();
       }
     }
   }

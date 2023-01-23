@@ -84,9 +84,4 @@ public class TestTCMessage implements TCAction {
   public NodeID getDestinationNodeID() {
     throw new UnsupportedOperationException();
   }
-
-  @Override
-  public void addProcessedCallback(Runnable r) {
-    throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-  }
 }
