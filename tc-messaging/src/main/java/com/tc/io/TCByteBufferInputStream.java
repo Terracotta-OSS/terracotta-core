@@ -271,18 +271,6 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     if (len == 0) { return TCByteBufferFactory.getInstance(0); }
 
     if (available() == 0) { return TCByteBufferFactory.getInstance(0); }
-    // optimization to use current buffer if possible
-    if (len <= this.data[this.index].remaining()) {
-      TCByteBuffer target = this.data[this.index];
-      // position to the number of bytes about to read
-      target.position(target.position() + len);
-      // flip to position zero and set limit to current position
-      target = target.asReadOnlyBuffer().flip();
-      // position to the proper starting location, slice for completness
-      target.position(target.remaining() - len);
-
-      return target.slice();
-    }
 
     TCByteBuffer result = TCByteBufferFactory.getInstance(len);
     while (this.index < this.numBufs) {
