@@ -18,6 +18,7 @@
  */
 package org.terracotta.testing.rules;
 
+import java.net.InetSocketAddress;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.terracotta.connection.Connection;
@@ -29,8 +30,8 @@ import org.terracotta.connection.entity.EntityRef;
 
 import java.net.URI;
 import java.util.Properties;
-import java.util.concurrent.TimeoutException;
 import org.terracotta.connection.Diagnostics;
+import org.terracotta.connection.DiagnosticsFactory;
 
 
 public class DynamicPassiveRemovalIT {
@@ -79,14 +80,14 @@ public class DynamicPassiveRemovalIT {
     for (String hostPort: hostPorts) {
       Properties properties = new Properties();
       properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "10000");
-      try (Connection connection = ConnectionFactory.connect(URI.create( "diagnostic://" + hostPort), properties)) {
+      String[] split = hostPort.split(":");
+      try (Diagnostics connection = DiagnosticsFactory.connect(InetSocketAddress.createUnresolved(split[0], Integer.parseInt(split[1])), properties)) {
+        System.out.println(hostPort + " -- " + connection.getState());
       } catch (ConnectionException exception) {
-        if (exception.getCause() instanceof TimeoutException) {
-          return hostPort;
-        }
+        return hostPort;
       }
     }
-
+    
     return null;
   }
 }
