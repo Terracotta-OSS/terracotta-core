@@ -32,7 +32,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
   private static final int            EOF                     = -1;
   private static final TCByteBuffer[] EMPTY_BYTE_BUFFER_ARRAY = new TCByteBuffer[] {};
 
-  private final Queue<TCByteBuffer>   returns;
+  private final Runnable   onCloseHook;
 
   private final TCByteBuffer[]              data;
   private int                         totalLength;
@@ -49,8 +49,8 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
   public TCByteBufferInputStream(TCByteBuffer data) {
     this(new TCByteBuffer[] { data });
   }
-
-  public TCByteBufferInputStream(TCByteBuffer[] data, Queue<TCByteBuffer> returns) {
+  
+  public TCByteBufferInputStream(TCByteBuffer[] data, Runnable onClose) {
     if (data == null) { throw new NullPointerException(); }
 
     long length = 0;
@@ -70,11 +70,21 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     this.numBufs = this.data.length;
     this.totalLength = (int) length;
 
-    this.returns = returns;
+    this.onCloseHook = onClose;
+  }
+
+  public TCByteBufferInputStream(TCByteBuffer[] data, Queue<TCByteBuffer> returns) {
+    this(data, () -> {
+      if (returns != null) {
+        for (TCByteBuffer buf : data) {
+          returns.offer(buf.reInit());
+        }
+      }
+    });
   }
 
   public TCByteBufferInputStream(TCByteBuffer[] data) {
-    this(data, null);
+    this(data, ()->{});
   }
 
   private TCByteBufferInputStream(TCByteBuffer[] sourceData, int dupeLength, int sourceIndex, boolean duplicate) {
@@ -97,7 +107,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     this.totalLength = dupeLength;
     this.position = 0;
     this.index = 0;
-    this.returns = null;
+    this.onCloseHook = ()->{};
   }
 
   /**
@@ -201,13 +211,8 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
   public void close() {
     if (!this.closed) {
       this.closed = true;
+      this.onCloseHook.run();
     }
-  }
-
-  @SuppressWarnings("sync-override")
-  @Override
-  public void mark(int readlimit) {
-    throw new UnsupportedOperationException();
   }
 
   // XXX: This is a TC special version of mark() to be used in conjunction with tcReset()...We should eventually
@@ -218,11 +223,6 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     checkClosed();
     this.marked = true;
     return new TCMark(this, this.index, this.data[this.index].position(), this.position);
-  }
-
-  @Override
-  public boolean markSupported() {
-    return false;
   }
 
   @Override
@@ -313,16 +313,6 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     }
     this.index++;
   }
-
-  @Override
-  public void reset() {
-    if (returns != null) {
-      for (TCByteBuffer buf : data) {
-        returns.offer(buf.reInit());
-      }
-    }
-  }
-
   /**
    * Reset this input stream to the position recorded by the mark that is passed an input parameter.
    * 

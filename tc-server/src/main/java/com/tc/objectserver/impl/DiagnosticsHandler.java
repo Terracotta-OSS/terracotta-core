@@ -71,6 +71,7 @@ public class DiagnosticsHandler extends AbstractEventHandler<TCAction> {
       message.hydrate();
     } catch (Exception e) {
       logger.warn("trouble with diagnostics", e);
+      return;
     }
     DiagnosticMessage msg = (DiagnosticMessage)message;
     TCByteBuffer data = msg.getExtendedData();

@@ -147,7 +147,7 @@ public abstract class TCActionImpl implements TCAction {
           }
         }
       } finally {
-        this.bbis.reset();
+        this.bbis.close();
         this.bbis = null;
       }
       monitor.newIncomingMessage(this);
