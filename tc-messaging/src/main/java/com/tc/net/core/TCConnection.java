@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Map;
+import java.util.concurrent.Future;
 
 /**
  * Common interface for TC network connections
@@ -69,14 +70,14 @@ public interface TCConnection extends NetworkMessageSink {
   /**
    * Close this connection. The actual close happens asynchronously to this call.
    */
-  public void asynchClose();
+  public Future<Void> asynchClose();
 
   /**
    * Close this connection, blocking for at most the given timeout value
    * 
    * @return true/false whether the connection closed in time
    */
-  public boolean close(long timeout);
+  public void close();
 
   /**
    * Connect synchronously to a given destination. If this call fails, connect called be called again. However once a

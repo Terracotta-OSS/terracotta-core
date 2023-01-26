@@ -72,21 +72,21 @@ public class TCConnectionManagerTest extends TestCase {
 
     assertTrue(Arrays.asList(conns).containsAll(Arrays.asList(new Object[] { conn1, conn2, conn3 })));
 
-    clientConnMgr.closeAllConnections(5000);
+    clientConnMgr.closeAllConnections();
 
     assertEquals(0, clientConnMgr.getAllConnections().length);
 
     conn1 = clientConnMgr.createConnection(new NullProtocolAdaptor());
     assertEquals(1, clientConnMgr.getAllConnections().length);
 
-    conn1.close(5000);
+    conn1.close();
     assertEquals(0, clientConnMgr.getAllConnections().length);
 
     conn1 = clientConnMgr.createConnection(new NullProtocolAdaptor());
     assertEquals(1, clientConnMgr.getAllConnections().length);
     conn1.connect(lsnr.getBindSocketAddress(), 3000);
     assertEquals(1, clientConnMgr.getAllConnections().length);
-    conn1.close(5000);
+    conn1.close();
     assertEquals(0, clientConnMgr.getAllConnections().length);
   }
 
@@ -149,7 +149,7 @@ public class TCConnectionManagerTest extends TestCase {
       ThreadUtil.reallySleep(500);
     }
 
-    clientConnMgr.closeAllConnections(5000);
+    clientConnMgr.closeAllConnections();
     assertEquals(0, clientConnMgr.getAllConnections().length);
 
     while (serverConnMgr.getAllConnections().length > 0) {
@@ -191,9 +191,9 @@ public class TCConnectionManagerTest extends TestCase {
     assertEquals(2, activeConns.length);
     assertTrue(Arrays.asList(activeConns).containsAll(Arrays.asList(new Object[] { conn1, conn2 })));
 
-    conn1.close(5000);
-    conn2.close(5000);
-
+    conn1.close();
+    conn2.close();
+    
     assertEquals(0, clientConnMgr.getAllConnections().length);
 
     while (serverConnMgr.getAllConnections().length > 0) {

@@ -103,7 +103,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
   protected void tearDown() throws Exception {
     super.tearDown();
     try {
-      clientComms.getConnectionManager().closeAllConnections(5000);
+      clientComms.getConnectionManager().closeAllConnections();
 
       for (int i = 0; i < 30; i++) {
         if (channelManager.getChannels().length == 0) {

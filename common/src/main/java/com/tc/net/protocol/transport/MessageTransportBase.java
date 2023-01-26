@@ -342,7 +342,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   protected void clearConnection() {
     TCConnection conn;
     if ((conn = getConnection()) != null) {
-      conn.close(10000);
+      conn.close();
       conn.removeListener(this);
       this.connection = null;
       resetIfNotEnd();

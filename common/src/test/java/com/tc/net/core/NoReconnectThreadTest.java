@@ -144,7 +144,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
 
           // closing all connections from server side
           System.err.println("XXX closing all client connections");
-          serverCommsMgr.getConnectionManager().closeAllConnections(1000);
+          serverCommsMgr.getConnectionManager().closeAllConnections();
 
           while (connections.get() != 0) {
             ThreadUtil.reallySleep(2000);

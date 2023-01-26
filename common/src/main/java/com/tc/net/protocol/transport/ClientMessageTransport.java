@@ -140,7 +140,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     } catch (CommStackMismatchException | IOException | MaxConnectionsExceededException | TCTimeoutException | RuntimeException e) {
       finishOpenWithException(e);
       if (connection != null) {
-        connection.close(1000);
+        connection.close();
       }
       throw e;
     }
@@ -162,10 +162,10 @@ public class ClientMessageTransport extends MessageTransportBase {
     try {
       connection.connect(sa, this.timeout);
     } catch (IOException e) {
-      connection.close(100);
+      connection.close();
       throw e;
     } catch (TCTimeoutException e) {
-      connection.close(100);
+      connection.close();
       throw e;
     }
     return connection;

@@ -66,7 +66,7 @@ public interface TCConnectionManager extends PrettyPrintable {
    */
   public void asynchCloseAllConnections();
 
-  public void closeAllConnections(long timeout);
+  public void closeAllConnections();
 
   /**
    * Close all listeners created through this connection manager instance

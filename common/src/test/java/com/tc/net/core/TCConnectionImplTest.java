@@ -48,6 +48,7 @@ import java.net.InetSocketAddress;
 import java.nio.channels.GatheringByteChannel;
 import java.nio.channels.SelectableChannel;
 import static junit.framework.TestCase.assertTrue;
+import static org.mockito.Mockito.doAnswer;
 
 /**
  *
@@ -148,6 +149,10 @@ public class TCConnectionImplTest {
         TCProtocolAdaptor adaptor = mock(TCProtocolAdaptor.class);
         TCConnectionManagerImpl mgr = new TCConnectionManagerImpl();
         final CoreNIOServices nioServiceThread = mock(CoreNIOServices.class);
+        doAnswer(a->{
+          ((Runnable)a.getArgument(1)).run();
+          return null;
+        }).when(nioServiceThread).cleanupChannel(any(SocketChannel.class), any(Runnable.class));
         SocketParams socketParams = new SocketParams();
         BufferManagerFactory bufferManagerFactory = mock(BufferManagerFactory.class);
 
@@ -168,7 +173,7 @@ public class TCConnectionImplTest {
         InetSocketAddress addr = new InetSocketAddress("localhost", port);
         conn.connect(addr, 0);
 
-        conn.close(100);
+        conn.close();
 
         verify(bufferManager).close();
       }
@@ -325,6 +330,6 @@ public class TCConnectionImplTest {
     } catch (InterruptedException ie) {
       ie.printStackTrace();
     }
-    conn.close(100);
+    conn.close();
   }
 }

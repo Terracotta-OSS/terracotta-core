@@ -873,7 +873,7 @@ public class DistributedObjectServer {
       this.l2Coordinator.shutdown();
       this.groupCommManager.shutdown();
       this.communicationsManager.shutdown();
-      this.communicationsManager.getConnectionManager().closeAllConnections(6000);
+      this.communicationsManager.getConnectionManager().closeAllConnections();
       this.persistor.shutdown();
       this.context.shutdown();
       this.entityManager.shutdown();

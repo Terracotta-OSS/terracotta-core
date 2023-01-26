@@ -18,7 +18,6 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCListener;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;

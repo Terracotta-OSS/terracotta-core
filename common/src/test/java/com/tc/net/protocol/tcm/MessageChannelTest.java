@@ -402,8 +402,8 @@ try {
     int port = lsnr.getBindPort();
 
     lsnr.stop(WAIT);
-    serverComms.getConnectionManager().closeAllConnections(WAIT);
-    clientComms.getConnectionManager().closeAllConnections(WAIT);
+    serverComms.getConnectionManager().closeAllConnections();
+    clientComms.getConnectionManager().closeAllConnections();
 
     for (int i = 0; i < 10; i++) {
       try {
@@ -447,7 +447,7 @@ try {
     clientChannel.open(serverAddress);
     assertEquals(1, clientChannel.getConnectAttemptCount());
     assertEquals(1, clientChannel.getConnectCount());
-    clientComms.getConnectionManager().closeAllConnections(WAIT);
+    clientComms.getConnectionManager().closeAllConnections();
     ThreadUtil.reallySleep(5000);
     assertEquals(1, clientChannel.getConnectAttemptCount());
     assertEquals(1, clientChannel.getConnectCount());
@@ -467,7 +467,7 @@ try {
     lsnr.stop(WAIT);
     assertEquals(0, serverComms.getAllListeners().length);
 
-    clientComms.getConnectionManager().closeAllConnections(5000);
+    clientComms.getConnectionManager().closeAllConnections();
     int count = clientChannel.getConnectAttemptCount();
     ThreadUtil.reallySleep(WAIT * 4);
     assertTrue(clientChannel.getConnectAttemptCount() + " vs " + count, clientChannel.getConnectAttemptCount() > count);
@@ -600,10 +600,10 @@ try {
             try {
               if (serverClose) {
                 logger.info("Initiating close on the SERVER side...");
-                serverComms.getConnectionManager().asynchCloseAllConnections();
+                serverComms.getConnectionManager().closeAllConnections();
               } else {
                 logger.info("Initiating close on the CLIENT side...");
-                clientComms.getConnectionManager().asynchCloseAllConnections();
+                clientComms.getConnectionManager().closeAllConnections();
               }
             } catch (Throwable t) {
               setError(t);
