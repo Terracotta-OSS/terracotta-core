@@ -103,7 +103,7 @@ public class TCThreadGroup extends ThreadGroup {
       }
     }
     if (complete) {
-      LOGGER.info("finished thread exiting in {} seconds", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - killStart));
+      LOGGER.debug("finished thread exiting in {} seconds", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - killStart));
     }
     return complete;
   }
