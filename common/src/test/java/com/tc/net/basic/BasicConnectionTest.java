@@ -102,7 +102,7 @@ public class BasicConnectionTest {
         assertEquals(expResult, instance.getConnectTime());
         instance.connect(new InetSocketAddress(server.getLocalPort()), 0);
         assertNotEquals(expResult, instance.getConnectTime());
-        instance.close(0);
+        instance.close();
       }
     }
   }
@@ -131,7 +131,7 @@ public class BasicConnectionTest {
         when(msg.getEntireMessageData()).thenReturn(new TCByteBuffer[] { mock(TCByteBuffer.class) });
         instance.putMessage(msg);
         assertTrue(idleTime > instance.getIdleTime());
-        instance.close(0);
+        instance.close();
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -155,7 +155,7 @@ public class BasicConnectionTest {
         long idleTime = instance.getIdleTime();
         Thread.sleep(1000);
         assertNotEquals(idleTime, instance.getIdleTime());
-        instance.close(0);
+        instance.close();
       }
     }
   }
@@ -176,7 +176,7 @@ public class BasicConnectionTest {
         TCConnectionEventListener listener = mock(TCConnectionEventListener.class);
         instance.addListener(listener);
         instance.connect(new InetSocketAddress(server.getLocalPort()), 0);
-        instance.close(0);
+        instance.close();
         verify(listener).closeEvent(any(TCConnectionEvent.class));
         verify(listener).connectEvent(any(TCConnectionEvent.class));
       }

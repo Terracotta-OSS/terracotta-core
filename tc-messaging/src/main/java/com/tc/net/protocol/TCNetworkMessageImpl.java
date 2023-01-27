@@ -26,8 +26,7 @@ import com.tc.exception.TCInternalError;
 import com.tc.util.Assert;
 import com.tc.util.HexDump;
 import com.tc.util.concurrent.SetOnceFlag;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Base class for network messages
@@ -209,22 +208,21 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
 
   private void fireCallbacks() {
     if (callbackFired.attemptSet()) {
-      try {
-        callbacks.forEach(Runnable::run);
-      } catch (Exception e) {
-        logger.error("Caught exception running sent callback", e);
-      }
+      complete.complete(null);
     }
   }
 
   @Override
   public void addCompleteCallback(Runnable r) {
-    if (callbackFired.isSet()) {
-      r.run();
-    } else {
-      callbacks.add(r);
-    }
+    complete.thenRun(r);
   }
+
+  @Override
+  public Runnable stealCompleteAction() {
+    callbackFired.set(); // will throw if already set which is an assertion
+    return ()->complete.complete(null);
+  }
+  
   private void checkSealed() {
     // this check is not thread safe
     if (payloadData == null) throw new IllegalStateException("Message is not sealed");
@@ -238,5 +236,5 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   private int                         totalLength;
   private int                         dataLength;
   private int                         headerLength;
-  private final List<Runnable>        callbacks       = new LinkedList<>();
+  private final CompletableFuture<Void>       complete = new CompletableFuture<>();
 }

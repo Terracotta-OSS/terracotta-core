@@ -45,8 +45,6 @@ public interface TCByteBufferInput extends TCDataInput {
 
   public void close();
 
-  public void mark(int readlimit);
-
   /**
    * This is a TC special version of mark() to be used in conjunction with tcReset()...We should eventually implement
    * the general purpose mark(int) method as specified by InputStream. NOTE: It has some unusual semantics that make it
@@ -61,8 +59,6 @@ public interface TCByteBufferInput extends TCDataInput {
   public TCByteBuffer read(int len);
 
   public int read();
-
-  public void reset();
 
   /**
    * Reset this input stream to the position recorded by the mark that is passed an input parameter.

@@ -44,6 +44,7 @@ import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
+import java.util.concurrent.Future;
 
 /**
  * The {@link TCConnectionManager} implementation.
@@ -176,25 +177,24 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   }
 
   @Override
-  public void closeAllConnections(long timeout) {
-    closeAllConnections(false, timeout);
+  public void closeAllConnections() {
+    closeAllConnections(false);
   }
-
+  
   @Override
   public void asynchCloseAllConnections() {
-    closeAllConnections(true, 0);
+    closeAllConnections(true);
   }
 
-  private void closeAllConnections(boolean async, long timeout) {
+  private void closeAllConnections(boolean async) {
     TCConnection[] conns = getAllConnections();
 
     logger.info("closing {} connection/s for {}", conns.length, this.comm.toString());
     for (TCConnection conn : conns) {
       try {
-        if (async) {
-          conn.asynchClose();
-        } else {
-          conn.close(timeout);
+        Future<Void> c = conn.asynchClose();
+        if (!async) {
+          c.get();
         }
       } catch (Exception e) {
         logger.error("Exception trying to close " + conn, e);

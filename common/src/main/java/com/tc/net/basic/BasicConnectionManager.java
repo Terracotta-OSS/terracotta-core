@@ -70,15 +70,15 @@ public class BasicConnectionManager implements TCConnectionManager {
   }
 
   @Override
-  public void asynchCloseAllConnections() {
-    new Thread(()->closeAllConnections(1000)).start();
+  public void closeAllConnections() {
+    Arrays.asList(getAllConnections()).forEach(c->c.close());
   }
 
   @Override
-  public void closeAllConnections(long timeout) {
-    Arrays.asList(getAllConnections()).forEach(c->c.close(timeout));
+  public void asynchCloseAllConnections() {
+    Arrays.asList(getAllConnections()).forEach(c->c.asynchClose());
   }
-
+  
   @Override
   public void closeAllListeners() {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
@@ -86,7 +86,7 @@ public class BasicConnectionManager implements TCConnectionManager {
 
   @Override
   public void shutdown() {
-    closeAllConnections(1000);
+    asynchCloseAllConnections();
   }
 
   @Override

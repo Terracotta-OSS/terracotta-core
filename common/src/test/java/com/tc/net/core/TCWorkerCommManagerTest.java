@@ -203,7 +203,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     Assert.assertEquals(1, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1));
     Assert.assertEquals(1, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2));
 
-    commsMgr.getConnectionManager().closeAllConnections(1000);
+    commsMgr.getConnectionManager().closeAllConnections();
 
     waitForWeight(commsMgr, 0, 0);
     waitForWeight(commsMgr, 1, 0);
@@ -401,7 +401,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
             // case 4: closing all connections from server side
             System.out.println("XXX closing all client connections");
-            commsMgr.getConnectionManager().closeAllConnections(5000);
+            commsMgr.getConnectionManager().closeAllConnections();
 
             // all clients should reconnect and should be distributed fairly among the worker comms.
 

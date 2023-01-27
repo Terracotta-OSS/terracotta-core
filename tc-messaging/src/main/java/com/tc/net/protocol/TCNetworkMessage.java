@@ -40,4 +40,6 @@ public interface TCNetworkMessage {
   public void complete();
 
   void addCompleteCallback(Runnable r);
+  
+  Runnable stealCompleteAction();
 }

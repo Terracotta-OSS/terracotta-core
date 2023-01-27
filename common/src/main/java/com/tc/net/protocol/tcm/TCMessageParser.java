@@ -67,8 +67,8 @@ class TCMessageParser {
     if (type == null) {
       throw new RuntimeException("Can't find message type for type: " + msgType);
     }
-
-    TCAction converted = factory.createMessage(source, type, hdr, new TCByteBufferInputStream(msgData));
+    
+    TCAction converted = factory.createMessage(source, type, hdr, new TCByteBufferInputStream(msgData, msg.stealCompleteAction()));
     
     return converted;
   }

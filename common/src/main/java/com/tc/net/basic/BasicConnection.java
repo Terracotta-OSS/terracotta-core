@@ -37,7 +37,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.TCProtocolException;
 import com.tc.net.protocol.tcm.TCActionNetworkMessage;
@@ -51,9 +50,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,17 +109,18 @@ public class BasicConnection implements TCConnection {
             while (sent < totalLen) {
               sent += buffer.sendFromBuffer();
             }
-            message.complete();
             if (interrupted) {
               Thread.currentThread().interrupt();
             }
           }
         } catch (IOException ioe) {
           fireError(ioe, message);
-          close(0);
+          close();
         } catch (Exception t) {
           fireError(t, message);
-          close(0);
+          close();
+        } finally {
+          message.complete();
         }
       }
     };
@@ -159,12 +162,19 @@ public class BasicConnection implements TCConnection {
   }
 
   @Override
-  public void asynchClose() {
-    close(1000);
+  public void close() {
+    try {
+      asynchClose().get();
+    } catch (ExecutionException e) {
+      LOGGER.warn("close failed", e);
+    } catch (InterruptedException e) {
+      LOGGER.warn("close failed", e);
+      Thread.currentThread().interrupt();
+    }
   }
 
   @Override
-  public boolean close(long timeout) {
+  public Future<Void> asynchClose() {
     try {
       this.closeRunnable.accept(this);
       shutdownBuffer();
@@ -176,8 +186,7 @@ public class BasicConnection implements TCConnection {
         close(src);
         LOGGER.debug("CLOSING {} channel {} isConnected: {} isConnectionPending: {}", System.identityHashCode(this), channel, channel.isConnected(), channel.isConnectionPending());
       }
-      shutdownAndAwaitTermination(timeout);
-      return true;
+      return shutdownAndAwaitTermination();
     } finally {
       this.established = false;
       this.connected = false;
@@ -214,20 +223,43 @@ public class BasicConnection implements TCConnection {
     return false;
   }
     
-  private boolean shutdownAndAwaitTermination(long time) {
+  private Future<Void> shutdownAndAwaitTermination() {
     ExecutorService reader = readerExec;
     if (reader != null) {
       reader.shutdownNow();
-      if (time != 0) {
-        try {
-          return reader.awaitTermination(time, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException ie) {
-          LOGGER.warn(System.identityHashCode(this) + " interrupted waiting for termination", ie);
-        }
-      }
-      return reader.isTerminated();
     }
-    return true;
+    return new Future<Void>() {
+      @Override
+      public boolean cancel(boolean mayInterruptIfRunning) {
+        return false;
+      }
+
+      @Override
+      public boolean isCancelled() {
+        return false;
+      }
+
+      @Override
+      public boolean isDone() {
+        return reader == null || reader.isTerminated();
+      }
+
+      @Override
+      public Void get() throws InterruptedException, ExecutionException {
+        if (reader != null) {
+          reader.awaitTermination(0, TimeUnit.DAYS);
+        }
+        return null;
+      }
+
+      @Override
+      public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+        if (reader != null) {
+          reader.awaitTermination(timeout, unit);
+        }
+        return null;
+      } 
+    };
   }
 
   private synchronized List<TCConnectionEventListener> getListeners() {
@@ -378,14 +410,14 @@ public class BasicConnection implements TCConnection {
         } catch (EOFException eof) {
           if (!isClosed()) {
             fireEOF();
-            close(0);
+            close();
           }
           exiting = true;
         } catch (TCProtocolException | IOException ioe) {
           if (!isClosed()) {
             fireError(ioe, null);
             LOGGER.debug("error reading from connection", ioe);
-            close(0);
+            close();
           }
           exiting = true;
         }

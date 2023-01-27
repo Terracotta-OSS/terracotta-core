@@ -56,8 +56,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
@@ -67,6 +65,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import com.tc.net.protocol.tcm.TCActionNetworkMessage;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -197,7 +198,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     this.commWorker = worker;
   }
 
-  private void closeImpl(Runnable callback) {
+  private Future<Void> closeImpl(Runnable callback) {
     Assert.assertTrue(this.closed.isSet());
     this.transportEstablished.set(false);
     try {
@@ -211,9 +212,19 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     }
     try {
       if (this.channel != null) {
-        this.commWorker.cleanupChannel(this.channel, callback);
+        CompletableFuture<Void> complete = new CompletableFuture<>();
+        this.commWorker.cleanupChannel(this.channel, ()->{
+          try {
+            callback.run();
+            complete.complete(null);
+          } catch (Exception e) {
+            complete.completeExceptionally(e);
+          }
+        });
+        return complete;
       } else {
         callback.run();
+        return CompletableFuture.completedFuture(null);
       }
     } finally {
       this.writeMessages.clear();
@@ -557,36 +568,30 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       this.commWorker.requestWriteInterest(this, this.channel);
     }
   }
+  
+  @Override
+  public void close() {
+    try {
+      asynchClose().get();
+    } catch (ExecutionException exception) {
+      logger.warn("error closing connection", exception);
+    } catch(InterruptedException exception) {
+      logger.warn("interrupted closing connection", exception);
+      Thread.currentThread().interrupt();
+    }
+  }
 
   @Override
-  public final void asynchClose() {
+  public Future<Void> asynchClose() {
     if (this.closed.attemptSet()) {
-      closeImpl(createCloseCallback(null));
+      return closeImpl(createCloseCallback());
     } else {
       this.parent.removeConnection(this);
+      return CompletableFuture.completedFuture(null);
     }
   }
 
-  @Override
-  public final boolean close(long timeout) {
-    if (timeout <= 0) { throw new IllegalArgumentException("timeout cannot be less than or equal to zero"); }
-
-    if (this.closed.attemptSet()) {
-      final CountDownLatch latch = new CountDownLatch(1);
-      closeImpl(createCloseCallback(latch));
-      try {
-        return latch.await(timeout, TimeUnit.MILLISECONDS);
-      } catch (final InterruptedException e) {
-        logger.warn("close interrupted");
-        Thread.currentThread().interrupt();
-        return isConnected();
-      }
-    }
-
-    return isClosed();
-  }
-
-  private Runnable createCloseCallback(final CountDownLatch latch) {
+  private Runnable createCloseCallback() {
     final boolean fireClose = isConnected();
 
     return new Runnable() {
@@ -599,9 +604,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
           TCConnectionImpl.this.eventCaller.fireCloseEvent(TCConnectionImpl.this.eventListeners, TCConnectionImpl.this);
         }
 
-        if (latch != null) {
-          latch.countDown();
-        }
         if (buffers != null) {
           buffers.close();
         }
