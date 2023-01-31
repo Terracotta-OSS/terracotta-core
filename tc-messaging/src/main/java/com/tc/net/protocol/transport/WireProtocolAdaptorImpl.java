@@ -64,8 +64,6 @@ public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implement
         }
         if (msg.getWireProtocolHeader().isMessagesGrouped()) {
           WireProtocolGroupMessage wpmg = (WireProtocolGroupMessage) msg;
-          int msgCount = wpmg.getWireProtocolHeader().getMessageCount();
-          Assert.eval(msgCount > 1);
 
           for (Iterator<TCNetworkMessage> i = wpmg.getMessageIterator(); i.hasNext();) {
             WireProtocolMessage wpm = (WireProtocolMessage) i.next();
