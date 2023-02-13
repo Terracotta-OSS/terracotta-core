@@ -294,7 +294,7 @@ public class ClientConnectionEstablisher {
       try {
         Thread.sleep(CONNECT_RETRY_INTERVAL);
       } catch (InterruptedException e1) {
-        Thread.currentThread().interrupt();
+        LOGGER.info("Async reconnect thread woken by interrupt " + transport);
       }
     }
   }
@@ -442,6 +442,7 @@ public class ClientConnectionEstablisher {
     }
 
     public boolean putConnectionRequest(ConnectionRequest request) {
+      //TODO I'm worried about this code-path... it's signalling for a stop... but it's not setting any conditions.
       if (!isStopped() && waitForThread(getConnectionThread(), true)) {
         if (!transport.isConnected()) {
           startThreadIfNecessary(request);
