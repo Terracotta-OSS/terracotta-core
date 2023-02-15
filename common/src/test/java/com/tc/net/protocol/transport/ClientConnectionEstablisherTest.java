@@ -52,6 +52,9 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import java.net.Socket;
+import java.nio.channels.ClosedByInterruptException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 
 public class ClientConnectionEstablisherTest {
@@ -97,6 +100,31 @@ public class ClientConnectionEstablisherTest {
     Assert.assertFalse(this.spyConnEstablisher.isReconnectEnabled());
   }
 
+  @Test
+  public void test_interrupt_kills_reconnect() throws Exception {
+    Mockito.doReturn(mock(NetworkStackID.class)).when(cmt).open(any());
+    Mockito.when(cmt.wasOpened()).thenReturn(Boolean.FALSE);
+    spyConnEstablisher.open(Collections.singleton(serverAddress), errorListener);
+    Mockito.when(cmt.wasOpened()).thenReturn(Boolean.TRUE);
+    CountDownLatch callOnce = new CountDownLatch(1);
+    Mockito.doAnswer(a->{
+      if (Thread.interrupted()) {
+        Thread.currentThread().interrupt();
+        throw new ClosedByInterruptException();
+      } else {
+        callOnce.countDown();
+        throw new IOException("host not found");
+      }
+    }).when(cmt).reopen(any(InetSocketAddress.class));
+    Assert.assertTrue(spyConnEstablisher.asyncReconnect(()->false));
+    Assert.assertTrue(spyConnEstablisher.isReconnecting());
+    callOnce.await();
+    spyConnEstablisher.interruptReconnect();
+    spyConnEstablisher.waitForTermination();
+    Assert.assertFalse(cmt.isConnected());
+    Assert.assertFalse(spyConnEstablisher.isReconnecting());
+  }
+  
   @Test
   public void test_multiple_open_without_reset_fails() throws TCTimeoutException, IOException,
       MaxConnectionsExceededException, CommStackMismatchException {
@@ -154,7 +182,7 @@ public class ClientConnectionEstablisherTest {
   }
 
   @Test
-  public void test_reconnect_ignored_when_transport_already_connected() throws MaxConnectionsExceededException {
+  public void test_reconnect_ignored_when_transport_already_connected() throws MaxConnectionsExceededException, InterruptedException {
     // Mockito.doReturn(Boolean.TRUE).when(cmt).isConnected();
     Mockito.when(cmt.isConnected()).thenReturn(true);
     Mockito.doNothing().when(spyConnEstablisher);

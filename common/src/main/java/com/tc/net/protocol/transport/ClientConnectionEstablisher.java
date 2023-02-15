@@ -44,6 +44,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import static java.util.Arrays.asList;
+import java.util.Objects;
 
 /**
  * This guy establishes a connection to the server for the Client.
@@ -160,7 +161,7 @@ public class ClientConnectionEstablisher {
     return "ClientConnectionEstablisher[" + this.serverAddresses + "]";
   }
 
-  void reconnect(Supplier<Boolean> stopCheck) throws MaxConnectionsExceededException {
+  void reconnect(Supplier<Boolean> stopCheck) throws MaxConnectionsExceededException, InterruptedException {
     try {
       // Lossy logging for connection errors. Log the errors once in every 10 seconds
       LossyTCLogger connectionErrorLossyLogger = new LossyTCLogger(transport.getLogger(), 10000,
@@ -224,6 +225,11 @@ public class ClientConnectionEstablisher {
             }
             transport.reopen(target);
             connected = transport.isConnected() && transport.getConnectionID().isValid();
+            if (!connected) {
+              // if here, a strange state has been reached.  reopen should have either thrown an exception
+              // or created a proper connection.  Log it for now
+              LOGGER.warn("reopen succeeded however connection is not established ", new Exception());
+            }
           } catch (TransportRedirect redirect) {
             target = InetSocketAddress.createUnresolved(redirect.getHostname(), redirect.getPort());
           } catch (NoActiveException noactive) {
@@ -285,24 +291,20 @@ public class ClientConnectionEstablisher {
     return !connected && !stopper && !stopped;
   }
 
-  void handleConnectException(Exception e, boolean logFullException, Logger logger) {
+  void handleConnectException(Exception e, boolean logFullException, Logger logger) throws InterruptedException {
     if (logger.isDebugEnabled() || logFullException) {
       logger.error("Connect Exception", e);
     }
 
     if (CONNECT_RETRY_INTERVAL > 0) {
-      try {
-        Thread.sleep(CONNECT_RETRY_INTERVAL);
-      } catch (InterruptedException e1) {
-        Thread.currentThread().interrupt();
-      }
+      Thread.sleep(CONNECT_RETRY_INTERVAL);
     }
   }
 
   public boolean asyncReconnect(Supplier<Boolean> stopCheck) {
     if (transport.getConnectionID().isValid()) {
       LOGGER.info("async reconnect initiated " + transport.getConnectionID());
-      return putConnectionRequest(ConnectionRequest.newReconnectRequest(stopCheck));
+      return startReconnectHandler(ConnectionRequest.newReconnectRequest(stopCheck));
     } else {
       LOGGER.info("async reconnect ignored connection not valid " + transport.getConnectionID());
       transport.close();
@@ -310,7 +312,7 @@ public class ClientConnectionEstablisher {
     }
   }
 
-  private boolean putConnectionRequest(ConnectionRequest request) {
+  private boolean startReconnectHandler(ConnectionRequest request) {
     AsyncReconnect reconnect = getReconnectHandler();
     if (reconnect == null || reconnect.isStopped()) {
       LOGGER.info("Ignoring connection request: " + request + " as allowReconnects: " + (reconnect == null)
@@ -319,16 +321,12 @@ public class ClientConnectionEstablisher {
     }
 
     // Allow the async thread reconnects/restores only when cmt was connected atleast once
-    if (transport != null) {
-      if (transport.isConnected()) {
-        LOGGER.info("Ignoring connection request.  The connection is already open. {}", transport);
-      } else if (!transport.wasOpened()) {
-        LOGGER.info("Ignoring connection request as transport was not connected even once");
-      } else {
-        return reconnect.putConnectionRequest(request);
-      }
+    if (transport.isConnected()) {
+      LOGGER.info("Ignoring connection request.  The connection is already open. {}", transport);
+    } else if (!transport.wasOpened()) {
+      LOGGER.info("Ignoring connection request as transport was not connected even once");
     } else {
-      LOGGER.warn("no transport {}", request);
+      return reconnect.putConnectionRequest(request);
     }
     return false;
   }
@@ -373,7 +371,7 @@ public class ClientConnectionEstablisher {
     if (reconnect != null) {
       reconnect.stop();
       if (!transport.isRetryOnReconnectionRejected()) {
-        reconnect.awaitTermination(true);
+        reconnect.awaitTermination();
       }
     }
   }
@@ -382,10 +380,22 @@ public class ClientConnectionEstablisher {
   void waitForTermination() {
     AsyncReconnect reconnect = getReconnectHandler();
     if (reconnect != null) {
-      reconnect.waitForThreadToComplete();
+      reconnect.waitForConnectionThreadToFinish();
     }
   }
-
+  // for testing only
+  void interruptReconnect() {
+    AsyncReconnect reconnect = getReconnectHandler();
+    if (reconnect != null) {
+      reconnect.getConnectionThread().interrupt();
+    }
+  }
+  
+  boolean isReconnecting() {
+    Thread t = getReconnectHandler().getConnectionThread();
+    return !getReconnectHandler().isStopped() && t != null && t.isAlive();
+  }
+  
   private class AsyncReconnect {
     private boolean stopped = false;
     private Thread connectionEstablisherThread;
@@ -396,17 +406,19 @@ public class ClientConnectionEstablisher {
      * @param mayInterruptIfRunning interrupt thread
      * @return true if the passed in thread is joined
      */
-    private boolean waitForThread(Thread oldThread, boolean mayInterruptIfRunning) {
+    private boolean waitForConnectionThreadToFinish() {
+      Thread oldThread = getConnectionThread();
       boolean isInterrupted = false;
       try {
         if (oldThread == null) {
           return true;
         } else if (Thread.currentThread() != oldThread) {
-          if (mayInterruptIfRunning) {
-            oldThread.interrupt();
-          }
+          oldThread.interrupt();
           oldThread.join();
           return true;
+        } else {
+          // when the thread is the same, something went wrong
+          LOGGER.warn("assertion error, thread cannot join itself", new Exception());
         }
       } catch (InterruptedException e) {
         LOGGER.info("Got interrupted while waiting for connectionEstablisherThread to complete");
@@ -417,14 +429,9 @@ public class ClientConnectionEstablisher {
       return false; //  even if interrupted, don't reschedule
     }
 
-    // for testing only
-    private boolean waitForThreadToComplete() {
-      return waitForThread(getConnectionThread(), false);
-    }
-
-    private void awaitTermination(boolean mayInterruptIfRunning) {
+    private void awaitTermination() {
       Assert.assertTrue(isStopped());
-      waitForThread(getConnectionThread(), mayInterruptIfRunning);
+      waitForConnectionThreadToFinish();
     }
 
     public synchronized boolean isStopped() {
@@ -442,7 +449,7 @@ public class ClientConnectionEstablisher {
     }
 
     public boolean putConnectionRequest(ConnectionRequest request) {
-      if (!isStopped() && waitForThread(getConnectionThread(), true)) {
+      if (!isStopped() && waitForConnectionThreadToFinish()) {
         if (!transport.isConnected()) {
           startThreadIfNecessary(request);
           return true;
@@ -456,6 +463,7 @@ public class ClientConnectionEstablisher {
     }
 
     private synchronized void startThreadIfNecessary(ConnectionRequest request) {
+      Objects.requireNonNull(request);
       if (!stopped) {
         Thread thread = new Thread(()->execute(request), RECONNECT_THREAD_NAME + "-" + serverAddresses.toString() + "-" + transport.getConnectionID());
         thread.setDaemon(true);
@@ -467,16 +475,15 @@ public class ClientConnectionEstablisher {
 
     public void execute(ConnectionRequest request) {
       LOGGER.info("reconnection starting for connection {} to {}", transport.getConnectionID(), serverAddresses);
-      if (request != null) {
-        Logger clientLogger = transport.getLogger();
-        try {
-          reconnect(()->(isStopped() || request.checkForStop()));
-        } catch (MaxConnectionsExceededException e) {
-          String connInfo = ((transport == null) ? "" : (transport.getLocalAddress() + "->" + transport.getRemoteAddress() + " "));
-          transport.getLogger().error(connInfo + e.getMessage());
-        } catch (Throwable t) {
-          if (transport != null) clientLogger.warn("Reconnect failed !", t);
-        }
+      try {
+        reconnect(()->(isStopped() || request.checkForStop()));
+      } catch (MaxConnectionsExceededException e) {
+        String connInfo = (transport.getLocalAddress() + "->" + transport.getRemoteAddress() + " ");
+        transport.getLogger().error(connInfo + e.getMessage());
+      } catch (InterruptedException ie) {
+        transport.getLogger().warn("reconnection failed for connection {} to {} due to interruption", transport.getConnectionID(), serverAddresses, ie);
+      } catch (Throwable t) {
+        transport.getLogger().warn("Reconnect failed !", t);
       }
       LOGGER.info("reconnection exiting for connection {} to {}", transport.getConnectionID(), serverAddresses);
     }

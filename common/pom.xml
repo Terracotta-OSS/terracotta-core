@@ -113,6 +113,8 @@ Apache Ivy version: 2.2.0 20100923230623
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
+      <version>1.4.5</version> <!-- logback version 1.2.11 specified in 
+            buildparent swallows interrupts making ConnectionEstablisher tests not work. bump here for now -->
       <scope>test</scope>
     </dependency>
   </dependencies>
