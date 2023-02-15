@@ -32,7 +32,6 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.CompositeIterator;
 import com.tc.util.TCTimeoutException;
-import com.tc.util.Util;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -44,7 +43,15 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import static java.util.Arrays.asList;
-import java.util.Objects;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This guy establishes a connection to the server for the Client.
@@ -104,9 +111,9 @@ public class ClientConnectionEstablisher {
               TCTimeoutException |
               RuntimeException e) {
         AsyncReconnect reconnect = disableReconnects();
-        // if there was an error here, no reconnect attempts should have happened, thus no thread created
+        // if there was an error here, no reconnect attempts should have happened
         if (reconnect != null) {
-            Assert.assertNull(reconnect.getConnectionThread());
+            Assert.assertTrue(reconnect.getCurrentTask().isDone());
         }
         throw e;
       }
@@ -296,9 +303,7 @@ public class ClientConnectionEstablisher {
       logger.error("Connect Exception", e);
     }
 
-    if (CONNECT_RETRY_INTERVAL > 0) {
-      Thread.sleep(CONNECT_RETRY_INTERVAL);
-    }
+    Thread.sleep(CONNECT_RETRY_INTERVAL);
   }
 
   public boolean asyncReconnect(Supplier<Boolean> stopCheck) {
@@ -370,106 +375,79 @@ public class ClientConnectionEstablisher {
     AsyncReconnect reconnect = disableReconnects();
     if (reconnect != null) {
       reconnect.stop();
-      if (!transport.isRetryOnReconnectionRejected()) {
-        reconnect.awaitTermination();
-      }
     }
   }
 
   // for testing only
-  void waitForTermination() {
+  void waitForTermination() throws ExecutionException, InterruptedException {
     AsyncReconnect reconnect = getReconnectHandler();
     if (reconnect != null) {
-      reconnect.waitForConnectionThreadToFinish();
+      try {
+        reconnect.getCurrentTask().get();
+      } catch (CancellationException cancelled) {
+        // do nothing task is complete
+      }
     }
   }
   // for testing only
   void interruptReconnect() {
     AsyncReconnect reconnect = getReconnectHandler();
     if (reconnect != null) {
-      reconnect.getConnectionThread().interrupt();
+      reconnect.getCurrentTask().cancel(true);
     }
   }
   
   boolean isReconnecting() {
-    Thread t = getReconnectHandler().getConnectionThread();
-    return !getReconnectHandler().isStopped() && t != null && t.isAlive();
+    AsyncReconnect reconnect = getReconnectHandler();
+    if (reconnect != null) {
+      return !reconnect.getCurrentTask().isDone();
+    } else {
+      return false;
+    }
   }
   
   private class AsyncReconnect {
-    private boolean stopped = false;
-    private Thread connectionEstablisherThread;
+    private final ExecutorService connectionEstablisher = new ThreadPoolExecutor(0, 1, 5, TimeUnit.SECONDS, new SynchronousQueue<>(), (Runnable r) -> {
+      Thread t = new Thread(r, RECONNECT_THREAD_NAME + "-" + serverAddresses.toString() + "-" + transport.getConnectionID());
+      t.setDaemon(true);
+      return t;
+    });
+    private volatile Future<?> currentTask = CompletableFuture.completedFuture(null);
 
-    /**
-     *
-     * @param oldThread thread to wait for if not current thread
-     * @param mayInterruptIfRunning interrupt thread
-     * @return true if the passed in thread is joined
-     */
-    private boolean waitForConnectionThreadToFinish() {
-      Thread oldThread = getConnectionThread();
-      boolean isInterrupted = false;
-      try {
-        if (oldThread == null) {
-          return true;
-        } else if (Thread.currentThread() != oldThread) {
-          oldThread.interrupt();
-          oldThread.join();
-          return true;
-        } else {
-          // when the thread is the same, something went wrong
-          LOGGER.warn("assertion error, thread cannot join itself", new Exception());
-        }
-      } catch (InterruptedException e) {
-        LOGGER.info("Got interrupted while waiting for connectionEstablisherThread to complete");
-        isInterrupted = true;
-      } finally {
-        Util.selfInterruptIfNeeded(isInterrupted);
-      }
-      return false; //  even if interrupted, don't reschedule
-    }
-
-    private void awaitTermination() {
-      Assert.assertTrue(isStopped());
-      waitForConnectionThreadToFinish();
-    }
-
-    public synchronized boolean isStopped() {
-      return stopped;
+    public boolean isStopped() {
+      return connectionEstablisher.isShutdown();
     }
     
-    public synchronized void stop() {
+    public void stop() {
       LOGGER.debug("Connection establisher stopping for connection {} to {}", transport.getConnectionID(), serverAddresses);
-      stopped = true;
-      this.notifyAll();
+      connectionEstablisher.shutdown();
+      currentTask.cancel(true);
     }
     
-    private synchronized Thread getConnectionThread() {
-      return connectionEstablisherThread;
+    public Future<?> getCurrentTask() {
+      return currentTask;
     }
 
     public boolean putConnectionRequest(ConnectionRequest request) {
-      if (!isStopped() && waitForConnectionThreadToFinish()) {
-        if (!transport.isConnected()) {
-          startThreadIfNecessary(request);
+      if (isStopped()) {
+        LOGGER.info("connect request ignored, reconnect has been shut down");
+        return false;
+      } else if (!currentTask.isDone()) {
+        //  if the current task is not done, this addtional request is likely 
+        //  due to a failed reconnect, let the original just continue on
+        LOGGER.info("connect request ignored, already reconnecting");
+        return false;
+      } else if (!transport.isConnected()) {
+        try {
+          currentTask = connectionEstablisher.submit(()->execute(request));
           return true;
-        } else {
-          LOGGER.info("ignoring connection request.  Already connected: {}", transport);
+        } catch (RejectedExecutionException rejected) {
+          LOGGER.info("ignoring connection request.  reconnect is shutdown");
+          return false;
         }
       } else {
-        LOGGER.info("connect request ignored, already reconnecting");
-      }
-      return false;
-    }
-
-    private synchronized void startThreadIfNecessary(ConnectionRequest request) {
-      Objects.requireNonNull(request);
-      if (!stopped) {
-        Thread thread = new Thread(()->execute(request), RECONNECT_THREAD_NAME + "-" + serverAddresses.toString() + "-" + transport.getConnectionID());
-        thread.setDaemon(true);
-        thread.start();
-        LOGGER.info("connection establisher started " + thread.getName());
-        connectionEstablisherThread = thread;
+        LOGGER.info("ignoring connection request.  Already connected: {}", transport);
+        return false;
       }
     }
 
