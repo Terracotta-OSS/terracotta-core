@@ -19,6 +19,7 @@
 package com.tc.io;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferAllocator;
 import com.tc.bytes.TCByteBufferFactory;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -30,32 +31,12 @@ import java.util.Queue;
  */
 public class TCDirectByteBufferOutputStream extends TCByteBufferOutputStream {
 
-  private final Queue<TCByteBuffer> cache;
-
   public TCDirectByteBufferOutputStream() {
     this(new LinkedList<>());
   }
 
   public TCDirectByteBufferOutputStream(Queue<TCByteBuffer> cache) {
-    this.cache = cache;
-  }
-
-  @Override
-  protected TCByteBuffer newBuffer() {
-    TCByteBuffer bb = cache.poll();
-    if (bb == null) {
-      bb = TCByteBufferFactory.getDirectByteBuffer();
-    }
-    return bb;
-  }
-
-  @Override
-  public void reset() {
-    close();
-    for (TCByteBuffer buffer : toArray()) {
-      cache.offer(buffer.reInit());
-    }
-    super.reset();
+    super(new TCByteBufferAllocator(TCByteBufferFactory::getDirectByteBuffer, cache));
   }
 }
 

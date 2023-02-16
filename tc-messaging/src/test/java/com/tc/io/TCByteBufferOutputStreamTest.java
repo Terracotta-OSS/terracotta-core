@@ -20,14 +20,12 @@ package com.tc.io;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Random;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
-import com.tc.io.TCByteBufferOutputStream.Mark;
+import com.tc.bytes.TCReference;
 import com.tc.util.Assert;
 
 import org.junit.Test;
@@ -52,175 +50,26 @@ public class TCByteBufferOutputStreamTest {
   @Test
   public void testMultipleToArray() {
     for (int i = 0; i < 250; i++) {
-
-      TCByteBufferOutputStream bbos = new TCByteBufferOutputStream(random.nextInt(100) + 1);
-      try {
+      try (TCByteBufferOutputStream bbos = new TCByteBufferOutputStream(random.nextInt(100) + 1)) {
         int bytesToWrite = random.nextInt(75) + 50;
         for (int n = 0; n < bytesToWrite; n++) {
           bbos.write(42);
         }
         assertEquals(bytesToWrite, bbos.getBytesWritten());
-        TCByteBuffer[] data = bbos.toArray();
-        assertEquals(bytesToWrite, length(data));
-        for (int j = 0; j < 10; j++) {
-          bbos.toArray();
-        }
-      } finally {
-        bbos.close();
-      }
-    }
-  }
-
-  @Test
-  public void testMark() {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    TCByteBufferOutputStream output = new TCByteBufferOutputStream(32);
-    try {
-      for (int i = 0; i < 30; i++) {
-        output.write(1);
-        baos.write(1);
-      }
-      Mark mark1 = output.mark();
-      for (int i = 0; i < 4; i++) {
-        output.write(0);
-        baos.write(i + 1);
-      }
-      for (int i = 0; i < 30; i++) {
-        output.write(1);
-        baos.write(1);
-      }
-      Mark mark2 = output.mark();
-      output.write(0);
-      int b = random.nextInt();
-      baos.write(b);
-      int written = output.getBytesWritten();
-      mark1.write(new byte[] { 1, 2, 3, 4 }); // should cross the 1st and 2nd buffers in the stream
-      assertEquals(written, output.getBytesWritten());
-      mark2.write(b); // should write to the 3rd buffer exclusively, but start on the 2nd
-      assertEquals(written, output.getBytesWritten());
-      compareData(baos.toByteArray(), output.toArray());
-      // output stream should be closed now due to toArray() above
-      try {
-        mark1.write(1);
-        fail();
-      } catch (IllegalStateException ise) {
-        // expected
-      }
-      try {
-        mark1.write(new byte[2]);
-        fail();
-      } catch (IllegalStateException ise) {
-        // expected
-      }
-      try {
-        output.mark();
-        fail();
-      } catch (IllegalStateException ise) {
-        // expected
-      }
-    } finally {
-      output.close();
-    }
-
-  }
-
-  @Test
-  public void testInvalidWriteThroughMark() {
-    TCByteBufferOutputStream output = new TCByteBufferOutputStream();
-    try {
-      output.write(new byte[30]);
-      Mark mark1 = output.mark();
-      try {
-        mark1.write(0);
-        fail();
-      } catch (IllegalArgumentException iae) {
-        // expected
-      }
-      try {
-        mark1.write(new byte[1]);
-        fail();
-      } catch (IllegalArgumentException iae) {
-        // expected
-      }
-      output.write(1);
-      int written = output.getBytesWritten();
-      mark1.write(1);
-      assertEquals(written, output.getBytesWritten());
-      mark1.write(new byte[0]);
-      assertEquals(written, output.getBytesWritten());
-      mark1.write(new byte[1]);
-      assertEquals(written, output.getBytesWritten());
-      try {
-        mark1.write(new byte[2]);
-        fail();
-      } catch (IllegalArgumentException iae) {
-        // expected
-      }
-    } finally {
-      output.close();
-    }
-
-  }
-
-  @Test
-  public void testRandomMark() throws IOException {
-    for (int i = 0; i < 500; i++) {
-      doRandomMark();
-    }
-  }
-
-  private void doRandomMark() throws IOException {
-    int initial = random.nextInt(10) + 1;
-    int max = initial + random.nextInt(1024) + 1;
-    TCByteBufferOutputStream output = new TCByteBufferOutputStream(initial, max);
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    List<byte[]> data = new ArrayList<byte[]>();
-    List<Mark> marks = new ArrayList<Mark>();
-
-    try {
-      for (int i = 0; i < 1000; i++) {
-        marks.add(output.mark());
-
-        if (random.nextBoolean()) {
-          byte[] b = new byte[random.nextInt(10)];
-          random.nextBytes(b);
-          baos.write(b);
-          output.write(new byte[b.length]);
-          data.add(b);
-        } else {
-          int b = random.nextInt();
-          output.write(0);
-          baos.write(b);
-          data.add(new byte[] { (byte) b });
-        }
-
-        if (random.nextInt(10) > 6) {
-          byte[] b = new byte[random.nextInt(5) + 1];
-          random.nextBytes(b);
-          baos.write(b);
-          output.write(b);
+        try (TCReference ref = bbos.accessBuffers()) {
+          TCByteBuffer[] data = ref.asArray();
+          assertEquals(bytesToWrite, length(data));
+          for (int j = 0; j < 10; j++) {
+            ref.asArray();
+          }
         }
       }
-      for (int i = 0, n = marks.size(); i < n; i++) {
-        Mark mark = marks.get(i);
-        byte[] b = data.get(i);
-        if (b.length == 1) {
-          mark.write(b[0]);
-        } else {
-          mark.write(b);
-        }
-      }
-      compareData(baos.toByteArray(), output.toArray());
-    } finally {
-      output.close();
     }
   }
 
   @Test
   public void testArrayWriteZeroLength() {
-    TCByteBufferOutputStream output = new TCByteBufferOutputStream();
-
-    try {
+    try (TCByteBufferOutputStream output = new TCByteBufferOutputStream()) {
       TCByteBuffer[] bufs = new TCByteBuffer[5];
       TCByteBuffer bufZeroLen = TCByteBufferFactory.getInstance(0);
       bufs[0] = bufZeroLen;
@@ -231,10 +80,8 @@ public class TCByteBufferOutputStreamTest {
       long buflength = length(bufs);
       output.write(bufs);
       assertEquals(buflength, output.getBytesWritten());
-      TCByteBuffer[] bufsOut = output.toArray();
+      TCByteBuffer[] bufsOut = output.accessBuffers().asArray();
       assertTrue(bufsOut.length < bufs.length); // 'coz its consolidated
-    } finally {
-      output.close();
     }
   }
 
@@ -275,7 +122,7 @@ public class TCByteBufferOutputStreamTest {
       for (int i = 0; i < blockSize * num; i++) {
         bbos.write(write++);
       }
-      TCByteBuffer[] data = bbos.toArray();
+      TCByteBuffer[] data = bbos.accessBuffers().asArray();
       assertEquals(data.length, num);
       for (TCByteBuffer element : data) {
         assertNotNull(element);
@@ -313,7 +160,7 @@ public class TCByteBufferOutputStreamTest {
         baos.write(b);
         os.write(b);
       }
-      TCByteBuffer[] bufs = os.toArray();
+      TCByteBuffer[] bufs = os.accessBuffers().asArray();
       /*
        * Consolidation with the new TCByteBuffer buf 0 : 32 + 64 + 128 + 256 + 512 + 1024 + 2048 = 4064 ( < 4096 ) buf 1
        * : 4096 buf 2 : 32
@@ -334,9 +181,7 @@ public class TCByteBufferOutputStreamTest {
 
     final int bufSize = random.nextInt(50) + 1;
 
-    TCByteBufferOutputStream os = new TCByteBufferOutputStream(bufSize);
-
-    try {
+    try (TCByteBufferOutputStream os = new TCByteBufferOutputStream(bufSize)) {
       for (int i = 0; i < bufSize * 3; i++) {
         int streamLen = os.getBytesWritten();
         int whichWrite = random.nextInt(4);
@@ -387,12 +232,12 @@ public class TCByteBufferOutputStreamTest {
         }
       }
 
-      TCByteBuffer[] bufsOut = os.toArray();
-      assertNoZeroLength(bufsOut);
+      try (TCReference ref = os.accessBuffers()) {
+        TCByteBuffer[] bufsOut = ref.asArray();
+        assertNoZeroLength(bufsOut);
 
-      compareData(baos.toByteArray(), os.toArray());
-    } finally {
-      os.close();
+        compareData(baos.toByteArray(), ref.asArray());
+      }
     }
   }
 
@@ -435,7 +280,7 @@ public class TCByteBufferOutputStreamTest {
     out.writeString(wierd);
     out.close();
 
-    TCByteBufferInputStream in = new TCByteBufferInputStream(out.toArray());
+    TCByteBufferInputStream in = new TCByteBufferInputStream(out.accessBuffers().asArray());
     try {
       String read = in.readString();
       Assert.assertTrue(Arrays.equals(wierd.toCharArray(), read.toCharArray()));
@@ -453,7 +298,7 @@ public class TCByteBufferOutputStreamTest {
     out.writeString(longString);
     out.close();
 
-    TCByteBufferInputStream in = new TCByteBufferInputStream(out.toArray());
+    TCByteBufferInputStream in = new TCByteBufferInputStream(out.accessBuffers().asArray());
     try {
       Assert.assertNull(in.readString());
       Assert.assertTrue(Arrays.equals(in.readString().toCharArray(), "XXX".toCharArray()));
@@ -490,7 +335,7 @@ public class TCByteBufferOutputStreamTest {
       b[0].put(s);
       b[0].flip();
       bbos.write(b);
-      TCByteBuffer[] data = bbos.toArray();
+      TCByteBuffer[] data = bbos.accessBuffers().asArray();
       assertEquals(num + 1, data.length);
       for (int i = 0; i < data.length - 1; i++) {
         assertNotNull(data[i]);
@@ -600,7 +445,7 @@ public class TCByteBufferOutputStreamTest {
         bbos.write(data);
         dataWriten += data.length;
       }
-      TCByteBuffer[] bufs = bbos.toArray();
+      TCByteBuffer[] bufs = bbos.accessBuffers().asArray();
       for (int i = 0; i < bufs.length - 1; i++) {
         assertEquals(bufs[i].capacity(), bufs[i].limit());
         dataWriten -= bufs[i].limit();
@@ -633,7 +478,7 @@ public class TCByteBufferOutputStreamTest {
         bbos.write(data, i, 50);
         written += 50;
       }
-      TCByteBuffer[] bufs = bbos.toArray();
+      TCByteBuffer[] bufs = bbos.accessBuffers().asArray();
       for (int i = 0; i < bufs.length - 1; i++) {
         assertEquals(bufs[i].capacity(), bufs[i].limit());
         written -= bufs[i].limit();
@@ -653,7 +498,7 @@ public class TCByteBufferOutputStreamTest {
   public void testEmpty() {
     TCByteBufferOutputStream bbos = new TCByteBufferOutputStream();
     bbos.close();
-    TCByteBuffer[] data = bbos.toArray();
+    TCByteBuffer[] data = bbos.accessBuffers().asArray();
     assertEquals(0, data.length);
   }
 

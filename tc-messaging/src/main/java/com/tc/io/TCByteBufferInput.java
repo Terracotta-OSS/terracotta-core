@@ -19,12 +19,9 @@
 package com.tc.io;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCReference;
 
 public interface TCByteBufferInput extends TCDataInput {
-
-  public interface Mark {
-    // This is just a Marker interface as far as anyone is concerned
-  }
 
   /**
    * Duplicate this stream. The resulting stream will share data with the source stream (ie. no copying), but the two
@@ -33,39 +30,19 @@ public interface TCByteBufferInput extends TCDataInput {
    */
   public TCByteBufferInput duplicate();
 
-  /**
-   * Effectively the same thing as calling duplicate().limit(int), but potentially creating far less garbage (depending
-   * on the size difference between the original stream and the slice you want)
-   */
-  public TCByteBufferInput duplicateAndLimit(int limit);
-
   public int getTotalLength();
 
   public int available();
 
   public void close();
 
-  /**
-   * This is a TC special version of mark() to be used in conjunction with tcReset()...We should eventually implement
-   * the general purpose mark(int) method as specified by InputStream. NOTE: It has some unusual semantics that make it
-   * a little trickier to implement (in our case) than you might think (specifically the readLimit field)
-   */
-  public Mark mark();
-
-  public boolean markSupported();
-
   public int read(byte[] b);
+  
+  public TCReference readReference(int len);
   
   public TCByteBuffer read(int len);
 
   public int read();
-
-  /**
-   * Reset this input stream to the position recorded by the mark that is passed an input parameter.
-   * 
-   * @throws IllegalArgumentException if m is null or if it was not created against this stream.
-   */
-  public void tcReset(Mark m);
 
   public long skip(long skip);
 

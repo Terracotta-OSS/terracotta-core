@@ -112,7 +112,7 @@ public abstract class TCActionImpl implements TCAction {
   protected TCActionNetworkMessage convertToNetworkMessage() {
     TCActionNetworkMessage msg = new TCActionNetworkMessageImpl(new TCMessageHeaderImpl(type), ()->getDataBuffers());
     if (this.isOutgoing) {
-      msg.addCompleteCallback(out::reset);
+      msg.addCompleteCallback(out::close);
     }
     return msg;
   }
