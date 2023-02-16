@@ -27,6 +27,7 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.bytes.TCReference;
 import com.tc.util.Assert;
+import java.util.Iterator;
 
 import org.junit.Test;
 
@@ -48,26 +49,6 @@ public class TCByteBufferOutputStreamTest {
   }
 
   @Test
-  public void testMultipleToArray() {
-    for (int i = 0; i < 250; i++) {
-      try (TCByteBufferOutputStream bbos = new TCByteBufferOutputStream(random.nextInt(100) + 1)) {
-        int bytesToWrite = random.nextInt(75) + 50;
-        for (int n = 0; n < bytesToWrite; n++) {
-          bbos.write(42);
-        }
-        assertEquals(bytesToWrite, bbos.getBytesWritten());
-        try (TCReference ref = bbos.accessBuffers()) {
-          TCByteBuffer[] data = ref.asArray();
-          assertEquals(bytesToWrite, length(data));
-          for (int j = 0; j < 10; j++) {
-            ref.asArray();
-          }
-        }
-      }
-    }
-  }
-
-  @Test
   public void testArrayWriteZeroLength() {
     try (TCByteBufferOutputStream output = new TCByteBufferOutputStream()) {
       TCByteBuffer[] bufs = new TCByteBuffer[5];
@@ -80,8 +61,6 @@ public class TCByteBufferOutputStreamTest {
       long buflength = length(bufs);
       output.write(bufs);
       assertEquals(buflength, output.getBytesWritten());
-      TCByteBuffer[] bufsOut = output.accessBuffers().asArray();
-      assertTrue(bufsOut.length < bufs.length); // 'coz its consolidated
     }
   }
 
@@ -122,13 +101,15 @@ public class TCByteBufferOutputStreamTest {
       for (int i = 0; i < blockSize * num; i++) {
         bbos.write(write++);
       }
-      TCByteBuffer[] data = bbos.accessBuffers().asArray();
-      assertEquals(data.length, num);
+      TCReference data = bbos.accessBuffers();
+      int count = 0;
       for (TCByteBuffer element : data) {
         assertNotNull(element);
         assertEquals(0, element.position());
         assertEquals(blockSize, element.limit());
+        count++;
       }
+      assertEquals(count, num);
       byte expect = 0;
       for (TCByteBuffer buf : data) {
         while (buf.hasRemaining()) {
@@ -160,15 +141,16 @@ public class TCByteBufferOutputStreamTest {
         baos.write(b);
         os.write(b);
       }
-      TCByteBuffer[] bufs = os.accessBuffers().asArray();
+      TCReference bufs = os.accessBuffers();
       /*
        * Consolidation with the new TCByteBuffer buf 0 : 32 + 64 + 128 + 256 + 512 + 1024 + 2048 = 4064 ( < 4096 ) buf 1
        * : 4096 buf 2 : 32
        */
-      assertEquals(3, bufs.length);
-      assertEquals(4064, bufs[0].limit());
-      assertEquals(4096, bufs[1].limit());
-      assertEquals(32, bufs[2].limit());
+      int count = 0;
+      int[] eq = {4064, 4096,32};
+      for (TCByteBuffer target : bufs) {
+        assertEquals(eq[count], target.limit());
+      }
       compareData(baos.toByteArray(), bufs);
     } finally {
       os.close();
@@ -233,36 +215,38 @@ public class TCByteBufferOutputStreamTest {
       }
 
       try (TCReference ref = os.accessBuffers()) {
-        TCByteBuffer[] bufsOut = ref.asArray();
-        assertNoZeroLength(bufsOut);
+        assertNoZeroLength(ref);
 
-        compareData(baos.toByteArray(), ref.asArray());
+        compareData(baos.toByteArray(), ref);
       }
     }
   }
 
-  private void assertNoZeroLength(TCByteBuffer[] bufs) {
-    for (int i = 0; i < bufs.length; i++) {
-      assertTrue("Buffer " + i + " has zero length", bufs[i].limit() > 0);
+  private void assertNoZeroLength(TCReference bufs) {
+    int count = 0;
+    for (TCByteBuffer buffer : bufs) {
+      assertTrue("Buffer " + count++ + " has zero length", buffer.limit() > 0);
     }
   }
 
-  private void compareData(byte[] compare, TCByteBuffer[] test) {
-    if (test.length == 0) {
+  private void compareData(byte[] compare, TCReference test) {
+    Iterator<TCByteBuffer> curs = test.duplicate().iterator();
+    if (!curs.hasNext()) {
       assertEquals(0, compare.length);
       return;
     }
 
-    int index = 0;
+    TCByteBuffer current = curs.next();
     for (byte b : compare) {
-      while (!test[index].hasRemaining()) {
-        index++;
+      while (!current.hasRemaining()) {
+        current = curs.next();
       }
-      byte b2 = test[index].get();
+      byte b2 = current.get();
       assertEquals(b, b2);
     }
 
-    assertFalse(test[index].hasRemaining());
+    assertFalse(current.hasRemaining());
+    assertFalse(curs.hasNext());
   }
 
   private int length(TCByteBuffer[] b) {
@@ -280,7 +264,7 @@ public class TCByteBufferOutputStreamTest {
     out.writeString(wierd);
     out.close();
 
-    TCByteBufferInputStream in = new TCByteBufferInputStream(out.accessBuffers().asArray());
+    TCByteBufferInputStream in = new TCByteBufferInputStream(out.accessBuffers());
     try {
       String read = in.readString();
       Assert.assertTrue(Arrays.equals(wierd.toCharArray(), read.toCharArray()));
@@ -298,7 +282,7 @@ public class TCByteBufferOutputStreamTest {
     out.writeString(longString);
     out.close();
 
-    TCByteBufferInputStream in = new TCByteBufferInputStream(out.accessBuffers().asArray());
+    TCByteBufferInputStream in = new TCByteBufferInputStream(out.accessBuffers());
     try {
       Assert.assertNull(in.readString());
       Assert.assertTrue(Arrays.equals(in.readString().toCharArray(), "XXX".toCharArray()));
@@ -335,28 +319,38 @@ public class TCByteBufferOutputStreamTest {
       b[0].put(s);
       b[0].flip();
       bbos.write(b);
-      TCByteBuffer[] data = bbos.accessBuffers().asArray();
-      assertEquals(num + 1, data.length);
-      for (int i = 0; i < data.length - 1; i++) {
-        assertNotNull(data[i]);
-        assertEquals(0, data[i].position());
-        assertEquals(blockSize, data[i].limit());
-      }
-      int last = data.length - 1;
-      assertNotNull(data[last]);
-      assertEquals(0, data[last].position());
-      byte expect = 0;
-      for (int i = 0; i < data.length - 1; i++) {
-        TCByteBuffer buf = data[i];
-        while (buf.hasRemaining()) {
-          byte read = buf.get();
-          assertEquals(expect++, read);
+      TCReference data = bbos.accessBuffers();
+
+      Iterator<TCByteBuffer> curs = data.iterator();
+      while (curs.hasNext()) {
+        TCByteBuffer current = curs.next();
+        if (curs.hasNext()) {
+          assertNotNull(current);
+          assertEquals(0, current.position());
+          assertEquals(blockSize, current.limit());
+        } else {
+          assertNotNull(current);
+          assertEquals(0, current.position());
         }
       }
-      byte[] s2 = new byte[s.length];
-      data[last].get(s2);
-      assertTrue(Arrays.equals(s, s2));
-      assertFalse(data[last].hasRemaining());
+
+      byte expect = 0;
+      curs = data.iterator();
+      while (curs.hasNext()) {
+        TCByteBuffer current = curs.next();
+        if (curs.hasNext()) {
+          while (current.hasRemaining()) {
+            byte read = current.get();
+            assertEquals(expect++, read);
+          }
+        } else {
+          byte[] s2 = new byte[s.length];
+          current.get(s2);
+          assertTrue(Arrays.equals(s, s2));
+          assertFalse(current.hasRemaining());
+        }
+      }
+
     } finally {
       bbos.close();
     }
@@ -445,12 +439,18 @@ public class TCByteBufferOutputStreamTest {
         bbos.write(data);
         dataWriten += data.length;
       }
-      TCByteBuffer[] bufs = bbos.accessBuffers().asArray();
-      for (int i = 0; i < bufs.length - 1; i++) {
-        assertEquals(bufs[i].capacity(), bufs[i].limit());
-        dataWriten -= bufs[i].limit();
+      TCReference ref = bbos.accessBuffers();
+      Iterator<TCByteBuffer> curs = ref.iterator();
+      while (curs.hasNext()) {
+        TCByteBuffer current = curs.next();
+        if (curs.hasNext()) {
+          assertEquals(current.capacity(), current.limit());
+          dataWriten -= current.limit();
+        } else {
+          assertEquals(dataWriten, current.limit());
+        }
       }
-      assertEquals(dataWriten, bufs[bufs.length - 1].limit());
+
     } finally {
       bbos.close();
     }
@@ -478,13 +478,19 @@ public class TCByteBufferOutputStreamTest {
         bbos.write(data, i, 50);
         written += 50;
       }
-      TCByteBuffer[] bufs = bbos.accessBuffers().asArray();
-      for (int i = 0; i < bufs.length - 1; i++) {
-        assertEquals(bufs[i].capacity(), bufs[i].limit());
-        written -= bufs[i].limit();
+      TCReference ref = bbos.accessBuffers();
+      Iterator<TCByteBuffer> curs = ref.iterator();
+      while (curs.hasNext()) {
+        TCByteBuffer current = curs.next();
+        if (curs.hasNext()) {
+          assertEquals(current.capacity(), current.limit());
+          written -= current.limit();
+        } else {
+          assertEquals(written, current.limit());
+        }
       }
-      assertEquals(written, bufs[bufs.length - 1].limit());
-      for (TCByteBuffer buf : bufs) {
+      
+      for (TCByteBuffer buf : ref) {
         while (buf.hasRemaining()) {
           assertEquals(42, buf.get());
         }
@@ -498,8 +504,8 @@ public class TCByteBufferOutputStreamTest {
   public void testEmpty() {
     TCByteBufferOutputStream bbos = new TCByteBufferOutputStream();
     bbos.close();
-    TCByteBuffer[] data = bbos.accessBuffers().asArray();
-    assertEquals(0, data.length);
+    TCReference data = bbos.accessBuffers();
+    assertFalse(data.iterator().hasNext());
   }
 
   @Test

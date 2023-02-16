@@ -22,6 +22,7 @@ import java.io.IOException;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.bytes.TCReference;
 import com.tc.entity.VoltronEntityMessage.Acks;
 import com.tc.entity.VoltronEntityMessage.Type;
 import com.tc.io.TCByteBufferInputStream;
@@ -71,7 +72,7 @@ public class NetworkVoltronEntityMessageImplTest {
 
     TCMessageHeader header = (TCMessageHeader) msg.getHeader();
     msg.load();
-    TCByteBuffer[] payload = msg.getPayload();
+    TCReference payload = msg.getPayload();
     outputStream.close();
     NetworkVoltronEntityMessageImpl decodingMessage = new NetworkVoltronEntityMessageImpl(SessionID.NULL_ID, monitor, null, header, new TCByteBufferInputStream(payload));
     decodingMessage.hydrate();

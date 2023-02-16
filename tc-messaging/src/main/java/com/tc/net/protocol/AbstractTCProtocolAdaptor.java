@@ -22,11 +22,15 @@ import org.slf4j.Logger;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.bytes.TCReferenceSupport;
+import com.tc.bytes.TCReference;
 import com.tc.net.core.TCConnection;
 import com.tc.util.Assert;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.function.Consumer;
 
 /**
  * Base class for protocol adaptors
@@ -80,7 +84,7 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
   abstract protected AbstractTCNetworkHeader getNewProtocolHeader();
 
   // subclasses override this method to return specific message types
-  abstract protected TCNetworkMessage createMessage(TCConnection source, TCNetworkHeader hdr, TCByteBuffer[] data)
+  abstract protected TCNetworkMessage createMessage(TCConnection source, TCNetworkHeader hdr, TCReference data)
       throws TCProtocolException;
 
   abstract protected int computeDataLength(TCNetworkHeader hdr);
@@ -210,10 +214,7 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
       if (bufferIndex != dataBuffers.length) { throw new TCProtocolException("Not all buffers consumed"); }
       TCByteBuffer[] localDataBuffers = this.dataBuffers;
       // message is complete!
-      TCNetworkMessage msg = createMessage(source, header, localDataBuffers);
-      if (recycle != null) {
-        msg.addCompleteCallback(()->recycleBuffers(localDataBuffers, recycle));
-      }
+      TCNetworkMessage msg = createMessage(source, header, TCReferenceSupport.createReference(Arrays.asList(localDataBuffers), recycle == null ? r->{} : recycle::add));
 
       if (logger.isDebugEnabled()) {
         logger.debug("Message complete on connection " + source + ": " + msg.toString());

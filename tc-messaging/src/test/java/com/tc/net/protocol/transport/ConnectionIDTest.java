@@ -58,9 +58,10 @@ public class ConnectionIDTest {
   private static void checkSerializeDeserialize(ConnectionID id) throws IOException {
     TCByteBufferOutputStream outputStream = new TCByteBufferOutputStream();
     id.writeTo(outputStream);
-    TCByteBufferInputStream inputStream = new TCByteBufferInputStream(outputStream.toArray());
-    ConnectionID after = ConnectionID.readFrom(inputStream);
-    assertConnectionIDsEqual(id, after);
+    try (TCByteBufferInputStream inputStream = new TCByteBufferInputStream(outputStream.accessBuffers())) {
+      ConnectionID after = ConnectionID.readFrom(inputStream);
+      assertConnectionIDsEqual(id, after);
+    }
   }
 
   private static void assertConnectionIDsEqual(ConnectionID expected, ConnectionID actual) {

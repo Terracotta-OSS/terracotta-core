@@ -23,6 +23,7 @@ import com.tc.util.concurrent.SetOnceFlag;
 import java.lang.ref.PhantomReference;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -88,7 +89,7 @@ public class TCReferenceSupport {
     }
     return new TCReferenceSupport(tracked, returns).reference();
   }
-
+  
   private void reclaim() {
     Assert.assertTrue(referenceCount.get() == 0);
     for (TCByteBuffer buf : items) {
@@ -113,6 +114,10 @@ public class TCReferenceSupport {
   public static TCReference createGCReference(Collection<TCByteBuffer> tracked) {
     return new GCRef(tracked);
   }
+  
+  public static TCReference createGCReference(TCByteBuffer...tracked) {
+    return createGCReference(Arrays.asList(tracked));
+  }
   /**
    * An aggregate reference takes a duplicate reference of each item in the collection 
    * and manages them as a single reference.  The original references plus the aggregate reference must be closed 
@@ -122,6 +127,10 @@ public class TCReferenceSupport {
    */
   public static TCReference createAggregateReference(Collection<TCReference> tracked) {
     return new RefRef(tracked);
+  }
+  
+  public static TCReference createAggregateReference(TCReference...tracked) {
+    return createAggregateReference(Arrays.asList(tracked));
   }
   
   private Ref reference() {
@@ -141,11 +150,6 @@ public class TCReferenceSupport {
     @Override
     public TCReference duplicate() {
       return new GCRef(buffers);
-    }
-
-    @Override
-    public TCByteBuffer[] asArray() {
-      return buffers.stream().toArray(TCByteBuffer[]::new);
     }
 
     @Override
@@ -170,11 +174,6 @@ public class TCReferenceSupport {
     @Override
     public TCReference duplicate() {
       return new RefRef(localItems);
-    }
-
-    @Override
-    public TCByteBuffer[] asArray() {
-      return this.localItems.stream().flatMap(r->StreamSupport.stream(r.spliterator(), false)).toArray(TCByteBuffer[]::new);
     }
 
     @Override
@@ -229,12 +228,6 @@ public class TCReferenceSupport {
     public Ref duplicate() {
       checkClosed();
       return new Ref(localItems);
-    }
-    
-    @Override
-    public TCByteBuffer[] asArray() {
-      checkClosed();
-      return localItems.stream().toArray(TCByteBuffer[]::new);
     }
   }
   

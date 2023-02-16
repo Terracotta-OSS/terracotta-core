@@ -184,15 +184,6 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
     close();
     return buffers.complete();
   }
-  
-  /**
-   * TODO:  REMOVE ON NEW API ADOPTION
-   * @return 
-   */
-  @Deprecated
-  public TCByteBuffer[] toArray() {
-    return accessBuffers().asArray();
-  }
 
   @Override
   public String toString() {

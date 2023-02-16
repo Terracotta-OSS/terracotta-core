@@ -62,7 +62,7 @@ public class L2StateMessageTest {
     TCByteBufferOutputStream bo = new TCByteBufferOutputStream();
     l2sm.serializeTo(bo);
     System.err.println("Written : " + l2sm);
-    TCByteBufferInputStream bi = new TCByteBufferInputStream(bo.toArray());
+    TCByteBufferInputStream bi = new TCByteBufferInputStream(bo.accessBuffers());
     L2StateMessage l2sm1 = new L2StateMessage();
     l2sm1.deserializeFrom(bi);
     System.err.println("Read : " + l2sm1);

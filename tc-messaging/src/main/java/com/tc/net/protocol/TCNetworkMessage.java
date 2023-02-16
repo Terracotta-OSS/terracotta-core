@@ -18,7 +18,7 @@
  */
 package com.tc.net.protocol;
 
-import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCReference;
 
 /**
  * @author teck
@@ -27,9 +27,9 @@ public interface TCNetworkMessage {
 
   public TCNetworkHeader getHeader();
 
-  public TCByteBuffer[] getPayload();
+  public TCReference getPayload();
 
-  public TCByteBuffer[] getEntireMessageData();
+  public TCReference getEntireMessageData();
 
   public int getDataLength();
 
@@ -39,7 +39,5 @@ public interface TCNetworkMessage {
 
   public void complete();
 
-  void addCompleteCallback(Runnable r);
-  
-  Runnable stealCompleteAction();
+  void addCompleteCallback(Runnable r);  
 }

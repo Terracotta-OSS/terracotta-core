@@ -51,13 +51,6 @@ public interface TCReference extends Iterable<TCByteBuffer>, AutoCloseable {
   default int available() {
     return StreamSupport.stream(spliterator(), false).map(TCByteBuffer::remaining).reduce(0, Integer::sum);
   }
-  /**
-   * TODO:  REMOVE ON NEW API ADOPTION
-   * @return
-   * @deprecated
-   */
-  @Deprecated
-  TCByteBuffer[] asArray();
 
   @Override
   public void close();

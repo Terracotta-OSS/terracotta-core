@@ -49,6 +49,7 @@ import com.tc.async.api.StageManager;
 import com.tc.async.impl.OrderedSink;
 import com.tc.async.impl.StageController;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.bytes.TCReferenceSupport;
 import com.tc.entity.DiagnosticMessageImpl;
 import com.tc.entity.DiagnosticResponseImpl;
 import com.tc.entity.LinearVoltronEntityMultiResponse;
@@ -820,6 +821,9 @@ public class DistributedObjectServer {
     toInit.add(this.serverBuilder);
     
     this.timer.start();
+    
+    addMemoryMonitor(this.timer);
+    
     startStages(stageManager, toInit);
 
     // XXX: yucky casts
@@ -885,6 +889,16 @@ public class DistributedObjectServer {
     } catch (InterruptedException in) {
       stopped.completeExceptionally(in);
     }
+  }
+  
+  private void addMemoryMonitor(SingleThreadedTimer timer) {
+    TCReferenceSupport.startMonitoringReferences();
+    timer.addPeriodic(()->{
+      int count = TCReferenceSupport.checkReferences();
+      if (count > 0) {
+        logger.warn("found unclosed memory references count:{}", count);
+      }
+    }, 30_000L, 30_000L);
   }
 
   private void killThreads(CompletableFuture<Void> stopped, boolean immediate) {

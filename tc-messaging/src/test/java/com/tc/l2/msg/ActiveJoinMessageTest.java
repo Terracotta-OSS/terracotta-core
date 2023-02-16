@@ -42,7 +42,7 @@ public class ActiveJoinMessageTest {
     TCByteBufferOutputStream bo = new TCByteBufferOutputStream();
     ajm.serializeTo(bo);
     System.err.println("Written : " + ajm);
-    TCByteBufferInputStream bi = new TCByteBufferInputStream(bo.toArray());
+    TCByteBufferInputStream bi = new TCByteBufferInputStream(bo.accessBuffers());
     ActiveJoinMessage ajm1 = new ActiveJoinMessage();
     ajm1.deserializeFrom(bi);
     System.err.println("Read : " + ajm1);

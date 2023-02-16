@@ -18,7 +18,7 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCReference;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.TCNetworkHeader;
@@ -65,11 +65,10 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
   private final long         timestamp;
 
   @SuppressWarnings("resource")
-  TransportMessageImpl(TCConnection source, TCNetworkHeader header, TCByteBuffer[] payload) throws TCProtocolException {
+  TransportMessageImpl(TCConnection source, TCNetworkHeader header, TCReference payload) throws TCProtocolException {
     super(source, header, payload);
 
-    try {
-      TCByteBufferInputStream in = new TCByteBufferInputStream(payload);
+    try (TCByteBufferInputStream in = new TCByteBufferInputStream(payload)) {
       this.version = in.readByte();
 
       if (version != VERSION) { throw new TCProtocolException("Version Mismatch for Transport Message Handshake: " + version + " != " + VERSION); }

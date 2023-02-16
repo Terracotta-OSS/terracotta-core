@@ -18,7 +18,7 @@
  */
 package com.tc.net.basic;
 
-import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCReference;
 import com.tc.net.core.BufferManager;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.TCConnection;
@@ -30,10 +30,8 @@ import com.tc.net.protocol.transport.WireProtocolMessage;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.nio.channels.SocketChannel;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -128,7 +126,7 @@ public class BasicConnectionTest {
         idleTime = instance.getIdleTime();
         WireProtocolMessage msg = mock(WireProtocolMessage.class);
         when(msg.getHeader()).thenReturn(mock(WireProtocolHeader.class));
-        when(msg.getEntireMessageData()).thenReturn(new TCByteBuffer[] { mock(TCByteBuffer.class) });
+        when(msg.getEntireMessageData()).thenReturn(mock(TCReference.class));
         instance.putMessage(msg);
         assertTrue(idleTime > instance.getIdleTime());
         instance.close();

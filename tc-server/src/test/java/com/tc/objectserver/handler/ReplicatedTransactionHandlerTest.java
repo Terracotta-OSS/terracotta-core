@@ -481,16 +481,17 @@ public class ReplicatedTransactionHandlerTest {
     ReplicationMessage sending = ReplicationMessage.createActivityContainer(activity);
     TCByteBufferOutput output = new TCByteBufferOutputStream();
     sending.serializeTo(output);
-    TCByteBufferInput input = new TCByteBufferInputStream(output.toArray());
-    ReplicationMessage receiving = new ReplicationMessage();
-    try {
-      receiving.deserializeFrom(input);
-    } catch (IOException e) {
-      // Not expected in test.
-      e.printStackTrace();
-      Assert.fail(e.getLocalizedMessage());
+    try (TCByteBufferInputStream input = new TCByteBufferInputStream(output.accessBuffers())) {
+      ReplicationMessage receiving = new ReplicationMessage();
+      try {
+        receiving.deserializeFrom(input);
+      } catch (IOException e) {
+        // Not expected in test.
+        e.printStackTrace();
+        Assert.fail(e.getLocalizedMessage());
+      }
+      return receiving;
     }
-    return receiving;
   }  
   
   ReplicationMessage createMockRequest(SyncReplicationActivity act) {

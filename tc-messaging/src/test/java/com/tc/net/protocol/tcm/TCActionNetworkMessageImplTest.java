@@ -20,7 +20,10 @@ package com.tc.net.protocol.tcm;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.bytes.TCReferenceSupport;
+import com.tc.bytes.TCReference;
 import com.tc.net.protocol.TCNetworkHeader;
+import java.util.Arrays;
 import java.util.function.Supplier;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -35,7 +38,7 @@ public class TCActionNetworkMessageImplTest {
   @Test
   public void testCommit() throws Exception {
     TCNetworkHeader header = mock(TCNetworkHeader.class);
-    Supplier<TCByteBuffer[]> payloadSupplier = mock(Supplier.class);
+    Supplier<TCReference> payloadSupplier = mock(Supplier.class);
     
     TCActionNetworkMessageImpl network = new TCActionNetworkMessageImpl(header, payloadSupplier);
     assertFalse(network.commit());
@@ -47,7 +50,7 @@ public class TCActionNetworkMessageImplTest {
   @Test
   public void testCancel() throws Exception {
     TCNetworkHeader header = mock(TCNetworkHeader.class);
-    Supplier<TCByteBuffer[]> payloadSupplier = mock(Supplier.class);
+    Supplier<TCReference> payloadSupplier = mock(Supplier.class);
     
     TCActionNetworkMessageImpl network = new TCActionNetworkMessageImpl(header, payloadSupplier);
     assertFalse(network.commit());
@@ -59,7 +62,7 @@ public class TCActionNetworkMessageImplTest {
   @Test
   public void testDoubleCancel() throws Exception {
     TCNetworkHeader header = mock(TCNetworkHeader.class);
-    Supplier<TCByteBuffer[]> payloadSupplier = mock(Supplier.class);
+    Supplier<TCReference> payloadSupplier = mock(Supplier.class);
     
     TCActionNetworkMessageImpl network = new TCActionNetworkMessageImpl(header, payloadSupplier);
     assertFalse(network.commit());
@@ -71,7 +74,7 @@ public class TCActionNetworkMessageImplTest {
   @Test
   public void testCancelBeforeLoad() throws Exception {
     TCNetworkHeader header = mock(TCNetworkHeader.class);
-    Supplier<TCByteBuffer[]> payloadSupplier = mock(Supplier.class);
+    Supplier<TCReference> payloadSupplier = mock(Supplier.class);
     
     TCActionNetworkMessageImpl network = new TCActionNetworkMessageImpl(header, payloadSupplier);
     assertTrue(network.cancel());
@@ -82,7 +85,7 @@ public class TCActionNetworkMessageImplTest {
   @Test
   public void testCancelAfterCommit() throws Exception {
     TCNetworkHeader header = mock(TCNetworkHeader.class);
-    Supplier<TCByteBuffer[]> payloadSupplier = mock(Supplier.class);
+    Supplier<TCReference> payloadSupplier = mock(Supplier.class);
     
     TCActionNetworkMessageImpl network = new TCActionNetworkMessageImpl(header, payloadSupplier);
     assertTrue(network.load());
@@ -93,7 +96,7 @@ public class TCActionNetworkMessageImplTest {
   @Test
   public void testCommitThenLoad() throws Exception {
     TCNetworkHeader header = mock(TCNetworkHeader.class);
-    Supplier<TCByteBuffer[]> payloadSupplier = mock(Supplier.class);
+    Supplier<TCReference> payloadSupplier = mock(Supplier.class);
     
     TCActionNetworkMessageImpl network = new TCActionNetworkMessageImpl(header, payloadSupplier);
     assertFalse(network.commit());
@@ -105,8 +108,9 @@ public class TCActionNetworkMessageImplTest {
   @Test
   public void testDoubleLoad() throws Exception {
     TCNetworkHeader header = mock(TCNetworkHeader.class);
-    Supplier<TCByteBuffer[]> payloadSupplier = mock(Supplier.class);
-    when(payloadSupplier.get()).thenReturn(new TCByteBuffer[] {TCByteBufferFactory.getInstance(0)});
+    when(header.getDataBuffer()).thenReturn(mock(TCByteBuffer.class));
+    Supplier<TCReference> payloadSupplier = mock(Supplier.class);
+    when(payloadSupplier.get()).thenReturn(TCReferenceSupport.createReference(Arrays.asList(new TCByteBuffer[] {TCByteBufferFactory.getInstance(0)}), null));
     
     TCActionNetworkMessageImpl network = new TCActionNetworkMessageImpl(header, payloadSupplier);
     assertFalse(network.commit());

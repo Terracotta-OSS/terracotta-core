@@ -20,6 +20,7 @@ package com.tc.net.core;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.bytes.TCReferenceSupport;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;
 import java.io.IOException;
@@ -126,7 +127,7 @@ public class TCConnectionImplTest {
         when(msg.prepareToSend()).thenReturn(Boolean.TRUE);
         when(msg.getHeader()).thenReturn(mock(WireProtocolHeader.class));
         when(msg.getWireProtocolHeader()).thenReturn(mock(WireProtocolHeader.class));
-        when(msg.getEntireMessageData()).thenReturn(new TCByteBuffer[] { TCByteBufferFactory.wrap(new byte[512]) });
+        when(msg.getEntireMessageData()).thenReturn(TCReferenceSupport.createGCReference(TCByteBufferFactory.wrap(new byte[512])));
         when(msg.getDataLength()).thenReturn(512);
 
         conn.putMessage(msg);

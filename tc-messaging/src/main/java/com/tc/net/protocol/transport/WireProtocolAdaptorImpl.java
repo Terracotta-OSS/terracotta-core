@@ -22,13 +22,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCReference;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.AbstractTCNetworkHeader;
 import com.tc.net.protocol.AbstractTCProtocolAdaptor;
 import com.tc.net.protocol.TCNetworkHeader;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.TCProtocolException;
-import com.tc.util.Assert;
 
 import java.util.Iterator;
 import java.util.Queue;
@@ -57,24 +57,28 @@ public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implement
       throw e;
     }
     if (msg != null) {
-      try {
-        init();
-        if (logger.isDebugEnabled()) {
-          logger.debug("\nRECEIVE\n" + msg.toString());
-        }
-        if (msg.getWireProtocolHeader().isMessagesGrouped()) {
-          WireProtocolGroupMessage wpmg = (WireProtocolGroupMessage) msg;
-
-          for (Iterator<TCNetworkMessage> i = wpmg.getMessageIterator(); i.hasNext();) {
-            WireProtocolMessage wpm = (WireProtocolMessage) i.next();
-            sink.putMessage(wpm);
-          }
-        } else {
-          sink.putMessage(msg);
-        }
-      } finally {
-        msg.complete();
+      init();
+      if (logger.isDebugEnabled()) {
+        logger.debug("\nRECEIVE\n" + msg.toString());
       }
+      if (msg.getWireProtocolHeader().isMessagesGrouped()) {
+        WireProtocolGroupMessage wpmg = (WireProtocolGroupMessage) msg;
+
+        for (Iterator<TCNetworkMessage> i = wpmg.getMessageIterator(); i.hasNext();) {
+          WireProtocolMessage wpm = (WireProtocolMessage) i.next();
+          dispatch(wpm);
+        }
+      } else {
+        dispatch(msg);
+      }
+    }
+  }
+  
+  private void dispatch(WireProtocolMessage msg) throws WireProtocolException {
+    try {
+      sink.putMessage(msg);
+    } finally {
+      msg.complete();
     }
   }
 
@@ -90,7 +94,7 @@ public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implement
   }
 
   @Override
-  protected TCNetworkMessage createMessage(TCConnection source, TCNetworkHeader hdr, TCByteBuffer[] data)
+  protected TCNetworkMessage createMessage(TCConnection source, TCNetworkHeader hdr, TCReference data)
       throws TCProtocolException {
     if (data == null) { throw new TCProtocolException("Wire protocol messages must have a payload"); }
     WireProtocolHeader wph = (WireProtocolHeader) hdr;

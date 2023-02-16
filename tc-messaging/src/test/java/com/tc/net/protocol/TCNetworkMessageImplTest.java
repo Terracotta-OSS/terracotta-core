@@ -16,31 +16,26 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.net.protocol.delivery;
+package com.tc.net.protocol;
 
-import com.tc.net.protocol.TCNetworkMessage;
-import com.tc.util.UUID;
+import org.junit.Test;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
- * Message at the OAOO protocol level
+ *
  */
-public interface OOOProtocolMessage extends TCNetworkMessage {
-
-  public long getAckSequence();
-
-  public long getSent();
-
-  public boolean isHandshake();
-
-  public boolean isHandshakeReplyOk();
-
-  public boolean isHandshakeReplyFail();
-
-  public boolean isSend();
-
-  public boolean isAck();
-
-  public boolean isGoodbye();
-
-  public UUID getSessionId();
+public class TCNetworkMessageImplTest {
+  @Test
+  public void testMultipleCompleteActions() {
+    Runnable r1 = mock(Runnable.class);
+    Runnable r2 = mock(Runnable.class);
+    TCNetworkHeader hdr = mock(TCNetworkHeader.class);
+    TCNetworkMessage msg = new TCNetworkMessageImpl(hdr);
+    msg.addCompleteCallback(r1);
+    msg.addCompleteCallback(r2);
+    msg.complete();
+    verify(r1).run();
+    verify(r2).run();
+  }
 }

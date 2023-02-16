@@ -18,7 +18,7 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCReference;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.TCNetworkHeader;
 import com.tc.net.protocol.TCNetworkMessage;
@@ -52,9 +52,10 @@ public class WireProtocolMessageImpl extends TCNetworkMessageImpl implements Wir
     return rv;
   }
   
-  protected WireProtocolMessageImpl(TCConnection source, TCNetworkHeader header, TCByteBuffer[] data) {
-    super(header, data);
+  protected WireProtocolMessageImpl(TCConnection source, TCNetworkHeader header, TCReference buffers) {
+    super(header);
     this.sourceConnection = source;
+    setPayload(buffers);
     message = Optional.empty();
   }
   
@@ -70,7 +71,8 @@ public class WireProtocolMessageImpl extends TCNetworkMessageImpl implements Wir
       getWireProtocolHeader().finalizeHeader(this.getTotalLength());
       return true;
     } else if (this.message.get().commit()) {
-      setPayload(this.message.get().getEntireMessageData());
+      // duplicate because the original message is closed as well
+      setPayload(this.message.get().getEntireMessageData().duplicate());
       getWireProtocolHeader().finalizeHeader(this.getTotalLength());
       return true;
     } else {

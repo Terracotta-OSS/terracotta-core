@@ -66,10 +66,10 @@ public class TCReferenceSupportTest {
     Collection<TCByteBuffer> items = new ArrayList<>();
     Collections.addAll(items, buf1, buf2);
     TCReference ref = TCReferenceSupport.createReference(items, null);
-    Assert.assertEquals(2, ref.asArray().length);
     Iterator<TCByteBuffer> it = ref.iterator();
     it.next();
-    it.remove();
+    it.next(); // has two buffers
+    Assert.assertFalse(it.hasNext());
     ref.close();
   }
 
@@ -80,13 +80,12 @@ public class TCReferenceSupportTest {
     Collection<TCByteBuffer> items = new ArrayList<>();
     Collections.addAll(items, buf1, buf2);
     TCReference ref = TCReferenceSupport.createReference(items, null);
-    Assert.assertEquals(2, ref.asArray().length);
-
     TCReference dup = ref.duplicate();
     ref.close();
     Iterator<TCByteBuffer> it = dup.iterator();
     it.next();
-    it.remove();
+    it.next(); // has two buffers
+    Assert.assertFalse(it.hasNext());
     dup.close();
   } 
   
@@ -96,13 +95,13 @@ public class TCReferenceSupportTest {
     TCByteBuffer buf2 = TCByteBufferFactory.getInstance(512);
     TCByteBuffer[] bufs = new TCByteBuffer[] {buf1, buf2};
     TCReference ref = TCReferenceSupport.createReference(Arrays.asList(bufs), null);
-    Assert.assertEquals(2, ref.asArray().length);
 
     TCReference dup = ref.duplicate();
     ref.close();
     Iterator<TCByteBuffer> it = dup.iterator();
     it.next();
-    it.remove();
+    it.next(); // has two buffers
+    Assert.assertFalse(it.hasNext());
     dup.close();
   }  
   
