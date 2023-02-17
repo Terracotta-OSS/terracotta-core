@@ -18,6 +18,7 @@
  */
 package com.tc.net.protocol.transport;
 
+import com.tc.bytes.TCReference;
 import com.tc.bytes.TCByteBuffer;
 
 import org.junit.Before;

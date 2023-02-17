@@ -19,13 +19,16 @@
 package com.tc.io;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCReference;
 
 public interface TCByteBufferOutput extends TCDataOutput {
 
-  public TCByteBuffer[] toArray();
+  public TCReference accessBuffers();
 
   public void write(TCByteBuffer[] data);
   
   public void write(TCByteBuffer data);
+  // TODO: REMOVE ON NEW API ADOPTION
+  public TCByteBuffer[] toArray();
 
 }
