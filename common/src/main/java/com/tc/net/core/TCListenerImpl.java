@@ -38,8 +38,6 @@ import java.nio.channels.SocketChannel;
 import java.util.concurrent.CopyOnWriteArraySet;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import java.net.InetSocketAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
 
 /**
  * TCListener implementation

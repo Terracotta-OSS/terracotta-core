@@ -22,7 +22,6 @@ import com.tc.net.core.TCConnectionManagerImpl;
 import org.slf4j.Logger;
 import org.terracotta.connection.ConnectionPropertyNames;
 
-import com.tc.async.api.StageManager;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.ProductID;
 import com.tc.net.core.TCConnectionManager;

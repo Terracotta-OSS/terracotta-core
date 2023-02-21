@@ -20,7 +20,6 @@ package com.tc.util;
 
 import com.tc.productinfo.BasePatchInfo;
 import java.io.IOException;
-import java.io.InputStream;
 
 /**
  *

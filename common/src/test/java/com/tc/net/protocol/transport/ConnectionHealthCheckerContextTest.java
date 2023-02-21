@@ -23,7 +23,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnectionManager;
 import java.net.InetSocketAddress;
 

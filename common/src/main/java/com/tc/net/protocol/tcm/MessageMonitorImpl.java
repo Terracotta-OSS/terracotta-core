@@ -18,7 +18,6 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.bytes.TCReferenceSupport;
 import org.slf4j.Logger;
 
 import com.tc.properties.TCProperties;

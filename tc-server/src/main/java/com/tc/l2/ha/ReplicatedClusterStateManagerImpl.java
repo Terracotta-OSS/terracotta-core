@@ -35,7 +35,6 @@ import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.utils.L2Utils;
 import com.tc.util.Assert;
 import com.tc.util.State;
-import com.tc.util.concurrent.SetOnceFlag;
 import org.terracotta.configuration.ConfigurationProvider;
 
 import java.util.Collection;

@@ -33,7 +33,6 @@ import org.terracotta.monitoring.PlatformMonitoringConstants;
 
 import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
@@ -44,7 +43,6 @@ import com.tc.objectserver.entity.ClientDescriptorImpl;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import com.tc.util.Assert;
 import com.tc.util.State;
-import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;

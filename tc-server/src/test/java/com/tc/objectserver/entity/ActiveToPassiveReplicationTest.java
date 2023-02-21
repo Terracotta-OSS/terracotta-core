@@ -39,7 +39,6 @@ import com.tc.l2.state.ConsistencyManager.Transition;
 import com.tc.l2.state.ServerMode;
 import com.tc.net.NodeID;
 import com.tc.object.session.SessionID;
-import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;

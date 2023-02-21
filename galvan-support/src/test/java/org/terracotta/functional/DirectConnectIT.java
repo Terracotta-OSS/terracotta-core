@@ -25,11 +25,9 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionPropertyNames;
 import org.terracotta.connection.Diagnostics;
 import org.terracotta.connection.DiagnosticsFactory;
-import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.testing.rules.BasicExternalClusterBuilder;
 import org.terracotta.testing.rules.Cluster;
 
