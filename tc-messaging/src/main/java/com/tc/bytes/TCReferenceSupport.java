@@ -137,7 +137,7 @@ public class TCReferenceSupport {
     if (track != null) {
       COMMITTED_REFERENCES.add(this);
     }
-    return new Ref(items);
+    return new Ref(items.stream().map(TCByteBuffer::asReadOnlyBuffer).collect(Collectors.toList()));
   }
   
   private static class GCRef implements TCReference {

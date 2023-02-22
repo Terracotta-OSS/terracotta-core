@@ -112,6 +112,7 @@ public class TCReferenceSupportTest {
     when(buf1.hasRemaining()).thenReturn(Boolean.TRUE);
     when(buf1.duplicate()).thenReturn(buf1);
     when(buf1.slice()).thenReturn(buf1);
+    when(buf1.asReadOnlyBuffer()).thenReturn(buf1);
     TCByteBuffer[] bufs = new TCByteBuffer[] {buf1};
     TCReference ref = TCReferenceSupport.createReference(Arrays.asList(bufs), null);
 
@@ -135,10 +136,12 @@ public class TCReferenceSupportTest {
     when(buf1.duplicate()).thenReturn(buf1);
     when(buf1.slice()).thenReturn(buf1);
     when(buf1.reInit()).thenReturn(buf1);
+    when(buf1.asReadOnlyBuffer()).thenReturn(buf1);
     when(buf2.hasRemaining()).thenReturn(Boolean.TRUE);
     when(buf2.duplicate()).thenReturn(buf2);
     when(buf2.slice()).thenReturn(buf2);
     when(buf2.reInit()).thenReturn(buf2);
+    when(buf2.asReadOnlyBuffer()).thenReturn(buf2);
     TCByteBuffer[] bufs = new TCByteBuffer[] {buf1, buf2};
     TCReferenceSupport.startMonitoringReferences();
     TCReference ref = TCReferenceSupport.createReference(Arrays.asList(bufs), returns::add);
