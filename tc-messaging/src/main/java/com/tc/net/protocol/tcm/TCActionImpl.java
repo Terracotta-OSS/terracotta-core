@@ -48,8 +48,8 @@ public abstract class TCActionImpl implements TCAction {
   private final MessageChannel          channel;
   private final boolean                 isOutgoing;
   private int                           nvCount;
-  private TCByteBufferOutputStream      out;
-  private TCByteBufferInputStream       bbis;
+  private final TCByteBufferOutputStream      out;
+  private final TCByteBufferInputStream       bbis;
   private int                           messageVersion;
 
   /**
@@ -62,6 +62,7 @@ public abstract class TCActionImpl implements TCAction {
     this.channel = channel;
 
     this.out = output;
+    this.bbis = null;
 
     this.isOutgoing = true;
   }
@@ -78,6 +79,7 @@ public abstract class TCActionImpl implements TCAction {
     this.type = TCMessageType.getInstance(header.getMessageType());
     this.messageVersion = header.getMessageTypeVersion();
     this.bbis = data;
+    this.out = null;
     this.channel = channel;
     this.isOutgoing = false;
   }
@@ -144,7 +146,6 @@ public abstract class TCActionImpl implements TCAction {
         }
       } finally {
         this.bbis.close();
-        this.bbis = null;
       }
       monitor.newIncomingMessage(this);
     }

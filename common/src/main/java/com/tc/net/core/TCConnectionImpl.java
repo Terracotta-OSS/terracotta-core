@@ -230,7 +230,9 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         return CompletableFuture.completedFuture(null);
       }
     } finally {
+      this.writeMessages.forEach(TCNetworkMessage::complete);
       this.writeMessages.clear();
+      this.writeContexts.forEach(WriteContext::writeComplete);
     }
   }
 
@@ -388,7 +390,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         TCNetworkMessage element = this.writeMessages.poll();
 
         while (element != null) {
-          if (this.closed.isSet()) { return false; }
+          if (this.closed.isSet()) { element.complete(); return false; }
           if (element instanceof WireProtocolMessage) {
               // we don't want to group already constructed Transport Handshake WireProtocolMessages
               final WireProtocolMessage ms = finalizeWireProtocolMessage((WireProtocolMessage) element, 1);
@@ -535,7 +537,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     boolean newData = false;
     
     while (!placed) {
-      if (this.closed.isSet()) { return; }
+      if (this.closed.isSet()) { message.complete(); return; }
       placed = this.writeMessages.offer(message);
       if (!placed) {
         buildWriteContextsFromMessages(true);
