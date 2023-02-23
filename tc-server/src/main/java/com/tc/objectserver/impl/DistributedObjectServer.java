@@ -280,7 +280,6 @@ public class DistributedObjectServer {
   private GroupManager<AbstractGroupMessage> groupCommManager;
   private StripeIDStateManagerImpl               stripeIDStateManager;
 
-  private final SingleThreadedTimer timer;
   private final TerracottaServiceProviderRegistryImpl serviceRegistry;
   private WeightGeneratorFactory globalWeightGeneratorFactory;
   private EntityManagerImpl entityManager;
@@ -310,7 +309,6 @@ public class DistributedObjectServer {
     this.seda = seda;
     this.server = server;
     this.serverBuilder = createServerBuilder(configSetupManager.getGroupConfiguration(), logger, server);
-    this.timer = new SingleThreadedTimer(null, threadGroup);
     this.serviceRegistry = new TerracottaServiceProviderRegistryImpl();
     this.topologyManager = new TopologyManager(this.configSetupManager.getGroupConfiguration().getHostPorts(), ()-> {
       Configuration config = this.configSetupManager.getConfiguration();
@@ -505,7 +503,7 @@ public class DistributedObjectServer {
     final ProductInfo pInfo = server.productInfo();
     PlatformServer thisServer = new PlatformServer(server.getL2Identifier(), host, ip.getHostAddress(), bindAddress, serverPort, l2DSOConfig.getGroupPort().getPort(), pInfo.buildVersion(), pInfo.buildID(), ServerEnv.getServer().getStartTime());
 
-    final LocalMonitoringProducer monitoringShimService = new LocalMonitoringProducer(this.configSetupManager.getServiceLocator().getServiceLoader(), this.serviceRegistry, thisServer, this.timer);
+    final LocalMonitoringProducer monitoringShimService = new LocalMonitoringProducer(this.configSetupManager.getServiceLocator().getServiceLoader(), this.serviceRegistry, thisServer, this.threadGroup);
     this.serviceRegistry.registerImplementationProvided(monitoringShimService);
 
     // ***** NOTE:  At this point, since we are about to create a subregistry for the platform, the serviceRegistry must be complete!
@@ -562,7 +560,7 @@ public class DistributedObjectServer {
     final NetworkStackHarnessFactory networkStackHarnessFactory;
     networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
 
-    final MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, logger);
+    final MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, logger, threadGroup);
 
     final TCMessageRouter messageRouter = new TCMessageRouterImpl();
 
@@ -820,10 +818,6 @@ public class DistributedObjectServer {
     this.context.addShutdownItem(passives::close);
     toInit.add(this.serverBuilder);
     
-    this.timer.start();
-    
-    addMemoryMonitor(this.timer);
-    
     startStages(stageManager, toInit);
 
     // XXX: yucky casts
@@ -882,23 +876,11 @@ public class DistributedObjectServer {
       this.context.shutdown();
       this.entityManager.shutdown();
       this.serviceRegistry.shutdown();
-      this.timer.cancelAll();
-      this.timer.stop();
       this.configSetupManager.close();
       stopped.complete(null);
-    } catch (InterruptedException in) {
+    } catch (Throwable in) {
       stopped.completeExceptionally(in);
     }
-  }
-  
-  private void addMemoryMonitor(SingleThreadedTimer timer) {
-    TCReferenceSupport.startMonitoringReferences();
-    timer.addPeriodic(()->{
-      int count = TCReferenceSupport.checkReferences();
-      if (count > 0) {
-        logger.warn("found unclosed memory references count:{}", count);
-      }
-    }, 30_000L, 30_000L);
   }
 
   private void killThreads(CompletableFuture<Void> stopped, boolean immediate) {

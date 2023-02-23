@@ -227,6 +227,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
         }
       }
       connectionManager.shutdown();
+      monitor.shutdown();
     } else {
       logger.warn("shutdown already started");
     }

@@ -39,7 +39,9 @@ import com.tc.classloader.BuiltinService;
 import com.tc.net.ServerID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.server.ServiceClassLoader;
+import java.io.Closeable;
 import java.util.Arrays;
+import org.terracotta.server.ServerEnv;
 
 
 /**
@@ -61,7 +63,7 @@ import java.util.Arrays;
  *  probably has better solutions.
  */
 @BuiltinService
-public class LocalMonitoringProducer implements ImplementationProvidedServiceProvider, ManagedEntity.LifecycleListener {
+public class LocalMonitoringProducer implements ImplementationProvidedServiceProvider, ManagedEntity.LifecycleListener, Closeable {
   private static final Logger LOGGER = LoggerFactory.getLogger(LocalMonitoringProducer.class);
   private final TerracottaServiceProviderRegistry globalRegistry;
   private final PlatformServer thisServer;
@@ -72,16 +74,29 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
   private Map<Long, CacheNode> cachedTreeRoot;
   private BestEffortsMonitoring bestEfforts;
   private final ServiceClassLoader classLoader;
+  private final SingleThreadedTimer timer;
 
-  public LocalMonitoringProducer(ClassLoader loader, TerracottaServiceProviderRegistry globalRegistry, PlatformServer thisServer, ISimpleTimer timer) {
+  public LocalMonitoringProducer(ClassLoader loader, TerracottaServiceProviderRegistry globalRegistry, PlatformServer thisServer, ThreadGroup groupForTimer) {
     this.globalRegistry = globalRegistry;
     this.thisServer = thisServer;
     this.otherServers = new HashMap<>();
     this.cachedTreeRoot = new HashMap<>();
+    this.timer = new SingleThreadedTimer(TimeSource.SYSTEM_TIME_SOURCE, groupForTimer);
     this.bestEfforts = new BestEffortsMonitoring(timer);
     this.classLoader = new ServiceClassLoader(loader);
+    this.timer.start();
   }
 
+  @Override
+  public void close() {
+    this.timer.cancelAll();
+    try {
+      this.timer.stop();
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+    }
+  }
+  
   @Override
   public synchronized void entityCreated(ManagedEntity sender) {
 
