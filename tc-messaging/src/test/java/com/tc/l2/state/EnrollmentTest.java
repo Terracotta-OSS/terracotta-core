@@ -35,12 +35,13 @@ public class EnrollmentTest {
     TCByteBufferOutputStream bo = new TCByteBufferOutputStream();
     e.serializeTo(bo);
     System.err.println("Written : " + e);
-    TCByteBufferInputStream bi = new TCByteBufferInputStream(bo.toArray());
-    Enrollment e1 = new Enrollment();
-    e1.deserializeFrom(bi);
-    System.err.println("Read : " + e1);
+    try (TCByteBufferInputStream bi = new TCByteBufferInputStream(bo.accessBuffers())) {
+      Enrollment e1 = new Enrollment();
+      e1.deserializeFrom(bi);
+      System.err.println("Read : " + e1);
 
-    assertEquals(e, e1);
+      assertEquals(e, e1);
+    }
 
   }
 

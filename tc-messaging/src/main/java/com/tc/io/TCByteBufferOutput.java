@@ -28,7 +28,5 @@ public interface TCByteBufferOutput extends TCDataOutput {
   public void write(TCByteBuffer[] data);
   
   public void write(TCByteBuffer data);
-  // TODO: REMOVE ON NEW API ADOPTION
-  public TCByteBuffer[] toArray();
 
 }

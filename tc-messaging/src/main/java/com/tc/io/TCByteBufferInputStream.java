@@ -22,15 +22,12 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.bytes.TCReferenceSupport;
 import com.tc.bytes.TCReference;
-import com.tc.util.Assert;
 
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.BufferUnderflowException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.stream.StreamSupport;
 
@@ -68,28 +65,8 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
   }
   
   public TCByteBufferInputStream(TCByteBuffer[] data) {
-    this(TCReferenceSupport.createGCReference(Arrays.asList(data)));
+    this(TCReferenceSupport.createGCReference(data));
   }
-  /**
-   * TODO:  REMOVE ON NEW API ADOPTION
-   * @param data
-   * @param onClose 
-   */
-  public TCByteBufferInputStream(TCByteBuffer[] data, Runnable onClose) {
-    if (data == null) { throw new NullPointerException(); }
-    
-    this.data = TCReferenceSupport.createGCReference(Arrays.asList(data));
-    this.list = this.data.iterator();
-    this.current = this.list.hasNext() ? this.list.next() : TCByteBufferFactory.getInstance(0);
-
-    long length = StreamSupport.stream(this.data.spliterator(), false).map(TCByteBuffer::remaining).map(Integer::longValue).reduce(0L, Long::sum);
-
-    if (length > Integer.MAX_VALUE) { throw new IllegalArgumentException("too much data: " + length); }
-
-    this.totalLength = (int) length;
-
-    this.onCloseHook = onClose;
-  } 
   /**
    * Duplicate this stream. The resulting stream will share data with the source stream (ie. no copying), but the two
    * streams will have independent read positions. The read position of the result stream will initially be the same as
@@ -183,7 +160,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     checkClosed();
 
     if (len == 0) { 
-      return TCReferenceSupport.createGCReference(Collections.singleton(TCByteBufferFactory.getInstance(0))); 
+      return TCReferenceSupport.createGCReference(TCByteBufferFactory.getInstance(0)); 
     }
     
     TCReference dup = data.duplicate(len);

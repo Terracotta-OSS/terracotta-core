@@ -94,35 +94,35 @@ public class NodeIDTest {
     serializer = new NodeIDSerializer(ServerID.NULL_ID);
     serializer.serializeTo(bo);
 
-    TCByteBufferInputStream bi = new TCByteBufferInputStream(bo.toArray());
-    serializer = new NodeIDSerializer();
-    serializer.deserializeFrom(bi);
-    NodeID r1 = serializer.getNodeID();
-    assertEquals(n1, r1);
-    serializer = new NodeIDSerializer();
-    serializer.deserializeFrom(bi);
-    NodeID r2 = serializer.getNodeID();
-    assertEquals(n2, r2);
-    serializer = new NodeIDSerializer();
-    serializer.deserializeFrom(bi);
-    NodeID r3 = serializer.getNodeID();
-    assertEquals(n3, r3);
-    serializer = new NodeIDSerializer();
-    serializer.deserializeFrom(bi);
-    NodeID r4 = serializer.getNodeID();
-    assertEquals(n4, r4);
-    serializer = new NodeIDSerializer();
-    serializer.deserializeFrom(bi);
-    NodeID r5 = serializer.getNodeID();
-    assertEquals(n5, r5);
-    serializer = new NodeIDSerializer();
-    serializer.deserializeFrom(bi);
-    NodeID r6 = serializer.getNodeID();
-    assertEquals(n6, r6);
-    serializer = new NodeIDSerializer();
-    serializer.deserializeFrom(bi);
-    NodeID r7 = serializer.getNodeID();
-    assertEquals(ServerID.NULL_ID, r7);
-
+    try (TCByteBufferInputStream bi = new TCByteBufferInputStream(bo.accessBuffers())) {
+      serializer = new NodeIDSerializer();
+      serializer.deserializeFrom(bi);
+      NodeID r1 = serializer.getNodeID();
+      assertEquals(n1, r1);
+      serializer = new NodeIDSerializer();
+      serializer.deserializeFrom(bi);
+      NodeID r2 = serializer.getNodeID();
+      assertEquals(n2, r2);
+      serializer = new NodeIDSerializer();
+      serializer.deserializeFrom(bi);
+      NodeID r3 = serializer.getNodeID();
+      assertEquals(n3, r3);
+      serializer = new NodeIDSerializer();
+      serializer.deserializeFrom(bi);
+      NodeID r4 = serializer.getNodeID();
+      assertEquals(n4, r4);
+      serializer = new NodeIDSerializer();
+      serializer.deserializeFrom(bi);
+      NodeID r5 = serializer.getNodeID();
+      assertEquals(n5, r5);
+      serializer = new NodeIDSerializer();
+      serializer.deserializeFrom(bi);
+      NodeID r6 = serializer.getNodeID();
+      assertEquals(n6, r6);
+      serializer = new NodeIDSerializer();
+      serializer.deserializeFrom(bi);
+      NodeID r7 = serializer.getNodeID();
+      assertEquals(ServerID.NULL_ID, r7);
+    }
   }
 }

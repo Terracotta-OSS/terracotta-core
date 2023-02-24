@@ -22,9 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCReference;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.net.protocol.TCNetworkMessage;
-import com.tc.util.Assert;
+import com.tc.util.HexDump;
 
 /**
  * A class that knows how to parse TCMessages out of raw bytes
@@ -38,27 +39,16 @@ class TCMessageParser {
   }
 
   TCAction parseMessage(MessageChannel source, TCNetworkMessage msg) {
-    TCByteBuffer[] data = msg.getPayload();
-    TCMessageHeader hdr = new TCMessageHeaderImpl(data[0].duplicate().limit(TCMessageHeader.HEADER_LENGTH));
+    TCByteBufferInputStream helper = new TCByteBufferInputStream(msg.getPayload());
+    TCByteBuffer header = helper.read(TCMessageHeader.HEADER_LENGTH);
+    TCMessageHeader hdr = new TCMessageHeaderImpl(header);
     final int headerLength = hdr.getHeaderByteLength();
 
     if (headerLength != TCMessageHeader.HEADER_LENGTH) {
       logger.error("Invalid header length ! length = " + headerLength);
       logger.error("error header = " + hdr);
-      logger.error(" buffer data is " + toString(data));
+      logger.error(" buffer data is " + toString(msg.getPayload()));
       throw new RuntimeException("Invalid header length: " + headerLength);
-    }
-
-    final TCByteBuffer msgData[];
-
-    if (data[0].limit() > headerLength) {
-      msgData = new TCByteBuffer[data.length];
-      System.arraycopy(data, 0, msgData, 0, msgData.length);
-      msgData[0] = msgData[0].position(headerLength).slice();
-    } else {
-      Assert.eval(data.length > 1);
-      msgData = new TCByteBuffer[data.length - 1];
-      System.arraycopy(data, 1, msgData, 0, msgData.length);
     }
 
     final int msgType = hdr.getMessageType();
@@ -68,21 +58,20 @@ class TCMessageParser {
       throw new RuntimeException("Can't find message type for type: " + msgType);
     }
     
-    TCAction converted = factory.createMessage(source, type, hdr, new TCByteBufferInputStream(msgData, msg.stealCompleteAction()));
+    TCAction converted = factory.createMessage(source, type, hdr, helper);
     
     return converted;
   }
 
-  private String toString(TCByteBuffer[] data) {
-    if(data == null || data.length == 0) { return "null or size 0"; }
+  private String toString(TCReference data) {
+    if(data == null || !data.iterator().hasNext()) { return "null or size 0"; }
     StringBuffer sb = new StringBuffer();
-    for (int i = 0; i < data.length; i++) {
-      sb.append(data[i]);
+    for (TCByteBuffer buf : data) {
+      sb.append(buf);
       sb.append(" { ");
-      byte b[] = data[i].array();
-      for (int j = 0; j < b.length; j++) {
-        sb.append(b[j]).append(" ");
-      }
+      byte[] read = new byte[buf.remaining()];
+      buf.duplicate().get(read);
+      HexDump.dump(read);
       sb.append(" } ");
     }
     return sb.toString();

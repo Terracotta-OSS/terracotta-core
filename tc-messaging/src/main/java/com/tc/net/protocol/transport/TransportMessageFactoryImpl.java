@@ -117,7 +117,8 @@ public class TransportMessageFactoryImpl implements TransportHandshakeMessageFac
 
     final TransportMessageImpl packet;
     try {
-      packet = new TransportMessageImpl(source, header, bbos.toArray());
+      bbos.close();
+      packet = new TransportMessageImpl(source, header, bbos.accessBuffers());
     } catch (TCProtocolException e) {
       throw new TCInternalError(e);
     }

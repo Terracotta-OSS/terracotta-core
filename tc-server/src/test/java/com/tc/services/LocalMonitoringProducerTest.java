@@ -35,6 +35,8 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.monitoring.IStripeMonitoring;
 import org.terracotta.monitoring.PlatformServer;
+import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
 
 /**
  *
@@ -58,12 +60,12 @@ public class LocalMonitoringProducerTest {
   @Before
   public void setUp() throws Exception {
     TerracottaServiceProviderRegistry reg = mock(TerracottaServiceProviderRegistry.class);
-    ISimpleTimer timer = mock(ISimpleTimer.class);
     PlatformServer server = mock(PlatformServer.class);
     InternalServiceRegistry internal = mock(InternalServiceRegistry.class);
     when(internal.getService(any(ServiceConfiguration.class))).thenReturn(mock(IStripeMonitoring.class));
     when(reg.subRegistry(anyLong())).thenReturn(internal);
-    producer = new LocalMonitoringProducer(getClass().getClassLoader(), reg, server, timer);
+    ServerEnv.setDefaultServer(mock(Server.class));
+    producer = new LocalMonitoringProducer(getClass().getClassLoader(), reg, server, null);
   }
   
   @After

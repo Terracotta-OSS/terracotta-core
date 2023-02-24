@@ -19,7 +19,7 @@
 package com.tc.net.protocol.tcm;
 
 
-import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCReference;
 import com.tc.net.protocol.TCNetworkHeader;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -31,10 +31,10 @@ import java.util.Objects;
  */
 public class TCActionNetworkMessageImpl extends TCNetworkMessageImpl implements TCActionNetworkMessage {
 
-  private final Supplier<TCByteBuffer[]> payloadSupplier;
+  private final Supplier<TCReference> payloadSupplier;
   private final AtomicReference<State> state = new AtomicReference<>(State.PENDING);
 
-  public TCActionNetworkMessageImpl(TCNetworkHeader header, Supplier<TCByteBuffer[]> payloadSupplier) {
+  public TCActionNetworkMessageImpl(TCNetworkHeader header, Supplier<TCReference> payloadSupplier) {
     super(header);
     Objects.requireNonNull(payloadSupplier);
     this.payloadSupplier = payloadSupplier;
@@ -43,7 +43,10 @@ public class TCActionNetworkMessageImpl extends TCNetworkMessageImpl implements 
   @Override
   public boolean load() {
     if (updateState(State.SEALED, EnumSet.of(State.PENDING))) {
-      setPayload(payloadSupplier.get());
+      TCReference ref = payloadSupplier.get();
+      if (ref != null) {
+        setPayload(ref);
+      }
       return true;
     } else {
       return false;

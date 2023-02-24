@@ -65,10 +65,13 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import com.tc.net.protocol.tcm.TCActionNetworkMessage;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.StreamSupport;
 
 /**
  * The {@link TCConnection} implementation. SocketChannel read/write happens here.
@@ -227,7 +230,9 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         return CompletableFuture.completedFuture(null);
       }
     } finally {
+      this.writeMessages.forEach(TCNetworkMessage::complete);
       this.writeMessages.clear();
+      this.writeContexts.forEach(WriteContext::writeComplete);
     }
   }
 
@@ -385,7 +390,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         TCNetworkMessage element = this.writeMessages.poll();
 
         while (element != null) {
-          if (this.closed.isSet()) { return false; }
+          if (this.closed.isSet()) { element.complete(); return false; }
           if (element instanceof WireProtocolMessage) {
               // we don't want to group already constructed Transport Handshake WireProtocolMessages
               final WireProtocolMessage ms = finalizeWireProtocolMessage((WireProtocolMessage) element, 1);
@@ -496,13 +501,11 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     }
 
     while (context != null) {
-      if (context.start()) {
-        long bytesWritten = context.writeBuffers();
-        if (debug) {
-          logger.debug("Wrote " + bytesWritten + " bytes on connection " + this.channel.toString());
-        }
-        totalBytesWritten += bytesWritten;
+      long bytesWritten = context.writeBuffers();
+      if (debug) {
+        logger.debug("Wrote " + bytesWritten + " bytes on connection " + this.channel.toString());
       }
+      totalBytesWritten += bytesWritten;
 
       if (context.done()) {
         if (debug) {
@@ -518,10 +521,8 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         break;
       }
     }
-
-    if (this.closed.isSet()) { return totalBytesWritten; }
     
-    if (context == null && !buildWriteContextsFromMessages(false)) {
+    if (!this.closed.isSet() && context == null && !buildWriteContextsFromMessages(false)) {
       this.commWorker.removeWriteInterest(this, this.channel);
     }
 
@@ -536,7 +537,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     boolean newData = false;
     
     while (!placed) {
-      if (this.closed.isSet()) { return; }
+      if (this.closed.isSet()) { message.complete(); return; }
       placed = this.writeMessages.offer(message);
       if (!placed) {
         buildWriteContextsFromMessages(true);
@@ -885,38 +886,28 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
   protected class WriteContext {
     private final WireProtocolMessage message;
-    private int                    index = 0;
-    private TCByteBuffer[]   entireMessageData;
+    private Iterator<TCByteBuffer>   messageBytes;
+    private TCByteBuffer current;
 
     WriteContext(WireProtocolMessage message) {
       this.message = message;
     }
     
-    boolean start() {
-      if (entireMessageData == null) {
+    private void prepIfNeeded() {
+      if (messageBytes == null) {
         if (message.prepareToSend()) {
-          entireMessageData = getClonedMessage(message.getEntireMessageData());
-          return true;
+          messageBytes = StreamSupport.stream(message.getEntireMessageData().spliterator(),false).map(TCByteBuffer::asReadOnlyBuffer).iterator();
+        } else {
+          messageBytes = Collections.emptyIterator();
         }
-        return false;
-      } else {
-        return true;
+        current = messageBytes.hasNext() ? messageBytes.next() : null;
       }
     }
 
     boolean done() {
-      if (entireMessageData != null) {
-        for (int i = index, n = entireMessageData.length; i < n; i++) {
-          if (entireMessageData[i].hasRemaining()) { return false; }
-        }
-      }
-      return true;
+      return (messageBytes != null && current == null);
     }
-
-    void incrementIndexAndCleanOld() {
-      entireMessageData[index++] = null;
-    }
-
+    
     void writeComplete() {
       this.message.complete();
     }
@@ -927,33 +918,30 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     
     long writeBuffers() {
       long bytesWritten = 0;
-      // Do the write in a loop, instead of calling write(ByteBuffer[]).
-      // This seems to avoid memory leaks and faster
-      for (int i = index; i < entireMessageData.length; i++) {
-        ByteBuffer buf = entireMessageData[i].getNioBuffer();
+
+      prepIfNeeded();
+      
+      while (current != null) {
+        ByteBuffer buf = current.getNioBuffer();
 
         final int written = bufferManager.forwardToWriteBuffer(buf);
 
         bytesWritten += written;
         
-        entireMessageData[i].returnNioBuffer(buf);
+        current.returnNioBuffer(buf);
 
-        if (written == 0 || entireMessageData[i].hasRemaining()) {
+        if (written == 0 || current.hasRemaining()) {
           break;
         } else {
-          incrementIndexAndCleanOld();
+          if (messageBytes.hasNext()) {
+            current = messageBytes.next();
+          } else {
+            current = null;
+          }
         }
       }
 
       return bytesWritten;
-    }
-
-    private TCByteBuffer[] getClonedMessage(TCByteBuffer[] sourceMessageByteBuffers) {
-      TCByteBuffer[] clonedMessageData = new TCByteBuffer[sourceMessageByteBuffers.length];
-      for (int i = 0; i < sourceMessageByteBuffers.length; i++) {
-        clonedMessageData[i] = sourceMessageByteBuffers[i].asReadOnlyBuffer();
-      }
-      return clonedMessageData;
     }
   }
 

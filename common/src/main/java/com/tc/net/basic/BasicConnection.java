@@ -19,6 +19,7 @@
 package com.tc.net.basic;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCReference;
 import com.tc.net.core.BufferManager;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.TCConnection;
@@ -45,6 +46,7 @@ import java.io.Closeable;
 import java.io.EOFException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Date;
@@ -98,19 +100,30 @@ public class BasicConnection implements TCConnection {
             int totalLen = message.getTotalLength();
             int moved = 0;
             int sent = 0;
-            TCByteBuffer[] data = message.getEntireMessageData();
-            LOGGER.debug("sending a message with {} buffers", data.length);
-            while (moved < totalLen) {
-              for (TCByteBuffer b : data) {
-                moved += buffer.forwardToWriteBuffer(b.getNioBuffer());
+            try (TCReference data = message.getEntireMessageData().duplicate()) {
+              while (moved < totalLen) {
+                for (TCByteBuffer b : data) {
+                  if (!b.hasRemaining()) {
+                    // if there is no data here to write move to next
+                    continue;
+                  }
+                  ByteBuffer bb = b.getNioBuffer();
+                  moved += buffer.forwardToWriteBuffer(bb);
+                  b.returnNioBuffer(bb);
+                  if (b.hasRemaining()) {
+                    // if there is still data here, flush the buffer and try again to complete
+                    break;
+                  }
+                }
+                sent += buffer.sendFromBuffer();
               }
-              sent += buffer.sendFromBuffer();
-            }
-            while (sent < totalLen) {
-              sent += buffer.sendFromBuffer();
-            }
-            if (interrupted) {
-              Thread.currentThread().interrupt();
+              while (sent < totalLen) {
+                // flush everything out of the buffer
+                sent += buffer.sendFromBuffer();
+              }
+              if (interrupted) {
+                Thread.currentThread().interrupt();
+              }
             }
           }
         } catch (IOException ioe) {

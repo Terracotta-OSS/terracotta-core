@@ -20,6 +20,7 @@ package com.tc.object.tx;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.bytes.TCReference;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
@@ -93,15 +94,16 @@ public class ServerTransactionID implements Comparable<ServerTransactionID> {
     nodeIDSerializer.serializeTo(out);
     out.writeLong(txnID.toLong());
     out.close();
-    TCByteBuffer[] bufs = out.toArray();
     byte[] toRet = new byte[out.getBytesWritten()];
     int idx = 0;
-    for (TCByteBuffer buf : bufs) {
-      int length = buf.limit();
-      buf.get(toRet, idx, buf.limit());
-      idx += length;
+    try (TCReference ref = out.accessBuffers()) {
+      for (TCByteBuffer buf : ref) {
+        int length = buf.limit();
+        buf.get(toRet, idx, buf.limit());
+        idx += length;
+      }
+      Assert.assertEquals(idx, out.getBytesWritten());
     }
-    Assert.assertEquals(idx, out.getBytesWritten());
     return toRet;
   }
 

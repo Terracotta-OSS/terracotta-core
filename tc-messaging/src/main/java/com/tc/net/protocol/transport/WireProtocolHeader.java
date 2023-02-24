@@ -21,7 +21,6 @@ package com.tc.net.protocol.transport;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.net.protocol.AbstractTCNetworkHeader;
 import com.tc.net.protocol.TCNetworkMessage;
-import com.tc.net.protocol.delivery.OOOProtocolMessage;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -87,7 +86,7 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
     // TODO: is there a better way to do this (ie. not using instanceof)?
     if (msg.getHeader() instanceof TCMessageHeader) {
       return PROTOCOL_TCM;
-    } else if (msg instanceof OOOProtocolMessage) { return PROTOCOL_OOOP; }
+    }
 
     return PROTOCOL_UNKNOWN;
   }

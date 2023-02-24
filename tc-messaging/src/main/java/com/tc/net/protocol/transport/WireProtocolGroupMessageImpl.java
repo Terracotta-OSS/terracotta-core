@@ -49,6 +49,8 @@ package com.tc.net.protocol.transport;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.bytes.TCReference;
+import com.tc.bytes.TCReferenceSupport;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.TCNetworkMessage;
@@ -77,8 +79,9 @@ public class WireProtocolGroupMessageImpl extends TCNetworkMessageImpl implement
 
   // used by the reader
   protected WireProtocolGroupMessageImpl(TCConnection source, WireProtocolHeader header,
-                                         TCByteBuffer[] messagePayloadByteBuffers) {
-    super(header, messagePayloadByteBuffers);
+                                         TCReference messagePayloadByteBuffers) {
+    super(header);
+    setPayload(messagePayloadByteBuffers);
     this.sourceConnection = source;
     messagePayloads = null;
   }
@@ -92,14 +95,14 @@ public class WireProtocolGroupMessageImpl extends TCNetworkMessageImpl implement
 
   @Override
   public boolean prepareToSend() {
-      setPayload(generatePayload());
-      getWireProtocolHeader().setMessageCount(messagePayloads.size());
-      getWireProtocolHeader().finalizeHeader(getTotalLength());
-      return getWireProtocolHeader().getMessageCount() > 0;
+    setPayload(generatePayload());
+    getWireProtocolHeader().setMessageCount(messagePayloads.size());
+    getWireProtocolHeader().finalizeHeader(getTotalLength());
+    return getWireProtocolHeader().getMessageCount() > 0;
   }
   
-  private TCByteBuffer[] generatePayload() {
-    List<TCByteBuffer> msgs = new ArrayList<>(messagePayloads.size() * 2);
+  private TCReference generatePayload() {
+    List<TCReference> msgs = new ArrayList<>(messagePayloads.size() * 2);
     Iterator<TCActionNetworkMessage> msgI = messagePayloads.iterator();
     while (msgI.hasNext()) {
       TCActionNetworkMessage msg = msgI.next();
@@ -109,35 +112,41 @@ public class WireProtocolGroupMessageImpl extends TCNetworkMessageImpl implement
         tcb.putShort(WireProtocolHeader.getProtocolForMessageClass(msg));
         tcb.flip();
 
-        msgs.add(tcb);
+        TCReference header = TCReferenceSupport.createGCReference(tcb);
+        msgs.add(header);
+        // not nescessary because its just GC but do for completness 
+        msg.addCompleteCallback(header::close); 
         // referring to the original payload buffers
-        msgs.addAll(Arrays.asList(msg.getEntireMessageData()));
+        msgs.add(msg.getEntireMessageData());
       } else {
         msg.complete();
         msgI.remove();
       }
     }
-    return msgs.toArray(new TCByteBuffer[msgs.size()]);
+    return TCReferenceSupport.createAggregateReference(msgs);
   }
   
   private List<TCNetworkMessage> getMessagesFromByteBuffers() throws IOException {
     ArrayList<TCNetworkMessage> messages = new ArrayList<>();
 
-    TCByteBufferInputStream msgs = new TCByteBufferInputStream(getPayload());
+    TCReference src = getPayload();
 
-    for (int i = 0; i < getWireProtocolHeader().getMessageCount(); i++) {
-      int msgLen = msgs.readInt();
-      short msgProto = msgs.readShort();
+    try (TCByteBufferInputStream msgs = new TCByteBufferInputStream(src)) {
+      for (int i = 0; i < getWireProtocolHeader().getMessageCount(); i++) {
+        int msgLen = msgs.readInt();
+        short msgProto = msgs.readShort();
 
-      WireProtocolHeader hdr;
-      hdr = (WireProtocolHeader) getWireProtocolHeader().clone();
-      hdr.setTotalPacketLength(hdr.getHeaderByteLength() + msgLen);
-      hdr.setProtocol(msgProto);
-      hdr.setMessageCount(1);
-      hdr.computeChecksum();
-      WireProtocolMessage msg = new WireProtocolMessageImpl(this.sourceConnection, hdr, new TCByteBuffer[] {msgs.read(msgLen)});
-      messages.add(msg);
+        WireProtocolHeader hdr;
+        hdr = (WireProtocolHeader) getWireProtocolHeader().clone();
+        hdr.setTotalPacketLength(hdr.getHeaderByteLength() + msgLen);
+        hdr.setProtocol(msgProto);
+        hdr.setMessageCount(1);
+        hdr.computeChecksum();
+        WireProtocolMessage msg = new WireProtocolMessageImpl(this.sourceConnection, hdr, msgs.readReference(msgLen));
+        messages.add(msg);
+      }
     }
+
     return messages;
   }
 

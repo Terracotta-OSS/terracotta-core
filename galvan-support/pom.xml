@@ -175,6 +175,7 @@ limitations under the License.
             <kitInstallationPath>${kitUnzipLocation}/terracotta-${project.version}</kitInstallationPath>
             <kitTestDirectory>${project.build.testOutputDirectory}/testing_directory</kitTestDirectory>
             <logback.debug>true</logback.debug>
+            <com.tc.tcm.monitor.enabled>true</com.tc.tcm.monitor.enabled>
           </systemPropertyVariables>
         </configuration>
       </plugin>

@@ -66,10 +66,10 @@ public class TCReferenceSupportTest {
     Collection<TCByteBuffer> items = new ArrayList<>();
     Collections.addAll(items, buf1, buf2);
     TCReference ref = TCReferenceSupport.createReference(items, null);
-    Assert.assertEquals(2, ref.asArray().length);
     Iterator<TCByteBuffer> it = ref.iterator();
     it.next();
-    it.remove();
+    it.next(); // has two buffers
+    Assert.assertFalse(it.hasNext());
     ref.close();
   }
 
@@ -80,13 +80,12 @@ public class TCReferenceSupportTest {
     Collection<TCByteBuffer> items = new ArrayList<>();
     Collections.addAll(items, buf1, buf2);
     TCReference ref = TCReferenceSupport.createReference(items, null);
-    Assert.assertEquals(2, ref.asArray().length);
-
     TCReference dup = ref.duplicate();
     ref.close();
     Iterator<TCByteBuffer> it = dup.iterator();
     it.next();
-    it.remove();
+    it.next(); // has two buffers
+    Assert.assertFalse(it.hasNext());
     dup.close();
   } 
   
@@ -96,13 +95,13 @@ public class TCReferenceSupportTest {
     TCByteBuffer buf2 = TCByteBufferFactory.getInstance(512);
     TCByteBuffer[] bufs = new TCByteBuffer[] {buf1, buf2};
     TCReference ref = TCReferenceSupport.createReference(Arrays.asList(bufs), null);
-    Assert.assertEquals(2, ref.asArray().length);
 
     TCReference dup = ref.duplicate();
     ref.close();
     Iterator<TCByteBuffer> it = dup.iterator();
     it.next();
-    it.remove();
+    it.next(); // has two buffers
+    Assert.assertFalse(it.hasNext());
     dup.close();
   }  
   
@@ -113,6 +112,7 @@ public class TCReferenceSupportTest {
     when(buf1.hasRemaining()).thenReturn(Boolean.TRUE);
     when(buf1.duplicate()).thenReturn(buf1);
     when(buf1.slice()).thenReturn(buf1);
+    when(buf1.asReadOnlyBuffer()).thenReturn(buf1);
     TCByteBuffer[] bufs = new TCByteBuffer[] {buf1};
     TCReference ref = TCReferenceSupport.createReference(Arrays.asList(bufs), null);
 
@@ -122,7 +122,6 @@ public class TCReferenceSupportTest {
     verify(buf1, never()).reInit();
     Iterator<TCByteBuffer> it = dup.iterator();
     it.next();
-    it.remove();
     dup.close();
     verify(buf1).reInit();
   }
@@ -136,10 +135,12 @@ public class TCReferenceSupportTest {
     when(buf1.duplicate()).thenReturn(buf1);
     when(buf1.slice()).thenReturn(buf1);
     when(buf1.reInit()).thenReturn(buf1);
+    when(buf1.asReadOnlyBuffer()).thenReturn(buf1);
     when(buf2.hasRemaining()).thenReturn(Boolean.TRUE);
     when(buf2.duplicate()).thenReturn(buf2);
     when(buf2.slice()).thenReturn(buf2);
     when(buf2.reInit()).thenReturn(buf2);
+    when(buf2.asReadOnlyBuffer()).thenReturn(buf2);
     TCByteBuffer[] bufs = new TCByteBuffer[] {buf1, buf2};
     TCReferenceSupport.startMonitoringReferences();
     TCReference ref = TCReferenceSupport.createReference(Arrays.asList(bufs), returns::add);

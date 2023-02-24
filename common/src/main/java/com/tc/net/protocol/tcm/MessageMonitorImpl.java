@@ -18,7 +18,7 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.bytes.TCReferenceSupport;
 import org.slf4j.Logger;
 
 import com.tc.properties.TCProperties;
@@ -28,9 +28,11 @@ import com.tc.text.StringFormatter;
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.TreeMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class MessageMonitorImpl implements MessageMonitor {
@@ -38,14 +40,14 @@ public class MessageMonitorImpl implements MessageMonitor {
   private final Map<TCMessageType, MessageCounter> counters     = new TreeMap<TCMessageType, MessageCounter>(
                                                                                                              new TCMessageTypeComparator());
   private final StringFormatter                    formatter    = new StringFormatter();
-  private final Timer                              timer;
+  private final ScheduledExecutorService                              timer;
+  private final ScheduledFuture<?> currentTask;
   private int                                      maxTypeWidth = 0;
 
-  public static MessageMonitor createMonitor(TCProperties tcProps, Logger logger) {
+  public static MessageMonitor createMonitor(TCProperties tcProps, Logger logger, ThreadGroup group) {
     final MessageMonitor mm;
     if (tcProps.getBoolean(TCPropertiesConsts.TCM_MONITOR_ENABLED, false)) {
-      mm = new MessageMonitorImpl();
-      ((MessageMonitorImpl) mm).startLogging(logger, tcProps.getInt(TCPropertiesConsts.TCM_MONITOR_DELAY));
+      mm = new MessageMonitorImpl(group, logger, tcProps.getInt(TCPropertiesConsts.TCM_MONITOR_DELAY));
     } else {
       mm = new NullMessageMonitor();
     }
@@ -53,20 +55,31 @@ public class MessageMonitorImpl implements MessageMonitor {
     return mm;
   }
 
-  public MessageMonitorImpl() {
-    this.timer = new Timer("MessageMonitor logger", true);
+  public MessageMonitorImpl(ThreadGroup grp, Logger logger, int delay) {
+    this.timer = Executors.newSingleThreadScheduledExecutor(r->{
+      Thread t = new Thread(grp, r, "MessageMonitor logger");
+      t.setDaemon(true);
+      return t;
+    });
+    this.currentTask = startLogging(logger, delay);
   }
 
-  public void startLogging(final Logger logger, int intervalSeconds) {
+  private ScheduledFuture<?> startLogging(final Logger logger, int intervalSeconds) {
     if (intervalSeconds < 1) { throw new IllegalArgumentException("invalid interval: " + intervalSeconds); }
-    TimerTask task = new TimerTask() {
-      @Override
-      public void run() {
-        logger.info(MessageMonitorImpl.this.toString());
-      }
-    };
+    TCReferenceSupport.startMonitoringReferences();
+    return this.timer.scheduleAtFixedRate(()->{
+      logger.info(MessageMonitorImpl.this.toString());
+        int count = TCReferenceSupport.checkReferences();
+        if (count < 0) {
+          logger.info("found {} memory references that were not closed", count);
+        }
+    }, 0, intervalSeconds, TimeUnit.SECONDS);
+  }
 
-    this.timer.scheduleAtFixedRate(task, 0, intervalSeconds * 1000);
+  @Override
+  public void shutdown() {
+    currentTask.cancel(true);
+    timer.shutdownNow();
   }
 
   @Override

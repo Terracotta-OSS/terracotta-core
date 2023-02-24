@@ -20,6 +20,8 @@ package com.tc.net.protocol.transport;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.bytes.TCReference;
+import com.tc.bytes.TCReferenceSupport;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
@@ -204,7 +206,7 @@ public class TCConnectionTransportTest extends TestCase {
       bufs.add(sourceBuffer);
       bufCunt--;
     }
-    TCNetworkMessage message = getDSOMessage(monitor, bufs.toArray(new TCByteBuffer[] {}));
+    TCNetworkMessage message = getDSOMessage(monitor, TCReferenceSupport.createGCReference());
     return message;
   }
 
@@ -221,7 +223,7 @@ public class TCConnectionTransportTest extends TestCase {
     return buf.toString();
   }
 
-  private TCNetworkMessage getDSOMessage(MessageMonitor monitor, TCByteBuffer[] bufs) {
+  private TCNetworkMessage getDSOMessage(MessageMonitor monitor, TCReference bufs) {
     TCActionNetworkMessage nmsg = new MyMessage(monitor, seq.getNextSequence(), bufs).getNetworkMessage();
     return nmsg;
   }
@@ -231,15 +233,15 @@ public class TCConnectionTransportTest extends TestCase {
     private static final byte SEQUENCE = 1;
     private static final byte DATA     = 2;
     private long              seqID;
-    private TCByteBuffer[]    data;
+    private TCReference    data;
 
     @SuppressWarnings("resource")
-    MyMessage(MessageMonitor monitor, long nextSequence, TCByteBuffer[] bufs) {
+    MyMessage(MessageMonitor monitor, long nextSequence, TCReference bufs) {
       super(new SessionID(0), monitor, new TCByteBufferOutputStream(), null, TCMessageType.PING_MESSAGE);
       initialize(nextSequence, bufs);
     }
 
-    private void initialize(long nextSequence, TCByteBuffer[] bufs) {
+    private void initialize(long nextSequence, TCReference bufs) {
       Objects.requireNonNull(bufs);
       this.seqID = nextSequence;
       this.data = bufs;
@@ -250,19 +252,18 @@ public class TCConnectionTransportTest extends TestCase {
     }
 
     @Override
-    public TCByteBuffer[] getDataBuffers() {
+    public TCReference getDataBuffers() {
       int tot = 0;
       dehydrateValues();
       TCByteBufferOutputStream out = getOutputStream();
-      final TCByteBuffer[] nvData = out.toArray();
-      Assert.eval(nvData.length > 0);
+      final TCReference refdata = out.accessBuffers();
       int after = 0;
-      for (TCByteBuffer c : nvData) {
+      for (TCByteBuffer c : refdata) {
         after += c.remaining();
       }
       System.out.println(out.getBytesWritten() + " " + tot + " " + after);
 
-      return nvData;
+      return refdata;
     }
 
     @Override
@@ -288,7 +289,7 @@ public class TCConnectionTransportTest extends TestCase {
             }
           }
           out.close();
-          this.data = out.toArray();
+          data = out.accessBuffers();
           return true;
         default:
           throw new AssertionError("unknown type in message");

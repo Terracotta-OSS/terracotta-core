@@ -20,6 +20,7 @@ package com.tc.net.protocol.transport;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.bytes.TCReferenceSupport;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.tcm.TCActionNetworkMessage;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -44,7 +45,8 @@ public class WireProtocoGroupMessageTest {
     TCActionNetworkMessage msg = mock(TCActionNetworkMessage.class);
     when(msg.commit()).thenReturn(Boolean.TRUE);
     when(msg.getTotalLength()).thenReturn(TCMessageHeader.HEADER_LENGTH + 32);
-    when(msg.getEntireMessageData()).thenReturn(new TCByteBuffer[] {TCByteBufferFactory.getInstance(TCMessageHeader.HEADER_LENGTH + 32)});
+    when(msg.getEntireMessageData()).thenReturn(
+            TCReferenceSupport.createGCReference(TCByteBufferFactory.getInstance(TCMessageHeader.HEADER_LENGTH + 32)));
     
     TCActionNetworkMessage[] msgs = new TCActionNetworkMessage[2];
     msgs[0] = msg;
@@ -71,7 +73,7 @@ public class WireProtocoGroupMessageTest {
     TCActionNetworkMessage msg = mock(TCActionNetworkMessage.class);
     when(msg.commit()).thenReturn(Boolean.TRUE);
     when(msg.getTotalLength()).thenReturn(TCMessageHeader.HEADER_LENGTH + 32);
-    when(msg.getEntireMessageData()).thenReturn(new TCByteBuffer[] {TCByteBufferFactory.getInstance(TCMessageHeader.HEADER_LENGTH + 32)});
+    when(msg.getEntireMessageData()).thenReturn(TCReferenceSupport.createGCReference(TCByteBufferFactory.getInstance(TCMessageHeader.HEADER_LENGTH + 32)));
     
     TCActionNetworkMessage[] msgs = new TCActionNetworkMessage[2];
     msgs[0] = msg;

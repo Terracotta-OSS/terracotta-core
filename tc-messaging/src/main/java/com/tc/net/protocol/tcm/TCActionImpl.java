@@ -22,13 +22,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferFactory;
+import com.tc.bytes.TCReference;
+import com.tc.bytes.TCReferenceSupport;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCSerializable;
 import com.tc.net.NodeID;
 import com.tc.net.groups.NodeIDSerializer;
 import com.tc.util.AbstractIdentifier;
-import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;
@@ -46,8 +48,8 @@ public abstract class TCActionImpl implements TCAction {
   private final MessageChannel          channel;
   private final boolean                 isOutgoing;
   private int                           nvCount;
-  private TCByteBufferOutputStream      out;
-  private TCByteBufferInputStream       bbis;
+  private final TCByteBufferOutputStream      out;
+  private final TCByteBufferInputStream       bbis;
   private int                           messageVersion;
 
   /**
@@ -59,11 +61,8 @@ public abstract class TCActionImpl implements TCAction {
     this.type = type;
     this.channel = channel;
 
-    // this.bbos = new TCByteBufferOutputStream(4, 4096, false);
     this.out = output;
-
-    // write out a zero. When dehydrated, this space will be replaced with the NV count
-    this.out.writeInt(0);
+    this.bbis = null;
 
     this.isOutgoing = true;
   }
@@ -80,6 +79,7 @@ public abstract class TCActionImpl implements TCAction {
     this.type = TCMessageType.getInstance(header.getMessageType());
     this.messageVersion = header.getMessageTypeVersion();
     this.bbis = data;
+    this.out = null;
     this.channel = channel;
     this.isOutgoing = false;
   }
@@ -110,21 +110,19 @@ public abstract class TCActionImpl implements TCAction {
   protected abstract void dehydrateValues();
 
   protected TCActionNetworkMessage convertToNetworkMessage() {
-    TCActionNetworkMessage msg = new TCActionNetworkMessageImpl(new TCMessageHeaderImpl(type), ()->getDataBuffers());
-    if (this.isOutgoing) {
-      msg.addCompleteCallback(out::close);
-    }
-    return msg;
+    return new TCActionNetworkMessageImpl(new TCMessageHeaderImpl(type), ()->getDataBuffers());
   }
 
-  public TCByteBuffer[] getDataBuffers() {
+  public TCReference getDataBuffers() {
     dehydrateValues();
 
-    final TCByteBuffer[] nvData = out.toArray();
-
-    Assert.eval(nvData.length > 0);
-    nvData[0].putInt(0, nvCount);
-    return nvData;
+    out.close();
+    //  header with nvCount
+    try (TCReference header = TCReferenceSupport.createGCReference(
+              TCByteBufferFactory.getInstance(Integer.BYTES).putInt(0, nvCount)); 
+          TCReference nvData = out.accessBuffers()) {
+      return TCReferenceSupport.createAggregateReference(header, nvData);
+    }
   }
 
   /**
@@ -148,7 +146,6 @@ public abstract class TCActionImpl implements TCAction {
         }
       } finally {
         this.bbis.close();
-        this.bbis = null;
       }
       monitor.newIncomingMessage(this);
     }
@@ -283,6 +280,14 @@ public abstract class TCActionImpl implements TCAction {
     out.write(name);
     object.serializeTo(out);
   }
+  
+  protected void putNVPair(byte name, TCReference data) {
+    nvCount++;
+    out.write(name);
+    for (TCByteBuffer buf : data) {
+      out.write(buf);
+    }
+  }  
 
   protected void putNVPair(byte name, TCByteBuffer[] data) {
     nvCount++;

@@ -54,11 +54,12 @@ public class NodeIDSerializationTest {
     nodeIDSerializer.serializeTo(out);
     out.close();
 
-    TCByteBufferInputStream in = new TCByteBufferInputStream(out.toArray());
-    NodeIDSerializer nodeIDSerializer2 = new NodeIDSerializer();
-    nodeIDSerializer2.deserializeFrom(in);
-    NodeID dup = nodeIDSerializer2.getNodeID();
-    return dup;
+    try (TCByteBufferInputStream in = new TCByteBufferInputStream(out.accessBuffers())) {
+      NodeIDSerializer nodeIDSerializer2 = new NodeIDSerializer();
+      nodeIDSerializer2.deserializeFrom(in);
+      NodeID dup = nodeIDSerializer2.getNodeID();
+      return dup;
+    }
   }
 
   @Test
@@ -86,10 +87,11 @@ public class NodeIDSerializationTest {
     serializer.serializeTo(out);
     out.close();
 
-    TCByteBufferInputStream in = new TCByteBufferInputStream(out.toArray());
-    serializer = new NodeIDSerializer();
-    NodeID dup = serializer.deserializeFrom(in).getNodeID();
-    return dup;
+    try (TCByteBufferInputStream in = new TCByteBufferInputStream(out.accessBuffers())) {
+      serializer = new NodeIDSerializer();
+      NodeID dup = serializer.deserializeFrom(in).getNodeID();
+      return dup;
+    }
   }
 
 }

@@ -18,14 +18,18 @@
  */
 package com.tc.net.protocol;
 
+import com.tc.bytes.TCByteBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCReference;
+import com.tc.bytes.TCReferenceSupport;
 import com.tc.exception.TCInternalError;
 import com.tc.util.Assert;
 import com.tc.util.HexDump;
 import com.tc.util.concurrent.SetOnceFlag;
+import java.util.Collections;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -36,11 +40,6 @@ import java.util.concurrent.CompletableFuture;
 public class TCNetworkMessageImpl implements TCNetworkMessage {
   protected static final Logger logger = LoggerFactory.getLogger(TCNetworkMessage.class);
   private static final int        MESSAGE_DUMP_MAXBYTES = 4 * 1024;
-
-  public TCNetworkMessageImpl(TCNetworkHeader header, TCByteBuffer[] payload) {
-    this(header);
-    setPayload(payload);
-  }
 
   protected TCNetworkMessageImpl(TCNetworkHeader header) {
     Assert.eval(header != null);
@@ -71,25 +70,26 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   }
 
   @Override
-  public final TCByteBuffer[] getPayload() {
+  public final TCReference getPayload() {
     Assert.eval(payloadData != null);
 
     return payloadData;
   }
 
-  protected final void setPayload(TCByteBuffer[] newPayload) {
+  protected final void setPayload(TCReference newPayload) {
     // this array should have already been set in seal()
     Assert.eval(payloadData == null);
     if (newPayload == null) {
-      payloadData = EMPTY_BUFFER_ARRAY;
+      payloadData = EMPTY_BUFFER;
     } else {
       payloadData = newPayload;
     }
+    this.complete.thenRun(payloadData::close);
     seal();
   }
 
   @Override
-  public final TCByteBuffer[] getEntireMessageData() {
+  public final TCReference getEntireMessageData() {
     // this array should have already been set in seal()
     Assert.eval(entireMessageData != null);
 
@@ -139,24 +139,20 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   protected String messageBytes() {
     StringBuilder buf = new StringBuilder();
     int totalBytesDumped = 0;
-    if ((payloadData != null) && (payloadData.length != 0)) {
-      for (int i = 0; i < payloadData.length; i++) {
+    if (payloadData != null) {
+      for (TCByteBuffer i : payloadData) {
         buf.append("Buffer ").append(i).append(": ");
-        if (payloadData[i] != null) {
+        buf.append(i.toString());
+        buf.append("\n");
 
-          buf.append(payloadData[i].toString());
-          buf.append("\n");
-
-          if (totalBytesDumped < MESSAGE_DUMP_MAXBYTES) {
-            int bytesFullBuf = payloadData[i].limit();
-            int bytesToDump = (((totalBytesDumped + bytesFullBuf) < MESSAGE_DUMP_MAXBYTES) ? bytesFullBuf
-                : (MESSAGE_DUMP_MAXBYTES - totalBytesDumped));
-
-            buf.append(HexDump.dump(payloadData[i].array(), payloadData[i].arrayOffset(), bytesToDump));
-            totalBytesDumped += bytesToDump;
-          }
-        } else {
-          buf.append("null");
+        if (totalBytesDumped < MESSAGE_DUMP_MAXBYTES) {
+          int bytesFullBuf = i.limit();
+          int bytesToDump = (((totalBytesDumped + bytesFullBuf) < MESSAGE_DUMP_MAXBYTES) ? bytesFullBuf
+              : (MESSAGE_DUMP_MAXBYTES - totalBytesDumped));
+          byte[] read = new byte[i.remaining()];
+          i.duplicate().get(read);
+          buf.append(HexDump.dump(read));
+          totalBytesDumped += bytesToDump;
         }
       }
     } else {
@@ -170,35 +166,34 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
     StringBuilder toRet = new StringBuilder(toString());
     toRet.append("\n\n");
     if (entireMessageData != null) {
-      for (int i = 0; i < entireMessageData.length; i++) {
-        toRet.append('[').append(i).append(']').append('=').append(entireMessageData[i].toString());
+      int count = 0;
+      for (TCByteBuffer data : entireMessageData) {
+        toRet.append('[').append(count++).append(']').append('=').append(data.toString());
         toRet.append(" =  { ");
-        byte ba[] = entireMessageData[i].array();
-        for (byte element : ba) {
-          toRet.append(Byte.toString(element)).append(' ');
-        }
+        byte ba[] = new byte[data.remaining()];
+        data.duplicate().get(ba);
+        HexDump.dump(ba);
         toRet.append(" }  \n\n");
       }
     }
     return toRet.toString();
   }
 
-  private final void seal() {
-    final int size = 1 + payloadData.length;
-    entireMessageData = new TCByteBuffer[size];
-    entireMessageData[0] = header.getDataBuffer();
-    System.arraycopy(payloadData, 0, entireMessageData, 1, payloadData.length);
+  private void seal() {
+    Objects.requireNonNull(payloadData);
+    try (TCReference headerRef = TCReferenceSupport.createGCReference(header.getDataBuffer())) {
+      TCReference message = TCReferenceSupport.createAggregateReference(headerRef ,payloadData);
 
-    long dataLen = 0;
-    for (int i = 1; i < entireMessageData.length; i++) {
-      dataLen += entireMessageData[i].remaining();
+      long dataLen = payloadData.available();
+
+      if (dataLen + header.getHeaderByteLength() > Integer.MAX_VALUE) { throw new TCInternalError("Message too big"); }
+
+      this.dataLength = (int) dataLen;
+      this.headerLength = header.getHeaderByteLength();
+      this.totalLength = this.headerLength + this.dataLength;
+      this.entireMessageData = message;
+      complete.thenRun(entireMessageData::close);
     }
-
-    if (dataLen > Integer.MAX_VALUE) { throw new TCInternalError("Message too big"); }
-
-    this.dataLength = (int) dataLen;
-    this.headerLength = header.getHeaderByteLength();
-    this.totalLength = this.headerLength + this.dataLength;
   }
 
   @Override
@@ -216,12 +211,6 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   public void addCompleteCallback(Runnable r) {
     complete.thenRun(r);
   }
-
-  @Override
-  public Runnable stealCompleteAction() {
-    callbackFired.set(); // will throw if already set which is an assertion
-    return ()->complete.complete(null);
-  }
   
   private void checkSealed() {
     // this check is not thread safe
@@ -229,10 +218,10 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
   }
   
   private final SetOnceFlag           callbackFired  = new SetOnceFlag();
-  private static final TCByteBuffer[] EMPTY_BUFFER_ARRAY = {};
+  private static final TCReference EMPTY_BUFFER = TCReferenceSupport.createReference(Collections.emptyList(), null);
   private final TCNetworkHeader       header;
-  private TCByteBuffer[]              payloadData;
-  private TCByteBuffer[]              entireMessageData;
+  private TCReference             payloadData;
+  private TCReference              entireMessageData;
   private int                         totalLength;
   private int                         dataLength;
   private int                         headerLength;

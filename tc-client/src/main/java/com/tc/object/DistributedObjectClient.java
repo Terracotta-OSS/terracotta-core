@@ -201,7 +201,7 @@ public class DistributedObjectClient {
     final NetworkStackHarnessFactory networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
 
     this.counterManager = new CounterManagerImpl();
-    final MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, DSO_LOGGER);
+    final MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, DSO_LOGGER, threadGroup);
     final TCMessageRouter messageRouter = new TCMessageRouterImpl();
     final HealthCheckerConfig hc = new HealthCheckerConfigClientImpl(tcProperties
                                          .getPropertiesFor(TCPropertiesConsts.L1_L2_HEALTH_CHECK_CATEGORY), "TC Client");

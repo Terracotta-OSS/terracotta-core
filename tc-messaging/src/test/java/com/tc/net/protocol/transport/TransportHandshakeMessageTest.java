@@ -19,7 +19,6 @@
 package com.tc.net.protocol.transport;
 
 import com.tc.bytes.TCReference;
-import com.tc.bytes.TCByteBuffer;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -42,11 +41,11 @@ public class TransportHandshakeMessageTest {
     int maxConnections = 13;
     ConnectionID connectionId = new ConnectionID("abc", 1L);
     message = factory.createSynAck(connectionId, null, isMaxConnectionsExceeded, maxConnections, 43);
-    TCByteBuffer payload[] = message.getPayload();
+    TCReference payload = message.getPayload();
 
     WireProtocolHeader header = new WireProtocolHeader();
     header.setProtocol(WireProtocolHeader.PROTOCOL_TRANSPORT_HANDSHAKE);
-    message = new TransportMessageImpl(null, header, payload);
+    message = new TransportMessageImpl(null, header, payload.duplicate());
     assertEquals(isMaxConnectionsExceeded, message.isMaxConnectionsExceeded());
     assertEquals(maxConnections, message.getMaxConnections());
   }

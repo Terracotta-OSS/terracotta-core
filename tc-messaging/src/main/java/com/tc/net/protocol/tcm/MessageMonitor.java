@@ -23,5 +23,7 @@ public interface MessageMonitor {
   public void newIncomingMessage(TCAction message);
 
   public void newOutgoingMessage(TCAction message);
+  
+  void shutdown();
 
 }

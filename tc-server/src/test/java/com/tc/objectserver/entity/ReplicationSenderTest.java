@@ -99,16 +99,17 @@ public class ReplicationSenderTest {
       ReplicationMessage sending = (ReplicationMessage)args[1];
       TCByteBufferOutput output = new TCByteBufferOutputStream();
       sending.serializeTo(output);
-      TCByteBufferInput input = new TCByteBufferInputStream(output.toArray());
-      ReplicationMessage receiving = new ReplicationMessage();
-      try {
-        receiving.deserializeFrom(input);
-      } catch (IOException e) {
-        // Not expected in test.
-        e.printStackTrace();
-        Assert.fail(e.getLocalizedMessage());
+      try (TCByteBufferInputStream input = new TCByteBufferInputStream(output.accessBuffers())) {
+        ReplicationMessage receiving = new ReplicationMessage();
+        try {
+          receiving.deserializeFrom(input);
+        } catch (IOException e) {
+          // Not expected in test.
+          e.printStackTrace();
+          Assert.fail(e.getLocalizedMessage());
+        }
+        collector.add(receiving);
       }
-      collector.add(receiving);
       return null;
     }).when(groupMgr).sendTo(ArgumentMatchers.any(NodeID.class), ArgumentMatchers.any(ReplicationMessage.class));
     

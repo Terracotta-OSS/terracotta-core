@@ -30,4 +30,9 @@ public class NullMessageMonitor implements MessageMonitor {
     return;
   }
 
+  @Override
+  public void shutdown() {
+
+  }
+
 }
