@@ -41,7 +41,6 @@ import com.tc.objectserver.api.ManagedEntity;
 import com.tc.server.ServiceClassLoader;
 import java.io.Closeable;
 import java.util.Arrays;
-import org.terracotta.server.ServerEnv;
 
 
 /**

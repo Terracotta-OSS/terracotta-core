@@ -30,7 +30,6 @@ import com.tc.logging.TCLogging;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.services.PlatformConfigurationImpl;
 import com.tc.services.PlatformServiceProvider;
-import com.tc.services.SingleThreadedTimer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +48,6 @@ import com.tc.async.api.StageManager;
 import com.tc.async.impl.OrderedSink;
 import com.tc.async.impl.StageController;
 import com.tc.bytes.TCByteBufferFactory;
-import com.tc.bytes.TCReferenceSupport;
 import com.tc.entity.DiagnosticMessageImpl;
 import com.tc.entity.DiagnosticResponseImpl;
 import com.tc.entity.LinearVoltronEntityMultiResponse;
