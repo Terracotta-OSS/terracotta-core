@@ -19,7 +19,6 @@
 
 package com.tc.entity;
 
-import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.ServerExceptionType;
 import com.tc.exception.ServerException;
 import com.tc.io.TCByteBufferInputStream;

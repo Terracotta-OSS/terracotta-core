@@ -54,7 +54,6 @@ import com.tc.net.protocol.TCProtocolAdaptor;
 import java.net.Socket;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.CyclicBarrier;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 
 public class ClientConnectionEstablisherTest {

@@ -25,7 +25,6 @@ import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Stage;
 import com.tc.async.impl.MonitoringEventCreator;
 import com.tc.bytes.TCByteBuffer;
-import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;

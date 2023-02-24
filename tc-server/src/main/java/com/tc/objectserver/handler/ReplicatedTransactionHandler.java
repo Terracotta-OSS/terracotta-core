@@ -61,7 +61,6 @@ import com.tc.objectserver.entity.NoopResultCapture;
 import com.tc.objectserver.entity.PassiveResultCapture;
 import com.tc.objectserver.entity.PlatformEntity;
 import com.tc.objectserver.entity.ResultCaptureImpl;
-import com.tc.objectserver.entity.ServerEntityFactory;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.tracing.Trace;

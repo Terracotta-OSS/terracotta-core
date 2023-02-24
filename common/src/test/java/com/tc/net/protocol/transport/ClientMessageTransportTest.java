@@ -23,7 +23,6 @@ import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.TCProtocolException;
-import com.tc.net.protocol.tcm.TCActionImpl;
 import java.util.Queue;
 
 import org.junit.Before;

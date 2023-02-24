@@ -20,7 +20,6 @@ package com.tc.util.version;
 
 import com.tc.productinfo.VersionCompatibility;
 import java.util.Collection;
-import java.util.function.BiFunction;
 
 /**
  * Version compatibility check is currently disabled.

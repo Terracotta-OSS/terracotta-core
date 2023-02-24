@@ -25,7 +25,6 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.InetAddress;
 
-import com.tc.net.TCSocketAddress;
 
 import org.junit.Assert;
 import org.junit.Before;

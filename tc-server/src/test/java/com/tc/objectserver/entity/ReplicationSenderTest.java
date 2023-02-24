@@ -21,7 +21,6 @@ package com.tc.objectserver.entity;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.bytes.TCByteBufferFactory;
-import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;

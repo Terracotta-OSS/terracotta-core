@@ -30,7 +30,6 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
-import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
