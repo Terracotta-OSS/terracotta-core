@@ -157,4 +157,28 @@ public class TCReferenceSupportTest {
     }
     verify(buf2).reInit();
   }  
+  
+  
+  @Test
+  public void testTruncate() throws Exception {
+    LinkedList<TCByteBuffer> returns = new LinkedList<>();
+    TCByteBuffer buf1 = TCByteBufferFactory.getInstance(512);
+    TCByteBuffer buf2 = TCByteBufferFactory.getInstance(1024);
+
+    TCByteBuffer[] bufs = new TCByteBuffer[] {buf1, buf2};
+    TCReference ref = TCReferenceSupport.createReference(Arrays.asList(bufs), returns::add);
+    TCReference dup = ref.duplicate();
+    dup.iterator().next().position(32);
+    TCReference truncate = dup.truncate(312);
+    
+    Assert.assertEquals(312, truncate.available());
+    Iterator<TCByteBuffer> sec = truncate.iterator();
+    Assert.assertEquals(312, sec.next().remaining());
+    Assert.assertFalse(sec.next().hasRemaining());
+    
+    TCReference trimmed = truncate.duplicate();
+    sec = trimmed.iterator();
+    Assert.assertEquals(312, sec.next().limit());
+    Assert.assertFalse(sec.hasNext());
+  }  
 }

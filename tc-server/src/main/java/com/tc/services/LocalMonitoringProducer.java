@@ -80,10 +80,10 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     this.thisServer = thisServer;
     this.otherServers = new HashMap<>();
     this.cachedTreeRoot = new HashMap<>();
-    this.timer = new SingleThreadedTimer(TimeSource.SYSTEM_TIME_SOURCE, groupForTimer);
+    this.timer = new SingleThreadedTimer(null, groupForTimer);
+    this.timer.start();
     this.bestEfforts = new BestEffortsMonitoring(timer);
     this.classLoader = new ServiceClassLoader(loader);
-    this.timer.start();
   }
 
   @Override

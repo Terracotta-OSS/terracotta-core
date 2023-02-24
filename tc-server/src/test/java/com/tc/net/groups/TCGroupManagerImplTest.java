@@ -27,7 +27,7 @@ import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.PlatformInfoRequest;
 import com.tc.l2.state.Enrollment;
 import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandlerImpl;
+import com.tc.lang.TestThrowableHandler;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.ChannelEvent;
@@ -69,6 +69,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
+import org.slf4j.Logger;
 import org.terracotta.server.Server;
 import org.terracotta.server.ServerEnv;
 
@@ -597,7 +598,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     final Integer upbound = Integer.valueOf(50);
 
     // setup throwable ThreadGroup to catch AssertError from threads.
-    TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandlerImpl(null), "TCGroupManagerImplTestGroup");
+    TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(mock(Logger.class)), "TCGroupManagerImplTestGroup");
 
     Thread t1 = new SenderThread(threadGroup, "Node-0", mgr1, upbound);
     Thread t2 = new SenderThread(threadGroup, "Node-1", mgr2, upbound);
