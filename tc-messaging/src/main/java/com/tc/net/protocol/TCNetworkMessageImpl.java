@@ -84,8 +84,8 @@ public class TCNetworkMessageImpl implements TCNetworkMessage {
     } else {
       payloadData = newPayload;
     }
-    this.complete.thenRun(payloadData::close);
     seal();
+    this.complete.thenRun(payloadData::close);
   }
 
   @Override

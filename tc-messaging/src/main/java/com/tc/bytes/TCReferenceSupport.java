@@ -23,6 +23,7 @@ import com.tc.util.concurrent.SetOnceFlag;
 import java.lang.ref.PhantomReference;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
+import java.util.AbstractCollection;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -201,7 +202,7 @@ public class TCReferenceSupport {
       this.tracker = track == null ? null : track.startTracking(this);
       this.localItems = localItems.stream().filter(TCByteBuffer::hasRemaining).map(TCByteBuffer::slice).collect(toUnmodifiableList());
     }
-
+  
     @Override
     public void close() {
       if (closed.attemptSet()) {
