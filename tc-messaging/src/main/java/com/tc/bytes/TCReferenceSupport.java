@@ -23,7 +23,6 @@ import com.tc.util.concurrent.SetOnceFlag;
 import java.lang.ref.PhantomReference;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
-import java.util.AbstractCollection;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,6 +33,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -141,7 +141,7 @@ public class TCReferenceSupport {
     if (track != null) {
       COMMITTED_REFERENCES.add(this);
     }
-    return new Ref(items.stream().map(TCByteBuffer::asReadOnlyBuffer).collect(toUnmodifiableList()));
+    return new Ref(items, TCByteBuffer::asReadOnlyBuffer);
   }
   
   private static class GCRef implements TCReference {
@@ -197,10 +197,10 @@ public class TCReferenceSupport {
     private final Reference<Ref> tracker;
     private final SetOnceFlag closed = new SetOnceFlag();
     
-    Ref(Collection<TCByteBuffer> localItems) {
+    Ref(Collection<TCByteBuffer> localItems, Function<TCByteBuffer, TCByteBuffer> mapper) {
       referenceCount.getAndIncrement();
       this.tracker = track == null ? null : track.startTracking(this);
-      this.localItems = localItems.stream().filter(TCByteBuffer::hasRemaining).map(TCByteBuffer::slice).collect(toUnmodifiableList());
+      this.localItems = localItems.stream().map(mapper).filter(TCByteBuffer::hasRemaining).collect(toUnmodifiableList());
     }
   
     @Override
@@ -230,7 +230,19 @@ public class TCReferenceSupport {
     @Override
     public Ref duplicate() {
       checkClosed();
-      return new Ref(localItems);
+      return new Ref(localItems, TCByteBuffer::slice);
+    }
+    
+    @Override
+    public Ref duplicate(int length) {
+      checkClosed();
+      int[] counter = {length};
+      return new Ref(localItems, curs->{
+        curs = curs.slice();
+        curs.limit(Math.min(counter[0], curs.capacity()));
+        counter[0] -= curs.remaining();
+        return curs;
+      });
     }
   }
   

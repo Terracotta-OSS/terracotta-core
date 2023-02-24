@@ -39,6 +39,7 @@ import java.net.BindException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -72,6 +73,7 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
    * @param logger Logger
    */
   public ThrowableHandlerImpl(Logger logger) {
+    Objects.requireNonNull(logger);
     this.logger = logger;
     helper = new ExceptionHelperImpl();
     helper.addHelper(new RuntimeExceptionHelper());

@@ -213,27 +213,31 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     } catch (IOException ioe) {
       logger.warn("failed to close buffer manager", ioe);
     }
-    try {
-      if (this.channel != null) {
-        CompletableFuture<Void> complete = new CompletableFuture<>();
-        this.commWorker.cleanupChannel(this.channel, ()->{
-          try {
-            callback.run();
-            complete.complete(null);
-          } catch (Exception e) {
-            complete.completeExceptionally(e);
-          }
-        });
-        return complete;
-      } else {
-        callback.run();
-        return CompletableFuture.completedFuture(null);
-      }
-    } finally {
+
+    if (this.channel != null) {
+      CompletableFuture<Void> complete = new CompletableFuture<>();
+      this.commWorker.cleanupChannel(this.channel, ()->{
+        try {
+          callback.run();
+          cleanupUnsentWriteMessages();
+          complete.complete(null);
+        } catch (Exception e) {
+          complete.completeExceptionally(e);
+        }
+      });
+      return complete;
+    } else {
+      callback.run();
+      cleanupUnsentWriteMessages();
+      return CompletableFuture.completedFuture(null);
+    }
+  }
+  
+  private void cleanupUnsentWriteMessages() {
       this.writeMessages.forEach(TCNetworkMessage::complete);
       this.writeMessages.clear();
       this.writeContexts.forEach(WriteContext::writeComplete);
-    }
+      this.writeContexts.clear();
   }
 
   protected void finishConnect() throws IOException {

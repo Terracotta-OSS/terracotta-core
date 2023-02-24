@@ -168,6 +168,7 @@ public class TCReferenceSupportTest {
     TCByteBuffer[] bufs = new TCByteBuffer[] {buf1, buf2};
     TCReference ref = TCReferenceSupport.createReference(Arrays.asList(bufs), returns::add);
     TCReference dup = ref.duplicate();
+    dup.iterator().next().position(32);
     TCReference truncate = dup.truncate(312);
     
     Assert.assertEquals(312, truncate.available());

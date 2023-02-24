@@ -38,8 +38,7 @@ public interface TCReference extends Iterable<TCByteBuffer>, AutoCloseable {
     int runTo = length;
     while (it.hasNext()) {
       TCByteBuffer curs = it.next();
-      Assert.assertEquals(0, curs.position());
-      curs.limit(Math.min(runTo, curs.limit()));
+      curs.limit(Math.min(curs.position() + runTo, curs.limit()));
       runTo -= curs.remaining();
     }
     return this;
