@@ -122,7 +122,6 @@ public class TCReferenceSupportTest {
     verify(buf1, never()).reInit();
     Iterator<TCByteBuffer> it = dup.iterator();
     it.next();
-    it.remove();
     dup.close();
     verify(buf1).reInit();
   }

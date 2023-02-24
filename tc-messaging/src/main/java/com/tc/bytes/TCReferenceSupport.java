@@ -25,12 +25,15 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
@@ -137,11 +140,11 @@ public class TCReferenceSupport {
     if (track != null) {
       COMMITTED_REFERENCES.add(this);
     }
-    return new Ref(items.stream().map(TCByteBuffer::asReadOnlyBuffer).collect(Collectors.toList()));
+    return new Ref(items.stream().map(TCByteBuffer::asReadOnlyBuffer).collect(toUnmodifiableList()));
   }
   
   private static class GCRef implements TCReference {
-    private final Collection<TCByteBuffer> buffers;
+    private final List<TCByteBuffer> buffers;
 
     public GCRef(Collection<TCByteBuffer> buffers) {
       this.buffers = buffers.stream().filter(TCByteBuffer::hasRemaining).map(TCByteBuffer::slice).collect(Collectors.toList());
@@ -165,10 +168,10 @@ public class TCReferenceSupport {
   }
   
   private static class RefRef implements TCReference {
-    private final Collection<TCReference> localItems;
+    private final List<TCReference> localItems;
     
     RefRef(Collection<TCReference> run) {
-      this.localItems = run.stream().map(TCReference::duplicate).collect(Collectors.toList());
+      this.localItems = run.stream().map(TCReference::duplicate).collect(toUnmodifiableList());
     }
 
     @Override
@@ -189,14 +192,14 @@ public class TCReferenceSupport {
   
   private class Ref implements TCReference {
     
-    private final Collection<TCByteBuffer> localItems;
+    private final List<TCByteBuffer> localItems;
     private final Reference<Ref> tracker;
     private final SetOnceFlag closed = new SetOnceFlag();
     
     Ref(Collection<TCByteBuffer> localItems) {
       referenceCount.getAndIncrement();
       this.tracker = track == null ? null : track.startTracking(this);
-      this.localItems = localItems.stream().filter(TCByteBuffer::hasRemaining).map(TCByteBuffer::slice).collect(Collectors.toList());
+      this.localItems = localItems.stream().filter(TCByteBuffer::hasRemaining).map(TCByteBuffer::slice).collect(toUnmodifiableList());
     }
 
     @Override
@@ -208,7 +211,6 @@ public class TCReferenceSupport {
         if (referenceCount.decrementAndGet() == 0) {
           reclaim();
         }
-        localItems.clear();
       }
     }
 
@@ -260,5 +262,9 @@ public class TCReferenceSupport {
       }
       return count;
     }
+  }
+  
+  private static <T> Collector<? super T, ?, List<T>> toUnmodifiableList() {
+    return Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList);
   }
 }
