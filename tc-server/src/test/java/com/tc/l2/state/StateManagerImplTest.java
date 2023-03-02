@@ -122,7 +122,7 @@ public class StateManagerImplTest {
     groupPorts = portManager.reservePorts(NUM_OF_SERVERS);
     Set<String> servers = ports.stream().map(r -> "localhost:" + r.port()).collect(toSet());
 
-    this.topologyManager = new TopologyManager(servers, ()->-1);
+    this.topologyManager = new TopologyManager(()->servers, ()->-1);
     for(int i = 0; i < NUM_OF_SERVERS; i++) {
       WeightGeneratorFactory wgf = RandomWeightGenerator.createTestingFactory(2);
       ConsistencyManager mgr = mock(ConsistencyManager.class);
@@ -140,7 +140,7 @@ public class StateManagerImplTest {
 //      tcServers[i] = mock(TCServer.class);
       stageManagers[i] = new StageManagerImpl(new ThreadGroup("test"), new QueueFactory());
       groupManagers[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports.get(i).port(), groupPorts.get(i).port(),
-                                                stageManagers[i], wgf, topologyManager);
+                                                stageManagers[i], wgf, nodes);
 
       stateManagers[i] = new StateManagerImpl(tcLogger, groupManagers[i], stageControllers[i], mgmt[i], stageManagers[i], NUM_OF_SERVERS, 5, wgf, mgr,
                                               clusterStatePersistorMock, topologyManager);

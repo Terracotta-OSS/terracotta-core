@@ -308,7 +308,7 @@ public class DistributedObjectServer {
     this.server = server;
     this.serverBuilder = createServerBuilder(configSetupManager.getGroupConfiguration(), logger, server);
     this.serviceRegistry = new TerracottaServiceProviderRegistryImpl();
-    this.topologyManager = new TopologyManager(this.configSetupManager.getGroupConfiguration().getHostPorts(), ()-> {
+    this.topologyManager = new TopologyManager(()->this.configSetupManager.getGroupConfiguration().getHostPorts(), ()-> {
       Configuration config = this.configSetupManager.getConfiguration();
       FailoverBehavior consistent = config.getFailoverPriority();
       if (this.configSetupManager.isPartialConfiguration() || consistent == null || consistent.isAvailability()) {
@@ -687,7 +687,7 @@ public class DistributedObjectServer {
     this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
                                                                       this.thisServerNodeID,
                                                                       this.stripeIDStateManager, this.globalWeightGeneratorFactory,
-                                                                      bufferManagerFactory, this.topologyManager);
+                                                                      bufferManagerFactory);
 
     if (consistencyMgr instanceof GroupEventsListener) {
       this.groupCommManager.registerForGroupEvents((GroupEventsListener)consistencyMgr);
@@ -708,7 +708,7 @@ public class DistributedObjectServer {
 
     StateManager state = new StateManagerImpl(DistributedObjectServer.consoleLogger, this.groupCommManager,
         createStageController(processTransactionHandler), eventCollector, stageManager,
-        configSetupManager.getGroupConfiguration().getMembers().length,
+        configSetupManager.getGroupConfiguration().getNodes().size(),
         configSetupManager.getGroupConfiguration().getElectionTimeInSecs(),
         this.globalWeightGeneratorFactory, consistencyMgr,
         this.persistor.getClusterStatePersistor(), this.topologyManager);

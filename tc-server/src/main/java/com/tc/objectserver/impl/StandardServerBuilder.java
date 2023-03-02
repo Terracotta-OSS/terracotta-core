@@ -63,9 +63,9 @@ public class StandardServerBuilder implements ServerBuilder {
   public GroupManager<AbstractGroupMessage> createGroupCommManager(ServerConfigurationManager configManager,
                                                                    StageManager stageManager, ServerID serverNodeID,
                                                                    StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
-                                                                   BufferManagerFactory bufferManagerFactory, TopologyManager topologyManager) {
+                                                                   BufferManagerFactory bufferManagerFactory) {
     return new TCGroupManagerImpl(configManager, stageManager, serverNodeID, this.groupConfiguration.getCurrentNode(),
-                                  weightGeneratorFactory, bufferManagerFactory, topologyManager);
+                                  weightGeneratorFactory, bufferManagerFactory);
   }
 
   @Override

@@ -18,10 +18,10 @@
  */
 package com.tc.l2.state;
 
+import static com.tc.l2.state.ServerVoterManager.INVALID_VOTER_RESPONSE;
 import com.tc.services.TestTimeSource;
 import org.junit.Test;
 
-import static com.tc.voter.VoterManager.INVALID_VOTER_RESPONSE;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
 import org.junit.Ignore;

@@ -117,8 +117,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
         TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
                                                        allNodes[i].getPort(), allNodes[i].getGroupPort(),
                                                        stages.createStageManager(),
-                                                       RandomWeightGenerator.createTestingFactory(2),
-                                                       mock(TopologyManager.class));
+                                                       RandomWeightGenerator.createTestingFactory(2), allNodes);
         gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, allNodes[i]));
 
         groupManagers[i] = gm;
@@ -178,8 +177,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
       for (int i = 0; i < nodes; ++i) {
         TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
                                                        allNodes[i].getPort(), allNodes[i].getGroupPort(),
-                                                       stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2),
-                                                       mock(TopologyManager.class));
+                                                       stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2), allNodes);
         gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, allNodes[i]));
 
         groupManagers[i] = gm;

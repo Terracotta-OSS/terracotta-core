@@ -25,8 +25,8 @@ import com.tc.net.groups.Node;
 import org.terracotta.configuration.ServerConfiguration;
 import java.net.InetSocketAddress;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -41,7 +41,7 @@ public class GroupConfigurationTest {
   private final int[]    SERVER_PORTS = {1000, 2000};
   private final Node[]   NODES = new Node[SERVER_NAMES.length];
 
-  private final Map<String, ServerConfiguration> serverConfigurationMap = new HashMap<>();
+  private final List<ServerConfiguration> serverConfigurationMap = new ArrayList<>();
 
   @Test
   public void testGetCurrentNode() {
@@ -78,7 +78,7 @@ public class GroupConfigurationTest {
   @Test
   public void testGetElectionTimeInSecsWithSingleServer() {
     createServiceConfigurations();
-    serverConfigurationMap.remove(SERVER_NAMES[1]);
+    serverConfigurationMap.remove(1);
     GroupConfiguration groupConfiguration = new GroupConfiguration(serverConfigurationMap, SERVER_NAMES[0]);
 
     assertThat(groupConfiguration.getElectionTimeInSecs(), is(GroupConfiguration.SINGLE_SERVER_ELECTION_TIMEOUT));
@@ -100,8 +100,7 @@ public class GroupConfigurationTest {
     String hostName = wildcard ? TCSocketAddress.WILDCARD_IP : "localhost";
 
     for (int i = 0; i < SERVER_NAMES.length; i++) {
-      serverConfigurationMap.put(SERVER_NAMES[i],
-                                 getServiceConfiguration(SERVER_NAMES[i],
+      serverConfigurationMap.add(getServiceConfiguration(SERVER_NAMES[i],
                                                          hostName,
                                                          SERVER_PORTS[i],
                                                          hostName,

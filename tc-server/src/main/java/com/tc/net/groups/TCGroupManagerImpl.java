@@ -67,8 +67,6 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handler.ReceiveGroupMessageHandler;
 import com.tc.objectserver.handler.TCGroupHandshakeMessageHandler;
 import com.tc.objectserver.handler.TCGroupMemberDiscoveryHandler;
-import com.tc.objectserver.impl.TopologyListener;
-import com.tc.objectserver.impl.TopologyManager;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -106,14 +104,16 @@ import static java.util.stream.Collectors.toSet;
 import org.terracotta.server.ServerEnv;
 import com.tc.net.protocol.tcm.TCAction;
 import java.util.Iterator;
+import java.util.function.Supplier;
 
 
-public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, ChannelManagerEventListener, TopologyListener {
+public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, ChannelManagerEventListener {
   private static final Logger logger = LoggerFactory.getLogger(TCGroupManagerImpl.class);
 
   public static final String                                HANDSHAKE_STATE_MACHINE_TAG = "TcGroupCommHandshake";
   
-  private final int                                         serverCount;
+  private volatile int                                      serverCount;
+  private final Supplier<Set<Node>>                         configuredNodes;
   
   private final String                                      version;
   private final ServerID                                    thisNodeID;
@@ -134,7 +134,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private final AtomicBoolean                               alreadyJoined               = new AtomicBoolean(false);
   private final WeightGeneratorFactory                      weightGeneratorFactory;
   private final BufferManagerFactory                        bufferManagerFactory;
-  private final TopologyManager topologyManager;
 
   private CommunicationsManager                             communicationsManager;
   private TCConnectionManager                               connectionManager;
@@ -151,28 +150,27 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
    */
   public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, StageManager stageManager,
                             ServerID thisNodeID, Node thisNode,
-                            WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory, TopologyManager topologyManager) {
+                            WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory) {
     this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, thisNode, weightGenerator,
-         bufferManagerFactory, topologyManager);
+         bufferManagerFactory);
   }
 
   public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, ConnectionPolicy connectionPolicy,
                             StageManager stageManager, ServerID thisNodeID, Node thisNode,
-                            WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory,
-                            TopologyManager topologyManager) {
+                            WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     this.thisNodeID = thisNodeID;
     this.bufferManagerFactory = bufferManagerFactory;
-    this.topologyManager = topologyManager;
     this.version = configSetupManager.getProductInfo().version();
+    this.configuredNodes = ()->configSetupManager.getGroupConfiguration().getNodes();
 
     ServerConfiguration l2DSOConfig = configSetupManager.getServerConfiguration();
     serverCount = configSetupManager.allCurrentlyKnownServers().length;
     
     this.groupPort = l2DSOConfig.getGroupPort().getPort();
     this.weightGeneratorFactory = weightGenerator;
-
+    
     InetSocketAddress socketAddress;
     // proxy group port. use a different group port from tc.properties (if exist) than the one on tc-config
     // currently used by L2Reconnect proxy test.
@@ -183,7 +181,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     init(socketAddress);
     Assert.assertNotNull(thisNodeID);
     setDiscover(new TCGroupMemberDiscoveryStatic(this, thisNode));
-    this.topologyManager.addListener(this);
   }
 
   protected final String getVersion() {
@@ -200,11 +197,12 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
    * for testing purpose only. Tester needs to do setDiscover().
    */
   public TCGroupManagerImpl(ConnectionPolicy connectionPolicy, String hostname, int port, int groupPort,
-                            StageManager stageManager, WeightGeneratorFactory weightGenerator, TopologyManager topologyManager) {
+                            StageManager stageManager, WeightGeneratorFactory weightGenerator, Node[] servers) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     this.bufferManagerFactory = new ClearTextBufferManagerFactory();
-    this.topologyManager = topologyManager;
+    this.configuredNodes = ()->new HashSet<>(Arrays.asList(servers));
+
     this.groupPort = groupPort;
     this.version = getVersion();
     this.weightGeneratorFactory = weightGenerator;
@@ -273,6 +271,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
    */
   protected Sink<DiscoveryStateMachine> getDiscoveryHandlerSink() {
     return discoveryStage.getSink();
+  }
+  
+  Set<Node> getConfiguredServers() {
+    return this.configuredNodes.get();
   }
 
   /*
@@ -829,17 +831,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     map.put("zapped", zapped);
     this.zappedSet.forEach(node->zapped.add(node));
     return map;
-  }
-
-  @Override
-  public void nodeAdded(String host, int port, int group) {
-
-    this.discover.addNode(new Node(host, port, group));
-  }
-
-  @Override
-  public void nodeRemoved(String host, int port, int group) {
-    this.discover.removeNode(new Node(host, port, group));
   }
 
   private class GroupResponseImpl implements GroupResponse<AbstractGroupMessage> {

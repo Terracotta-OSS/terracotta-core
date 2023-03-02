@@ -33,14 +33,14 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.Invocation;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 
 import static org.terracotta.entity.Invocation.synchronouslyGet;
 
-
-public class DiagnosticEntityClientService implements EntityClientService<Diagnostics, Object, EntityMessage, EntityResponse, Object>{
+public class DiagnosticEntityClientService implements EntityClientService<Diagnostics, Object, EntityMessage, EntityResponse, Object> {
 
   @Override
   public boolean handlesEntityType(Class<Diagnostics> type) {
@@ -49,7 +49,7 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
 
   @Override
   public byte[] serializeConfiguration(Object c) {
-    return new byte[] {};
+    return new byte[]{};
   }
 
   @Override
@@ -63,66 +63,80 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
     Runnable closeHook = getCloseHook(ece, config);
     final int timeoutInMillis = possible != null ? Integer.parseInt(possible.getProperty("request.timeout", "2000")) : 2000;
     final String timeoutMessage = possible != null ? possible.getProperty("request.timeoutMessage", "Request Timeout") : "Request Timeout";
-    return (Diagnostics)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] {Diagnostics.class},
+    return (Diagnostics) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Diagnostics.class},
             new java.lang.reflect.InvocationHandler() {
       @Override
       public Object invoke(Object proxy, Method method, final Object[] args) throws Throwable {
-        try {
-          final String methodName = method.getName();
-          if (methodName.equals("close")) {
-            closeHook.run();
-          } else {
-            Future returnValue = ece.message(new EntityMessage() {
-              @Override
-              public String toString() {
-                if (methodName.equals("get")) {
-                  return "getJMX " + args[0] + " " + args[1];
-                } else if (methodName.equals("set")) {
-                  return "setJMX " + args[0] + " " + args[1] + " " + args[2];
-                } else if (methodName.equals("invoke")) {
-                  return "invokeJMX " + args[0] + " " + args[1];
-                } else if (methodName.equals("invokeWithArg")) {
-                  return "invokeWithArgJMX " + args[0] + " " + args[1] + " " + args[2];
-                } else {
-                  StringBuilder cmd = new StringBuilder();
-                  cmd.append(methodName);
-                  if (args != null) {
-                    for (int x=0;x<args.length;x++) {
-                      cmd.append(' ');
-                      cmd.append(args[x]);
-                    }
+        final String methodName = method.getName();
+        if (methodName.equals("close")) {
+          closeHook.run();
+        } else {
+          Future returnValue = ece.message(new EntityMessage() {
+            @Override
+            public String toString() {
+              if (methodName.equals("get")) {
+                return "getJMX " + args[0] + " " + args[1];
+              } else if (methodName.equals("set")) {
+                return "setJMX " + args[0] + " " + args[1] + " " + args[2];
+              } else if (methodName.equals("invoke")) {
+                return "invokeJMX " + args[0] + " " + args[1];
+              } else if (methodName.equals("invokeWithArg")) {
+                return "invokeWithArgJMX " + args[0] + " " + args[1] + " " + args[2];
+              } else {
+                StringBuilder cmd = new StringBuilder();
+                cmd.append(methodName);
+                if (args != null) {
+                  for (int x = 0; x < args.length; x++) {
+                    cmd.append(' ');
+                    cmd.append(args[x]);
                   }
-                  return cmd.toString();
                 }
+                return cmd.toString();
               }
-            }).invoke();
-            // if the server is terminating, never going to get a message back.  just return null
-            if (!methodName.equals("terminateServer") && !methodName.equals("forceTerminateServer") && !methodName.equals("restartServer")) {
-              try {
-                return synchronouslyGet(returnValue, timeoutInMillis, TimeUnit.MILLISECONDS, EntityException.class).toString();
-              } catch (TimeoutException timeout) {
-                return timeoutMessage;
-              } catch (EntityException ee) {
-                RuntimeException t = ThreadUtil.getRootCause(ee, RuntimeException.class);
-                if (t != null) {
-                  throw t;
-                }
+            }
+          }).invoke();
+          // if the server is terminating, never going to get a message back.  just return null
+          if (!methodName.equals("terminateServer") && !methodName.equals("forceTerminateServer") && !methodName.equals("restartServer")) {
+            try {
+              return uninterruptiblyGet(returnValue, timeoutInMillis, TimeUnit.MILLISECONDS, EntityException.class).toString();
+            } catch (TimeoutException timeout) {
+              return timeoutMessage;
+            } catch (EntityException ee) {
+              RuntimeException t = ThreadUtil.getRootCause(ee, RuntimeException.class);
+              if (t != null) {
+                throw t;
               }
             }
           }
-        } catch (InterruptedException ie) {
-          return "ERROR:interrupted";
         }
         return null;
-      }}
+      }
+    }
     );
   }
-
+  
+  private static <R, T extends Throwable> R uninterruptiblyGet(Future<R> future, long timeout, TimeUnit units, Class<T> propagate) throws T, TimeoutException {
+    boolean interrupted = Thread.interrupted();
+    try {
+      while (true) {
+        try {
+          return synchronouslyGet(future, timeout, units);
+        } catch (InterruptedException e) {
+          interrupted = true;
+        }
+      }
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
+    }
+  }
+  
   private Properties getRequestProperties(Object props) {
     if (props instanceof Properties) {
-      return (Properties)props;
+      return (Properties) props;
     } else if (props instanceof DiagnosticsConfig) {
-      return ((DiagnosticsConfig)props).getProperties();
+      return ((DiagnosticsConfig) props).getProperties();
     }
     return new Properties();
   }
@@ -130,9 +144,9 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
   private Runnable getCloseHook(EntityClientEndpoint endpoint, Object props) {
     CompletableFuture<Void> closer = new CompletableFuture<>().thenRun(endpoint::close);
     if (props instanceof DiagnosticsConfig) {
-      closer.thenRun(((DiagnosticsConfig)props).getClose());
+      closer.thenRun(((DiagnosticsConfig) props).getClose());
     }
-    return ()->closer.complete(null);
+    return () -> closer.complete(null);
   }
 
   @Override

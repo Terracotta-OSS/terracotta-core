@@ -36,7 +36,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -198,11 +197,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
 
   @Override
   public void allowLastTransition() {
-    try {
-      this.voter.overrideVote("external");
-    } catch (TimeoutException e) {
-      // Won't happen since this call is within the server
-    }
+    this.voter.overrideVote("external");
   }
 
   @Override

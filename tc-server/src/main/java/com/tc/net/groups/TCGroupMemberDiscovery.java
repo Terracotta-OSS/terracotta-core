@@ -26,8 +26,6 @@ public interface TCGroupMemberDiscovery extends GroupEventsListener {
 
   public void start() throws GroupException;
   
-  public void addNode(Node node);
-
   public void stop(long timeout);
 
   public void setupNodes(Node local, Set<Node> nodes);
@@ -37,8 +35,6 @@ public interface TCGroupMemberDiscovery extends GroupEventsListener {
   public void discoveryHandler(DiscoveryStateMachine context);
   
   public boolean isValidClusterNode(NodeID nodeID);
-
-  public void removeNode(Node node);
 
   public boolean isServerConnected(String nodeName);
   
