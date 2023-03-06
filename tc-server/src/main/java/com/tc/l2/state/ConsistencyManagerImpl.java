@@ -36,6 +36,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -78,10 +79,10 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     return map;
   }
   
-  public ConsistencyManagerImpl(TopologyManager topologyManager) {
+  public ConsistencyManagerImpl(Supplier<ServerMode> mode, TopologyManager topologyManager) {
     this.topologyManager = topologyManager;
     try {
-      this.voter = new ServerVoterManagerImpl(topologyManager::getExternalVoters);
+      this.voter = new ServerVoterManagerImpl(mode, topologyManager::getExternalVoters);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -113,7 +114,6 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
         
   @Override
   public boolean requestTransition(ServerMode mode, NodeID sourceNode, Topology topology, Transition newMode) throws IllegalStateException {
-
     if (topology == null) {
       topology = this.topologyManager.getTopology();
     }

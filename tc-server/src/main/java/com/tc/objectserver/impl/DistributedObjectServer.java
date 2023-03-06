@@ -912,7 +912,7 @@ public class DistributedObjectServer {
     return new SafeStartupManagerImpl(
         consistentStartup,
         knownPeers,
-        new ConsistencyManagerImpl(this.topologyManager)
+        new ConsistencyManagerImpl(()->this.l2Coordinator != null ? this.l2Coordinator.getStateManager().getCurrentMode() : ServerMode.START, this.topologyManager)
     );
   }
 

@@ -81,7 +81,7 @@ public class ConsistencyManagerImplTest {
     when(server.getManagement()).thenReturn(jmx);
     ServerEnv.setServer(server);
     TopologyManager topologyManager = new TopologyManager(()->new HashSet<>(asList("localhost:9410", "localhost:9510")), ()->1);
-    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager);
+    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(()->ServerMode.ACTIVE, topologyManager);
     caller.call(ServerVoterManager.MBEAN_NAME, "registerVoter", voter);
     long term = Long.parseLong(caller.call(ServerVoterManager.MBEAN_NAME, "heartbeat", voter));
     Assert.assertTrue(term == 0);
@@ -123,7 +123,7 @@ public class ConsistencyManagerImplTest {
   @Test
   public void testAddClientIsNotPersistent() throws Exception {
     TopologyManager topologyManager = new TopologyManager(()->new HashSet<>(asList("localhost:9410", "localhost:9510")), ()->1);
-    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager);
+    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(()->ServerMode.ACTIVE, topologyManager);
     long cterm = impl.getCurrentTerm();
     boolean granted = impl.requestTransition(ServerMode.ACTIVE, mock(NodeID.class), ConsistencyManager.Transition.ADD_CLIENT);
     Assert.assertTrue(granted);
@@ -135,7 +135,7 @@ public class ConsistencyManagerImplTest {
   @Test
   public void testAddClientDoesntVote() throws Exception {
     TopologyManager topologyManager = new TopologyManager(()->new HashSet<>(asList("localhost:9410", "localhost:9510")), ()->1);
-    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager);
+    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(()->ServerMode.ACTIVE, topologyManager);
     long cterm = impl.getCurrentTerm();
     boolean granted = impl.requestTransition(ServerMode.ACTIVE, mock(NodeID.class), ConsistencyManager.Transition.ADD_CLIENT);
     Assert.assertTrue(granted);

@@ -33,6 +33,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -58,7 +59,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   private final Map<String, DiscoveryStateMachine> nodeStateMap            = new ConcurrentHashMap<>();
   private final TCGroupManagerImpl                 manager;
   private final Node                                     local;
-  private Integer                                  joinedNodes             = 0;
+  private int                                  joinedNodes             = 0;
   private final HashSet<String>                    nodeThreadConnectingSet = new HashSet<>();
 
   public TCGroupMemberDiscoveryStatic(TCGroupManagerImpl manager, Node local) {
@@ -181,6 +182,8 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
       public void run() {
         while (!stopAttempt.get()) {
           openChannels();
+          // sleep to allow nodes to connect
+          ThreadUtil.reallySleep(DISCOVERY_INTERVAL_MS);
           Set<Node> servers = pauseDiscovery();
           if (!servers.isEmpty()) {
             for (Node n : servers) {
@@ -296,7 +299,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
             return servers;
           }
         } catch (Throwable t) {
-          logger.info("discovery update failed pausing to try again", t);
+          logger.info("discovery configuration update failed. pausing to try again", t);
         }
       } catch (InterruptedException e) {
         L2Utils.handleInterrupted(logger, e);
