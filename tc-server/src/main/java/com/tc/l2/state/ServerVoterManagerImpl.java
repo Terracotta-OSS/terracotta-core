@@ -36,6 +36,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
 
   static final long VOTEBEAT_TIMEOUT = 5000;  // In milliseconds
 
+  private final Supplier<ServerMode> mode;
   private final Supplier<Integer> voterLimit;
   final Map<String, Long> voters = new ConcurrentHashMap<>();
   private final TimeSource timeSource;
@@ -46,11 +47,11 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
 
   private volatile boolean overrideVote = false;
 
-  public ServerVoterManagerImpl(Supplier<Integer> voterLimit) throws Exception {
-    this(voterLimit, TimeSource.SYSTEM_TIME_SOURCE, true);
+  public ServerVoterManagerImpl(Supplier<ServerMode> mode, Supplier<Integer> voterLimit) throws Exception {
+    this(mode, voterLimit, TimeSource.SYSTEM_TIME_SOURCE, true);
   }
 
-  ServerVoterManagerImpl(Supplier<Integer> voterLimit, TimeSource timeSource, boolean initMBean) throws Exception {
+  ServerVoterManagerImpl(Supplier<ServerMode> mode, Supplier<Integer> voterLimit, TimeSource timeSource, boolean initMBean) throws Exception {
     super(ServerVoterManager.class, false);
     if (initMBean) {
       try {
@@ -60,6 +61,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
         logger.warn("problem registering MBean", e);
       }
     }
+    this.mode = mode;
     this.voterLimit = voterLimit;
     this.timeSource = timeSource;
     this.electionTerm = 0;
@@ -83,7 +85,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
   }
 
   boolean canAcceptVoter() {
-    return !votingInProgress && getRegisteredVoters() < voterLimit.get();
+    return mode.get().canBeActive() && !votingInProgress && getRegisteredVoters() < voterLimit.get();
   }
 
   @Override
@@ -190,7 +192,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
     logger.info("Deregister " + id);
     return !votingInProgress ? voters.remove(id) != null : false;
   }
-
+  
   @Override
   public void reset() {
     //

@@ -75,16 +75,6 @@ public class NullTCGroupMemberDiscovery implements TCGroupMemberDiscovery {
   }
 
   @Override
-  public void addNode(Node node) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void removeNode(Node node) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public boolean isServerConnected(String nodeName) {
     throw new UnsupportedOperationException();
   }

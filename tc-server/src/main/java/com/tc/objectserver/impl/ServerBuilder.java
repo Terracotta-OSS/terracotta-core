@@ -46,7 +46,7 @@ public interface ServerBuilder extends PostInit {
   GroupManager<AbstractGroupMessage> createGroupCommManager(ServerConfigurationManager configManager,
                                                             StageManager stageManager, ServerID serverNodeID,
                                                             StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
-                                                            BufferManagerFactory bufferManagerFactory, TopologyManager topologyManager);
+                                                            BufferManagerFactory bufferManagerFactory);
 
   ServerConfigurationContext createServerConfigurationContext(String id, StageManager stageManager, DSOChannelManager channelManager,
                                                               ChannelStatsImpl channelStats,

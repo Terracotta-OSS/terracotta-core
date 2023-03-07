@@ -38,6 +38,7 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -58,10 +59,10 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   private final Map<String, DiscoveryStateMachine> nodeStateMap            = new ConcurrentHashMap<>();
   private final TCGroupManagerImpl                 manager;
   private final Node                                     local;
-  private Integer                                  joinedNodes             = 0;
+  private int                                  joinedNodes             = 0;
   private final HashSet<String>                    nodeThreadConnectingSet = new HashSet<>();
 
-  public TCGroupMemberDiscoveryStatic(TCGroupManagerImpl manager,Node local) {
+  public TCGroupMemberDiscoveryStatic(TCGroupManagerImpl manager, Node local) {
     this.manager = manager;
     this.local = local;
   }
@@ -77,8 +78,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     }
   }
 
-  @Override
-  public void addNode(Node node) {
+  private void addNode(Node node) {
     DiscoveryStateMachine stateMachine = new DiscoveryStateMachine(node);
     stateMachine.start();
     DiscoveryStateMachine old = nodeStateMap.put(getNodeName(node), stateMachine);
@@ -93,8 +93,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     }
   }
 
-  @Override
-  public void removeNode(Node node) {
+  private void removeNode(Node node) {
     DiscoveryStateMachine old = nodeStateMap.remove(getNodeName(node));
     Assert.assertNotNull("Tried removing node which was not present", old);
   }
@@ -170,7 +169,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     if (nodeStateMap.isEmpty()) { throw new GroupException("No nodes"); }
 
     if (running.getAndSet(true)) {
-      throw Assert.failure("Not to start discovert second time");
+      throw Assert.failure("Do not start discovery second time");
     }
 
     manager.registerForGroupEvents(this);
@@ -183,8 +182,21 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
       public void run() {
         while (!stopAttempt.get()) {
           openChannels();
+          // sleep to allow nodes to connect
           ThreadUtil.reallySleep(DISCOVERY_INTERVAL_MS);
-          pauseDiscovery();
+          Set<Node> servers = pauseDiscovery();
+          if (!servers.isEmpty()) {
+            for (Node n : servers) {
+              if (!nodeStateMap.containsKey(getNodeName(n))) {
+                addNode(n);
+              }
+            }
+            for (DiscoveryStateMachine n : nodeStateMap.values()) {
+              if (!servers.contains(n.getNode())) {
+                removeNode(n.getNode());
+              }
+            }
+          }
         }
         running.set(false);
       }
@@ -277,14 +289,23 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     notifyAll();
   }
 
-  public synchronized void pauseDiscovery() {
-    while (joinedNodes == (nodeStateMap.size() - 1) && !stopAttempt.get()) {
+  public synchronized Set<Node> pauseDiscovery() {
+    while (!stopAttempt.get()) {
       try {
-        this.wait();
+        this.wait(DISCOVERY_INTERVAL_MS);
+        try {
+          Set<Node> servers = manager.getConfiguredServers();
+          if (joinedNodes != servers.size() - 1) {
+            return servers;
+          }
+        } catch (Throwable t) {
+          logger.info("discovery configuration update failed. pausing to try again", t);
+        }
       } catch (InterruptedException e) {
         L2Utils.handleInterrupted(logger, e);
       }
     }
+    return Collections.emptySet();
   }
 
   @Override

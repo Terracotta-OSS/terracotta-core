@@ -24,64 +24,55 @@ import static com.tc.properties.TCPropertiesConsts.L2_ELECTION_TIMEOUT;
 import com.tc.properties.TCPropertiesImpl;
 import org.terracotta.configuration.ServerConfiguration;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class GroupConfiguration {
 
   static final int SINGLE_SERVER_ELECTION_TIMEOUT = 0;
   static final int MULTI_SERVER_ELECTION_TIMEOUT = TCPropertiesImpl.getProperties().getInt(L2_ELECTION_TIMEOUT, 5);
 
-  private final Set<String> members = new HashSet<>();
-  private final Set<Node> nodes = new HashSet<>();
-  private final Set<String> hostPorts = new HashSet<>();
-  private final Node currentNode;
+  private final List<ServerConfiguration> configs;
+  private final String serverName;
 
-  GroupConfiguration(Map<String, ServerConfiguration> configMap, String serverName) {
-    this.members.addAll(configMap.keySet());
-    Node current = null;
-    for (Map.Entry<String, ServerConfiguration> member : configMap.entrySet()) {
-      ServerConfiguration serverConfiguration = member.getValue();
-      String bindAddress = serverConfiguration.getTsaPort().getHostName();
-      if (TCSocketAddress.isWildcardAddress(bindAddress)) {
-        bindAddress = serverConfiguration.getHost();
-      }
-      Node node = new Node(bindAddress,
-                           serverConfiguration.getTsaPort().getPort(),
-                           serverConfiguration.getGroupPort().getPort());
-      hostPorts.add(node.getServerNodeName());
-      if (serverName.equals(member.getKey())) {
-        current = node;
-      }
-      nodes.add(node);
-    }
-    this.currentNode = current;
+  GroupConfiguration(List<ServerConfiguration> servers, String serverName) {
+    this.configs = servers;
+    this.serverName = serverName;
     if (MULTI_SERVER_ELECTION_TIMEOUT < 0) {
       throw new AssertionError("server election timeout cannot be less than zero");
     }
   }
 
   public Set<Node> getNodes() {
-    return nodes;
+    return this.configs.stream().map(GroupConfiguration::configToNode).collect(Collectors.toSet());
   }
 
   public Node getCurrentNode() {
-    return currentNode;
+    return this.configs.stream().filter(c->c.getName().equals(serverName)).findFirst().map(GroupConfiguration::configToNode).orElseThrow(()->new RuntimeException("invalid configuration"));
+  }
+  
+  private static Node configToNode(ServerConfiguration sc) {
+    String bindAddress = sc.getTsaPort().getHostName();
+      if (TCSocketAddress.isWildcardAddress(bindAddress)) {
+        bindAddress = sc.getHost();
+      }
+      return new Node(bindAddress,
+                           sc.getTsaPort().getPort(),
+                           sc.getGroupPort().getPort());
   }
 
   public int getElectionTimeInSecs() {
     //TODO fix the election time
     // If there is only one server, always going to win so no reason to wait
-    return (members.size() == 1) ? SINGLE_SERVER_ELECTION_TIMEOUT : MULTI_SERVER_ELECTION_TIMEOUT;
+    return (configs.size() == 1) ? SINGLE_SERVER_ELECTION_TIMEOUT : MULTI_SERVER_ELECTION_TIMEOUT;
   }
 
   public Set<String> getHostPorts() {
-    return Collections.unmodifiableSet(hostPorts);
+    return getNodes().stream().map(Node::getServerNodeName).collect(Collectors.toSet());
   }
 
   public String[] getMembers() {
-    return this.members.toArray(new String[0]);
+    return this.configs.stream().map(ServerConfiguration::getName).toArray(String[]::new);
   }
 }

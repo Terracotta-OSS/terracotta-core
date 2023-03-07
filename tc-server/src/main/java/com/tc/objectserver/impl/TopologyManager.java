@@ -22,10 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.management.AbstractTerracottaMBean;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.management.NotCompliantMBeanException;
 
 import static com.tc.management.beans.L2MBeanNames.TOPOLOGY_MBEAN;
@@ -37,13 +33,12 @@ import org.terracotta.server.ServerEnv;
 
 public class TopologyManager {
 
-  private Topology topology;
+  private final Supplier<Set<String>> config;
   private volatile TopologyMbean topologyMbean;
-  private final List<TopologyListener> listeners = new ArrayList<>();
   private final Supplier<Integer> voters;
 
-  public TopologyManager(Set<String> servers, Supplier<Integer> voters) {
-    this.topology = new Topology(servers);
+  public TopologyManager(Supplier<Set<String>> config, Supplier<Integer> voters) {
+    this.config = config;
     this.voters = voters;
     initializeMbean();
   }
@@ -57,7 +52,7 @@ public class TopologyManager {
   }
 
   public synchronized Topology getTopology() {
-    return topology;
+    return new Topology(config.get());
   }
 
   private void initializeMbean() {
@@ -70,35 +65,14 @@ public class TopologyManager {
   }
 
   private synchronized boolean addPassive(String host, int port, int group) {
-    final Topology old = this.topology;
+    final Topology old = this.getTopology();
     Set<String> newServers = new HashSet<>(old.getServers());
-    if (newServers.add(host + ":" + port)) {
-      this.topology = new Topology(newServers);
-      for (TopologyListener listener : listeners) {
-        listener.nodeAdded(host,port,group);
-      }
-      return true;
-    }
-
-    return false;
+    return !newServers.add(host + ":" + port);
   }
 
   private synchronized boolean removePassive(String host, int port, int group) {
-    final Topology old = this.topology;
-    Set<String> newServers = new HashSet<>(old.getServers());
-    if (newServers.remove(host + ":" + port)) {
-      this.topology = new Topology(newServers);
-      for (TopologyListener listener : listeners) {
-        listener.nodeRemoved(host,port,group);
-      }
-      return true;
-    }
-
-    return false;
-  }
-
-  public synchronized void addListener(TopologyListener listener) {
-    this.listeners.add(listener);
+    Set<String> newServers = new HashSet<>(getTopology().getServers());
+    return !newServers.remove(host + ":" + port);
   }
 
   public interface TopologyMbean {

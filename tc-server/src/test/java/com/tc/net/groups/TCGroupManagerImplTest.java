@@ -105,8 +105,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     }
     for (int i = 0; i < n; ++i) {
       groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports.get(i).port(), groupPorts.get(i).port(),
-                                         stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2),
-                                         mock(TopologyManager.class));
+                                         stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2), nodes);
       groups[i].setDiscover(new TCGroupMemberDiscoveryStatic(groups[i], nodes[i]));
       groupEventListeners[i] = new TestGroupEventListener(groups[i]);
       groups[i].registerForGroupEvents(groupEventListeners[i]);

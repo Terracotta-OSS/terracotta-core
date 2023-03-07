@@ -98,8 +98,7 @@ public class ServerConfigurationManager implements PrettyPrintable {
   }
 
   public GroupConfiguration getGroupConfiguration() {
-    Map<String, ServerConfiguration> serverConfigurationMap = getServerConfigurationMap(configuration.getServerConfigurations());
-
+    List<ServerConfiguration> serverConfigurationMap = configuration.getServerConfigurations();
     return new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName());
   }
   
