@@ -432,13 +432,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
           }
         }
       };
-      resolvedEndpoint = new EntityClientEndpointImpl<M, R>(entity, version, EntityDescriptor.createDescriptorForInvoke(fetch, instance), this, config, codec, compoundRunnable, this.endpointCloser);
+      resolvedEndpoint = new EntityClientEndpointImpl<>(entity, version, EntityDescriptor.createDescriptorForInvoke(fetch, instance), this, config, codec, compoundRunnable, this.endpointCloser);
       
-      if (null != this.objectStoreMap.get(instance)) {
+      if (this.objectStoreMap.putIfAbsent(instance, resolvedEndpoint) != null) {
         throw Assert.failure("Attempt to add an object that already exists: Object of class " + resolvedEndpoint.getClass()
                              + " [Identity Hashcode : 0x" + Integer.toHexString(System.identityHashCode(resolvedEndpoint)) + "] ");
       }
-      this.objectStoreMap.put(instance, resolvedEndpoint);
     } catch (EntityNotFoundException notfound) {
       throw notfound;
     } catch (EntityException e) {
