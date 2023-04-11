@@ -62,10 +62,12 @@ public class ReplicationSender {
   private static final boolean debugMessaging = PLOGGER.isDebugEnabled();
 
   private final Sink<ReplicationSendingAction> outgoing;
+  private final Sink<ReplicationSendingAction> flush;
 
-  public ReplicationSender(Sink<ReplicationSendingAction> outgoing, GroupManager<AbstractGroupMessage> group) {
+  public ReplicationSender(Sink<ReplicationSendingAction> outgoing, Sink<ReplicationSendingAction> flush, GroupManager<AbstractGroupMessage> group) {
     this.group = group;
     this.outgoing = outgoing;
+    this.flush = flush;
   }
 
   public void removePassive(SessionID dest) {
@@ -355,7 +357,7 @@ public class ReplicationSender {
     }
         
     private void flushBatch() {
-      outgoing.addToSink(new ReplicationSendingAction(this.executionLane, ()->{
+      flush.addToSink(new ReplicationSendingAction(this.executionLane, ()->{
         try {
           this.batchContext.flushBatch();
         } catch (GroupException ge) {

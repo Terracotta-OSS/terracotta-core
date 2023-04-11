@@ -32,6 +32,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.mockito.ArgumentMatchers;
@@ -123,7 +124,7 @@ public class MockStageManagerFactory {
   }
   
   private ExecutorService createExecutor(String name, int size) {
-    BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(size);
+    BlockingQueue<Runnable> queue = size <= 0 ? new LinkedBlockingQueue<>() : new ArrayBlockingQueue<>(size);
     new Thread(threadGroup, ()->{ 
       
       while (alive) {

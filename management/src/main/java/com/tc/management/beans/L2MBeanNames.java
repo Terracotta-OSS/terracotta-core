@@ -30,14 +30,13 @@ public class L2MBeanNames {
 
   //XXX: this for test, to read server data when active-active is running.
   public static final ObjectName DUMPER;
-  public static final ObjectName TOPOLOGY_MBEAN;
+  //public static final ObjectName TOPOLOGY_MBEAN;
 
   static {
     try {
       TC_SERVER_INFO = TerracottaManagement.createObjectName(null, "TerracottaServer", TerracottaManagement.MBeanDomain.PUBLIC);
       DSO = TerracottaManagement.createObjectName(null, "DSO", TerracottaManagement.MBeanDomain.PUBLIC);
       DUMPER = TerracottaManagement.createObjectName(null, "L2Dumper", TerracottaManagement.MBeanDomain.PUBLIC);
-      TOPOLOGY_MBEAN = TerracottaManagement.createObjectName(null, "TopologyMBean", TerracottaManagement.MBeanDomain.PUBLIC);
     } catch (MalformedObjectNameException mone) {
       throw new RuntimeException(mone);
     } catch (NullPointerException npe) {

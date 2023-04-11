@@ -151,6 +151,6 @@ public class TCWorkerCommManager {
   
   public synchronized void unpause() {
     paused = false;
-    this.notify();
+    this.notifyAll();
   }  
 }

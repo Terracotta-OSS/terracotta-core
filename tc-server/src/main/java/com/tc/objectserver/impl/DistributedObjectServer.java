@@ -472,7 +472,7 @@ public class DistributedObjectServer {
 
     TCByteBufferFactory.setFixedBufferSize(tcProperties.getInt("bytebuffer.direct.size", 4096));
     final int maxStageSize = tcProperties.getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
-    final int fastStageSize = 1024;
+    final int fastStageSize = -1; // needs to be unbounded due to rescheduling by other stages on the pipeline.  If not unbounded, deadlock can occur.
     final StageManager stageManager = this.seda.getStageManager();
 
     this.sampledCounterManager = new CounterManagerImpl();
@@ -743,7 +743,10 @@ public class DistributedObjectServer {
     final Sink<ReplicationSendingAction> replicationSenderStage =
         stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
                                  ReplicationSendingAction.class, new GenericHandler<>(), max(3, knownPeers), maxStageSize).getSink();
-    ReplicationSender replicationSender = new ReplicationSender(replicationSenderStage, groupCommManager);
+    final Sink<ReplicationSendingAction> replicationSenderFlushStage =
+        stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_FLUSH_STAGE,
+                                 ReplicationSendingAction.class, new GenericHandler<>(), max(3, knownPeers), maxStageSize).getSink();
+    ReplicationSender replicationSender = new ReplicationSender(replicationSenderStage, replicationSenderFlushStage, groupCommManager);
     final Sink<ReplicationReceivingAction> replicationReceivingStage =
         stageManager.createStage(ServerConfigurationContext.PASSIVE_TO_ACTIVE_DRIVER_STAGE,
                                  ReplicationReceivingAction.class, new GenericHandler<>(), max(3, knownPeers), maxStageSize).getSink();
@@ -980,6 +983,7 @@ public class DistributedObjectServer {
         ServerConfigurationContext.VOLTRON_MESSAGE_STAGE,
         ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE,
         ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
+        ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_FLUSH_STAGE,
         ServerConfigurationContext.PASSIVE_TO_ACTIVE_DRIVER_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_STAGE,
         ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE,
@@ -1050,6 +1054,7 @@ public class DistributedObjectServer {
     // entities are create or existing entities are reloaded
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
+    control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_FLUSH_STAGE);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.PASSIVE_TO_ACTIVE_DRIVER_STAGE);
     
     control.addTriggerToState(ServerMode.STOP.getState(),s->{
