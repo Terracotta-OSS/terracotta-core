@@ -59,16 +59,6 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : L1 Seda stage properties
-   * Description : This section contains configuration for SEDA stages for L1
-   * stage.sink.capacity  : Capacity of L1's seda stage queue, Integer.MAX_VALUE if not set
-   * pinned.entry.fault.stage.threads : Number of threads for pinned entry fault stage
-   * </code>
-   ********************************************************************************************************************/
-  public static final String L1_SEDA_STAGE_SINK_CAPACITY                                    = "l1.seda.stage.sink.capacity";
-
-  /*********************************************************************************************************************
-   * <code>
    * Section : Network HA (nha)
    * Description : If Networked HA is enabled then these values take effect
    * tcgroupcomm.handshake.timeout        - tc-group-comm handshake timeout milliseconds

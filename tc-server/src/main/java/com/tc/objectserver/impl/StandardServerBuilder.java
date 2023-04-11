@@ -74,8 +74,7 @@ public class StandardServerBuilder implements ServerBuilder {
                                                                      ChannelStatsImpl channelStats,
                                                                      L2Coordinator coordinator,
                                                                      ServerClientHandshakeManager clientHandshakeManager,
-                                                                     ConnectionIDFactory connectionIdFactory,
-                                                                     int maxStageSize) {
+                                                                     ConnectionIDFactory connectionIdFactory) {
     return new ServerConfigurationContextImpl(id, stageManager,
         channelManager,
         clientHandshakeManager, channelStats, coordinator

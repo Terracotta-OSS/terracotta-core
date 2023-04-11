@@ -71,7 +71,7 @@ public class StageManagerImplTest extends TestCase {
   }
 
   public void testStage() throws Exception {
-    stageManager.createStage("testStage", TestEventContext.class, testEventHandler, 1, 3);
+    stageManager.createStage("testStage", TestEventContext.class, testEventHandler, 1);
     Stage<TestEventContext> s = stageManager.getStage("testStage", TestEventContext.class);
     assertTrue(s != null);
     s.getSink().addToSink(new TestEventContext());
@@ -89,7 +89,7 @@ public class StageManagerImplTest extends TestCase {
   }
 
   public void testMultiThreadedStage() throws Exception {
-    stageManager.createStage("testStage2", TestMultiThreadedEventContext.class, multiThreadedTestEventHandler, 3, 30);
+    stageManager.createStage("testStage2", TestMultiThreadedEventContext.class, multiThreadedTestEventHandler, 3);
     Stage<TestMultiThreadedEventContext> s = stageManager.getStage("testStage2", TestMultiThreadedEventContext.class);
     assertTrue(s != null);
     s.getSink().addToSink(new TestMultiThreadedEventContext());
@@ -115,7 +115,7 @@ public class StageManagerImplTest extends TestCase {
   }
 
   public void testMultiThreadedContext() throws Exception {
-    multiThreadedStageManager.createStage("testStage2", TestMultiThreadedEventContext.class, multiThreadedTestEventHandler, 3, 30);
+    multiThreadedStageManager.createStage("testStage2", TestMultiThreadedEventContext.class, multiThreadedTestEventHandler, 3);
     Stage<TestMultiThreadedEventContext> s = multiThreadedStageManager.getStage("testStage2", TestMultiThreadedEventContext.class);
     assertTrue(s != null);
     s.getSink().addToSink(new TestMultiThreadedEventContext());
@@ -146,7 +146,7 @@ public class StageManagerImplTest extends TestCase {
   }
 
   public void testMultiThreadedContextExtended() throws Exception {
-    multiThreadedStageManager.createStage("testStage2", TestMultiThreadedEventContext.class, multiThreadedTestEventHandler, 3, 10);
+    multiThreadedStageManager.createStage("testStage2", TestMultiThreadedEventContext.class, multiThreadedTestEventHandler, 3);
     Stage<TestMultiThreadedEventContext> s = multiThreadedStageManager.getStage("testStage2", TestMultiThreadedEventContext.class);
     assertTrue(s != null);
     s.getSink().addToSink(new TestMultiThreadedEventContext("Thread-1"));

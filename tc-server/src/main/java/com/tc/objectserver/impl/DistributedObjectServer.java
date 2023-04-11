@@ -471,7 +471,6 @@ public class DistributedObjectServer {
     this.tcProperties = TCPropertiesImpl.getProperties();
 
     TCByteBufferFactory.setFixedBufferSize(tcProperties.getInt("bytebuffer.direct.size", 4096));
-    final int maxStageSize = tcProperties.getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
     final int fastStageSize = -1; // needs to be unbounded due to rescheduling by other stages on the pipeline.  If not unbounded, deadlock can occur.
     final StageManager stageManager = this.seda.getStageManager();
 
@@ -661,7 +660,7 @@ public class DistributedObjectServer {
     if (!USE_DIRECT) {
       logger.info("disabling the use for direct sinks");
     }
-    RequestProcessor processor = new RequestProcessor(stageManager, maxStageSize, USE_DIRECT);
+    RequestProcessor processor = new RequestProcessor(stageManager, USE_DIRECT);
 
     ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(serviceInterface);
     ClientEntityStateManager clientEntityStateManager = new ClientEntityStateManagerImpl();
@@ -670,7 +669,7 @@ public class DistributedObjectServer {
     // We need to set up a stage to point at the ProcessTransactionHandler and we also need to register it for events, below.
     final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor, channelManager, entityManager);
     stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, fastStageSize, USE_DIRECT, true).setSpinningCount(1000);
-    stageManager.createStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, ResponseMessage.class, processTransactionHandler.getMultiResponseSender(), L2Utils.getOptimalCommWorkerThreads(), maxStageSize, false, true);
+    stageManager.createStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, ResponseMessage.class, processTransactionHandler.getMultiResponseSender(), L2Utils.getOptimalCommWorkerThreads());
 //  add the server -> client communicator service
     final CommunicatorService communicatorService = new CommunicatorService(processTransactionHandler.getClientMessageSender());
     channelManager.addEventListener(communicatorService);
@@ -680,7 +679,7 @@ public class DistributedObjectServer {
     VoltronMessageHandler voltron = new VoltronMessageHandler(channelManager, USE_DIRECT);
     // We need to connect the IInterEntityMessengerProvider to the voltronMessageSink.
 
-    Stage<VoltronEntityMessage> fast = stageManager.createStage(ServerConfigurationContext.SINGLE_THREADED_FAST_PATH, VoltronEntityMessage.class, voltron, 1, maxStageSize);
+    Stage<VoltronEntityMessage> fast = stageManager.createStage(ServerConfigurationContext.SINGLE_THREADED_FAST_PATH, VoltronEntityMessage.class, voltron, 1);
     messengerProvider.setMessageSink(fast.getSink());
     entityManager.setMessageSink(fast.getSink());
 
@@ -693,10 +692,10 @@ public class DistributedObjectServer {
       this.groupCommManager.registerForGroupEvents((GroupEventsListener)consistencyMgr);
     }
     
-    final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler, getVersionCompatibility()), 1, maxStageSize);
+    final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler, getVersionCompatibility()), 1);
 
-    Stage<HydrateContext> hydrator = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_STAGE, HydrateContext.class, new HydrateHandler(), L2Utils.getOptimalCommWorkerThreads(), maxStageSize);
-    Stage<TCAction> diagStage = stageManager.createStage(ServerConfigurationContext.MONITOR_STAGE, TCAction.class, new DiagnosticsHandler(this, this.server.getJMX()), 1, 1);
+    Stage<HydrateContext> hydrator = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_STAGE, HydrateContext.class, new HydrateHandler(), L2Utils.getOptimalCommWorkerThreads());
+    Stage<TCAction> diagStage = stageManager.createStage(ServerConfigurationContext.MONITOR_STAGE, TCAction.class, new DiagnosticsHandler(this, this.server.getJMX()), 1, 1, false, true);
 
     VoltronMessageSink voltronSink = new VoltronMessageSink(hydrator, fast.getSink(), entityManager);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, new TCMessageHydrateSink<>(clientHandshake.getSink()));
@@ -715,13 +714,13 @@ public class DistributedObjectServer {
 
     // And the stage for handling their response batching/serialization.
     Stage<Runnable> replicationResponseStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE, Runnable.class,
-        new GenericHandler<>(), 1, maxStageSize);
+        new GenericHandler<>(), 1);
 //  routing for passive to receive replication
     ReplicatedTransactionHandler replicatedTransactionHandler = new ReplicatedTransactionHandler(state, replicationResponseStage, this.persistor, entityManager, groupCommManager);
     sequenceWeight.setReplicatedTransactionHandler(replicatedTransactionHandler);
 // This requires both the stage for handling the replication/sync messages.
     Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class,
-        replicatedTransactionHandler.getEventHandler(), 1, maxStageSize);
+        replicatedTransactionHandler.getEventHandler(), 1);
 
     final ClientChannelLifeCycleHandler channelLifeCycleHandler = new ClientChannelLifeCycleHandler(this.communicationsManager,
                                                                                         stageManager, channelManager,
@@ -742,14 +741,14 @@ public class DistributedObjectServer {
 // setup replication
     final Sink<ReplicationSendingAction> replicationSenderStage =
         stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
-                                 ReplicationSendingAction.class, new GenericHandler<>(), max(3, knownPeers), maxStageSize).getSink();
+                                 ReplicationSendingAction.class, new GenericHandler<>(), max(3, knownPeers)).getSink();
     final Sink<ReplicationSendingAction> replicationSenderFlushStage =
         stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_FLUSH_STAGE,
-                                 ReplicationSendingAction.class, new GenericHandler<>(), max(3, knownPeers), maxStageSize).getSink();
+                                 ReplicationSendingAction.class, new GenericHandler<>(), max(3, knownPeers)).getSink();
     ReplicationSender replicationSender = new ReplicationSender(replicationSenderStage, replicationSenderFlushStage, groupCommManager);
     final Sink<ReplicationReceivingAction> replicationReceivingStage =
         stageManager.createStage(ServerConfigurationContext.PASSIVE_TO_ACTIVE_DRIVER_STAGE,
-                                 ReplicationReceivingAction.class, new GenericHandler<>(), max(3, knownPeers), maxStageSize).getSink();
+                                 ReplicationReceivingAction.class, new GenericHandler<>(), max(3, knownPeers)).getSink();
     final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(consistencyMgr, processTransactionHandler, this.persistor.getEntityPersistor(), replicationSender, replicationReceivingStage, this.getGroupManager());
     processor.setReplication(passives);
 
@@ -779,17 +778,17 @@ public class DistributedObjectServer {
                 throw new AssertionError("bad message " + context);
           }
           }
-        }, 1, maxStageSize);
+        }, 1);
 
 //  handle cluster state
-    Sink<L2StateMessage> stateMessageSink = stageManager.createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE, L2StateMessage.class, new L2StateMessageHandler(), 1, maxStageSize).getSink();
+    Sink<L2StateMessage> stateMessageSink = stageManager.createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE, L2StateMessage.class, new L2StateMessageHandler(), 1).getSink();
     this.groupCommManager.routeMessages(L2StateMessage.class, stateMessageSink);
 //  handle passives
     GroupEventsDispatchHandler dispatchHandler = new GroupEventsDispatchHandler();
     dispatchHandler.addListener(this.l2Coordinator);
     dispatchHandler.addListener(passives);
 
-    Stage<GroupEvent> groupEvents = stageManager.createStage(ServerConfigurationContext.GROUP_EVENTS_DISPATCH_STAGE, GroupEvent.class, dispatchHandler, 1, maxStageSize);
+    Stage<GroupEvent> groupEvents = stageManager.createStage(ServerConfigurationContext.GROUP_EVENTS_DISPATCH_STAGE, GroupEvent.class, dispatchHandler, 1);
     this.groupCommManager.registerForGroupEvents(dispatchHandler.createDispatcher(groupEvents.getSink()));
   //  TODO:  These stages should probably be activated and destroyed dynamically
 //  Replicated messages need to be ordered
@@ -797,7 +796,7 @@ public class DistributedObjectServer {
     this.groupCommManager.routeMessages(ReplicationMessage.class, replication);
 
     this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStageAck.getSink());
-    Sink<PlatformInfoRequest> info = createPlatformInformationStages(stageManager, maxStageSize, monitoringShimService);
+    Sink<PlatformInfoRequest> info = createPlatformInformationStages(stageManager, monitoringShimService);
     dispatchHandler.addListener(connectPassiveEvents(info, monitoringShimService));
 
     final ServerClientHandshakeManager clientHandshakeManager = new ServerClientHandshakeManager(
@@ -814,8 +813,7 @@ public class DistributedObjectServer {
     this.context = this.serverBuilder.createServerConfigurationContext(configSetupManager.getServerConfiguration().getName(), stageManager, channelManager,
                                                                        channelStats, this.l2Coordinator,
                                                                        clientHandshakeManager,
-                                                                       this.connectionIdFactory,
-                                                                       maxStageSize);
+                                                                       this.connectionIdFactory);
     this.context.addShutdownItem(passives::close);
     toInit.add(this.serverBuilder);
     
@@ -972,9 +970,9 @@ public class DistributedObjectServer {
     });
   }
 
-  private Sink<PlatformInfoRequest> createPlatformInformationStages(StageManager stageManager, int maxStageSize, LocalMonitoringProducer monitoringSupport) {
+  private Sink<PlatformInfoRequest> createPlatformInformationStages(StageManager stageManager, LocalMonitoringProducer monitoringSupport) {
     Stage<PlatformInfoRequest> stage = stageManager.createStage(ServerConfigurationContext.PLATFORM_INFORMATION_REQUEST,
-        PlatformInfoRequest.class, new PlatformInfoRequestHandler(groupCommManager, monitoringSupport).getEventHandler(), 1, maxStageSize);
+        PlatformInfoRequest.class, new PlatformInfoRequestHandler(groupCommManager, monitoringSupport).getEventHandler(), 1);
     groupCommManager.routeMessages(PlatformInfoRequest.class, stage.getSink());
 //  publish state change events to everyone in the stripe
     return stage.getSink();

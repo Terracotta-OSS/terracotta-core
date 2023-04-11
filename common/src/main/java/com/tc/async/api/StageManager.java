@@ -26,7 +26,7 @@ import java.util.List;
 
 
 public interface StageManager extends PrettyPrintable {
-  public <EC> Stage<EC> createStage(String name, Class<EC> verification, EventHandler<EC> handler, int threads, int maxSize);
+  public <EC> Stage<EC> createStage(String name, Class<EC> verification, EventHandler<EC> handler, int threads);
   public <EC> Stage<EC> createStage(String name, Class<EC> verification, EventHandler<EC> handler, int threads, int maxSize, boolean canBeDirect, boolean stallWarn);
 /**
  * Start all the stages created on this stage manager.
@@ -43,4 +43,6 @@ public interface StageManager extends PrettyPrintable {
   public void setLoggerProvider(TCLoggerProvider loggerProvider);
 
   public Stats[] getStats();
+  
+  public int getDefaultStageMaximumCapacity();
 }

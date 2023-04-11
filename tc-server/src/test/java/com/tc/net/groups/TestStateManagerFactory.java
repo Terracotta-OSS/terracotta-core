@@ -77,7 +77,7 @@ public class TestStateManagerFactory {
                                                 new TestClusterStatePersistor(), mock(TopologyManager.class));
     handler.setMgr(mgr);
 
-    stateMsgs = stages.createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE, L2StateMessage.class, createEventHandler((msg)->mgr.handleClusterStateMessage(msg)), 0, 1024).getSink();
+    stateMsgs = stages.createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE, L2StateMessage.class, createEventHandler((msg)->mgr.handleClusterStateMessage(msg)), 0).getSink();
 
     return (mgr);
   }
