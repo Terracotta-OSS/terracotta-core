@@ -24,9 +24,7 @@ import org.slf4j.LoggerFactory;
 import com.tc.management.AbstractTerracottaMBean;
 import javax.management.NotCompliantMBeanException;
 
-import static com.tc.management.beans.L2MBeanNames.TOPOLOGY_MBEAN;
 import static java.lang.String.join;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
 import org.terracotta.server.ServerEnv;
@@ -51,7 +49,7 @@ public class TopologyManager {
     return voters.get() < 0;
   }
 
-  public synchronized Topology getTopology() {
+  public Topology getTopology() {
     return new Topology(config.get());
   }
 
@@ -64,26 +62,7 @@ public class TopologyManager {
     }
   }
 
-  private synchronized boolean addPassive(String host, int port, int group) {
-    final Topology old = this.getTopology();
-    Set<String> newServers = new HashSet<>(old.getServers());
-    return !newServers.add(host + ":" + port);
-  }
-
-  private synchronized boolean removePassive(String host, int port, int group) {
-    Set<String> newServers = new HashSet<>(getTopology().getServers());
-    return !newServers.remove(host + ":" + port);
-  }
-
   public interface TopologyMbean {
-    boolean addPassive(String host, int port, int group);
-
-    boolean addPassive(String hostPortGroup);
-
-    boolean removePassive(String hostPort, int port, int group);
-
-    boolean removePassive(String hostPortGroup);
-
     String getTopology();
   }
 
@@ -98,26 +77,8 @@ public class TopologyManager {
       try {
         ServerEnv.getServer().getManagement().registerMBean("TopologyMBean", this);
       } catch (Exception e) {
-        LOGGER.warn("Problem registering MBean with name " + TOPOLOGY_MBEAN.getCanonicalName(), e);
+        LOGGER.warn("Problem registering TopologyMBean", e);
       }
-    }
-
-    public boolean addPassive(String host, int port, int group) {
-      return this.topologyManager.addPassive(host,port,group);
-    }
-
-    public boolean addPassive(String hostPortGroup) {
-      String[] split = hostPortGroup.split("\\:");
-      return this.topologyManager.addPassive(split[0],Integer.parseInt(split[1]), Integer.parseInt(split[2]));
-    }
-    
-    public boolean removePassive(String host, int port, int group) {
-      return this.topologyManager.removePassive(host,port,group);
-    }
-
-    public boolean removePassive(String hostPortGroup) {
-      String[] split = hostPortGroup.split("\\:");
-      return this.topologyManager.removePassive(split[0],Integer.parseInt(split[1]), Integer.parseInt(split[2]));
     }
 
     @Override
