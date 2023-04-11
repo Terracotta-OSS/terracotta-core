@@ -91,7 +91,7 @@ public class ReplicationSenderTest {
   public void setUp() throws Exception {
     when(node.getUID()).thenReturn("test".getBytes());
     when(stage.getSink()).thenReturn(sink);
-    this.testSender = new ReplicationSender(sink, groupMgr);
+    this.testSender = new ReplicationSender(sink, sink, groupMgr);
     doAnswer((invoke)-> {
       Object[] args = invoke.getArguments();
       // We need to emulate having sent the message so run it through the serialization mechanism.
