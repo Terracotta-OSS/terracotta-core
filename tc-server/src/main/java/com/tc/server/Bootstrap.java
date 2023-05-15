@@ -160,6 +160,10 @@ public class Bootstrap implements BootstrapService {
       public Object getManagement() {
         return server.getManagement();
       }
+      
+      public Object getServer() {
+        return server;
+      }
     };
   }
 

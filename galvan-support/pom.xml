@@ -108,6 +108,30 @@ limitations under the License.
 
   <build>
     <plugins>
+        <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.0.2</version>
+        <executions>
+            <execution>
+                <id>configure</id>
+                <phase>pre-integration-test</phase>
+                <goals>
+                    <goal>copy-resources</goal>
+                </goals>
+                <configuration>
+                    <outputDirectory>${kitUnzipLocation}/terracotta-${project.version}/server/conf/</outputDirectory>                    
+                    <resources>
+                        <resource>
+                            <directory>src/test/resources</directory>
+                            <includes>
+                                <include>tc-config.xml</include>
+                            </includes>
+                        </resource>
+                    </resources>
+                </configuration>
+            </execution>
+        </executions>
+    </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
