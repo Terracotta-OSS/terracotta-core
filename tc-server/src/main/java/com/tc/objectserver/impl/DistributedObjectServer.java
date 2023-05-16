@@ -417,7 +417,7 @@ public class DistributedObjectServer {
     }
   }
 
-  public synchronized void start() throws IOException, LocationNotCreatedException, FileNotCreatedException {
+  public synchronized void bootstrap() throws IOException, LocationNotCreatedException, FileNotCreatedException {
     threadGroup.addCallbackOnExitDefaultHandler(new ThreadDumpHandler());
     threadGroup.addCallbackOnExitDefaultHandler((state) -> dumpOnExit());
     threadGroup.addCallbackOnExitExceptionHandler(TCServerRestartException.class, state -> {
@@ -828,7 +828,14 @@ public class DistributedObjectServer {
 
     final CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
+  }
+
+  public synchronized void openNetworkPorts() {
+    Configuration configuration = this.configSetupManager.getConfiguration();
 // don't join the group if the configuration is not complete
+    if (this.l2Coordinator == null) {
+      throw new IllegalStateException("server is not bootstrapped");
+    }
     if (!configuration.isPartialConfiguration()) {
       startGroupManagers();
       this.l2Coordinator.start();
@@ -1130,10 +1137,13 @@ public class DistributedObjectServer {
     });
   }
 
-  public void startGroupManagers() {
+  private void startGroupManagers() {
     try {
-        final NodeID myNodeId = this.groupCommManager.join(this.configSetupManager.getGroupConfiguration());
-        logger.info("This L2 Node ID = " + myNodeId);
+      if (this.groupCommManager == null) {
+        throw new IllegalStateException("server is not bootstrapped");
+      }
+      final NodeID myNodeId = this.groupCommManager.join(this.configSetupManager.getGroupConfiguration());
+      logger.info("This L2 Node ID = " + myNodeId);
     } catch (final GroupException e) {
       logger.error("Caught Exception :", e);
       throw new RuntimeException(e);

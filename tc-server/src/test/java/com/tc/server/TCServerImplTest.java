@@ -27,20 +27,22 @@ import com.tc.config.ServerConfigurationManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
+import com.tc.lang.TCThreadGroup;
 
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.impl.DistributedObjectServer;
+import com.tc.objectserver.impl.JMXSubsystem;
 import com.tc.util.Assert;
 import org.terracotta.server.Server;
 import org.terracotta.server.ServerEnv;
 
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import javax.management.MBeanServer;
 import org.mockito.ArgumentMatchers;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -62,7 +64,7 @@ public class TCServerImplTest {
   @Before
   public void setUp() throws Exception {
     dso = mock(DistributedObjectServer.class);
-    tcServer = new TCServerImpl(dso, mock(ServerConfigurationManager.class));
+    tcServer = new TCServerImpl(dso, mock(ServerConfigurationManager.class), mock(TCThreadGroup.class), mock(JMXSubsystem.class), mock(ConnectionPolicy.class));
     when(dso.destroy(anyBoolean())).thenReturn(CompletableFuture.completedFuture(null));
     ServerManagementContext smc = mock(ServerManagementContext.class);
     DSOChannelManagerMBean cm = mock(DSOChannelManagerMBean.class);
@@ -82,12 +84,7 @@ public class TCServerImplTest {
       return ((Set)i.getArguments()[0]).contains(currentState);
     });
     when(l2.getStateManager()).thenReturn(state);
-    try {
-      tcServer.registerDSOServer(mock(MBeanServer.class));
-    } catch (NullPointerException n) {
-      n.printStackTrace();
-      throw n;
-    }
+
     ServerEnv.setServer(mock(Server.class));
   }
   
