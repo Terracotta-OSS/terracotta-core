@@ -305,8 +305,8 @@ class BasicInlineCluster extends Cluster {
     waitForSafe();
   }
 
-  private Object startIsolatedServer(Path serverWorking, OutputStream out, String[] cmd) {
-    if (cmd[0].contains("start-tc-server")) {
+  static Object startIsolatedServer(Path serverWorking, OutputStream out, String[] cmd) {
+    if (cmd.length > 1 && cmd[0].contains("start-tc-server")) {
       cmd = Arrays.copyOfRange(cmd, 1, cmd.length);
     }
     ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
@@ -315,7 +315,7 @@ class BasicInlineCluster extends Cluster {
       Thread.currentThread().setContextClassLoader(null);
       URL url = tc.toUri().toURL();
       URL resource = serverWorking.toUri().toURL();
-      ClassLoader loader = new IsolatedClassLoader(new URL[] {resource, url}, getClass().getClassLoader());
+      ClassLoader loader = new IsolatedClassLoader(new URL[] {resource, url}, BasicInlineCluster.class.getClassLoader());
       Method m = Class.forName("com.tc.server.TCServerMain", true, loader).getMethod("createServer", List.class, OutputStream.class);
       return m.invoke(null, Arrays.asList(cmd), out);
     } catch (RuntimeException mal) {

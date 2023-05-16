@@ -106,7 +106,7 @@ public class TCServerImpl extends SEDA implements TCServer {
                       ConnectionPolicy connectionPolicy) {
     super(group);
 
-    subsystem = new JMXSubsystem(!group.isStoppable() ? ManagementFactory.getPlatformMBeanServer() : MBeanServerFactory.createMBeanServer());
+    subsystem = new JMXSubsystem(!group.isStoppable() ? ManagementFactory.getPlatformMBeanServer() : MBeanServerFactory.newMBeanServer());
     this.connectionPolicy = connectionPolicy;
     Assert.assertNotNull(manager);
     this.configurationSetupManager = manager;
