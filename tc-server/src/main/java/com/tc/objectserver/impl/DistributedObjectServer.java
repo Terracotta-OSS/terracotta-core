@@ -557,13 +557,14 @@ public class DistributedObjectServer {
     final NetworkStackHarnessFactory networkStackHarnessFactory;
     networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
 
-    final MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, logger, threadGroup);
-
     final TCMessageRouter messageRouter = new TCMessageRouterImpl();
 
     BufferManagerFactory bufferManagerFactory = getBufferManagerFactory(platformServiceRegistry);
 
     TCConnectionManager connectionManager = new TCConnectionManagerImpl(configSetupManager.getServerConfiguration().getName() + " - " + CommunicationsManager.COMMSMGR_SERVER, commWorkerThreadCount, bufferManagerFactory);
+
+    final MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, logger, threadGroup, connectionManager);
+
     this.communicationsManager = new CommunicationsManagerImpl(mm,
                                                                messageRouter, networkStackHarnessFactory,
                                                                connectionManager,

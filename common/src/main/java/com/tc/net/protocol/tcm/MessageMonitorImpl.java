@@ -19,6 +19,8 @@
 package com.tc.net.protocol.tcm;
 
 import com.tc.bytes.TCReferenceSupport;
+import com.tc.net.core.TCConnection;
+import com.tc.net.core.TCConnectionManager;
 import org.slf4j.Logger;
 
 import com.tc.properties.TCProperties;
@@ -33,21 +35,22 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 
 public class MessageMonitorImpl implements MessageMonitor {
 
   private final Map<TCMessageType, MessageCounter> counters     = new TreeMap<TCMessageType, MessageCounter>(
                                                                                                              new TCMessageTypeComparator());
+  private final TCConnectionManager                connections;
   private final StringFormatter                    formatter    = new StringFormatter();
   private final ScheduledExecutorService                              timer;
   private final ScheduledFuture<?> currentTask;
   private int                                      maxTypeWidth = 0;
 
-  public static MessageMonitor createMonitor(TCProperties tcProps, Logger logger, ThreadGroup group) {
+  public static MessageMonitor createMonitor(TCProperties tcProps, Logger logger, ThreadGroup group, TCConnectionManager mgr) {
     final MessageMonitor mm;
     if (tcProps.getBoolean(TCPropertiesConsts.TCM_MONITOR_ENABLED, false)) {
-      mm = new MessageMonitorImpl(group, logger, tcProps.getInt(TCPropertiesConsts.TCM_MONITOR_DELAY));
+      mm = new MessageMonitorImpl(group, logger, mgr, tcProps.getInt(TCPropertiesConsts.TCM_MONITOR_DELAY));
     } else {
       mm = new NullMessageMonitor();
     }
@@ -55,12 +58,13 @@ public class MessageMonitorImpl implements MessageMonitor {
     return mm;
   }
 
-  public MessageMonitorImpl(ThreadGroup grp, Logger logger, int delay) {
+  public MessageMonitorImpl(ThreadGroup grp, Logger logger, TCConnectionManager mgr, int delay) {
     this.timer = Executors.newSingleThreadScheduledExecutor(r->{
       Thread t = new Thread(grp, r, "MessageMonitor logger");
       t.setDaemon(true);
       return t;
     });
+    this.connections = mgr;
     this.currentTask = startLogging(logger, delay);
   }
 
@@ -69,10 +73,20 @@ public class MessageMonitorImpl implements MessageMonitor {
     TCReferenceSupport.startMonitoringReferences();
     return this.timer.scheduleAtFixedRate(()->{
       logger.info(MessageMonitorImpl.this.toString());
-        int count = TCReferenceSupport.checkReferences();
-        if (count < 0) {
-          logger.info("found {} memory references that were not closed", count);
-        }
+      int count = TCReferenceSupport.checkReferences();
+      if (count > 0) {
+        logger.info("found {} memory references that were not closed", count);
+      }
+      TCConnection[] list = connections.getAllConnections();
+      
+      for (TCConnection c : list) {
+        Map<String, ?> state = c.getState();
+        long sent = (Long)state.get("messageBatch");
+        long write = (Long)state.get("messageWritten");
+        long recv = (Long)state.get("messageRead");
+        
+        logger.info("\n" + formatter.rightPad(60, state.get("localAddress") + " -> " + state.get("remoteAddress")) + formatter.leftPad(20, "batch:" + sent)  + formatter.leftPad(20, "write:" + write) + formatter.leftPad(20, "read:" + recv));
+      }
     }, 0, intervalSeconds, TimeUnit.SECONDS);
   }
 
@@ -123,11 +137,11 @@ public class MessageMonitorImpl implements MessageMonitor {
   }
 
   public static class MessageCounter {
-    private final AtomicLong      incomingCount = new AtomicLong(0);
-    private final AtomicLong      incomingData  = new AtomicLong(0);
+    private final LongAdder      incomingCount = new LongAdder();
+    private final LongAdder      incomingData  = new LongAdder();
 
-    private final AtomicLong      outgoingCount = new AtomicLong(0);
-    private final AtomicLong      outgoingData  = new AtomicLong(0);
+    private final LongAdder      outgoingCount = new LongAdder();
+    private final LongAdder      outgoingData  = new LongAdder();
     private final StringFormatter formatter;
     private final String          name;
 
@@ -136,14 +150,14 @@ public class MessageMonitorImpl implements MessageMonitor {
       this.name = name;
     }
 
-    private synchronized void newIncomingMessage(TCAction message) {
-      incomingCount.incrementAndGet();
-      incomingData.addAndGet(message.getMessageLength());
+    private void newIncomingMessage(TCAction message) {
+      incomingCount.increment();
+      incomingData.add(message.getMessageLength());
     }
 
-    private synchronized void newOutgoingMessage(TCAction message) {
-      outgoingCount.incrementAndGet();
-      outgoingData.addAndGet(message.getMessageLength());
+    private void newOutgoingMessage(TCAction message) {
+      outgoingCount.increment();
+      outgoingData.add(message.getMessageLength());
     }
 
     public String toString(int nameWidth) {
@@ -153,20 +167,20 @@ public class MessageMonitorImpl implements MessageMonitor {
 
     }
 
-    public AtomicLong getIncomingCount() {
-      return incomingCount;
+    public long getIncomingCount() {
+      return incomingCount.sum();
     }
 
-    public AtomicLong getIncomingData() {
-      return incomingData;
+    public long getIncomingData() {
+      return incomingData.sum();
     }
 
-    public AtomicLong getOutgoingCount() {
-      return outgoingCount;
+    public long getOutgoingCount() {
+      return outgoingCount.sum();
     }
 
-    public AtomicLong getOutgoingData() {
-      return outgoingData;
+    public long getOutgoingData() {
+      return outgoingData.sum();
     }
 
     public String getName() {
