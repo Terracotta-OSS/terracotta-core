@@ -30,7 +30,6 @@ import com.tc.config.ServerConfigurationManager;
 import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
 import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2Dumper;
 import com.tc.management.beans.L2MBeanNames;
@@ -55,7 +54,6 @@ import java.nio.charset.Charset;
 import java.util.Date;
 
 import javax.management.InstanceAlreadyExistsException;
-import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
@@ -89,24 +87,21 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   private final JMXSubsystem                subsystem;
   private DSO dso;
-  /**
-   * This should only be used for tests.
-   */
-  TCServerImpl(DistributedObjectServer dso, ServerConfigurationManager configurationSetupManager) {
-    this(configurationSetupManager, new TCThreadGroup(new ThrowableHandlerImpl(logger)));
-    this.dsoServer = dso;
-    this.dsoStarted = true;
-  }
 
   public TCServerImpl(ServerConfigurationManager configurationSetupManager, TCThreadGroup threadGroup) {
-    this(configurationSetupManager, threadGroup, new ConnectionPolicyImpl(Integer.MAX_VALUE));
+    this(null, configurationSetupManager, threadGroup, 
+            new JMXSubsystem(!threadGroup.isStoppable() ? ManagementFactory.getPlatformMBeanServer() : MBeanServerFactory.newMBeanServer()), 
+            new ConnectionPolicyImpl(Integer.MAX_VALUE));
   }
 
-  protected TCServerImpl(ServerConfigurationManager manager, TCThreadGroup group,
+  TCServerImpl(DistributedObjectServer dso, ServerConfigurationManager manager, TCThreadGroup group, JMXSubsystem subsystem, 
                       ConnectionPolicy connectionPolicy) {
     super(group);
-
-    subsystem = new JMXSubsystem(!group.isStoppable() ? ManagementFactory.getPlatformMBeanServer() : MBeanServerFactory.newMBeanServer());
+    this.dsoServer = dso;
+    if (dso != null) {
+      dsoStarted = true;
+    }
+    this.subsystem = subsystem;
     this.connectionPolicy = connectionPolicy;
     Assert.assertNotNull(manager);
     this.configurationSetupManager = manager;
@@ -373,17 +368,18 @@ public class TCServerImpl extends SEDA implements TCServer {
   private void startDSOServer() throws Exception {
     Assert.assertTrue(this.dsoServer == null);
     this.dsoServer = createDistributedObjectServer(this.configurationSetupManager, this.connectionPolicy, this);
-    this.dsoServer.start();
-    this.dsoStarted = true;
     MBeanServer mbean = subsystem.getServer();
-    registerDSOServer(mbean);
-    registerServerMBeans(mbean);
+    registerDSOServer();
+    registerServerMBeans();
+    this.dsoServer.openNetworkPorts();
+    this.dsoStarted = true;
   }
 
   protected DistributedObjectServer createDistributedObjectServer(ServerConfigurationManager configSetupManager,
                                                                   ConnectionPolicy policy,
-                                                                  TCServerImpl serverImpl) {
+                                                                  TCServerImpl serverImpl) throws Exception {
     DistributedObjectServer dso = new DistributedObjectServer(configSetupManager, getThreadGroup(), policy, this, this);
+    dso.bootstrap();
     return dso;
   }
 
@@ -393,32 +389,25 @@ public class TCServerImpl extends SEDA implements TCServer {
     TCLogging.getDumpLogger().info(new String(this.dsoServer.getClusterState(Charset.defaultCharset(), null), Charset.defaultCharset()));
   }
 
-  protected synchronized void registerDSOServer(MBeanServer mBeanServer) throws InstanceAlreadyExistsException, MBeanRegistrationException,
+  private synchronized void registerDSOServer() throws InstanceAlreadyExistsException, MBeanRegistrationException,
       NotCompliantMBeanException {
     ServerManagementContext mgmtContext = this.dsoServer.getManagementContext();
     ServerConfigurationContext configContext = this.dsoServer.getContext();
-    registerDSOMBeans(mgmtContext, configContext, mBeanServer);
+    registerDSOMBeans(mgmtContext, configContext, this.subsystem.getServer());
   }
   
-  protected void registerServerMBeans(MBeanServer mBeanServer) 
+  private void registerServerMBeans() 
       throws NotCompliantMBeanException, InstanceAlreadyExistsException, MBeanRegistrationException {
+    MBeanServer mBeanServer = subsystem.getServer();
     mBeanServer.registerMBean(new TCServerInfo(this), L2MBeanNames.TC_SERVER_INFO);
     mBeanServer.registerMBean(new L2Dumper(this, mBeanServer), L2MBeanNames.DUMPER);
   }
   
-  protected void unregisterServerMBeans(MBeanServer mbs) throws MBeanRegistrationException, InstanceNotFoundException {
-    mbs.unregisterMBean(L2MBeanNames.TC_SERVER_INFO);
-    mbs.unregisterMBean(L2MBeanNames.DUMPER);
-  }
-  protected void registerDSOMBeans(ServerManagementContext mgmtContext, ServerConfigurationContext configContext,
+  private void registerDSOMBeans(ServerManagementContext mgmtContext, ServerConfigurationContext configContext,
                                    MBeanServer mBeanServer) throws NotCompliantMBeanException,
       InstanceAlreadyExistsException, MBeanRegistrationException {
       dso = new DSO(mgmtContext, configContext, mBeanServer);
       mBeanServer.registerMBean(dso, L2MBeanNames.DSO);
-  }
-
-  protected void unregisterDSOMBeans(MBeanServer mbs) throws MBeanRegistrationException, InstanceNotFoundException {
-    mbs.unregisterMBean(L2MBeanNames.DSO);
   }
 
   @Override

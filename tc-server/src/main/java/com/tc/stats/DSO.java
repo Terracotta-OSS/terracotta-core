@@ -98,10 +98,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
              MBeanServer mbeanServer)
       throws NotCompliantMBeanException {
     super(DSOMBean.class);
-    try {
-      // TraceImplementation.init(TraceTags.LEVEL_TRACE);
-    } catch (Exception e) {/**/
-    }
     this.mbeanServer = mbeanServer;
     this.channelMgr = managementContext.getChannelManager();
     this.channelStats = managementContext.getChannelStats();
