@@ -23,7 +23,6 @@
 <tc-config xmlns="http://www.terracotta.org/config">
     <servers>
         <server>
-            <logs>%(user.home)/terracotta/server-logs</logs>
         </server>
     </servers>
 </tc-config>
