@@ -52,12 +52,12 @@ public class RequestProcessor {
   private boolean isActive = false;
   private static final Logger PLOGGER = LoggerFactory.getLogger(MessagePayload.class);
   
-  public RequestProcessor(StageManager stageManager, int maxQueueSize, boolean use_direct) {
+  public RequestProcessor(StageManager stageManager, boolean use_direct) {
     int MIN_NUM_PROCESSORS = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.MIN_ENTITY_PROCESSOR_THREADS);
     int numOfProcessors = L2Utils.getOptimalApplyStageWorkerThreads(true);
     numOfProcessors = Math.max(MIN_NUM_PROCESSORS, numOfProcessors);
-    requestExecution = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, EntityRequest.class, new RequestProcessorHandler(), numOfProcessors, maxQueueSize, use_direct, true).getSink();
-    syncExecution = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE, EntityRequest.class, new SyncRequestProcessorHandler(), MIN_NUM_PROCESSORS, maxQueueSize, use_direct, true).getSink();
+    requestExecution = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, EntityRequest.class, new RequestProcessorHandler(), numOfProcessors,  stageManager.getDefaultStageMaximumCapacity(), use_direct, true).getSink();
+    syncExecution = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE, EntityRequest.class, new SyncRequestProcessorHandler(), MIN_NUM_PROCESSORS, stageManager.getDefaultStageMaximumCapacity(), use_direct, true).getSink();
   }
 //  TODO: do some accounting for transaction de-dupping on failover
   

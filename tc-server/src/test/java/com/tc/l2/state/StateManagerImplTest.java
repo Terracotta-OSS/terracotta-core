@@ -144,7 +144,7 @@ public class StateManagerImplTest {
 
       stateManagers[i] = new StateManagerImpl(tcLogger, groupManagers[i], stageControllers[i], mgmt[i], stageManagers[i], NUM_OF_SERVERS, 5, wgf, mgr,
                                               clusterStatePersistorMock, topologyManager);
-      Sink<L2StateMessage> stateMessageSink = stageManagers[i].createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE, L2StateMessage.class, new L2StateMessageHandler(), 1, 1).getSink();
+      Sink<L2StateMessage> stateMessageSink = stageManagers[i].createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE, L2StateMessage.class, new L2StateMessageHandler(), 1).getSink();
       groupManagers[i].routeMessages(L2StateMessage.class, stateMessageSink);
       groupManagers[i].setDiscover(new TCGroupMemberDiscoveryStatic(groupManagers[i], nodes[i]));
 
@@ -262,7 +262,7 @@ public class StateManagerImplTest {
     });
 
     ExecutorService threads = Executors.newCachedThreadPool();
-    when(stageManager.createStage(anyString(), any(Class.class), any(EventHandler.class), anyInt(), anyInt()))
+    when(stageManager.createStage(anyString(), any(Class.class), any(EventHandler.class), anyInt()))
         .then((invoke)->{
           Stage election = mock(Stage.class);
           Sink electionSink = mock(Sink.class);
@@ -323,7 +323,7 @@ public class StateManagerImplTest {
 
     when(stageManager.createStage(anyString(), any(Class.class), any(EventHandler.class), anyInt(), anyInt(), anyBoolean(), anyBoolean()))
         .then((invoke)->mockStage((EventHandler)invoke.getArguments()[2]));
-    when(stageManager.createStage(anyString(), any(Class.class), any(EventHandler.class), anyInt(), anyInt()))
+    when(stageManager.createStage(anyString(), any(Class.class), any(EventHandler.class), anyInt()))
         .then((invoke)->mockStage((EventHandler)invoke.getArguments()[2]));
     
     ConsistencyManager mgr = mock(ConsistencyManager.class);

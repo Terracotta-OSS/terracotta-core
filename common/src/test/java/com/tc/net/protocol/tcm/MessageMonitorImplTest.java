@@ -19,13 +19,15 @@
 package com.tc.net.protocol.tcm;
 
 
+import com.tc.net.core.TCConnectionManager;
 import junit.framework.TestCase;
+import static org.mockito.Mockito.mock;
 import org.slf4j.LoggerFactory;
 
 public class MessageMonitorImplTest extends TestCase {
   
   public void tests() throws Exception {
-    MessageMonitorImpl mm = new MessageMonitorImpl(null, LoggerFactory.getLogger(MessageMonitorImplTest.class), 5);
+    MessageMonitorImpl mm = new MessageMonitorImpl(null, LoggerFactory.getLogger(MessageMonitorImplTest.class), mock(TCConnectionManager.class), 5);
     mm.newIncomingMessage(new TestTCMessage());
     mm.newOutgoingMessage(new TestTCMessage());
     System.out.println(mm);

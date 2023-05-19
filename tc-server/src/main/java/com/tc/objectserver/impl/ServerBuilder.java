@@ -52,8 +52,7 @@ public interface ServerBuilder extends PostInit {
                                                               ChannelStatsImpl channelStats,
                                                               L2Coordinator l2HACoordinator,
                                                               ServerClientHandshakeManager clientHandshakeManager,
-                                                              ConnectionIDFactory connectionIdFactory,
-                                                              int maxStageSize);
+                                                              ConnectionIDFactory connectionIdFactory);
 
   L2Coordinator createL2HACoordinator(Logger consoleLogger, DistributedObjectServer server,
                                       StateManager stateMgr,

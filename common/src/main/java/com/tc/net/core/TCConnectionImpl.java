@@ -70,6 +70,7 @@ import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.StreamSupport;
 
@@ -98,6 +99,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private final TCConnectionEventCaller eventCaller = new TCConnectionEventCaller(logger);
   private final AtomicLong lastDataWriteTime = new AtomicLong(System.currentTimeMillis());
   private final LongAdder messagesWritten = new LongAdder();
+  private final LongAdder messageBatch = new LongAdder();
   private final AtomicLong lastDataReceiveTime = new AtomicLong(System.currentTimeMillis());
   private final LongAdder messagesRead = new LongAdder();
   private final AtomicLong connectTime = new AtomicLong(NO_CONNECT_TIME);
@@ -182,6 +184,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     state.put("receiveIdleTime", this.getIdleReceiveTime());
     state.put("idleTime", this.getIdleTime());
     state.put("messageWritten", this.messagesWritten.longValue());
+    state.put("messageBatch", this.messageBatch.longValue());
     state.put("messageRead", this.messagesRead.longValue());
     state.put("worker", commWorker.getName());
     state.put("closed", isClosed());
@@ -391,6 +394,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         ArrayList<TCActionNetworkMessage> currentBatch = new ArrayList<>();    
         int batchSize = 0;
         int batchMsgCount = 0;
+        boolean batchMode = false;
         TCNetworkMessage element = this.writeMessages.poll();
 
         while (element != null) {
@@ -398,7 +402,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
           if (element instanceof WireProtocolMessage) {
               // we don't want to group already constructed Transport Handshake WireProtocolMessages
               final WireProtocolMessage ms = finalizeWireProtocolMessage((WireProtocolMessage) element, 1);
-              this.writeContexts.add(new WriteContext(ms));
+              this.writeContexts.add(new WriteContext(ms, 1));
           } else { // anything else that is sent on this path is based on a TCAction and needs to be wrapped
             TCActionNetworkMessage batchable = (TCActionNetworkMessage)element;
             if (batchable.load()) {
@@ -409,8 +413,9 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
               }
               if (MSG_GROUPING_ENABLED) {
                 if (!canBatch(bytesToWrite, batchSize, batchMsgCount)) {
+                  logger.debug("batching {} messages with size {}", batchMsgCount, batchSize);
                   // We can't add this to the current batch so seal the current batch as a write context and create a new one.
-                  this.writeContexts.add(new WriteContext(buildWireProtocolMessageGroup(currentBatch)));
+                  this.writeContexts.add(new WriteContext(buildWireProtocolMessageGroup(currentBatch), batchSize));
                   batchSize = 0;
                   currentBatch = new ArrayList<>(batchMsgCount);
                   batchMsgCount = 0;
@@ -419,19 +424,25 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
                 batchMsgCount++;
                 currentBatch.add(batchable);
               } else {
-                this.writeContexts.add(new WriteContext(buildWireProtocolMessage(batchable)));
+                this.writeContexts.add(new WriteContext(buildWireProtocolMessage(batchable), 1));
               }
             } else {
               batchable.complete();
             }
           }
 
-          element = this.writeMessages.poll();
+          try {
+            element = (batchMode) ? this.writeMessages.poll(20, TimeUnit.MICROSECONDS) : this.writeMessages.poll();
+            batchMode = true;
+          } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            element = null;
+          }
         }
 
         if (MSG_GROUPING_ENABLED && batchMsgCount > 0) {
           final WireProtocolMessage ms = buildWireProtocolMessageGroup(currentBatch);
-          this.writeContexts.add(new WriteContext(ms));
+          this.writeContexts.add(new WriteContext(ms, batchMsgCount));
         }
         return true;
       } else {
@@ -506,8 +517,9 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
     while (context != null) {
       long bytesWritten = context.writeBuffers();
+      messageBatch.increment();
       if (debug) {
-        logger.debug("Wrote " + bytesWritten + " bytes on connection " + this.channel.toString());
+        logger.debug("Wrote " + bytesWritten + " bytes on connection " + this.channel.toString() + " with batch size " + context.getBatchSize());
       }
       totalBytesWritten += bytesWritten;
 
@@ -892,9 +904,11 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     private final WireProtocolMessage message;
     private Iterator<TCByteBuffer>   messageBytes;
     private TCByteBuffer current;
+    private final int batchSize;
 
-    WriteContext(WireProtocolMessage message) {
+    WriteContext(WireProtocolMessage message, int batchSize) {
       this.message = message;
+      this.batchSize = batchSize;
     }
     
     private void prepIfNeeded() {
@@ -918,6 +932,10 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     
     boolean isNotValid() {
       return !message.isValid();
+    }
+    
+    int getBatchSize() {
+      return batchSize;
     }
     
     long writeBuffers() {

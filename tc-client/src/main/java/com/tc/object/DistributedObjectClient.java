@@ -196,17 +196,18 @@ public class DistributedObjectClient {
 
   private synchronized ClientMessageChannel internalStart(int socketTimeout) {
     final TCProperties tcProperties = TCPropertiesImpl.getProperties();
-    final int maxSize = tcProperties.getInt(TCPropertiesConsts.L1_SEDA_STAGE_SINK_CAPACITY);
 
     final NetworkStackHarnessFactory networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
 
     this.counterManager = new CounterManagerImpl();
-    final MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, DSO_LOGGER, threadGroup);
     final TCMessageRouter messageRouter = new TCMessageRouterImpl();
     final HealthCheckerConfig hc = new HealthCheckerConfigClientImpl(tcProperties
                                          .getPropertiesFor(TCPropertiesConsts.L1_L2_HEALTH_CHECK_CATEGORY), "TC Client");
 
     this.connectionManager = this.clientBuilder.createConnectionManager(uuid, name);
+
+    final MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, DSO_LOGGER, threadGroup, this.connectionManager);
+
     this.communicationsManager = this.clientBuilder.createCommunicationsManager(mm,
                                      messageRouter,
                                      networkStackHarnessFactory,

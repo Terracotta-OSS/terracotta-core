@@ -47,7 +47,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author steve
  */
 public class StageManagerImpl implements StageManager {
-
+  private static final int         DEFAULT_MAX_STAGE_CAPACITY = TCPropertiesImpl.getProperties()
+                                                     .getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
   private static final boolean     MONITOR       = TCPropertiesImpl.getProperties()
                                                      .getBoolean(TCPropertiesConsts.TC_STAGE_MONITOR_ENABLED);
   private static final long        MONITOR_DELAY = TCPropertiesImpl.getProperties()
@@ -118,8 +119,8 @@ public class StageManagerImpl implements StageManager {
   }
 
   @Override
-  public <EC> Stage<EC> createStage(String name, Class<EC> verification, EventHandler<EC> handler, int threads, int maxSize) {
-    return this.createStage(name, verification, handler, threads, maxSize, false, true);
+  public <EC> Stage<EC> createStage(String name, Class<EC> verification, EventHandler<EC> handler, int threads) {
+    return this.createStage(name, verification, handler, threads, DEFAULT_MAX_STAGE_CAPACITY, false, true);
   }
 
   @Override
@@ -213,5 +214,10 @@ public class StageManagerImpl implements StageManager {
     }
     map.put("stages", list);
     return map;
+  }
+
+  @Override
+  public int getDefaultStageMaximumCapacity() {
+    return DEFAULT_MAX_STAGE_CAPACITY;
   }
 }

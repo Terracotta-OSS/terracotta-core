@@ -59,7 +59,7 @@ public class TCNotRunningTest extends TestCase {
 
   public void testDirect() {
     debug("Running direct test");
-    Stage<TestEventContext> stage = stageManager.createStage("some-stage", TestEventContext.class, testHandler, 1, 10);
+    Stage<TestEventContext> stage = stageManager.createStage("some-stage", TestEventContext.class, testHandler, 1);
     stage.start(new ConfigurationContextImpl(null, null));
     stage.getSink().addToSink(new TestEventContext());
     testHandler.waitUntilHandledEventCount(1);
@@ -70,7 +70,7 @@ public class TCNotRunningTest extends TestCase {
   public void testWrapped() {
     debug("Testing wrapped exception");
     testHandler.state = HandlerState.WRAPPED_EXCEPTION;
-    Stage<TestEventContext> stage = stageManager.createStage("some-stage-2", TestEventContext.class, testHandler, 1, 10);
+    Stage<TestEventContext> stage = stageManager.createStage("some-stage-2", TestEventContext.class, testHandler, 1);
     stage.start(new ConfigurationContextImpl(null, null));
     stage.getSink().addToSink(new TestEventContext());
     testHandler.waitUntilHandledEventCount(1);
@@ -81,7 +81,7 @@ public class TCNotRunningTest extends TestCase {
   public void testOtherException() {
     debug("Testing other exception");
     testHandler.state = HandlerState.OTHER_EXCEPTION;
-    Stage<TestEventContext> stage = stageManager.createStage("some-stage-3", TestEventContext.class, testHandler, 1, 10);
+    Stage<TestEventContext> stage = stageManager.createStage("some-stage-3", TestEventContext.class, testHandler, 1);
     stage.start(new ConfigurationContextImpl(null, null));
     stage.getSink().addToSink(new TestEventContext());
     testHandler.waitUntilHandledEventCount(1);

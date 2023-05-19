@@ -62,11 +62,10 @@ public class MockStageManagerFactory {
   public StageManager createStageManager() throws Exception {
     StageManager stages = mock(StageManager.class);
     ConcurrentHashMap<String, Stage> created = new ConcurrentHashMap<>();
-    when(stages.createStage(ArgumentMatchers.anyString(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.anyInt(), ArgumentMatchers.anyInt()))
+    when(stages.createStage(ArgumentMatchers.anyString(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.anyInt()))
       .then((invoke)->{
         String stageName = invoke.getArguments()[0].toString();
-        int size = (Integer)invoke.getArguments()[4];
-        ExecutorService service = createExecutor(stageName, size);
+        ExecutorService service = createExecutor(stageName, -1);
         Stage stage = mock(Stage.class);
         Sink sink = mock(Sink.class);
         EventHandler ev = (EventHandler)invoke.getArguments()[2];
