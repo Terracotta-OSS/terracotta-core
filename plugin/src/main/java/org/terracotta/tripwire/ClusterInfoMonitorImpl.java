@@ -18,36 +18,27 @@
  */
 package org.terracotta.tripwire;
 
+import java.util.function.Supplier;
 import jdk.jfr.FlightRecorder;
 
 
-class MemoryMonitorImpl implements MemoryMonitor {
+class ClusterInfoMonitorImpl implements ClusterInfoMonitor {
 
-  private final String description;
-  private volatile long free = Long.MAX_VALUE;
-  private volatile long used = Long.MIN_VALUE;
+  private final Runnable runnable;
 
-  private final Runnable runnable = ()-> {
-    newEvent().commit();
-  };
-
-  MemoryMonitorImpl(String name) {
-    this.description = name;
+  ClusterInfoMonitorImpl(Supplier<String> supplier) {
+    this.runnable = ()-> {
+      newEvent(supplier.get()).commit();
+    };
   }
   
-  private MemoryEvent newEvent() {
-    return new MemoryEvent(description, free, used);
-  }
-  
-  @Override
-  public void sample(long free, long used) {
-    this.free = Math.min(this.free, free);
-    this.used = Math.max(this.used, used);
+  private ClusterInfoEvent newEvent(String info) {
+    return new ClusterInfoEvent(info);
   }
   
   @Override
   public void register() {
-    FlightRecorder.addPeriodicEvent(MemoryEvent.class, runnable);
+    FlightRecorder.addPeriodicEvent(ClusterInfoEvent.class, runnable);
   }
 
   @Override
