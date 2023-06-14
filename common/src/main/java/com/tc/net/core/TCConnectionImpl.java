@@ -398,8 +398,12 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         TCNetworkMessage element = this.writeMessages.poll();
 
         while (element != null) {
-          if (this.closed.isSet()) { element.complete(); return false; }
-          if (element instanceof WireProtocolMessage) {
+          if (this.closed.isSet()) {
+            // dropping these messages.  make sure memory is returned
+            currentBatch.forEach(TCActionNetworkMessage::complete); 
+            element.complete();
+            return false;
+          } else if (element instanceof WireProtocolMessage) {
               // we don't want to group already constructed Transport Handshake WireProtocolMessages
               final WireProtocolMessage ms = finalizeWireProtocolMessage((WireProtocolMessage) element, 1);
               this.writeContexts.add(new WriteContext(ms, 1));
