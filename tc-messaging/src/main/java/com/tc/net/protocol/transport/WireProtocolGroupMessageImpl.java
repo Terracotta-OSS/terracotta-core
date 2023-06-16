@@ -181,7 +181,7 @@ public class WireProtocolGroupMessageImpl extends TCNetworkMessageImpl implement
   @Override
   public void complete() {
     if (this.messagePayloads != null) {
-      this.messagePayloads.iterator().forEachRemaining(TCNetworkMessage::complete);
+      this.messagePayloads.forEach(TCNetworkMessage::complete);
     }
     super.complete();
   }
