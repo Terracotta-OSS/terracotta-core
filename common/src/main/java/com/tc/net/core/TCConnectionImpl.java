@@ -394,7 +394,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         ArrayList<TCActionNetworkMessage> currentBatch = new ArrayList<>();    
         int batchSize = 0;
         int batchMsgCount = 0;
-        boolean batchMode = false;
         TCNetworkMessage element = this.writeMessages.poll();
 
         while (element != null) {
@@ -435,13 +434,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
             }
           }
 
-          try {
-            element = (batchMode) ? this.writeMessages.poll(20, TimeUnit.MICROSECONDS) : this.writeMessages.poll();
-            batchMode = true;
-          } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-            element = null;
-          }
+          element = this.writeMessages.poll();
         }
 
         if (MSG_GROUPING_ENABLED && batchMsgCount > 0) {
