@@ -76,10 +76,6 @@ public class CallbackPortRangeTest extends TestCase {
     } catch (NumberFormatException nfe) {
       // expected
     }
-
-    ports = CallbackPortRange.expandRange(String.valueOf(TransportHandshakeMessage.NO_CALLBACK_PORT));
-    assertEquals(1, ports.size());
-    assertEquals(TransportHandshakeMessage.NO_CALLBACK_PORT, ports.iterator().next().intValue());
   }
 
 }

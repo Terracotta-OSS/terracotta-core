@@ -66,11 +66,6 @@ public class DisabledHealthCheckerConfigImpl implements HealthCheckerConfig {
   }
 
   @Override
-  public boolean isCallbackPortListenerNeeded() {
-    return false;
-  }
-
-  @Override
   public boolean isCheckTimeEnabled() {
     throw new AssertionError("Disabled HealthChecker");
   }

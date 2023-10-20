@@ -61,7 +61,7 @@ public class ClientMessageTransportTest {
       }
       
     };
-    client = new ClientMessageTransport(cce, eh, factory, wiref, 0, 0);
+    client = new ClientMessageTransport(cce, eh, factory, wiref, 0);
   }
 
   @Test

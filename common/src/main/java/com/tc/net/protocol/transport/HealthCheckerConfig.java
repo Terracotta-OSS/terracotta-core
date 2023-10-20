@@ -53,10 +53,6 @@ public interface HealthCheckerConfig {
   int getSocketConnectTimeout();
 
   /**
-   * RMP-343: L2 SocketConnect L1
-   */
-  boolean isCallbackPortListenerNeeded();
-  /**
    * Checking time difference between hosts enabled/disabled.
    */
   boolean isCheckTimeEnabled();

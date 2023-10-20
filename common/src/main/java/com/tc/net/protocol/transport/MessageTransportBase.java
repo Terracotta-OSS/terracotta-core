@@ -55,7 +55,6 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
   private final AtomicReference<TCConnectionEvent> connectionCloseEvent   = new AtomicReference<>();
   private volatile ConnectionHealthCheckerContext  healthCheckerContext   = new ConnectionHealthCheckerContextDummyImpl();
-  private int                                      remoteCallbackPort     = TransportHandshakeMessage.NO_CALLBACK_PORT;
 
   protected MessageTransportBase(MessageTransportState initialState,
                                  TransportHandshakeErrorHandler handshakeErrorHandler,
@@ -384,16 +383,6 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   public String getStackLayerName() {
     // this is the transport layer
     return NAME_TRANSPORT_LAYER;
-  }
-
-  @Override
-  public synchronized int getRemoteCallbackPort() {
-    return this.remoteCallbackPort;
-  }
-
-  @Override
-  public synchronized void setRemoteCallbackPort(int remoteCallbackPort) {
-    this.remoteCallbackPort = remoteCallbackPort;
   }
 
   @Override
