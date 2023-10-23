@@ -59,15 +59,14 @@ public class ClientMessageTransport extends MessageTransportBase {
   private CompletableFuture<NetworkStackID>                         opener;
   private CompletableFuture<SynAckMessage>                          waitForSynAckResult;
   private final WireProtocolAdaptorFactory  wireProtocolAdaptorFactory;
-  private final int                         callbackPort;
   private final int                         timeout;
   private final ReconnectionRejectedHandler reconnectionRejectedHandler;
 
   public ClientMessageTransport(TCConnectionManager clientConnectionEstablisher,
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory,
-                                WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort, int timeout) {
-    this(clientConnectionEstablisher, handshakeErrorHandler, messageFactory, wireProtocolAdaptorFactory, callbackPort, timeout,
+                                WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int timeout) {
+    this(clientConnectionEstablisher, handshakeErrorHandler, messageFactory, wireProtocolAdaptorFactory, timeout,
          ReconnectionRejectedHandlerL1.SINGLETON);
   }
 
@@ -78,13 +77,12 @@ public class ClientMessageTransport extends MessageTransportBase {
   public ClientMessageTransport(TCConnectionManager connectionManager,
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory,
-                                WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort, int timeout,
+                                WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int timeout,
                                 ReconnectionRejectedHandler reconnectionRejectedHandler) {
 
     super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, LoggerFactory.getLogger(ClientMessageTransport.class));
     this.wireProtocolAdaptorFactory = wireProtocolAdaptorFactory;
     this.connectionManager = connectionManager;
-    this.callbackPort = callbackPort;
     this.timeout = timeout;
     this.reconnectionRejectedHandler = reconnectionRejectedHandler;
   }
@@ -309,7 +307,6 @@ public class ClientMessageTransport extends MessageTransportBase {
       }
       getConnection().setTransportEstablished();
       setSynAckResult(synAck);
-      setRemoteCallbackPort(synAck.getCallbackPort());
     }
   }
 
@@ -400,7 +397,7 @@ public class ClientMessageTransport extends MessageTransportBase {
       // get the stack layer list and pass it in
       short stackLayerFlags = getCommunicationStackFlags(this);
       TransportHandshakeMessage syn = this.messageFactory.createSyn(getConnectionID(), getConnection(),
-                                                                    stackLayerFlags, this.callbackPort);
+                                                                    stackLayerFlags);
       // send syn message
       try {
         this.sendToConnection(syn);

@@ -140,11 +140,6 @@ public class HealthCheckerConfigImpl implements HealthCheckerConfig {
   }
 
   @Override
-  public boolean isCallbackPortListenerNeeded() {
-    return false;
-  }
-
-  @Override
   public boolean isCheckTimeEnabled() {
     return this.checkTimeEnabled;
   }

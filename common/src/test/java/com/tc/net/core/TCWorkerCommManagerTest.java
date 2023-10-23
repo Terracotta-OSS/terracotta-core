@@ -84,7 +84,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                    new NullConnectionPolicy());
 
     ClientMessageTransport cmt = new ClientMessageTransport(commsMgr.getConnectionManager(), createHandshakeErrorHandler(), new TransportMessageFactoryImpl(),
-                                      new WireProtocolAdaptorFactoryImpl(), TransportHandshakeMessage.NO_CALLBACK_PORT, 1000);
+                                      new WireProtocolAdaptorFactoryImpl(), 1000);
     transports.add(cmt);
     return cmt;
   }

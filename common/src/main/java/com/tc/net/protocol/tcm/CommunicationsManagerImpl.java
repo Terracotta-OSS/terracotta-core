@@ -99,7 +99,6 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
 
   private final ConnectionHealthChecker                                              connectionHealthChecker;
   private ServerID                                                             serverID                  = ServerID.NULL_ID;
-  private int                                                                  callbackPort              = TransportHandshakeMessage.NO_CALLBACK_PORT;
   private final TransportHandshakeErrorHandler                                 handshakeErrHandler;
 
   /**
@@ -276,7 +275,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                                                                      connectionHealthChecker,
                                                                                      connectionManager,
                                                                                      timeout,
-                                                                                     callbackPort, handshakeErrHandler,
+                                                                                     handshakeErrHandler,
                                                                                      reconnectionRejectedHandler
     );
     NetworkStackHarness stackHarness = this.stackHarnessFactory.createClientHarness(transportFactory, rv,
@@ -327,13 +326,6 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
         return new ServerMessageChannelImpl(id, messageRouter, msgFactory, serverID);
       }
     };
-
-    // XXX: since we don't create multiple listeners per commsMgr, its OK to set
-    // L2's callbackPort here. Otherwise, have interface method and set after starting
-    // commsMgr listener.
-    if (!this.healthCheckerConfig.isCallbackPortListenerNeeded()) {
-      this.callbackPort = addr.getPort();
-    }
 
     final ChannelManagerImpl channelManager = new ChannelManagerImpl(transportDisconnectRemovesChannel, channelFactory);
     return new NetworkListenerImpl(addr, this, channelManager, msgFactory, reuseAddr,

@@ -27,6 +27,7 @@ import com.tc.net.protocol.transport.MessageTransportListener;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
 import com.tc.net.protocol.transport.ServerMessageTransport;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandler;
+import com.tc.net.protocol.transport.TransportHandshakeMessage;
 import com.tc.net.protocol.transport.TransportHandshakeMessageFactory;
 import com.tc.net.protocol.transport.WireProtocolAdaptorFactory;
 import com.tc.net.protocol.transport.WireProtocolAdaptorFactoryImpl;
@@ -38,21 +39,19 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
   private final ConnectionHealthChecker          connectionHealthChecker;
   private final TCConnectionManager              connectionMgr;
   private final int                              timeout;
-  private final int                              callbackport;
   private final TransportHandshakeErrorHandler   defaultHandshakeErrorHandler;
   private final ReconnectionRejectedHandler      reconnectionRejectedHandler;
 
   public MessageTransportFactoryImpl(TransportHandshakeMessageFactory transportMessageFactory,
                                      ConnectionHealthChecker connectionHealthChecker,
                                      TCConnectionManager connectionManager,
-                                     int timeout, int callbackPort,
+                                     int timeout, 
                                      TransportHandshakeErrorHandler defaultHandshakeErrorHandler,
                                      ReconnectionRejectedHandler reconnectionRejectedBehaviour) {
     this.transportMessageFactory = transportMessageFactory;
     this.connectionHealthChecker = connectionHealthChecker;
     this.connectionMgr = connectionManager;
     this.timeout = timeout;
-    this.callbackport = callbackPort;
     this.defaultHandshakeErrorHandler = defaultHandshakeErrorHandler;
     this.reconnectionRejectedHandler = reconnectionRejectedBehaviour;
   }
@@ -61,17 +60,16 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
   public ClientMessageTransport createNewTransport() {
     ClientMessageTransport cmt = createClientMessageTransport(
                                                               defaultHandshakeErrorHandler, transportMessageFactory,
-                                                              new WireProtocolAdaptorFactoryImpl(), callbackport);
+                                                              new WireProtocolAdaptorFactoryImpl());
     cmt.addTransportListener(connectionHealthChecker);
     return cmt;
   }
 
   protected ClientMessageTransport createClientMessageTransport(TransportHandshakeErrorHandler handshakeErrorHandler,
                                                                 TransportHandshakeMessageFactory messageFactory,
-                                                                WireProtocolAdaptorFactory wireProtocolAdaptorFactory,
-                                                                int callbackPortNum) {
+                                                                WireProtocolAdaptorFactory wireProtocolAdaptorFactory) {
     return new ClientMessageTransport(this.connectionMgr, handshakeErrorHandler, transportMessageFactory,
-                                      wireProtocolAdaptorFactory, callbackPortNum, this.timeout, reconnectionRejectedHandler);
+                                      wireProtocolAdaptorFactory, this.timeout, reconnectionRejectedHandler);
   }
 
   @Override

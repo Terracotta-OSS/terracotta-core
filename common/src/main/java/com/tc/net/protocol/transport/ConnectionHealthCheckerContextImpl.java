@@ -67,7 +67,6 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
 
   // Context info
   private final HealthCheckerConfig              config;
-  private final int                              callbackPort;
   private final String                           remoteNodeDesc;
 
   // Socket Connect probes
@@ -96,44 +95,14 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     this.remoteNodeDesc = mtb.getRemoteAddress().toString();
     logger.info("Health monitoring agent started for " + remoteNodeDesc);
     currentState = INIT;
-    callbackPort = transport.getRemoteCallbackPort();
     configFactor = 1;
-    // only verify the callback port if the callback is different 
-    // from the connection port
-    if (callbackPort != transport.getRemoteAddress().getPort()) {
-      initCallbackPortVerification();
-    } else {
-      changeState(START);
-    }
+    changeState(START);
   }
   
   @Override
   public synchronized void close() {
     changeState(DEAD);
     sockectConnect.stop();
-  }
-
-  // RMP-343
-  private void initCallbackPortVerification() {
-    if (config.isSocketConnectOnPingFail()) {
-      SocketConnectStartStatus status = initSocketConnectProbe();
-      if (status == SocketConnectStartStatus.FAILED) {
-        // 1. callback port handshaked and not reachable -- upgrade the config factor
-        callbackPortVerificationFailed();
-      } else if (status == SocketConnectStartStatus.NOT_STARTED) {
-        // 2. callback port not handshaked -- just log it, no config upgrade, move to next state
-        changeState(START);
-      } else if (status == SocketConnectStartStatus.STARTED) {
-        // async socket connect to callback port has started. HC state remains at INIT. state change happens on
-        // connection events
-      } else {
-        throw new AssertionError("initCallbackPortVerification: Unexpected SocketConnectStart Status");
-      }
-    } else {
-      logger
-          .info("HealthCheck SocketConnect disabled for " + remoteNodeDesc + ". HealthCheckCallbackPort not verified");
-      changeState(START);
-    }
   }
 
   /* all callers of this method are already synchronized */
@@ -188,15 +157,8 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
   protected HealthCheckerSocketConnect getHealthCheckerSocketConnector(TCConnection connection,
                                                                        MessageTransportBase transportBase,
                                                                        Logger loger, HealthCheckerConfig cnfg) {
-    if (TransportHandshakeMessage.NO_CALLBACK_PORT == callbackPort) {
-      logger.info("No HealthCheckCallbackPort handshaked for node " + remoteNodeDesc);
-      return new NullHealthCheckerSocketConnectImpl();
-    }
-
-    // TODO: do we need to exchange the address as well ??? (since it might be different than the remote IP on this
-    // conn)
-    InetSocketAddress sa = new InetSocketAddress(transportBase.getRemoteAddress().getAddress(), callbackPort);
-    return new HealthCheckerSocketConnectImpl(sa, connection, remoteNodeDesc + "(callbackport:" + callbackPort + ")",
+    InetSocketAddress sa = transportBase.getRemoteAddress();
+    return new HealthCheckerSocketConnectImpl(sa, connection, remoteNodeDesc,
                                               loger, cnfg.getSocketConnectTimeout());
   }
 
@@ -310,17 +272,14 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
   }
 
   private void callbackPortVerificationFailed() {
-    transport.setRemoteCallbackPort(TransportHandshakeMessage.NO_CALLBACK_PORT);
     updateConfigFactor(CONFIG_UPGRADE_FACTOR);
     changeState(START);
-    logger.debug("HealthCheckCallbackPort verification FAILED for " + remoteNodeDesc + "(callbackport: " + callbackPort
-                + ")");
+    logger.debug("HealthCheckCallbackPort verification FAILED for " + remoteNodeDesc);
   }
 
   private void callbackPortVerificationSuccess() {
     changeState(START);
-    logger.debug("HealthCheckCallbackPort verification PASSED for " + remoteNodeDesc + "(callbackport: " + callbackPort
-                + ")");
+    logger.debug("HealthCheckCallbackPort verification PASSED for " + remoteNodeDesc);
   }
 
   @Override

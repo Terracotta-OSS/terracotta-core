@@ -50,9 +50,5 @@ public interface MessageTransport extends NetworkLayer, PrettyPrintable {
 
   public String getCommunicationStackNames(NetworkLayer parentLayer);
 
-  public void setRemoteCallbackPort(int callbackPort);
-
-  public int getRemoteCallbackPort();
-
   public void initConnectionID(ConnectionID cid);
 }

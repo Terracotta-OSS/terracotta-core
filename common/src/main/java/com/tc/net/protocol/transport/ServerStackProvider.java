@@ -353,7 +353,6 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
       }
 
       connectionId = transport.getConnectionID();
-      this.transport.setRemoteCallbackPort(syn.getCallbackPort());
       // now check that the client side stack and server side stack are both in sync
       short clientStackLayerFlags = syn.getStackLayerFlags();
       short serverStackLayerFlags = this.transport.getCommunicationStackFlags(this.transport);
@@ -417,8 +416,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
                 source, isMaxConnectionsReached, maxConnections);
         }
       } else {
-        int callbackPort = source.getLocalAddress().getPort();
-        synAck = handshakeMessageFactory.createSynAck(connectionId, source, isMaxConnectionsReached, maxConnections, callbackPort);
+        synAck = handshakeMessageFactory.createSynAck(connectionId, source, isMaxConnectionsReached, maxConnections);
         source.setTransportEstablished();
       }
       sendMessage(synAck);
