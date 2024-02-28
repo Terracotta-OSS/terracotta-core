@@ -199,7 +199,7 @@ import com.tc.l2.state.ConsistencyManagerImpl;
 import com.tc.l2.state.ServerMode;
 import com.tc.net.ClientID;
 import com.tc.net.core.BufferManagerFactory;
-import com.tc.net.core.CachingClearTextBufferManagerFactory;
+import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.core.DefaultBufferManagerFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
@@ -317,7 +317,7 @@ public class DistributedObjectServer {
         return consistent.getExternalVoters();
       }
     });
-    DefaultBufferManagerFactory.setBufferManagerFactory(new CachingClearTextBufferManagerFactory());
+    DefaultBufferManagerFactory.setBufferManagerFactory(new ClearTextBufferManagerFactory());
   }
 
   protected final ServerBuilder createServerBuilder(GroupConfiguration groupConfiguration, Logger tcLogger,
@@ -561,7 +561,7 @@ public class DistributedObjectServer {
 
     BufferManagerFactory bufferManagerFactory = getBufferManagerFactory(platformServiceRegistry);
 
-    TCConnectionManager connectionManager = new TCConnectionManagerImpl(configSetupManager.getServerConfiguration().getName() + " - " + CommunicationsManager.COMMSMGR_SERVER, commWorkerThreadCount, bufferManagerFactory);
+    TCConnectionManager connectionManager = new TCConnectionManagerImpl(configSetupManager.getServerConfiguration().getName(), commWorkerThreadCount, bufferManagerFactory);
 
     final MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, logger, threadGroup, connectionManager);
 
@@ -686,7 +686,7 @@ public class DistributedObjectServer {
     messengerProvider.setMessageSink(fast.getSink());
     entityManager.setMessageSink(fast.getSink());
 
-    this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
+    this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager, connectionManager,
                                                                       this.thisServerNodeID,
                                                                       this.stripeIDStateManager, this.globalWeightGeneratorFactory,
                                                                       bufferManagerFactory);

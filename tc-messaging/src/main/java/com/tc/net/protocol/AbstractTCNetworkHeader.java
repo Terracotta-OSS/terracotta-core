@@ -38,7 +38,6 @@ public abstract class AbstractTCNetworkHeader implements TCNetworkHeader {
   protected final int         minLength;
   protected final int         maxLength;
   protected TCByteBuffer      data;
-  private final boolean       localAllocation;
 
   abstract protected void setHeaderLength(short headerLength);
 
@@ -59,10 +58,8 @@ public abstract class AbstractTCNetworkHeader implements TCNetworkHeader {
     if (buffer == null) {
       this.data = TCByteBufferFactory.getInstance(max);
       this.data.limit(min);
-      localAllocation = true;
     } else {
       this.data = buffer;
-      localAllocation = false;
     }
 
 //    Assert.eval(!this.data.isDirect());

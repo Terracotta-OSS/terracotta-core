@@ -18,9 +18,8 @@
  */
 package com.tc.net.protocol;
 
-import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCReference;
 import com.tc.net.core.TCConnection;
-import java.util.Queue;
 
 /**
  * Message adaptor/parser for incoming data from TCConnection
@@ -28,12 +27,9 @@ import java.util.Queue;
  * @author teck
  */
 public interface TCProtocolAdaptor {
-  default void addReadData(TCConnection source, TCByteBuffer data[], int length) throws TCProtocolException {
-    addReadData(source, data, length, null);
-  }
 
-  public void addReadData(TCConnection source, TCByteBuffer data[], int length, Queue<TCByteBuffer> recycle) throws TCProtocolException;
-
-  public TCByteBuffer[] getReadBuffers();
+  public void addReadData(TCConnection source, TCReference data) throws TCProtocolException;
+  
+  public int getExpectedBytes();
 }
 

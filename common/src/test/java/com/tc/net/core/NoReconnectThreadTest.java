@@ -101,6 +101,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                          getNetworkStackHarnessFactory(),
                                                                          connectionMgr,
                                                                          new NullConnectionPolicy(),
+//            new DisabledHealthCheckerConfigImpl(),
                                                                          new HealthCheckerConfigImpl(TCPropertiesImpl
                                                                              .getProperties()
                                                                              .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY),

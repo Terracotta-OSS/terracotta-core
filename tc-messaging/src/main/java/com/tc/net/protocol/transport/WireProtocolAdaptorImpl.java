@@ -21,7 +21,6 @@ package com.tc.net.protocol.transport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCReference;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.AbstractTCNetworkHeader;
@@ -31,7 +30,6 @@ import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.TCProtocolException;
 
 import java.util.Iterator;
-import java.util.Queue;
 
 /**
  * Connection adaptor to parse wire protocol messages
@@ -41,17 +39,21 @@ import java.util.Queue;
 public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implements WireProtocolAdaptor {
   private static final Logger logger = LoggerFactory.getLogger(WireProtocolAdaptorImpl.class);
   private final WireProtocolMessageSink sink;
-
+  
   protected WireProtocolAdaptorImpl(WireProtocolMessageSink sink) {
     super(logger);
     this.sink = sink;
   }
-
+  
   @Override
-  public void addReadData(TCConnection source, TCByteBuffer[] data, int length, Queue<TCByteBuffer> recycle) throws TCProtocolException {
+  public void addReadData(TCConnection source, TCReference data) throws TCProtocolException {
+    packageAndDispatchData(source, data);
+  }
+  
+  private void packageAndDispatchData(TCConnection source, TCReference data) throws TCProtocolException {
     final WireProtocolMessage msg;
     try {
-      msg = (WireProtocolMessage) this.processIncomingData(source, data, length, recycle);
+      msg = (WireProtocolMessage) this.processIncomingData(source, data);
     } catch (TCProtocolException e) {
       init();
       throw e;

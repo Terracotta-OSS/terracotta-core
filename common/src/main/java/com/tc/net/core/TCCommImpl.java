@@ -47,7 +47,7 @@ class TCCommImpl implements TCComm {
       workerCommMgr = null;
     }
 
-    this.commThreadName = name + ":TCComm Main Selector Thread";
+    this.commThreadName = name + " - TCComm Main Selector Thread";
     this.commThread = new CoreNIOServices(commThreadName, workerCommMgr, socketParams);
   }
 

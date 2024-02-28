@@ -18,6 +18,7 @@
  */
 package com.tc.bytes;
 
+import com.tc.util.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +49,9 @@ public class TCByteBufferFactory {
     if (size == 0) { return ZERO_BYTE_BUFFER; }
 
     // Don't give 4k ByteBuffer from pool for smaller size requests.
-    return new TCByteBufferImpl(size, false);
+    TCByteBufferImpl buf = new TCByteBufferImpl(size, false);
+    Assert.assertTrue(buf.position() == 0);
+    return buf;
   }
 
   public static void setFixedBufferSize(int size) {

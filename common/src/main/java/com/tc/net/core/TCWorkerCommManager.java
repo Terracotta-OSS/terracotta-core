@@ -57,7 +57,7 @@ public class TCWorkerCommManager {
     this.totalWorkerComm = workerCommCount;
     this.workerCommThreads = new CoreNIOServices[workerCommCount];
     for (int i = 0; i < this.workerCommThreads.length; i++) {
-      this.workerCommThreads[i] = new CoreNIOServices(name + ":" + WORKER_NAME_PREFIX + i, this, socketParams);
+      this.workerCommThreads[i] = new CoreNIOServices(name + " - " + WORKER_NAME_PREFIX + i, this, socketParams);
     }
   }
 

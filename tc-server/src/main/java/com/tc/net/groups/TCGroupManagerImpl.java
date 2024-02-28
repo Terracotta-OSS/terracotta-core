@@ -149,17 +149,21 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
    * Setup a communication manager which can establish channel from either sides.
    */
   public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, StageManager stageManager,
+                            TCConnectionManager comms,
                             ServerID thisNodeID, Node thisNode,
                             WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory) {
-    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, thisNode, weightGenerator,
+    this(configSetupManager, new NullConnectionPolicy(), stageManager, comms, thisNodeID, thisNode, weightGenerator,
          bufferManagerFactory);
   }
 
   public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, ConnectionPolicy connectionPolicy,
-                            StageManager stageManager, ServerID thisNodeID, Node thisNode,
+                            StageManager stageManager, 
+                            TCConnectionManager comms,
+                            ServerID thisNodeID, Node thisNode,
                             WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
+    this.connectionManager = comms;
     this.thisNodeID = thisNodeID;
     this.bufferManagerFactory = bufferManagerFactory;
     this.version = configSetupManager.getProductInfo().version();
@@ -226,8 +230,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     HealthCheckerConfig hcconfig = new HealthCheckerConfigImpl(tcProperties
                                                               .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY), ServerEnv.getServer().getIdentifier() + " - TCGroupManager");
     
-    connectionManager = new TCConnectionManagerImpl(ServerEnv.getServer().getIdentifier() + " - " + CommunicationsManager.COMMSMGR_GROUPS, serverCount <= 1 ? 0 :
+    if (connectionManager == null) {
+      connectionManager = new TCConnectionManagerImpl(ServerEnv.getServer().getIdentifier() + " - " + CommunicationsManager.COMMSMGR_GROUPS, serverCount <= 1 ? 0 :
         serverCount, bufferManagerFactory);
+    }
     communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), messageRouter,
                                                           networkStackHarnessFactory, 
                                                           this.connectionManager,

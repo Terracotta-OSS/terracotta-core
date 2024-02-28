@@ -30,6 +30,7 @@ import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.StateManager;
 import com.tc.net.ServerID;
 import com.tc.net.core.BufferManagerFactory;
+import com.tc.net.core.TCConnectionManager;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
@@ -44,7 +45,9 @@ import java.io.IOException;
 
 public interface ServerBuilder extends PostInit {
   GroupManager<AbstractGroupMessage> createGroupCommManager(ServerConfigurationManager configManager,
-                                                            StageManager stageManager, ServerID serverNodeID,
+                                                            StageManager stageManager, 
+                                                            TCConnectionManager connectionManager,
+                                                            ServerID serverNodeID,
                                                             StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
                                                             BufferManagerFactory bufferManagerFactory);
 
