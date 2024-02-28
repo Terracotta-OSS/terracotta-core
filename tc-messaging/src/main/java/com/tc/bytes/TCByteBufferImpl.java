@@ -388,7 +388,7 @@ public class TCByteBufferImpl implements TCByteBuffer {
 
   @Override
   public String toString() {
-    return (accessBuffer() == null) ? "TCByteBufferJDK14(null buffer)" : "TCByteBufferJDK14@" + System.identityHashCode(this)
+    return (accessBuffer() == null) ? "TCByteBufferJDK14(null buffer)" : "TCByteBuffer@" + System.identityHashCode(this)
                                                                  + "(" + accessBuffer().toString() + ")";
   }
 

@@ -30,7 +30,7 @@ import com.tc.properties.TCPropertiesImpl;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Collections;
-
+import com.tc.net.core.ClearTextBufferManagerFactory;
 /**
  * TODO Jan 13, 2005: comment describing what this class is for.
  */
@@ -44,8 +44,8 @@ public class TCConnectionManagerTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
     TCPropertiesImpl.getProperties().overwriteTcPropertiesFromConfig(Collections.emptyMap());
-    this.clientConnMgr = new TCConnectionManagerImpl();
-    this.serverConnMgr = new TCConnectionManagerImpl();
+    this.clientConnMgr = new TCConnectionManagerImpl("Client", 0, new ClearTextBufferManagerFactory());
+    this.serverConnMgr = new TCConnectionManagerImpl("Server", 0, new ClearTextBufferManagerFactory());
     this.lsnr = this.serverConnMgr.createListener(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), new ProtocolAdaptorFactory() {
       @Override
       public TCProtocolAdaptor getInstance() {

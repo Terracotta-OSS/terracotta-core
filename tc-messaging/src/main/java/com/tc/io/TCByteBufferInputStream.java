@@ -164,7 +164,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     }
     
     TCReference dup = data.duplicate(len);
-    int run = dup.available();
+    long run = dup.available();
     skip(run);
     
     if (run != len) {

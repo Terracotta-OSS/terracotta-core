@@ -27,6 +27,9 @@ import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.core.TCListener;
+import com.tc.net.core.event.TCConnectionEventListener;
+import com.tc.net.core.event.TCListenerEvent;
+import com.tc.net.core.event.TCListenerEventListener;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -97,9 +100,17 @@ public class TCConnectionTransportTest extends TestCase {
   public void testBasic() throws TCTimeoutException, IOException, InterruptedException, BrokenBarrierException {
     final TCConnection clientConn = connMgr.createConnection(new WireProtocolAdaptorImpl(new ClientWPMGSink()));
     clientConn.connect(new InetSocketAddress(server.getBindSocketAddress().getPort()), 3000);
-
     final CyclicBarrier startBarrier = new CyclicBarrier(2);
     final CyclicBarrier endBarrier = new CyclicBarrier(2);
+    
+    server.addEventListener(new TCListenerEventListener() {
+      @Override
+      public void closeEvent(TCListenerEvent event) {
+        System.out.println(event);
+      }
+      
+    });
+       
 
     Thread checker = new Thread(new Runnable() {
       @Override
@@ -124,7 +135,8 @@ public class TCConnectionTransportTest extends TestCase {
             synchronized (rcvdMessages2TotalLength) {
               while (rcvdMessages2TotalLength.get() != sentMessagesTotalLength.get()) {
                 try {
-                  rcvdMessages2TotalLength.wait();
+                  rcvdMessages2TotalLength.wait(1000);
+                  System.out.println(rcvdMessages2TotalLength + " " + sentMessagesTotalLength);
                 } catch (InterruptedException e) {
                   System.out.println("rcvdMessages2: " + e);
                 }
@@ -144,7 +156,7 @@ public class TCConnectionTransportTest extends TestCase {
 
     checker.start();
     long startTime = System.currentTimeMillis();
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 1000; i++) {
 
       int bufCount = r.nextInt(15 + 1);
       fullySent.set(false);
@@ -174,11 +186,11 @@ public class TCConnectionTransportTest extends TestCase {
 
   SequenceGenerator seq = new SequenceGenerator(1);
 
-  private TCNetworkMessage getMessages(int bufCunt) {
+  private TCNetworkMessage getMessages(int bufcount) {
     MessageMonitor monitor = new NullMessageMonitor();
     ArrayList<TCByteBuffer> bufs = new ArrayList<TCByteBuffer>();
     int len = 0;
-    while (bufCunt > 0) {
+    while (bufcount > 0) {
       len = r.nextInt(500 + 1);
 
       TCByteBuffer sourceBuffer = TCByteBufferFactory.wrap(getContent(len).getBytes());
@@ -204,9 +216,9 @@ public class TCConnectionTransportTest extends TestCase {
       }
 
       bufs.add(sourceBuffer);
-      bufCunt--;
+      bufcount--;
     }
-    TCNetworkMessage message = getDSOMessage(monitor, TCReferenceSupport.createGCReference());
+    TCNetworkMessage message = getDSOMessage(monitor, TCReferenceSupport.createGCReference(bufs));
     return message;
   }
 
@@ -253,15 +265,9 @@ public class TCConnectionTransportTest extends TestCase {
 
     @Override
     public TCReference getDataBuffers() {
-      int tot = 0;
       dehydrateValues();
       TCByteBufferOutputStream out = getOutputStream();
       final TCReference refdata = out.accessBuffers();
-      int after = 0;
-      for (TCByteBuffer c : refdata) {
-        after += c.remaining();
-      }
-      System.out.println(out.getBytesWritten() + " " + tot + " " + after);
 
       return refdata;
     }

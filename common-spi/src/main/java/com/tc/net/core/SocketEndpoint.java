@@ -16,30 +16,26 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.net.protocol;
+package com.tc.net.core;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.Closeable;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
-import com.tc.bytes.TCReference;
-import com.tc.net.core.TCConnection;
+/**
+ *
+ */
+public interface SocketEndpoint extends Closeable {
+    
+  ResultType writeFrom(ByteBuffer[] ref) throws IOException;
+  
+  ResultType readTo(ByteBuffer[] ref) throws IOException;
 
-public class NullProtocolAdaptor implements TCProtocolAdaptor {
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-  public NullProtocolAdaptor() {
-    super();
+  enum ResultType {
+    EOF,  // end of file
+    ZERO, // zero bytes produced or consumed
+    SUCCESS, // some bytes produced or consumed
+    UNDERFLOW, // may occur on writeFrom, provide more data to be consumed
+    OVERFLOW,  // may occur on readTo, provide more capacity to read into
   }
-
-  @Override
-  public int getExpectedBytes() {
-    return 32;
-  }
-
-  @Override
-  public void addReadData(TCConnection source, TCReference data) {
-    logger.warn("Null Protocol Adaptor isn't supposed to receive any data from the network.");
-  }
-
-
 }

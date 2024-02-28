@@ -20,8 +20,6 @@ package com.tc.net.core;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.GatheringByteChannel;
-import java.nio.channels.ScatteringByteChannel;
 
 /**
  * @author Ludovic Orban
@@ -68,9 +66,5 @@ public interface BufferManager {
   default void dispose() {
     
   }
-
-  // These methods are used by the PipeSocket.
-  int forwardFromReadBuffer(GatheringByteChannel gbc) throws IOException;
-
-  int forwardToWriteBuffer(ScatteringByteChannel sbc) throws IOException;
+   
 }

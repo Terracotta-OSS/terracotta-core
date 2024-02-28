@@ -666,7 +666,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
             }
 
             if (isReader() && key.isValid() && key.isReadable()) {
-              int read;
+              long read;
               TCChannelReader reader = (TCChannelReader) key.attachment();
               do {
                 read = reader.doRead();
@@ -675,7 +675,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
             }
 
             if (key.isValid() && !isReader() && key.isWritable()) {
-              int written = ((TCChannelWriter) key.attachment()).doWrite();
+              long written = ((TCChannelWriter) key.attachment()).doWrite();
                 bytesMoved += written;
             }
           } catch (CancelledKeyException cke) {

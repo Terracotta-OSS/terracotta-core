@@ -18,11 +18,7 @@
  */
 package com.tc.net.core;
 
-import java.io.EOFException;
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.GatheringByteChannel;
-import java.nio.channels.ScatteringByteChannel;
 
 public abstract class AbstractBufferManager implements BufferManager {
 
@@ -36,27 +32,9 @@ public abstract class AbstractBufferManager implements BufferManager {
   }
 
   @Override
-  public int forwardFromReadBuffer(GatheringByteChannel gbc) throws IOException {
-    ByteBuffer recvBuffer = getRecvBuffer();
-    recvBuffer.flip();
-    int forwarded = gbc.write(recvBuffer);
-    recvBuffer.compact();
-    if (forwarded == -1) { throw new EOFException(); }
-    return forwarded;
-  }
-
-  @Override
   public int forwardToWriteBuffer(ByteBuffer src) {
     ByteBuffer sendBuffer = getSendBuffer();
     return forwardBuffer(src, sendBuffer);
-  }
-
-  @Override
-  public int forwardToWriteBuffer(ScatteringByteChannel sbc) throws IOException {
-    ByteBuffer sendBuffer = getSendBuffer();
-    int read = sbc.read(sendBuffer);
-    if (read == -1) { throw new EOFException(); }
-    return read;
   }
 
   protected abstract ByteBuffer getRecvBuffer();

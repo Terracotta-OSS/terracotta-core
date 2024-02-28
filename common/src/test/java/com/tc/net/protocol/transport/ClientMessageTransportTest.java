@@ -18,12 +18,13 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCReference;
+import com.tc.bytes.TCReferenceSupport;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.TCProtocolException;
-import java.util.Queue;
+import java.util.Collections;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -51,7 +52,7 @@ public class ClientMessageTransportTest {
       public TCProtocolAdaptor newWireProtocolAdaptor(WireProtocolMessageSink sink) {
         adapt = new WireProtocolAdaptorImpl(sink) {
           @Override
-          public void addReadData(TCConnection source, TCByteBuffer[] data, int length, Queue<TCByteBuffer> recycle) throws TCProtocolException {
+          public void addReadData(TCConnection source, TCReference data) throws TCProtocolException {
             sink.putMessage(seed);
             seed.complete();
           }
@@ -71,7 +72,7 @@ public class ClientMessageTransportTest {
     TCProtocolAdaptor proto = client.getProtocolAdapter();
 
     seed = spy(factory.createAck(ConnectionID.NULL_ID, connection));
-    proto.addReadData(connection, new TCByteBuffer[]{}, 0);
+    proto.addReadData(connection, TCReferenceSupport.createGCReference(Collections.emptyList()));
     verify(seed).complete();
     
   }

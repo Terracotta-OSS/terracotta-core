@@ -16,30 +16,24 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.net.protocol;
+package com.tc.io;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException;
+import java.io.OutputStream;
 
-import com.tc.bytes.TCReference;
-import com.tc.net.core.TCConnection;
+/**
+ *
+ */
+public class OutputWrapper extends OutputStream {
+  
+  private final TCByteBufferOutput sink;
 
-public class NullProtocolAdaptor implements TCProtocolAdaptor {
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-  public NullProtocolAdaptor() {
-    super();
+  public OutputWrapper(TCByteBufferOutput sink) {
+    this.sink = sink;
   }
 
   @Override
-  public int getExpectedBytes() {
-    return 32;
+  public void write(int b) throws IOException {
+    sink.write(b);
   }
-
-  @Override
-  public void addReadData(TCConnection source, TCReference data) {
-    logger.warn("Null Protocol Adaptor isn't supposed to receive any data from the network.");
-  }
-
-
 }
