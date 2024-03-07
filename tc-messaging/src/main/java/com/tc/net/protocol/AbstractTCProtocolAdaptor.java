@@ -52,7 +52,7 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
       return dataBytesNeeded;
     }
   }
-  
+
   abstract protected AbstractTCNetworkHeader getNewProtocolHeader();
 
   // subclasses override this method to return specific message types
@@ -90,7 +90,7 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
     for (TCByteBuffer b : data) {
       headerBuf.put(b);
     }
-    
+
     if (!this.header.isHeaderLengthAvail()) { return null; }
 
     if (headerLength == AbstractTCNetworkHeader.LENGTH_NOT_AVAIL) { return null; }
@@ -116,7 +116,7 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
         this.header.validate();
 
         this.mode = MODE_DATA;
-        
+
         dataBytesNeeded = computeDataLength(this.header);
         // compact out the header data, leave residual bytes to be read
         

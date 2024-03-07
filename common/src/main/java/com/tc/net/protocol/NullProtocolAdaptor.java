@@ -40,6 +40,4 @@ public class NullProtocolAdaptor implements TCProtocolAdaptor {
   public void addReadData(TCConnection source, TCReference data) {
     logger.warn("Null Protocol Adaptor isn't supposed to receive any data from the network.");
   }
-
-
 }
