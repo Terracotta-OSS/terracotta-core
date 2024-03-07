@@ -29,7 +29,7 @@ import com.tc.net.core.TCConnection;
 public interface TCProtocolAdaptor {
 
   public void addReadData(TCConnection source, TCReference data) throws TCProtocolException;
-  
+
   public int getExpectedBytes();
 }
 

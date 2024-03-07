@@ -66,5 +66,4 @@ public interface BufferManager {
   default void dispose() {
     
   }
-   
 }

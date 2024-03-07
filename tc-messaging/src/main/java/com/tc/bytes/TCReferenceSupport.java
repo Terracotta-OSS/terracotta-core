@@ -100,14 +100,6 @@ public class TCReferenceSupport {
     }
     return new TCReferenceSupport(Arrays.asList(tracked), returns).reference();
   }
-  
-  public static TCReference createDirectReference(Collection<TCByteBuffer> tracked, Consumer<TCByteBuffer> returns) {
-    if (returns == null) {
-      returns = c->{};
-    }
-    return new TCReferenceSupport(tracked, returns).directReference();
-  }
-  
   private void reclaim() {
     Assert.assertTrue(referenceCount.get() == 0);
     for (TCByteBuffer buf : items) {
@@ -158,13 +150,6 @@ public class TCReferenceSupport {
     return new Ref(items, TCByteBuffer::asReadOnlyBuffer);
   }
   
-  private DirectRef directReference() {
-    if (track != null) {
-      COMMITTED_REFERENCES.add(this);
-    }
-    return new DirectRef();
-  }
-  
   private static class GCRef implements TCReference {
     private final List<TCByteBuffer> buffers;
 
@@ -209,37 +194,6 @@ public class TCReferenceSupport {
     @Override
     public Iterator<TCByteBuffer> iterator() {
       return this.localItems.stream().flatMap(r->StreamSupport.stream(r.spliterator(), false)).iterator();
-    }
-  }
-  
-  private class DirectRef implements TCReference {
-    private final SetOnceFlag closed = new SetOnceFlag();
-    private final Reference<TCReference> tracker = track == null ? null : track.startTracking(this);
-
-    @Override
-    public TCReference duplicate() {
-      return new DirectRef();
-    }
-
-  
-    @Override
-    public void close() {
-      if (closed.attemptSet()) {
-        if (track != null) {
-          track.stopTracking(tracker);
-        }
-        if (referenceCount.decrementAndGet() == 0) {
-          reclaim();
-        }
-      }
-    }
-
-    @Override
-    public Iterator<TCByteBuffer> iterator() {
-      if (closed.isSet()) {
-        throw new IllegalStateException("reference is closed");
-      }
-      return items.iterator();
     }
   }
   

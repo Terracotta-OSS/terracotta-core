@@ -32,7 +32,6 @@ import com.tc.util.Assert;
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.ScatteringByteChannel;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -98,11 +97,14 @@ public class TCSocketEndpointReader implements AutoCloseable {
       newBufs.addFirst(readBuffer);
       int received = readBuffer.position() - readTo;
       // read bytes from the network until the requested bytes are in
+      int rotations = 0;
       while (received < len) {
         try {
+          rotations += 1;
           received += doRead(endpoint, newBufs);
+          LOGGER.debug("rotation:{} received:{}", rotations, received);
         } catch (NoBytesAvailable no) {
-      //  no bytes in the channel, peer ay not have written yet, 
+      //  no bytes in the channel, peer may not have written yet, 
       //  if no bytes are cached, return null here and let the 
       //  caller call again if needed
           if (received == 0) {
@@ -116,10 +118,15 @@ public class TCSocketEndpointReader implements AutoCloseable {
        // still expecting bytes, might be something wrong here.
        // go around again after a short pause, maybe should consider
        // failing at some point
-            try {
-              Thread.sleep(500);
-            } catch (InterruptedException ie) {
-              throw new IOException(ie);
+            if (rotations > 10) {
+              // give up, something is wrong
+              throw new IOException("incomplete bytes in channel");
+            } else {
+              try {
+                Thread.sleep(500);
+              } catch (InterruptedException ie) {
+                throw new IOException(ie);
+              }
             }
           }
         }
