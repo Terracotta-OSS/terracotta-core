@@ -48,6 +48,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.GatheringByteChannel;
 import java.nio.channels.SelectableChannel;
 import static junit.framework.TestCase.assertTrue;
+import org.mockito.Mockito;
 import static org.mockito.Mockito.doAnswer;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -104,6 +105,10 @@ public class TCConnectionImplTest {
         TCProtocolAdaptor adaptor = mock(TCProtocolAdaptor.class);
         TCConnectionManagerImpl mgr = new TCConnectionManagerImpl();
         final CoreNIOServices nioServiceThread = mock(CoreNIOServices.class);
+        Mockito.doAnswer(a->{
+          ((Runnable)a.getArgument(1)).run();
+          return null;
+        }).when(nioServiceThread).cleanupChannel(any(), any());
         SocketParams socketParams = new SocketParams();
         BufferManagerFactory bufferManagerFactory = mock(BufferManagerFactory.class);
 
@@ -139,8 +144,9 @@ public class TCConnectionImplTest {
 
         conn.putMessage(msg);
 
-        new Thread(() -> sleepThenClose(conn)).start();
-        Thread.sleep(4000);
+        Thread stopper = new Thread(() -> sleepThenClose(conn));
+        stopper.start();
+        stopper.join();
         long w = conn.doWrite();
 
         Assert.assertEquals(0, w);

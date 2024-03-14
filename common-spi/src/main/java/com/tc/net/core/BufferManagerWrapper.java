@@ -23,7 +23,6 @@ import java.nio.ByteBuffer;
 
 /**
  *
- * @author mscott2
  */
 public class BufferManagerWrapper implements SocketEndpoint {
   
@@ -33,33 +32,57 @@ public class BufferManagerWrapper implements SocketEndpoint {
     this.base = base;
   }
   
+  @Override
   public ResultType writeFrom(ByteBuffer[] ref) throws IOException {
-    long total = 0;
+    int sentOnWire = 0;
+    int transfered = 0;
     for (ByteBuffer b : ref) {
       while (b.hasRemaining()) {
         int amt = base.forwardToWriteBuffer(b);
-        int sent = base.sendFromBuffer();
-        while (sent != amt) {
-          sent += base.sendFromBuffer();
+        if (amt == 0) {
+          int sent = base.sendFromBuffer();
+          if (sent == 0) {
+            break;
+          } else {
+            sentOnWire += sent;
+          }
+        } else {
+          transfered += amt;
         }
-        total += sent;
+      }
+      if (b.hasRemaining()) {
+        break;
       }
     }
-    return ResultType.SUCCESS;
+    while (sentOnWire < transfered) {
+      sentOnWire += base.sendFromBuffer();
+    }
+    return transfered > 0 ? ResultType.SUCCESS : ResultType.ZERO;
   }
   
+  @Override
   public ResultType readTo(ByteBuffer[] ref) throws IOException {
-    long total = 0;
-    for (ByteBuffer b : ref) {
-      while (b.hasRemaining()) {
-        int amt = base.forwardFromReadBuffer(b);
-        if (amt == 0) {
-          int read = base.recvToBuffer();
+    int bytesRead = 0;
+    for (ByteBuffer buf : ref) {
+      if (buf.hasRemaining()) {
+        final int read = base.forwardFromReadBuffer(buf);
+
+        if (0 == read) {
+          if (base.recvToBuffer() == 0) {
+            break;
+          }
         }
-        total += amt;
+
+        bytesRead += read;
+
+        if (buf.hasRemaining()) {
+          // don't move on to the next buffer if we didn't fill the current one
+          break;
+        }
       }
     }
-    return ResultType.SUCCESS;
+    
+    return bytesRead > 0 ? ResultType.SUCCESS : ResultType.ZERO;
   }
 
   @Override

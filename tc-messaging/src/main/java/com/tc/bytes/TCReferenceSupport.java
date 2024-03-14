@@ -76,7 +76,7 @@ public class TCReferenceSupport {
   }
   
   public static int checkReferences() {
-    return COMMITTED_REFERENCES.stream().map(TCReferenceSupport::gc).reduce(0, Integer::sum);
+    return COMMITTED_REFERENCES.stream().mapToInt(TCReferenceSupport::gc).sum();
   }
   /**
    * General reference counter.  Starts with a reference count of one.  Each duplicate reference 
