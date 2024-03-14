@@ -95,7 +95,7 @@ public class TCSocketEndpointReader implements AutoCloseable {
       }
       // add the current buffer at the head
       newBufs.addFirst(readBuffer);
-      int received = readBuffer.position() - readTo;
+      long received = readBuffer.position() - readTo;
       // read bytes from the network until the requested bytes are in
       int rotations = 0;
       while (received < len) {
@@ -125,6 +125,7 @@ public class TCSocketEndpointReader implements AutoCloseable {
               try {
                 Thread.sleep(500);
               } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
                 throw new IOException(ie);
               }
             }
@@ -208,8 +209,8 @@ public class TCSocketEndpointReader implements AutoCloseable {
     return dest.stream().map(TCByteBuffer::getNioBuffer).toArray(ByteBuffer[]::new);
   }
   
-  private int doRead(SocketEndpoint endpoint, List<TCByteBuffer> dest) throws IOException {
-    int remain = dest.stream().map(TCByteBuffer::remaining).reduce(Integer::sum).orElse(0);
+  private long doRead(SocketEndpoint endpoint, List<TCByteBuffer> dest) throws IOException {
+    long remain = dest.stream().mapToInt(TCByteBuffer::remaining).asLongStream().sum();
     ByteBuffer[] nioBytes = extractByteBuffers(dest);
     try {
       switch (endpoint.readTo(nioBytes)) {
@@ -230,7 +231,7 @@ public class TCSocketEndpointReader implements AutoCloseable {
           throw new NoBytesAvailable();
       }
     } finally {
-      remain -= dest.stream().map(TCByteBuffer::remaining).reduce(Integer::sum).orElse(0);
+      remain -= dest.stream().mapToInt(TCByteBuffer::remaining).asLongStream().sum();
       returnByteBuffers(dest, nioBytes);
     }
     LOGGER.debug("read from socket: {}", remain);

@@ -56,24 +56,9 @@ public interface TCReference extends Iterable<TCByteBuffer>, AutoCloseable {
     }
     return this;
   }
-
-  default long length() {
-    Iterator<TCByteBuffer> it = iterator();
-    int runTo = 0;
-    while (it.hasNext()) {
-      TCByteBuffer curs = it.next();
-      if (curs.hasRemaining()) {
-        runTo += curs.position();
-        break;
-      } else {
-        runTo += curs.limit();
-      }
-    }
-    return runTo;
-  }
   
   default long available() {
-    return stream().map(TCByteBuffer::remaining).map(v->(long)v).reduce(0L, Long::sum);
+    return stream().mapToInt(TCByteBuffer::remaining).asLongStream().sum();
   }
 
   default boolean hasRemaining() {

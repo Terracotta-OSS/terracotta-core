@@ -76,7 +76,7 @@ public class TCByteBufferAllocator {
   }
   
   public void rewind(int r) {
-    int len = items.stream().map(TCByteBuffer::position).reduce(0, Integer::sum);
+    int len = items.stream().mapToInt(TCByteBuffer::position).sum();
     reset(len - r);
   }
   
