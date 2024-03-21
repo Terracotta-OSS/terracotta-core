@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.tc.object.SafeInvocationCallback.safe;
+import org.terracotta.exception.EntityException;
 
 
 public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityResponse> implements EntityClientEndpoint<M, R> {
@@ -52,7 +53,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
   private final EntityID entityID;
   private final long version;
   private final MessageCodec<M, R> codec;
-  private final Runnable closeHook;
+  private final CloseHookCallable closeHook;
   private final ExecutorService closer;
   private EndpointDelegate<R> delegate;
   private boolean isOpen;
@@ -66,7 +67,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
    * @param entityConfiguration Opaque byte[] describing how to configure the entity to be built on top of this end-point.
    * @param closeHook A Runnable which will be run last when the end-point is closed.
    */
-  public EntityClientEndpointImpl(EntityID eid, long version, EntityDescriptor instance, InvocationHandler invocationHandler, byte[] entityConfiguration, MessageCodec<M, R> codec, Runnable closeHook, ExecutorService closer) {
+  public EntityClientEndpointImpl(EntityID eid, long version, EntityDescriptor instance, InvocationHandler invocationHandler, byte[] entityConfiguration, MessageCodec<M, R> codec, CloseHookCallable closeHook, ExecutorService closer) {
     this.entityID = eid;
     this.version = version;
     this.invokeDescriptor = instance;
@@ -96,14 +97,14 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
   @Override
   public byte[] getEntityConfiguration() {
     // This is harmless while closed but shouldn't be called so check open.
-    checkEndpointOpen();
+    checkEndpointOpen(false);
     return configuration;
   }
 
   @Override
   public void setDelegate(EndpointDelegate<R> delegate) {
     // This is harmless while closed but shouldn't be called so check open.
-    checkEndpointOpen();
+    checkEndpointOpen(false);
     Assert.assertNull(this.delegate);
     this.delegate = delegate;
   }
@@ -124,7 +125,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
   @Override
   public Invocation<R> message(M message) {
     // We can't create new invocations when the endpoint is closed.
-    checkEndpointOpen();
+    checkEndpointOpen(false);
     return new InvocationImpl(message);
   }
 
@@ -176,12 +177,17 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
   @Override
   public void close() {
     // We can't close twice.
-    checkEndpointOpen();
-    if (this.closeHook != null) {
-      this.closeHook.run();
+    try {
+      checkEndpointOpen(true);
+    } catch (IllegalStateException alreadyClosed) {
+      LOGGER.info("Trying to close an endpoint which has already been closed", alreadyClosed);
+      return;
     }
-    // We also need to invalidate ourselves so we don't continue allowing new messages through when disconnecting.
-    this.isOpen = false;
+    if (this.closeHook != null) {
+      EntityException e = this.closeHook.call();
+      LOGGER.info("Exception occured during close", e);
+      // log and swallow this exception closing
+    }
   }
 
   @Override
@@ -220,9 +226,12 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     }
   }
 
-  private void checkEndpointOpen() {
+  private synchronized void checkEndpointOpen(boolean close) {
     if (!this.isOpen) {
       throw new IllegalStateException("Endpoint closed");
+    }
+    if (close) {
+      this.isOpen = false;
     }
   }
 }

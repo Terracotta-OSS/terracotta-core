@@ -57,7 +57,6 @@ import com.tc.object.tx.TransactionID;
 import com.tc.text.MapListPrettyPrint;
 import com.tc.text.PrettyPrintable;
 import com.tc.util.Assert;
-import com.tc.util.Util;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -409,6 +408,23 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     Assert.assertNotNull("Can't lookup null entity descriptor", instance);
     final EntityDescriptor fetchDescriptor = EntityDescriptor.createDescriptorForFetch(entity, version, instance);
     EntityClientEndpointImpl<M, R> resolvedEndpoint = null;
+    // make sure this close hook is only ever called once
+    CloseHookCallable closeCall = new CloseHookCallable() {
+      boolean released = false;
+      @Override
+      public EntityException call() {
+        if (!released) {
+          released = true;
+          try {
+            internalRelease(entity, fetchDescriptor);
+          } catch (EntityException e) {
+            // We aren't expecting there to be any problems releasing an entity in the close hook but return the exception if there is an issue.
+            return e;
+          }
+        }
+        return null;
+      }
+    };
     try {
       byte[] raw = internalRetrieve(fetchDescriptor);
       ByteBuffer br = ByteBuffer.wrap(raw);
@@ -418,21 +434,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       br.get(config);
       // We can only fail to get the config if we threw an exception.
       Assert.assertTrue(null != raw);
-      // We managed to retrieve the config so create the end-point.
-      // Note that we will need to call release on this descriptor, when it is closed, prior to running the closeHook we
-      //  were given so combine these ideas to pass in one runnable.
-      Runnable compoundRunnable = new Runnable() {
-        @Override
-        public void run() {
-          try {
-            internalRelease(entity, fetchDescriptor);
-          } catch (EntityException e) {
-            // We aren't expecting there to be any problems releasing an entity in the close hook so we will just log and re-throw.
-            Util.printLogAndRethrowError(e, logger);
-          }
-        }
-      };
-      resolvedEndpoint = new EntityClientEndpointImpl<>(entity, version, EntityDescriptor.createDescriptorForInvoke(fetch, instance), this, config, codec, compoundRunnable, this.endpointCloser);
+
+      resolvedEndpoint = new EntityClientEndpointImpl<>(entity, version, EntityDescriptor.createDescriptorForInvoke(fetch, instance), this, config, codec, closeCall, this.endpointCloser);
       
       if (this.objectStoreMap.putIfAbsent(instance, resolvedEndpoint) != null) {
         throw Assert.failure("Attempt to add an object that already exists: Object of class " + resolvedEndpoint.getClass()
@@ -442,14 +445,14 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       throw notfound;
     } catch (EntityException e) {
       // Release the entity and re-throw to the higher level.
-      internalRelease(entity, fetchDescriptor);
-      // NOTE:  Since we are throwing, we are not responsible for calling the given closeHook.
+      e.addSuppressed(closeCall.call());
+
       throw e;
     } catch (Throwable t) {
       // This is the unexpected case so clean up and re-throw as a RuntimeException
       // Clean up any client-side or server-side state regarding this failed connection.
-      internalRelease(entity, fetchDescriptor);
-      // NOTE:  Since we are throwing, we are not responsible for calling the given closeHook.
+      t.addSuppressed(closeCall.call());
+
       throw Throwables.propagate(t);
     }
 
