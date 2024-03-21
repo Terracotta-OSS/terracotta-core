@@ -79,6 +79,7 @@ import org.terracotta.exception.EntityServerUncaughtException;
 
 import static com.tc.object.EntityDescriptor.createDescriptorForLifecycle;
 import static com.tc.object.SafeInvocationCallback.safe;
+import java.util.concurrent.Callable;
 import static java.util.stream.Collectors.toCollection;
 import static org.terracotta.entity.Invocation.uninterruptiblyGet;
 
@@ -408,23 +409,20 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     Assert.assertNotNull("Can't lookup null entity descriptor", instance);
     final EntityDescriptor fetchDescriptor = EntityDescriptor.createDescriptorForFetch(entity, version, instance);
     EntityClientEndpointImpl<M, R> resolvedEndpoint = null;
-    // make sure this close hook is only ever called once
-    CloseHookCallable closeCall = new CloseHookCallable() {
+    // make sure release is only ever called once
+    Callable<Void> closeCall = new Callable<Void>() {
       boolean released = false;
+      
       @Override
-      public EntityException call() {
+      public synchronized Void call() throws Exception {
         if (!released) {
           released = true;
-          try {
-            internalRelease(entity, fetchDescriptor);
-          } catch (EntityException e) {
-            // We aren't expecting there to be any problems releasing an entity in the close hook but return the exception if there is an issue.
-            return e;
-          }
+          internalRelease(entity, fetchDescriptor);
         }
         return null;
       }
     };
+    
     try {
       byte[] raw = internalRetrieve(fetchDescriptor);
       ByteBuffer br = ByteBuffer.wrap(raw);
@@ -445,13 +443,21 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       throw notfound;
     } catch (EntityException e) {
       // Release the entity and re-throw to the higher level.
-      e.addSuppressed(closeCall.call());
+      try {
+        closeCall.call();
+      } catch (Exception subE) {
+        e.addSuppressed(subE);
+      }
 
       throw e;
     } catch (Throwable t) {
       // This is the unexpected case so clean up and re-throw as a RuntimeException
       // Clean up any client-side or server-side state regarding this failed connection.
-      t.addSuppressed(closeCall.call());
+      try {
+        closeCall.call();
+      } catch (Exception subE) {
+        t.addSuppressed(subE);
+      }
 
       throw Throwables.propagate(t);
     }

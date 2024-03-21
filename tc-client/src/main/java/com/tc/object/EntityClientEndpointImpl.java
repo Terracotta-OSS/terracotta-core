@@ -53,7 +53,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
   private final EntityID entityID;
   private final long version;
   private final MessageCodec<M, R> codec;
-  private final CloseHookCallable closeHook;
+  private final Callable<Void> closeHook;
   private final ExecutorService closer;
   private EndpointDelegate<R> delegate;
   private boolean isOpen;
@@ -67,7 +67,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
    * @param entityConfiguration Opaque byte[] describing how to configure the entity to be built on top of this end-point.
    * @param closeHook A Runnable which will be run last when the end-point is closed.
    */
-  public EntityClientEndpointImpl(EntityID eid, long version, EntityDescriptor instance, InvocationHandler invocationHandler, byte[] entityConfiguration, MessageCodec<M, R> codec, CloseHookCallable closeHook, ExecutorService closer) {
+  public EntityClientEndpointImpl(EntityID eid, long version, EntityDescriptor instance, InvocationHandler invocationHandler, byte[] entityConfiguration, MessageCodec<M, R> codec, Callable<Void> closeHook, ExecutorService closer) {
     this.entityID = eid;
     this.version = version;
     this.invokeDescriptor = instance;
@@ -97,14 +97,14 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
   @Override
   public byte[] getEntityConfiguration() {
     // This is harmless while closed but shouldn't be called so check open.
-    checkEndpointOpen(false);
+    checkEndpointOpen();
     return configuration;
   }
 
   @Override
   public void setDelegate(EndpointDelegate<R> delegate) {
     // This is harmless while closed but shouldn't be called so check open.
-    checkEndpointOpen(false);
+    checkEndpointOpen();
     Assert.assertNull(this.delegate);
     this.delegate = delegate;
   }
@@ -125,7 +125,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
   @Override
   public Invocation<R> message(M message) {
     // We can't create new invocations when the endpoint is closed.
-    checkEndpointOpen(false);
+    checkEndpointOpen();
     return new InvocationImpl(message);
   }
 
@@ -177,16 +177,15 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
   @Override
   public void close() {
     // We can't close twice.
-    try {
-      checkEndpointOpen(true);
-    } catch (IllegalStateException alreadyClosed) {
-      LOGGER.info("Trying to close an endpoint which has already been closed", alreadyClosed);
-      return;
-    }
-    if (this.closeHook != null) {
-      EntityException e = this.closeHook.call();
-      LOGGER.info("Exception occured during close", e);
-      // log and swallow this exception closing
+    if (closeIfOpen()) {
+      if (this.closeHook != null) {
+        try {
+          this.closeHook.call();
+        } catch (Exception e) {
+          LOGGER.warn("Exception occured during close", e);
+        }
+        // log and swallow this exception closing
+      }
     }
   }
 
@@ -226,12 +225,15 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     }
   }
 
-  private synchronized void checkEndpointOpen(boolean close) {
+  private synchronized void checkEndpointOpen() {
     if (!this.isOpen) {
       throw new IllegalStateException("Endpoint closed");
     }
-    if (close) {
-      this.isOpen = false;
-    }
+  }
+
+  private synchronized boolean closeIfOpen() {
+    boolean wasOpen = this.isOpen;
+    this.isOpen = false;
+    return wasOpen;
   }
 }

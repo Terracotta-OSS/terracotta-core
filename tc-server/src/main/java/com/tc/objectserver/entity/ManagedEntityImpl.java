@@ -987,14 +987,13 @@ public class ManagedEntityImpl implements ManagedEntity {
           Assert.assertTrue(clientReferenceCount > 0);
         } else {
           // this should never happen.  Ther server is expecting sane things from the client. 
-          logger.info("the client has attempted to fetch the same entity instance twice {}", descriptor);
+          logger.warn("the client has attempted to fetch the same entity instance twice {}", descriptor);
         }
       }
       
       if (this.isInActiveState) {
         if (!added) {
-          //  this should never happen if the client is sane but if it does, exception the client
-          //  don't crash the server
+          //  Exception the client.  Don't crash the server
           response.failure(ServerException.createReferencedException(id));
           return;
         }
@@ -1060,15 +1059,14 @@ public class ManagedEntityImpl implements ManagedEntity {
           clientReferenceCount -= 1;
           Assert.assertTrue(clientReferenceCount >= 0);
         } else {
-        // this should never happen.  the expectation is that the client will send sane things to the server.  Will assert if active
-          logger.info("client has tried to release and entity that is not fetched {}", clientInstance);
+        // this should never happen.  the expectation is that the client will send sane things to the server.
+          logger.warn("client has tried to release an entity that is not fetched {}", clientInstance);
         }
       }
 
       if (this.isInActiveState) {
         if (!removed) {
-          //  this should never happen if the client is sane but if it does, exception the client
-          //  don't crash the server
+          //  Exception the client.  don't crash the server
           response.failure(ServerException.createNotFoundException(id));
           return;
         }
