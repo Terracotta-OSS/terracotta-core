@@ -19,7 +19,6 @@
 package com.tc.net.basic;
 
 import com.tc.bytes.TCReference;
-import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionErrorEvent;
 import com.tc.net.core.event.TCConnectionEvent;
@@ -59,6 +58,7 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.tc.net.core.SocketEndpoint;
+import com.tc.net.core.SocketEndpointFactory;
 import com.tc.net.core.TCSocketEndpointReader;
 
 /**
@@ -75,8 +75,8 @@ public class BasicConnection implements TCConnection {
   private final Consumer<WireProtocolMessage> write;
   private final TCProtocolAdaptor adaptor;
   private volatile SocketEndpoint socket;
-  private final BufferManagerFactory bufferManagerFactory;
-  private Socket src;
+  private final SocketEndpointFactory socketEndpointFactory;
+  private volatile Socket src;
   private boolean established = false;
   private boolean connected = false;
   private final List<TCConnectionEventListener> listeners = new ArrayList<>();
@@ -85,9 +85,9 @@ public class BasicConnection implements TCConnection {
   private final String id;
   
   
-  public BasicConnection(String id, TCProtocolAdaptor adapter, BufferManagerFactory buffers, Consumer<TCConnection> close) {
+  public BasicConnection(String id, TCProtocolAdaptor adapter, SocketEndpointFactory buffers, Consumer<TCConnection> close) {
     this.id = id;
-    this.bufferManagerFactory = buffers;
+    this.socketEndpointFactory = buffers;
     Object writeMutex = new Object();
     this.write = (message)->{
       if (!message.prepareToSend()) {
@@ -294,7 +294,7 @@ public class BasicConnection implements TCConnection {
     // always rebuild the socket address with exerything that comes with it UnkownHostException etc
     SocketChannel channel = SocketChannel.open(new InetSocketAddress(InetAddress.getByName(addr.getHostString()), addr.getPort()));
     src = channel.socket();
-    this.socket = bufferManagerFactory.createSocketEndpoint(channel, true);
+    this.socket = socketEndpointFactory.createSocketEndpoint(channel, true);
     if (this.socket == null) {
       throw new IOException("buffer manager not provided");
     }

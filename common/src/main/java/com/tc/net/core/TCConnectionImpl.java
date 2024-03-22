@@ -89,7 +89,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private volatile SocketChannel channel;
   private volatile SocketEndpoint socket;
 
-  private final BufferManagerFactory bufferManagerFactory;
+  private final SocketEndpointFactory socketEndpointFactory;
   private final boolean clientConnection;              
   private final AtomicBoolean transportEstablished = new AtomicBoolean(false);
   private final BlockingQueue<TCNetworkMessage> writeMessages = new ArrayBlockingQueue<>(MSG_GROUPING_MAX_COUNT);
@@ -140,13 +140,13 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
   TCConnectionImpl(TCConnectionEventListener listener, TCProtocolAdaptor adaptor,
                    TCConnectionManagerImpl managerJDK14, CoreNIOServices nioServiceThread,
-                   SocketParams socketParams, BufferManagerFactory bufferManagerFactory) {
+                   SocketParams socketParams, SocketEndpointFactory bufferManagerFactory) {
     this(listener, adaptor, null, managerJDK14, nioServiceThread, socketParams, bufferManagerFactory);
   }
 
   TCConnectionImpl(TCConnectionEventListener listener, TCProtocolAdaptor adaptor, SocketChannel ch,
                    TCConnectionManagerImpl parent, CoreNIOServices nioServiceThread,
-                   SocketParams socketParams, BufferManagerFactory bufferManagerFactory) {
+                   SocketParams socketParams, SocketEndpointFactory socketEndpointFactory) {
     Assert.assertNotNull(parent);
     Assert.assertNotNull(adaptor);
 
@@ -159,7 +159,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
     this.channel = ch;
 
-    this.bufferManagerFactory = bufferManagerFactory;
+    this.socketEndpointFactory = socketEndpointFactory;
 
     if (ch != null) {
       socketParams.applySocketParams(ch.socket());
@@ -275,7 +275,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   }
   
   private void installBufferManager() throws IOException {
-    this.socket = bufferManagerFactory.createSocketEndpoint(channel, clientConnection);
+    this.socket = socketEndpointFactory.createSocketEndpoint(channel, clientConnection);
     if (this.socket == null) {
       throw new IOException("buffer manager not provided");
     }

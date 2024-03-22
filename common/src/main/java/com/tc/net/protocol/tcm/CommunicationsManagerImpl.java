@@ -21,9 +21,9 @@ package com.tc.net.protocol.tcm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.net.core.ClearTextBufferManagerFactory;
+import com.tc.net.core.ClearTextSocketEndpointFactory;
 import com.tc.net.ServerID;
-import com.tc.net.core.BufferManagerFactory;
+import com.tc.net.core.SocketEndpointFactory;
 import com.tc.net.core.Constants;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
@@ -118,7 +118,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    Map<TCMessageType, Class<? extends TCAction>> messageTypeClassMapping,
                                    Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping) {
     this(monitor, messageRouter, stackHarnessFactory, connectionManager, connectionPolicy, config,
-         transportHandshakeErrorHandler, messageTypeClassMapping, ReconnectionRejectedHandlerL2.SINGLETON, new ClearTextBufferManagerFactory());
+         transportHandshakeErrorHandler, messageTypeClassMapping, ReconnectionRejectedHandlerL2.SINGLETON, new ClearTextSocketEndpointFactory());
     this.serverID = serverID;
   }
 
@@ -129,9 +129,9 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    TransportHandshakeErrorHandler transportHandshakeErrorHandler,
                                    Map<TCMessageType, Class<? extends TCAction>> messageTypeClassMapping,
                                    Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping,
-                                   BufferManagerFactory bufferManagerFactory) {
+                                   SocketEndpointFactory socketEndpointFactory) {
     this(monitor, messageRouter, stackHarnessFactory, connectionManager, connectionPolicy, config,
-         transportHandshakeErrorHandler, messageTypeClassMapping, ReconnectionRejectedHandlerL2.SINGLETON, bufferManagerFactory);
+         transportHandshakeErrorHandler, messageTypeClassMapping, ReconnectionRejectedHandlerL2.SINGLETON, socketEndpointFactory);
     this.serverID = serverID;
   }
 
@@ -144,7 +144,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping) {
     this(monitor, messageRouter, stackHarnessFactory, connMgr, connectionPolicy,
          healthCheckerConf, transportHandshakeErrorHandler, messageTypeClassMapping,
-         ReconnectionRejectedHandlerL1.SINGLETON, new ClearTextBufferManagerFactory());
+         ReconnectionRejectedHandlerL1.SINGLETON, new ClearTextSocketEndpointFactory());
   }
 
   /**
@@ -160,7 +160,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    TransportHandshakeErrorHandler transportHandshakeErrorHandler,
                                    Map<TCMessageType, Class<? extends TCAction>> messageTypeClassMapping,
                                    ReconnectionRejectedHandler reconnectionRejectedHandler,
-                                   BufferManagerFactory bufferManagerFactory) {
+                                   SocketEndpointFactory socketEndpointFactory) {
     this.monitor = monitor;
     this.messageRouter = messageRouter;
     this.transportMessageFactory = new TransportMessageFactoryImpl();

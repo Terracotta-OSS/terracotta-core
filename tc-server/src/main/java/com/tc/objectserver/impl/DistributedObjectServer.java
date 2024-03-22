@@ -198,9 +198,9 @@ import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ConsistencyManagerImpl;
 import com.tc.l2.state.ServerMode;
 import com.tc.net.ClientID;
-import com.tc.net.core.BufferManagerFactory;
-import com.tc.net.core.ClearTextBufferManagerFactory;
-import com.tc.net.core.DefaultBufferManagerFactory;
+import com.tc.net.core.SocketEndpointFactory;
+import com.tc.net.core.ClearTextSocketEndpointFactory;
+import com.tc.net.core.DefaultSocketEndpointFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.tcm.HydrateContext;
@@ -317,7 +317,7 @@ public class DistributedObjectServer {
         return consistent.getExternalVoters();
       }
     });
-    DefaultBufferManagerFactory.setBufferManagerFactory(new ClearTextBufferManagerFactory());
+    DefaultSocketEndpointFactory.setSocketEndpointFactory(new ClearTextSocketEndpointFactory());
   }
 
   protected final ServerBuilder createServerBuilder(GroupConfiguration groupConfiguration, Logger tcLogger,
@@ -559,7 +559,7 @@ public class DistributedObjectServer {
 
     final TCMessageRouter messageRouter = new TCMessageRouterImpl();
 
-    BufferManagerFactory bufferManagerFactory = getBufferManagerFactory(platformServiceRegistry);
+    SocketEndpointFactory bufferManagerFactory = getSocketEndpointFactory(platformServiceRegistry);
 
     TCConnectionManager connectionManager = new TCConnectionManagerImpl(configSetupManager.getServerConfiguration().getName(), commWorkerThreadCount, bufferManagerFactory);
 
@@ -940,15 +940,15 @@ public class DistributedObjectServer {
     };
   }
 
-  private BufferManagerFactory getBufferManagerFactory(ServiceRegistry platformRegistry) {
-    BufferManagerFactory bufferManagerFactory = null;
+  private SocketEndpointFactory getSocketEndpointFactory(ServiceRegistry platformRegistry) {
+    SocketEndpointFactory bufferManagerFactory = null;
     try {
-      bufferManagerFactory = platformRegistry.getService(new BasicServiceConfiguration<>(BufferManagerFactory.class));
+      bufferManagerFactory = platformRegistry.getService(new BasicServiceConfiguration<>(SocketEndpointFactory.class));
     } catch (ServiceException e) {
-      Assert.fail("Multiple BufferManagerFactory implementations found!");
+      Assert.fail("Multiple SocketEndpointFactory implementations found!");
     }
     if (bufferManagerFactory == null) {
-      bufferManagerFactory = DefaultBufferManagerFactory.getBufferManagerFactory();
+      bufferManagerFactory = DefaultSocketEndpointFactory.getSocketEndpointFactory();
     }
     return bufferManagerFactory;
   }

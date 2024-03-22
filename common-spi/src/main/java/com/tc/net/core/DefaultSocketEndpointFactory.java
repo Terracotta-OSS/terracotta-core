@@ -23,16 +23,16 @@ import com.tc.util.TCServiceLoader;
 /**
  *
  */
-public class DefaultBufferManagerFactory {
-  private static BufferManagerFactory DEFAULT;
+public class DefaultSocketEndpointFactory {
+  private static SocketEndpointFactory DEFAULT;
   
-  public static void setBufferManagerFactory(BufferManagerFactory d) {
+  public static void setSocketEndpointFactory(SocketEndpointFactory d) {
     DEFAULT = d;
   }
   
-  public static BufferManagerFactory getBufferManagerFactory() {
+  public static SocketEndpointFactory getSocketEndpointFactory() {
     if (DEFAULT == null) {
-      DEFAULT = (BufferManagerFactory)TCServiceLoader.loadServices(BufferManagerFactory.class).stream().findFirst().orElseThrow(()->new RuntimeException("not found"));
+      DEFAULT = (SocketEndpointFactory)TCServiceLoader.loadServices(SocketEndpointFactory.class).stream().findFirst().orElseThrow(()->new RuntimeException("not found"));
     }
     return DEFAULT;
   }

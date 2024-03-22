@@ -24,7 +24,7 @@ import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.state.Enrollment;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ClearTextBufferManagerFactory;
+import com.tc.net.core.ClearTextSocketEndpointFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
@@ -85,13 +85,13 @@ public class TCGroupMessageWrapperTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    clientConns = new TCConnectionManagerImpl("TestCommsMgr-Client", 0, new ClearTextBufferManagerFactory());
+    clientConns = new TCConnectionManagerImpl("TestCommsMgr-Client", 0, new ClearTextSocketEndpointFactory());
     clientComms = new CommunicationsManagerImpl(monitor, new TCMessageRouterImpl(),
                                                 new PlainNetworkStackHarnessFactory(), clientConns,
                                                 new NullConnectionPolicy(), new DisabledHealthCheckerConfigImpl(),
                                                 new TransportHandshakeErrorNullHandler(),  Collections.emptyMap(),
                                                 Collections.emptyMap());
-    serverConns = new TCConnectionManagerImpl("TestCommsMgr-Server", 0, new ClearTextBufferManagerFactory());
+    serverConns = new TCConnectionManagerImpl("TestCommsMgr-Server", 0, new ClearTextSocketEndpointFactory());
     serverComms = new CommunicationsManagerImpl(monitor, new TCMessageRouterImpl(),
                                                 new PlainNetworkStackHarnessFactory(), serverConns,
                                                 new NullConnectionPolicy(), new DisabledHealthCheckerConfigImpl(),
