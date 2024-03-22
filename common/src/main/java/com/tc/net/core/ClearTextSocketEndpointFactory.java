@@ -18,12 +18,15 @@
  */
 package com.tc.net.core;
 
-import java.util.Properties;
+import java.io.IOException;
+import java.nio.channels.SocketChannel;
 
 /**
  */
-public interface BufferManagerFactorySupplier {
+public class ClearTextSocketEndpointFactory implements SocketEndpointFactory {
 
-  BufferManagerFactory createBufferManagerFactory(Properties properties);
-
+  @Override
+  public SocketEndpoint createSocketEndpoint(SocketChannel socketChannel, boolean client) throws IOException {
+    return new ClearTextSocketEndpoint(socketChannel);
+  }
 }

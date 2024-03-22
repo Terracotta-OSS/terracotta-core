@@ -69,7 +69,7 @@ public class TCConnectionImplTest {
         TCConnectionManagerImpl mgr = new TCConnectionManagerImpl();
         final CoreNIOServices nioServiceThread = mock(CoreNIOServices.class);
         SocketParams socketParams = new SocketParams();
-        BufferManagerFactory bufferManagerFactory = mock(BufferManagerFactory.class);
+        SocketEndpointFactory bufferManagerFactory = mock(SocketEndpointFactory.class);
         when(bufferManagerFactory.createSocketEndpoint(any(SocketChannel.class), anyBoolean())).thenAnswer(invocationOnMock -> {
           verify(nioServiceThread, never()).requestReadInterest(any(TCChannelReader.class), any(ScatteringByteChannel.class));
           verify(nioServiceThread, never()).requestReadInterest(any(TCChannelReader.class), any(ScatteringByteChannel.class));
@@ -82,7 +82,7 @@ public class TCConnectionImplTest {
 
         verify(nioServiceThread).requestReadInterest(any(TCChannelReader.class), any(ScatteringByteChannel.class));
 
-        conn = new TCConnectionImpl(listener, adaptor, mgr, nioServiceThread, socketParams, mock(BufferManagerFactory.class));
+        conn = new TCConnectionImpl(listener, adaptor, mgr, nioServiceThread, socketParams, mock(SocketEndpointFactory.class));
         createManager.set(false);
 
         try {
@@ -110,7 +110,7 @@ public class TCConnectionImplTest {
           return null;
         }).when(nioServiceThread).cleanupChannel(any(), any());
         SocketParams socketParams = new SocketParams();
-        BufferManagerFactory bufferManagerFactory = mock(BufferManagerFactory.class);
+        SocketEndpointFactory bufferManagerFactory = mock(SocketEndpointFactory.class);
 
         SocketEndpoint bufferManager = mock(SocketEndpoint.class);
         when(bufferManager.writeFrom(any())).then(new Answer() {
@@ -169,7 +169,7 @@ public class TCConnectionImplTest {
           return null;
         }).when(nioServiceThread).cleanupChannel(any(SocketChannel.class), any(Runnable.class));
         SocketParams socketParams = new SocketParams();
-        BufferManagerFactory bufferManagerFactory = mock(BufferManagerFactory.class);
+        SocketEndpointFactory bufferManagerFactory = mock(SocketEndpointFactory.class);
 
         SocketEndpoint bufferManager = mock(SocketEndpoint.class);
         when(bufferManager.writeFrom(any())).thenReturn(SocketEndpoint.ResultType.SUCCESS);
@@ -202,7 +202,7 @@ public class TCConnectionImplTest {
         TCConnectionManagerImpl mgr = new TCConnectionManagerImpl();
         final CoreNIOServices nioServiceThread = mock(CoreNIOServices.class);
         SocketParams socketParams = new SocketParams();
-        BufferManagerFactory bufferManagerFactory = mock(BufferManagerFactory.class);
+        SocketEndpointFactory bufferManagerFactory = mock(SocketEndpointFactory.class);
 
         SocketEndpoint bufferManager = mock(SocketEndpoint.class);
         when(bufferManager.writeFrom(any())).thenReturn(SocketEndpoint.ResultType.SUCCESS);
@@ -245,7 +245,7 @@ public class TCConnectionImplTest {
         TCConnectionManagerImpl mgr = new TCConnectionManagerImpl();
         final CoreNIOServices nioServiceThread = mock(CoreNIOServices.class);
         SocketParams socketParams = new SocketParams();
-        BufferManagerFactory bufferManagerFactory = mock(BufferManagerFactory.class);
+        SocketEndpointFactory bufferManagerFactory = mock(SocketEndpointFactory.class);
 
         SocketEndpoint bufferManager = mock(SocketEndpoint.class);
         when(bufferManager.writeFrom(any())).thenReturn(SocketEndpoint.ResultType.SUCCESS);
@@ -289,7 +289,7 @@ public class TCConnectionImplTest {
         TCConnectionManagerImpl mgr = new TCConnectionManagerImpl();
         final CoreNIOServices nioServiceThread = mock(CoreNIOServices.class);
         SocketParams socketParams = new SocketParams();
-        BufferManagerFactory bufferManagerFactory = mock(BufferManagerFactory.class);
+        SocketEndpointFactory bufferManagerFactory = mock(SocketEndpointFactory.class);
 
         SocketEndpoint bufferManager = mock(SocketEndpoint.class);
         when(bufferManager.writeFrom(any())).thenReturn(SocketEndpoint.ResultType.SUCCESS);
@@ -341,7 +341,7 @@ public class TCConnectionImplTest {
           return null;
         }).when(nioServiceThread).cleanupChannel(any(), any());
         SocketParams socketParams = new SocketParams();
-        BufferManagerFactory bufferManagerFactory = mock(BufferManagerFactory.class);
+        SocketEndpointFactory bufferManagerFactory = mock(SocketEndpointFactory.class);
 
         SocketEndpoint bufferManager = mock(SocketEndpoint.class);
         when(bufferManager.writeFrom(any())).thenReturn(SocketEndpoint.ResultType.SUCCESS);
@@ -384,7 +384,7 @@ public class TCConnectionImplTest {
           return null;
         }).when(nioServiceThread).cleanupChannel(any(), any());
         SocketParams socketParams = new SocketParams();
-        BufferManagerFactory bufferManagerFactory = mock(BufferManagerFactory.class);
+        SocketEndpointFactory bufferManagerFactory = mock(SocketEndpointFactory.class);
 
         SocketEndpoint bufferManager = mock(SocketEndpoint.class);
         when(bufferManager.writeFrom(any())).thenReturn(SocketEndpoint.ResultType.SUCCESS);
@@ -427,7 +427,7 @@ public class TCConnectionImplTest {
           return null;
         }).when(nioServiceThread).cleanupChannel(any(), any());
         SocketParams socketParams = new SocketParams();
-        BufferManagerFactory bufferManagerFactory = mock(BufferManagerFactory.class);
+        SocketEndpointFactory bufferManagerFactory = mock(SocketEndpointFactory.class);
 
         SocketEndpoint bufferManager = mock(SocketEndpoint.class);
         when(bufferManager.writeFrom(any())).thenReturn(SocketEndpoint.ResultType.SUCCESS);

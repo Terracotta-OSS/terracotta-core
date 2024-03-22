@@ -18,18 +18,12 @@
  */
 package com.tc.net.core;
 
-import java.io.IOException;
-import java.nio.channels.SocketChannel;
+import java.util.Properties;
 
 /**
- * @author Ludovic Orban
  */
-public interface BufferManagerFactory {
+public interface SocketEndpointFactorySupplier {
 
-  BufferManager createBufferManager(SocketChannel socketChannel, boolean client) throws IOException;
-  
-  default SocketEndpoint createSocketEndpoint(SocketChannel socketChannel, boolean client) throws IOException {
-    return new BufferManagerWrapper(createBufferManager(socketChannel, client));
-  }
+  SocketEndpointFactory createSocketEndpointFactory(Properties properties);
 
 }

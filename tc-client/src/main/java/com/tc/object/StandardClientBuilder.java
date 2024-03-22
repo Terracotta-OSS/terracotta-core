@@ -22,7 +22,7 @@ import com.tc.net.core.TCConnectionManagerImpl;
 import org.slf4j.Logger;
 import org.terracotta.connection.ConnectionPropertyNames;
 
-import com.tc.net.core.BufferManagerFactory;
+import com.tc.net.core.SocketEndpointFactory;
 import com.tc.net.core.ProductID;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -50,9 +50,9 @@ public class StandardClientBuilder implements ClientBuilder {
   
   private final Properties connectionProperties;
   private volatile ClientConnectionErrorListener listener;
-  private final BufferManagerFactory buffers;
+  private final SocketEndpointFactory buffers;
 
-  public StandardClientBuilder(Properties connectionProperties, BufferManagerFactory buffers) {
+  public StandardClientBuilder(Properties connectionProperties, SocketEndpointFactory buffers) {
     this.connectionProperties = connectionProperties;
     this.buffers = buffers;
   }
@@ -77,7 +77,7 @@ public class StandardClientBuilder implements ClientBuilder {
                                                            ReconnectionRejectedHandler reconnectionRejectedHandler) {
     return new CommunicationsManagerImpl(monitor, messageRouter, stackHarnessFactory, connections,
                                          connectionPolicy, aConfig, new TransportHandshakeErrorHandlerForL1(), messageTypeClassMapping,
-                                         reconnectionRejectedHandler, getBufferManagerFactory());
+                                         reconnectionRejectedHandler, getSocketEndpointFactory());
   }
 
   @Override
@@ -116,10 +116,10 @@ public class StandardClientBuilder implements ClientBuilder {
 
   @Override
   public TCConnectionManager createConnectionManager(String uuid, String name) {
-    return new TCConnectionManagerImpl(name + "/" + uuid, 0, getBufferManagerFactory());
+    return new TCConnectionManagerImpl(name + "/" + uuid, 0, getSocketEndpointFactory());
   }
 
-  protected BufferManagerFactory getBufferManagerFactory() {
+  protected SocketEndpointFactory getSocketEndpointFactory() {
     return buffers;
   }
 

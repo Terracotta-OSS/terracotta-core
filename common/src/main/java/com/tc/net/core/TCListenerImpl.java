@@ -58,12 +58,12 @@ final class TCListenerImpl implements TCListener {
   private final CopyOnWriteArraySet<TCListenerEventListener> listeners       = new CopyOnWriteArraySet<>();
   private final ProtocolAdaptorFactory                       factory;
   private final CoreNIOServices                              commNIOServiceThread;
-  private final BufferManagerFactory                         bufferManagerFactory;
+  private final SocketEndpointFactory                         socketEndpointFactory;
 
   TCListenerImpl(ServerSocketChannel ssc, ProtocolAdaptorFactory factory, TCConnectionEventListener listener,
-                 TCConnectionManagerImpl managerJDK14, CoreNIOServices commNIOServiceThread, BufferManagerFactory bufferManagerFactory) throws IOException {
+                 TCConnectionManagerImpl managerJDK14, CoreNIOServices commNIOServiceThread, SocketEndpointFactory bufferManagerFactory) throws IOException {
     this.sockAddr = new InetSocketAddress(ssc.socket().getInetAddress(), ssc.socket().getLocalPort());
-    this.bufferManagerFactory = bufferManagerFactory;
+    this.socketEndpointFactory = bufferManagerFactory;
     this.factory = factory;
     this.staticEvent = new TCListenerEvent(this);
     this.ssc = ssc;
@@ -79,7 +79,7 @@ final class TCListenerImpl implements TCListener {
   TCConnectionImpl createConnection(SocketChannel ch, CoreNIOServices nioServiceThread, SocketParams socketParams)
       throws IOException {
     TCProtocolAdaptor adaptor = getProtocolAdaptorFactory().getInstance();
-    TCConnectionImpl rv = new TCConnectionImpl(listener, adaptor, ch, parent, nioServiceThread, socketParams, bufferManagerFactory);
+    TCConnectionImpl rv = new TCConnectionImpl(listener, adaptor, ch, parent, nioServiceThread, socketParams, socketEndpointFactory);
     rv.finishConnect();
     parent.newConnection(rv);
     return rv;

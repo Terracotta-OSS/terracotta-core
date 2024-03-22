@@ -23,14 +23,8 @@ import java.nio.channels.SocketChannel;
 
 /**
  */
-public class ClearTextBufferManagerFactory implements BufferManagerFactory {
-  @Override
-  public BufferManager createBufferManager(SocketChannel socketChannel, boolean client) {
-    return new ClearTextBufferManager(socketChannel);
-  }
+public interface SocketEndpointFactory {
 
-  @Override
-  public SocketEndpoint createSocketEndpoint(SocketChannel socketChannel, boolean client) throws IOException {
-    return new ClearTextSocketEndpoint(socketChannel);
-  }
+  SocketEndpoint createSocketEndpoint(SocketChannel socketChannel, boolean client) throws IOException;
+
 }

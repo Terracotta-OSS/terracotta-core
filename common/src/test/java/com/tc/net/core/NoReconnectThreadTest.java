@@ -79,7 +79,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
   }
 
   private ClientMessageChannel createClientMsgCh() {
-    TCConnectionManager connMgr = new TCConnectionManagerImpl("TestCommMgr-Client", 0, new ClearTextBufferManagerFactory());
+    TCConnectionManager connMgr = new TCConnectionManagerImpl("TestCommMgr-Client", 0, new ClearTextSocketEndpointFactory());
     clientConnectionMgrs.add(connMgr);
     CommunicationsManager clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                       getNetworkStackHarnessFactory(),
@@ -92,7 +92,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
   }
 
   public void testConnectionEstablisherThreadExit() throws Exception {
-    TCConnectionManager connectionMgr = new TCConnectionManagerImpl("TestCommsMgr-Server", 3, new ClearTextBufferManagerFactory());
+    TCConnectionManager connectionMgr = new TCConnectionManagerImpl("TestCommsMgr-Server", 3, new ClearTextSocketEndpointFactory());
     CommunicationsManager serverCommsMgr = new CommunicationsManagerImpl(
                                                                          new NullMessageMonitor(),
                                                                          new TCMessageRouterImpl(),

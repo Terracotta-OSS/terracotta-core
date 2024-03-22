@@ -36,8 +36,8 @@ import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.BufferManagerFactory;
-import com.tc.net.core.ClearTextBufferManagerFactory;
+import com.tc.net.core.SocketEndpointFactory;
+import com.tc.net.core.ClearTextSocketEndpointFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -133,7 +133,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private final StageManager                                stageManager;
   private final AtomicBoolean                               alreadyJoined               = new AtomicBoolean(false);
   private final WeightGeneratorFactory                      weightGeneratorFactory;
-  private final BufferManagerFactory                        bufferManagerFactory;
+  private final SocketEndpointFactory                        bufferManagerFactory;
 
   private CommunicationsManager                             communicationsManager;
   private TCConnectionManager                               connectionManager;
@@ -151,7 +151,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, StageManager stageManager,
                             TCConnectionManager comms,
                             ServerID thisNodeID, Node thisNode,
-                            WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory) {
+                            WeightGeneratorFactory weightGenerator, SocketEndpointFactory bufferManagerFactory) {
     this(configSetupManager, new NullConnectionPolicy(), stageManager, comms, thisNodeID, thisNode, weightGenerator,
          bufferManagerFactory);
   }
@@ -160,7 +160,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
                             StageManager stageManager, 
                             TCConnectionManager comms,
                             ServerID thisNodeID, Node thisNode,
-                            WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory) {
+                            WeightGeneratorFactory weightGenerator, SocketEndpointFactory bufferManagerFactory) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     this.connectionManager = comms;
@@ -204,7 +204,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
                             StageManager stageManager, WeightGeneratorFactory weightGenerator, Node[] servers) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
-    this.bufferManagerFactory = new ClearTextBufferManagerFactory();
+    this.bufferManagerFactory = new ClearTextSocketEndpointFactory();
     this.configuredNodes = ()->new HashSet<>(Arrays.asList(servers));
 
     this.groupPort = groupPort;

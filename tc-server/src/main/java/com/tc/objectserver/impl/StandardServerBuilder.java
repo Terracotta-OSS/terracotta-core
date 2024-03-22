@@ -33,7 +33,7 @@ import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.StateManager;
 import com.tc.net.ServerID;
-import com.tc.net.core.BufferManagerFactory;
+import com.tc.net.core.SocketEndpointFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
@@ -66,7 +66,7 @@ public class StandardServerBuilder implements ServerBuilder {
                                                                    TCConnectionManager connections,
                                                                    ServerID serverNodeID,
                                                                    StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
-                                                                   BufferManagerFactory bufferManagerFactory) {
+                                                                   SocketEndpointFactory bufferManagerFactory) {
     return new TCGroupManagerImpl(configManager, stageManager, connections, serverNodeID, this.groupConfiguration.getCurrentNode(),
                                   weightGeneratorFactory, bufferManagerFactory);
   }
