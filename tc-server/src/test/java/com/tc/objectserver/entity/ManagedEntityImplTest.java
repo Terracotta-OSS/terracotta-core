@@ -173,6 +173,7 @@ public class ManagedEntityImplTest {
     messageSelf = mock(Sink.class);
     when(clientEntityStateManager.addReference(any(ClientDescriptorImpl.class), any(FetchID.class))).thenReturn(Boolean.TRUE);
     when(clientEntityStateManager.removeReference(any(ClientDescriptorImpl.class))).thenReturn(Boolean.TRUE);
+    when(clientEntityStateManager.verifyNoEntityReferences(any())).thenReturn(Boolean.TRUE);
     eventCollector = new ManagementTopologyEventCollector(mock(IMonitoringProducer.class));
     // We will start this in a passive state, as the general test case.
     boolean isInActiveState = false;

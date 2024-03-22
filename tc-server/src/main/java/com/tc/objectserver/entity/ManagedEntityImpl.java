@@ -976,16 +976,27 @@ public class ManagedEntityImpl implements ManagedEntity {
     if (this.isDestroyed) {
       response.failure(ServerException.createNotFoundException(getID()));
     } else {
-      if (canDelete) {
-        clientReferenceCount += 1;
-        Assert.assertTrue(clientReferenceCount > 0);
-      }
       // The FETCH can only come directly from a client so we can down-cast.
       ClientID clientID = getEntityRequest.getNodeID();
       ClientDescriptorImpl descriptor = new ClientDescriptorImpl(clientID, getEntityRequest.getClientInstance());
       boolean added = clientEntityStateManager.addReference(descriptor, this.fetchID);
+      
+      if (canDelete) {
+        if (added) {
+          clientReferenceCount += 1;
+          Assert.assertTrue(clientReferenceCount > 0);
+        } else {
+          // this should never happen.  Ther server is expecting sane things from the client. 
+          logger.warn("the client has attempted to fetch the same entity instance twice {}", descriptor);
+        }
+      }
+      
       if (this.isInActiveState) {
-        Assert.assertTrue(added);
+        if (!added) {
+          //  Exception the client.  Don't crash the server
+          response.failure(ServerException.createReferencedException(id));
+          return;
+        }
         // Fire the event that the client fetched the entity.
         this.eventCollector.clientDidFetchEntity(clientID, this.id, this.consumerID, getEntityRequest.getClientInstance());
         // finally notify the entity that it was fetched
@@ -1006,10 +1017,18 @@ public class ManagedEntityImpl implements ManagedEntity {
               handler.handleReconnect(descriptor, extendedData);
             }
           } catch (ReconnectRejectedException rejected) {
+            Assert.assertTrue(clientEntityStateManager.removeReference(descriptor));
+            if (canDelete) {
+              clientReferenceCount -= 1;
+            }
             response.failure(ServerException.createReconnectRejected(getID(), rejected));
             return;
           } catch (Exception e) {
 //  something happened during reconnection, force a disconnection, see ProcessTransactionHandler.disconnectClientDueToFailure for handling
+            Assert.assertTrue(clientEntityStateManager.removeReference(descriptor));
+            if (canDelete) {
+              clientReferenceCount -= 1;
+            }
             logger.warn("unexpected exception.  rejecting reconnection of " + descriptor.getNodeID() + " to " + this.id, e);
             response.failure(ServerException.createReconnectRejected(getID(), new ReconnectRejectedException(e.getMessage(), e)));
             return;
@@ -1031,17 +1050,27 @@ public class ManagedEntityImpl implements ManagedEntity {
     if (this.isDestroyed) {
       response.failure(ServerException.createNotFoundException(this.getID()));
     } else {
-      if (canDelete) {
-        clientReferenceCount -= 1;
-        Assert.assertTrue(clientReferenceCount >= 0);
-      }
-
       ClientID clientID = request.getNodeID();
       ClientDescriptorImpl clientInstance = new ClientDescriptorImpl(clientID, request.getClientInstance());
       boolean removed = clientEntityStateManager.removeReference(clientInstance);
 
+      if (canDelete) {
+        if (removed) {
+          clientReferenceCount -= 1;
+          Assert.assertTrue(clientReferenceCount >= 0);
+        } else {
+        // this should never happen.  the expectation is that the client will send sane things to the server.
+          logger.warn("client has tried to release an entity that is not fetched {}", clientInstance);
+        }
+      }
+
       if (this.isInActiveState) {
-        Assert.assertTrue(removed);
+        if (!removed) {
+          //  Exception the client.  don't crash the server
+          response.failure(ServerException.createNotFoundException(id));
+          return;
+        }
+        
         this.activeServerEntity.disconnected(clientInstance);
         // Fire the event that the client released the entity.
         this.eventCollector.clientDidReleaseEntity(clientID, this.id, this.consumerID, request.getClientInstance());
@@ -1077,6 +1106,8 @@ public class ManagedEntityImpl implements ManagedEntity {
 // up on passives
     if (canDelete) {
       this.clientReferenceCount = 0;
+      // the entity references should have been cleared
+      Assert.assertTrue(clientEntityStateManager.verifyNoEntityReferences(fetchID));
     } else {
       Assert.assertEquals(this.clientReferenceCount, ManagedEntityImpl.UNDELETABLE_ENTITY);
     }
