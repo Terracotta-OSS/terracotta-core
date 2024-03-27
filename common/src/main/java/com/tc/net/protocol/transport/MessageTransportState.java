@@ -28,12 +28,15 @@ enum MessageTransportState {
       return false;
     }
   },
-  
-  STATE_START_OPEN("START_OPEN"),
-  
+    
   STATE_CONNECTED("CONNECTED"),
   
-  STATE_RESTART("RESTART"),
+  STATE_RESTART("RESTART") {
+    @Override
+    public boolean isAlive() {
+      return false;
+    }
+  },
 
   /**
    * XXX: Move to client state machine SYN message sent, waiting for reply
