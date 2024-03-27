@@ -58,7 +58,9 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
     Version client = new Version(version);
 
     try {
-      if (!GuardianContext.validate(Guardian.Op.CONNECT_CLIENT, cid, clientMsg.getChannel())) {
+      if (clientMsg.isReconnect() && this.handshakeManager.isStarted()) {
+        this.handshakeManager.notifyClientRefused(clientMsg, "server is not accepting reconnections");
+      } else if (!GuardianContext.validate(Guardian.Op.CONNECT_CLIENT, cid, clientMsg.getChannel())) {
         this.handshakeManager.notifyClientRefused(clientMsg, "new connections not allowed");
       } else if (!versionCheck.isCompatibleClientServer(client.toString(), serverVersion.toString())) {
         this.handshakeManager.notifyClientRefused(clientMsg, "client version is not compatible than the server.  client version:" + client.toString() + " server version:" + serverVersion);
