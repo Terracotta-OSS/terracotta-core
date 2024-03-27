@@ -39,7 +39,7 @@ import java.util.Comparator;
 
 
 public class ClientHandshakeMessageImpl extends DSOMessageBase implements ClientHandshakeMessage {
-  private static final byte   UNUSED_1        = 1;
+  private static final byte   RECONNECT        = 1;
   private static final byte   CLIENT_VERSION           = 2;
   private static final byte   UNUSED_2        = 3;
   private static final byte   LOCAL_TIME_MILLS         = 4;
@@ -58,6 +58,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   private String              clientRevision           = "";
   private String              clientAddress            = ""; 
   private int                 pid                      = -1;
+  private boolean             reconnect                = false;
   private final Set<ClientEntityReferenceContext> reconnectReferences = new HashSet<ClientEntityReferenceContext>();
   private final Set<ResendVoltronEntityMessage> resendMessages = new TreeSet<ResendVoltronEntityMessage>(new Comparator<ResendVoltronEntityMessage>() {
     @Override
@@ -78,6 +79,16 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
     super(sessionID, monitor, channel, header, data);
     // if this is on the server, it will be replaced by the dehydrate
     clientAddress = TCSocketAddress.getStringForm(channel.getLocalAddress());
+  }
+
+  @Override
+  public void setReconnect(boolean isReconnect) {
+    this.reconnect = isReconnect;
+  }
+
+  @Override
+  public boolean isReconnect() {
+    return this.reconnect;
   }
 
   @Override
@@ -142,7 +153,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
 
   @Override
   protected void dehydrateValues() {
-    putNVPair(UNUSED_1, false);  // unused but keep for compatibility
+    putNVPair(RECONNECT, reconnect);  // unused but keep for compatibility
     putNVPair(UNUSED_2, false);  // unused but keep for compatibility
     putNVPair(CLIENT_UUID, this.uuid);
     putNVPair(CLIENT_NAME, this.name);
@@ -162,8 +173,8 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
-      case UNUSED_1:
-        getBooleanValue();  // unused but keep for compatibility
+      case RECONNECT:
+        this.reconnect = getBooleanValue();
         return true;
       case UNUSED_2:
         getBooleanValue();  // unused but keep for compatibility

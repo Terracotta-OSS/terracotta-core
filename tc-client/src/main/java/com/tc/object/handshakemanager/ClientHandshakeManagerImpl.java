@@ -59,6 +59,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
   private State state;
   private volatile boolean disconnected;
+  private volatile boolean wasConnected;
   private volatile boolean isShutdown = false;
 
   public ClientHandshakeManagerImpl(Logger logger, ClientHandshakeMessageFactory chmf,
@@ -73,6 +74,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     this.callBacks = entities;
     this.state = State.PAUSED;
     this.disconnected = true;
+    this.wasConnected = false;
     pauseCallbacks();
   }
 
@@ -106,7 +108,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     ClientHandshakeMessage handshakeMessage;
 
     changeToStarting();
-    handshakeMessage = this.chmf.newClientHandshakeMessage(this.uuid, this.name, this.clientVersion, this.clientRevision);
+    handshakeMessage = this.chmf.newClientHandshakeMessage(this.uuid, this.name, this.clientVersion, this.clientRevision, this.wasConnected);
     if (handshakeMessage != null) {
       notifyCallbackOnHandshake(handshakeMessage);
 
@@ -242,5 +244,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     state = State.RUNNING;
 
     this.disconnected = false;
+    this.wasConnected = true;
   }
 }
