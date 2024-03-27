@@ -23,23 +23,19 @@ import org.slf4j.Logger;
 import com.tc.util.Assert;
 
 class MessageTransportStatus {
-  private final MessageTransportState initial;
   private MessageTransportState state;
   private final Logger logger;
-  private volatile boolean isEstablished = false;
 
   MessageTransportStatus(MessageTransportState initialState, Logger logger) {
-    this.initial = initialState;
     this.state = initialState;
     this.logger = logger;
   }
 
   void reset() {
-    stateChange(initial);
+    stateChange(MessageTransportState.STATE_START);
   }
 
   private synchronized void stateChange(MessageTransportState newState) {
-    isEstablished = false;
     if (logger.isDebugEnabled()) {
       logger.debug("Changing from " + state.toString() + " to " + newState.toString());
     }
@@ -78,18 +74,11 @@ class MessageTransportStatus {
   }
   
   private synchronized boolean checkState(MessageTransportState check) {
-    if (check == MessageTransportState.STATE_ESTABLISHED && state == MessageTransportState.STATE_ESTABLISHED) {
-      isEstablished = true;
-    }
     return this.state.equals(check);
   }
 
   boolean isStart() {
     return checkState(MessageTransportState.STATE_START);
-  }
-
-  boolean isStartOpen() {
-    return checkState(MessageTransportState.STATE_START_OPEN);
   }
   
   boolean isRestart() {
@@ -101,11 +90,7 @@ class MessageTransportStatus {
   }
 
   boolean isEstablished() {
-    if (isEstablished) {
-      return true;
-    } else {
-      return checkState(MessageTransportState.STATE_ESTABLISHED);
-    }
+    return checkState(MessageTransportState.STATE_ESTABLISHED);
   }
   
   boolean isDisconnected() {
