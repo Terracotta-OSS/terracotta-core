@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.net.core.TCConnection;
-import com.tc.net.core.event.TCConnectionEvent;
+import com.tc.net.protocol.IllegalReconnectException;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.util.Assert;
 
@@ -44,16 +44,20 @@ public class ServerMessageTransport extends MessageTransportBase {
   public ServerMessageTransport(TCConnection conn,
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory) {
-    super(MessageTransportState.STATE_START_OPEN, handshakeErrorHandler, messageFactory, smtLogger);
+    super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, smtLogger);
     Assert.assertNotNull(conn);
     wireNewConnection(conn);
   }
 
   @Override
-  protected ConnectionAttacher getConnectionAttacher() {
-    if (this.status.isRestart()) {
-      return new RestartConnectionAttacher();
-    } else return super.getConnectionAttacher();
+  public void attachNewConnection(TCConnection newConnection) throws IllegalReconnectException {
+    if (!this.status.isRestart()) {
+      // servers transports can only restart once
+      throw new IllegalReconnectException();
+    }
+    Assert.assertNull(getConnection());
+    wireNewConnection(newConnection);
+    logger.debug("reconnect connection attach {} {}", this.getConnectionID().getClientID(), getConnection());
   }
 
   @Override
@@ -127,16 +131,6 @@ public class ServerMessageTransport extends MessageTransportBase {
 
   private boolean verifyAck(WireProtocolMessage message) {
     return message instanceof TransportHandshakeMessage && ((TransportHandshakeMessage) message).isAck();
-  }
-
-  private final class RestartConnectionAttacher implements ConnectionAttacher {
-
-    @Override
-    public void attachNewConnection(TCConnectionEvent closeEvent, TCConnection oldConnection, TCConnection newConnection) {
-      wireNewConnection(newConnection);
-      log("Attaching new connection to transport: " + newConnection);
-    }
-
   }
 
   @Override

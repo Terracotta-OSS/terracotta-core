@@ -16,10 +16,14 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.object.msg;
+package com.tc.net.core;
 
-public interface ClientHandshakeMessageFactory {
+import java.util.Properties;
 
-  public ClientHandshakeMessage newClientHandshakeMessage(String uuid, String name, String clientVersion, String clientRevision, boolean reconnect);
+/**
+ */
+public interface SocketEndpointFactorySupplier {
+
+  SocketEndpointFactory createSocketEndpointFactory(Properties properties);
 
 }

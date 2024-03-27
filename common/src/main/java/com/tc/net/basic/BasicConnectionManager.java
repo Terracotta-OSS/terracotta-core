@@ -18,7 +18,7 @@
  */
 package com.tc.net.basic;
 
-import com.tc.net.core.BufferManagerFactory;
+import com.tc.net.core.SocketEndpointFactory;
 import com.tc.net.core.TCComm;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
@@ -38,10 +38,10 @@ import java.util.Arrays;
  */
 public class BasicConnectionManager implements TCConnectionManager {
   private final Set<TCConnection>       connections            = new HashSet<>();
-  private final BufferManagerFactory buffers;
+  private final SocketEndpointFactory buffers;
   private final String id;
 
-  public BasicConnectionManager(String id, BufferManagerFactory buffers) {
+  public BasicConnectionManager(String id, SocketEndpointFactory buffers) {
     this.buffers = buffers;
     this.id = id;
   }

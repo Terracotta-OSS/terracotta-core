@@ -19,8 +19,8 @@
 package com.tc.net.basic;
 
 import com.tc.bytes.TCReference;
-import com.tc.net.core.BufferManager;
-import com.tc.net.core.BufferManagerFactory;
+import com.tc.net.core.SocketEndpoint;
+import com.tc.net.core.SocketEndpointFactory;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;
@@ -92,8 +92,8 @@ public class BasicConnectionTest {
     try (PortManager.PortRef portRef = PortManager.getInstance().reservePort()) {
       try (ServerSocket server = openServerSocket(portRef.port())) {
         TCProtocolAdaptor adapter = mock(TCProtocolAdaptor.class);
-        BufferManagerFactory buffer = mock(BufferManagerFactory.class);
-        when(buffer.createBufferManager(any(SocketChannel.class), any(boolean.class))).thenReturn(mock(BufferManager.class));
+        SocketEndpointFactory buffer = mock(SocketEndpointFactory.class);
+        when(buffer.createSocketEndpoint(any(SocketChannel.class), any(boolean.class))).thenReturn(mock(SocketEndpoint.class));
         Consumer<TCConnection> close = s -> {};
         BasicConnection instance = new BasicConnection("", adapter, buffer, close);
         long expResult = 0L;
@@ -114,9 +114,9 @@ public class BasicConnectionTest {
     try (PortManager.PortRef portRef = PortManager.getInstance().reservePort()) {
       try (ServerSocket server = openServerSocket(portRef.port())) {
         TCProtocolAdaptor adapter = mock(TCProtocolAdaptor.class);
-        BufferManagerFactory buffer = mock(BufferManagerFactory.class);
-        BufferManager mgr = mock(BufferManager.class);
-        when(buffer.createBufferManager(any(SocketChannel.class), any(boolean.class))).thenReturn(mgr);
+        SocketEndpointFactory buffer = mock(SocketEndpointFactory.class);
+        SocketEndpoint mgr = mock(SocketEndpoint.class);
+        when(buffer.createSocketEndpoint(any(SocketChannel.class), any(boolean.class))).thenReturn(mgr);
         Consumer<TCConnection> close = s -> {};
         BasicConnection instance = new BasicConnection("", adapter, buffer, close);
         instance.connect(new InetSocketAddress(server.getLocalPort()), 0);
@@ -145,8 +145,8 @@ public class BasicConnectionTest {
     try (PortManager.PortRef portRef = PortManager.getInstance().reservePort()) {
       try (ServerSocket server = openServerSocket(portRef.port())) {
         TCProtocolAdaptor adapter = mock(TCProtocolAdaptor.class);
-        BufferManagerFactory buffer = mock(BufferManagerFactory.class);
-        when(buffer.createBufferManager(any(SocketChannel.class), any(boolean.class))).thenReturn(mock(BufferManager.class));
+        SocketEndpointFactory buffer = mock(SocketEndpointFactory.class);
+        when(buffer.createSocketEndpoint(any(SocketChannel.class), any(boolean.class))).thenReturn(mock(SocketEndpoint.class));
         Consumer<TCConnection> close = s -> {};
         BasicConnection instance = new BasicConnection("", adapter, buffer, close);
         instance.connect(new InetSocketAddress(server.getLocalPort()), 0);
@@ -167,8 +167,8 @@ public class BasicConnectionTest {
     try (PortManager.PortRef portRef = PortManager.getInstance().reservePort()) {
       try (ServerSocket server = openServerSocket(portRef.port())) {
         TCProtocolAdaptor adapter = mock(TCProtocolAdaptor.class);
-        BufferManagerFactory buffer = mock(BufferManagerFactory.class);
-        when(buffer.createBufferManager(any(SocketChannel.class), any(boolean.class))).thenReturn(mock(BufferManager.class));
+        SocketEndpointFactory buffer = mock(SocketEndpointFactory.class);
+        when(buffer.createSocketEndpoint(any(SocketChannel.class), any(boolean.class))).thenReturn(mock(SocketEndpoint.class));
         Consumer<TCConnection> close = s -> {};
         BasicConnection instance = new BasicConnection("", adapter, buffer, close);
         TCConnectionEventListener listener = mock(TCConnectionEventListener.class);

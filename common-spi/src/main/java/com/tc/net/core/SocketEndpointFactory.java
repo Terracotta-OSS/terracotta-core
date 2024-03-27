@@ -16,10 +16,15 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.object.msg;
+package com.tc.net.core;
 
-public interface ClientHandshakeMessageFactory {
+import java.io.IOException;
+import java.nio.channels.SocketChannel;
 
-  public ClientHandshakeMessage newClientHandshakeMessage(String uuid, String name, String clientVersion, String clientRevision, boolean reconnect);
+/**
+ */
+public interface SocketEndpointFactory {
+
+  SocketEndpoint createSocketEndpoint(SocketChannel socketChannel, boolean client) throws IOException;
 
 }

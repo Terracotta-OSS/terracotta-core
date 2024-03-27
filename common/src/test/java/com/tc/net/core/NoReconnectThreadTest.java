@@ -36,17 +36,14 @@ import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
-import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.net.proxy.TCPProxy;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
-import com.tc.properties.TCPropertiesConsts;
 import com.tc.util.Assert;
 
 import org.terracotta.utilities.test.net.PortManager;
@@ -58,6 +55,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import com.tc.net.protocol.tcm.TCAction;
+import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 
 public class NoReconnectThreadTest extends TCTestCase implements ChannelEventListener {
   private final int             L1_RECONNECT_TIMEOUT = 5000;
@@ -81,7 +79,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
   }
 
   private ClientMessageChannel createClientMsgCh() {
-    TCConnectionManager connMgr = new TCConnectionManagerImpl("TestCommMgr-Client", 0, new ClearTextBufferManagerFactory());
+    TCConnectionManager connMgr = new TCConnectionManagerImpl("TestCommMgr-Client", 0, new ClearTextSocketEndpointFactory());
     clientConnectionMgrs.add(connMgr);
     CommunicationsManager clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                       getNetworkStackHarnessFactory(),
@@ -94,17 +92,14 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
   }
 
   public void testConnectionEstablisherThreadExit() throws Exception {
-    TCConnectionManager connectionMgr = new TCConnectionManagerImpl("TestCommsMgr-Server", 3, new ClearTextBufferManagerFactory());
+    TCConnectionManager connectionMgr = new TCConnectionManagerImpl("TestCommsMgr-Server", 3, new ClearTextSocketEndpointFactory());
     CommunicationsManager serverCommsMgr = new CommunicationsManagerImpl(
                                                                          new NullMessageMonitor(),
                                                                          new TCMessageRouterImpl(),
                                                                          getNetworkStackHarnessFactory(),
                                                                          connectionMgr,
                                                                          new NullConnectionPolicy(),
-                                                                         new HealthCheckerConfigImpl(TCPropertiesImpl
-                                                                             .getProperties()
-                                                                             .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY),
-                                                                                                     "Test Server"),
+                                                                         new DisabledHealthCheckerConfigImpl(),
                                                                          new ServerID(),
                                                                          new TransportHandshakeErrorNullHandler(),
                                                                          Collections.<TCMessageType, Class<? extends TCAction>>emptyMap(),

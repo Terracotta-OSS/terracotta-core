@@ -122,11 +122,12 @@ Apache Ivy version: 2.2.0 20100923230623
     <plugins>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.2.5</version>
         <configuration>
             <forkCount>0.5C</forkCount>
             <reuseForks>false</reuseForks>
             <workingDirectory>${project.build.directory}/test-fork-${surefire.forkNumber}</workingDirectory>
-            <argLine>-Xmx2G -Djava.awt.headless=true</argLine>
+            <argLine>-Xmx2G -Djava.awt.headless=true -Dbuffer.access.check=true</argLine>
         </configuration>
       </plugin>
     </plugins>

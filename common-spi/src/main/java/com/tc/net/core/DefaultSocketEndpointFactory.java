@@ -18,14 +18,22 @@
  */
 package com.tc.net.core;
 
-import java.nio.channels.SocketChannel;
+import com.tc.util.TCServiceLoader;
 
 /**
- * @author Ludovic Orban
+ *
  */
-public class ClearTextBufferManagerFactory implements BufferManagerFactory {
-  @Override
-  public BufferManager createBufferManager(SocketChannel socketChannel, boolean client) {
-    return new ClearTextBufferManager(socketChannel);
+public class DefaultSocketEndpointFactory {
+  private static SocketEndpointFactory DEFAULT;
+  
+  public static void setSocketEndpointFactory(SocketEndpointFactory d) {
+    DEFAULT = d;
+  }
+  
+  public static SocketEndpointFactory getSocketEndpointFactory() {
+    if (DEFAULT == null) {
+      DEFAULT = (SocketEndpointFactory)TCServiceLoader.loadServices(SocketEndpointFactory.class).stream().findFirst().orElseThrow(()->new RuntimeException("not found"));
+    }
+    return DEFAULT;
   }
 }

@@ -28,5 +28,5 @@ import java.io.IOException;
  * @author teck
  */
 interface TCChannelWriter {
-  int doWrite() throws IOException;
+  long doWrite() throws IOException;
 }
