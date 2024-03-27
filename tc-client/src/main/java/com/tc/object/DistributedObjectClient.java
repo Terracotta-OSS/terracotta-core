@@ -240,7 +240,7 @@ public class DistributedObjectClient {
     
     final ProductInfo pInfo = ProductInfo.getInstance(getClass().getClassLoader());
     
-    ClientHandshakeMessageFactory chmf = (u, n, c, r)->{
+    ClientHandshakeMessageFactory chmf = (u, n, c, r, reconnect)->{
       ClientMessageChannel cmc = getClientMessageChannel();
       if (cmc != null) {
         final ClientHandshakeMessage rv = (ClientHandshakeMessage)cmc.createMessage(TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
@@ -249,6 +249,7 @@ public class DistributedObjectClient {
         rv.setClientPID(getPID());
         rv.setUUID(u);
         rv.setName(n);
+        rv.setReconnect(reconnect);
         return rv;
       } else {
         return null;

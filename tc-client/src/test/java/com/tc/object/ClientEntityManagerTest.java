@@ -579,6 +579,7 @@ public class ClientEntityManagerTest extends TestCase {
       result.get(1, TimeUnit.SECONDS);
       Assert.fail();
     } catch (TimeoutException to) {
+      assertTrue(!result.isDone());
       assertThat(System.currentTimeMillis() - start, Matchers.greaterThanOrEqualTo(1000L));
       //  expected
     }
@@ -587,6 +588,7 @@ public class ClientEntityManagerTest extends TestCase {
       result.get(2, TimeUnit.SECONDS);
       Assert.fail();
     } catch (TimeoutException to) {
+      assertTrue(!result.isDone());
       assertThat(System.currentTimeMillis() - start, Matchers.greaterThanOrEqualTo(2000L));
       //  expected
     }

@@ -54,7 +54,7 @@ import java.net.InetSocketAddress;
 public class ServerStackProvider implements NetworkStackProvider, MessageTransportListener, ProtocolAdaptorFactory {
   private static final Logger logger = LoggerFactory.getLogger(ServerStackProvider.class);
 
-  private final Map<ClientID, ServerNetworkStackHarness> harnesses          = new ConcurrentHashMap<ClientID, ServerNetworkStackHarness>();
+  private final Map<ClientID, ServerNetworkStackHarness> harnesses          = new ConcurrentHashMap<>();
   private final NetworkStackHarnessFactory       harnessFactory;
   private final ServerMessageChannelFactory      channelFactory;
   private final TransportHandshakeMessageFactory handshakeMessageFactory;
@@ -63,7 +63,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   private final WireProtocolAdaptorFactory       wireProtocolAdaptorFactory;
   private final WireProtocolMessageSink          wireProtoMsgsink;
   private final MessageTransportFactory          messageTransportFactory;
-  private final List<MessageTransportListener>   transportListeners = new ArrayList<MessageTransportListener>();
+  private final List<MessageTransportListener>   transportListeners = new ArrayList<>();
   private final ReentrantLock                    licenseLock;
   private final RedirectAddressProvider                 activeProvider;
   private final Predicate<MessageTransport>                validateTransport;
@@ -213,7 +213,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
       if (!connectionId.isJvmIDNull()) {
         boolean removed = this.connectionPolicy.clientDisconnected(connectionId);
         if (removed) {
-          logger.warn("connectionid not removed be transport disconnect");
+          logger.warn("connectionid not removed by transport disconnect");
         }
       }
     }
