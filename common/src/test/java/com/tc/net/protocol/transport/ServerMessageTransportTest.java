@@ -78,18 +78,16 @@ public class ServerMessageTransportTest {
         return null;
       }
     }).when(connection).addListener(ArgumentMatchers.any(TCConnectionEventListener.class));
+    when(connection.isConnected()).thenReturn(Boolean.TRUE);
     TransportHandshakeErrorHandler errHdr = mock(TransportHandshakeErrorHandler.class);
     TransportHandshakeMessageFactory factory = mock(TransportHandshakeMessageFactory.class);
     ServerMessageTransport transport = new ServerMessageTransport(connection, errHdr, factory);
     transport.initConnectionID(id);
     transport.addTransportListener(checker);
 
-    Assert.assertTrue(transport.status.isStartOpen());
+    Assert.assertTrue(transport.status.isConnected());
     
     TCConnectionEvent event = new TCConnectionEvent(connection);
-    transport.connectEvent(event);
-
-    Assert.assertTrue(transport.status.isConnected());
 
     for (TCConnectionEventListener trigger : listeners) {
       trigger.closeEvent(event);

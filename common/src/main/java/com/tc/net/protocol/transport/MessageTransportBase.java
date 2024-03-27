@@ -190,13 +190,13 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     }
   }
 
-  // Do not override this method. Not a final method, as a test class is deriving it
   @Override
   public void sendToConnection(TCNetworkMessage message) throws IOException {
     if (message == null) throw new AssertionError("Attempt to send a null message.");
     if (!status.isEnd()) {
       connection.putMessage(message);
     } else {
+      message.complete();
       throw new IOException("Couldn't send message status: " + status);
     }
   }
@@ -211,51 +211,31 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   }
 
   @Override
-  public final void attachNewConnection(TCConnection newConnection) throws IllegalReconnectException {
-    getConnectionAttacher().attachNewConnection(this.connectionCloseEvent.getAndSet(null), this.connection,
+  public void attachNewConnection(TCConnection newConnection) throws IllegalReconnectException {
+    attachNewConnection(this.connectionCloseEvent.getAndSet(null), this.connection,
                                                 newConnection);
   }
 
-  protected ConnectionAttacher getConnectionAttacher() {
-    return new DefaultConnectionAttacher(this, getLogger());
-  }
-
-  protected interface ConnectionAttacher {
-    public void attachNewConnection(TCConnectionEvent closeEvent, TCConnection oldConnection, TCConnection newConnection);
-  }
-
-  private static final class DefaultConnectionAttacher implements ConnectionAttacher {
-
-    private final MessageTransportBase transport;
-    private final Logger logger;
-
-    private DefaultConnectionAttacher(MessageTransportBase transport, Logger logger) {
-      this.transport = transport;
-      this.logger = logger;
-    }
-
-    @Override
-    public void attachNewConnection(TCConnectionEvent closeEvent, TCConnection oldConnection, TCConnection newConnection) {
-      Assert.assertNotNull(oldConnection);
-      if (closeEvent == null || closeEvent.getSource() != oldConnection) {
-        // We either didn't receive a close event or we received a close event
-        // from a connection that isn't our current connection.
-        if (transport.isConnected()) {
-          // DEV-1689 : Don't bother for connections which actually didn't make up to Transport Establishment.
-          this.transport.status.reset();
-          this.transport.fireTransportDisconnectedEvent();
-          this.transport.getConnection().asynchClose();
-        } else {
-          logger.warn("Old connection " + oldConnection + "might not have been Transport Established ");
-        }
+  private void attachNewConnection(TCConnectionEvent closeEvent, TCConnection oldConnection, TCConnection newConnection) {
+    Assert.assertNotNull(oldConnection);
+    if (closeEvent == null || closeEvent.getSource() != oldConnection) {
+      // We either didn't receive a close event or we received a close event
+      // from a connection that isn't our current connection.
+      if (isConnected()) {
+        // DEV-1689 : Don't bother for connections which actually didn't make up to Transport Establishment.
+        status.reset();
+        fireTransportDisconnectedEvent();
+        getConnection().asynchClose();
+      } else {
+        logger.warn("Old connection " + oldConnection + "might not have been Transport Established ");
       }
-      // remove the transport as a listener for the old connection
-      if (oldConnection != null && oldConnection != transport.getConnection()) {
-        oldConnection.removeListener(transport);
-      }
-      // set the new connection to the current connection.
-      transport.wireNewConnection(newConnection);
     }
+    // remove the transport as a listener for the old connection
+    if (oldConnection != null && oldConnection != getConnection()) {
+      oldConnection.removeListener(this);
+    }
+    // set the new connection to the current connection.
+    wireNewConnection(newConnection);
   }
 
   /*********************************************************************************************************************
@@ -408,15 +388,6 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     } else {
       return conn.createOutput();
     }
-  }
-
-  void log(String msg) {
-    if (!getProductID().isInternal()) {
-      getLogger().info(msg);
-    } else {
-      getLogger().debug(msg);
-    }
-
   }
 
   @Override
