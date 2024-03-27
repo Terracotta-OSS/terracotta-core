@@ -22,6 +22,7 @@ package com.tc.objectserver.api;
 import com.tc.entity.MessageCodecSupplier;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.exception.ServerException;
+import com.tc.net.ClientID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
@@ -30,6 +31,7 @@ import com.tc.text.PrettyPrintable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 
 public interface EntityManager extends MessageCodecSupplier, PrettyPrintable {
@@ -78,7 +80,7 @@ public interface EntityManager extends MessageCodecSupplier, PrettyPrintable {
    */
   void loadExisting(EntityID entityID, long recordedVersion, long consumerID, boolean canDelete, byte[] configuration) throws ServerException;
   
-  void resetReferences();
+  Set<ClientID> resetReferences();
 
   boolean canDelete(EntityID entityID);
 

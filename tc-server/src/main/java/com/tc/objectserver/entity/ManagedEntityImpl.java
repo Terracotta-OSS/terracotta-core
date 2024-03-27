@@ -1106,8 +1106,6 @@ public class ManagedEntityImpl implements ManagedEntity {
 // up on passives
     if (canDelete) {
       this.clientReferenceCount = 0;
-      // the entity references should have been cleared
-      Assert.assertTrue(clientEntityStateManager.verifyNoEntityReferences(fetchID));
     } else {
       Assert.assertEquals(this.clientReferenceCount, ManagedEntityImpl.UNDELETABLE_ENTITY);
     }
