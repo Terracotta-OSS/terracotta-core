@@ -23,6 +23,7 @@ import com.tc.classloader.ServiceLocator;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.exception.ServerException;
 import com.tc.exception.TCShutdownServerException;
+import com.tc.net.ClientID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 
@@ -343,11 +344,11 @@ public class EntityManagerImpl implements EntityManager {
   }
   
   @Override
-  public void resetReferences() {
-    clientEntityStateManager.clearClientReferences();
+  public Set<ClientID> resetReferences() {
     for (ManagedEntity me : entityIndex.values()) {
       me.resetReferences(0);
     }
+    return clientEntityStateManager.clearClientReferences();
   }
 
   @Override

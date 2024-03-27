@@ -738,7 +738,7 @@ public class DistributedObjectServer {
                                                                   this.stripeIDStateManager,
                                                                   consistencyMgr);
 
-    connectServerStateToReplicatedState(monitoringShimService, state, clientEntityStateManager, l2Coordinator.getReplicatedClusterStateManager());
+    connectServerStateToReplicatedState(monitoringShimService, state, l2Coordinator.getReplicatedClusterStateManager());
 // setup replication
     final Sink<ReplicationSendingAction> replicationSenderStage =
         stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
@@ -1105,7 +1105,7 @@ public class DistributedObjectServer {
     };
   }
 
-  private void connectServerStateToReplicatedState(LocalMonitoringProducer monitoringShimService, StateManager mgr, ClientEntityStateManager clients, ReplicatedClusterStateManager rcs) {
+  private void connectServerStateToReplicatedState(LocalMonitoringProducer monitoringShimService, StateManager mgr, ReplicatedClusterStateManager rcs) {
     mgr.registerForStateChangeEvents(new StateChangeListener() {
       private boolean diagnosticsStarted = false;
       
@@ -1122,7 +1122,8 @@ public class DistributedObjectServer {
           final Set<ClientID> existingClients = new HashSet<>(persistor.getClientStatePersistor().loadAllClientIDs());
 //  must do this because the replicated state when it comes to clients, may not include all the references
 //  to clients that were in the midst of cleaning up after disconnection.
-          existingClients.addAll(clients.clearClientReferences());
+          existingClients.addAll(entityManager.resetReferences());
+          ;
           Set<ConnectionID> existingConnections = existingClients.stream()
               .map(cid->new ConnectionID(ConnectionID.NULL_JVM_ID, cid.toLong(), stripeIDStateManager.getStripeID().getName())).collect(Collectors.toSet());
           getContext().getClientHandshakeManager().setStarting(existingClients);
