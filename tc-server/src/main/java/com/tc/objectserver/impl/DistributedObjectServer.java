@@ -596,8 +596,10 @@ public class DistributedObjectServer {
     final InetSocketAddress dsoBind = new InetSocketAddress(l2DSOConfig.getTsaPort().getHostString(), l2DSOConfig.getTsaPort().getPort());
     this.l1Listener = this.communicationsManager.createListener(dsoBind, (MessageChannel c)->!c.getProductID().isReconnectEnabled() || !server.isReconnectWindow(),
                                                                 this.connectionIdFactory, (MessageTransport t)->{
-                                                                  return getContext().getClientHandshakeManager().isStarting() || t.getConnectionID().getProductId() == ProductID.DIAGNOSTIC || consistencyMgr.requestTransition(context.getL2Coordinator().getStateManager().getCurrentMode(),
-                                                                      t.getConnectionID().getClientID(), ConsistencyManager.Transition.ADD_CLIENT);
+                                                                  return getContext().getClientHandshakeManager().isStarting() 
+                                                                          || t.getConnectionID().getProductId() == ProductID.DIAGNOSTIC 
+                                                                          || consistencyMgr.requestTransition(context.getL2Coordinator().getStateManager().getCurrentMode(),
+                                                                                t.getConnectionID().getClientID(), ConsistencyManager.Transition.ADD_CLIENT);
                                                                 });
     this.l1Diagnostics = createDiagnosticsListener(dsoBind, infoConnections);
 

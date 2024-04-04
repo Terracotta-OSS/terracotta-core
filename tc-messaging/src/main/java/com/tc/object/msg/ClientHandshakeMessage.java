@@ -26,6 +26,10 @@ import com.tc.net.protocol.tcm.TCAction;
 
 public interface ClientHandshakeMessage extends TCAction {
   
+  void setReconnect(boolean isReconnect);
+  
+  boolean isReconnect();
+  
   void setUUID(String uuid);
   
   String getUUID();

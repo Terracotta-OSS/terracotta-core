@@ -102,6 +102,8 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   
   void setPipelineMonitoring(boolean monitor);
   
+  boolean disconnectClient(String id);
+  
   String getClusterState(boolean shortForm);
 
   String getConnectedClients() throws IOException;

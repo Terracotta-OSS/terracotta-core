@@ -490,7 +490,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     handleHandshakeError(result);
     initConnectionID(result.synAck.getConnectionId());
     sendAck();
-    log("Handshake is complete");
+    logger.debug("Handshake is complete");
   }
 
   private String getMaxConnectionsExceededMessage(int maxConnections) {

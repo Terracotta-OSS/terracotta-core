@@ -49,6 +49,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -452,6 +453,25 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     } else {
       MonitoringEventCreator.setPipelineMonitor(null);
     }
+  }
+
+  @Override
+  public boolean disconnectClient(String id) {
+    Optional<Client> found = server.getConnectedClients().stream().filter(c->c.getRemoteUUID().equals(id)).findFirst();
+    found.ifPresent(Client::killClient);
+    if (found.isPresent()) {
+      return true;
+    }
+    found = server.getConnectedClients().stream().filter(c->c.getRemoteName().equals(id)).findFirst();
+    found.ifPresent(Client::killClient);
+    if (found.isPresent()) {
+      return true;
+    }
+    
+    long lid = Long.parseLong(id);
+    found = server.getConnectedClients().stream().filter(c->c.getClientID() == lid).findFirst();
+    found.ifPresent(Client::killClient);
+    return found.isPresent();
   }
 
   @Override
