@@ -136,11 +136,14 @@ public class DiagnosticsHandler extends AbstractEventHandler<TCAction> {
           }
           break;
         case "invokeJMX":
-          if (cmd.length != 3) {
+          if (cmd.length < 3) {
             result = ("Invalid JMX call:" + raw).getBytes(set);
+          } else if (cmd.length == 3) {
+            GuardianContext.validate(Guardian.Op.GENERIC_OP, cmd[2]);
+            result = subsystem.call(cmd[1], cmd[2]).getBytes(set);
           } else {
             GuardianContext.validate(Guardian.Op.GENERIC_OP, cmd[2]);
-            result = subsystem.call(cmd[1], cmd[2], null).getBytes(set);
+            result = subsystem.call(cmd[1], cmd[2], Arrays.copyOfRange(cmd, 3, cmd.length)).getBytes(set);
           }
           break;
         case "invokeWithArgJMX":

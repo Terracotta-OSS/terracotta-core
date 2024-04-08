@@ -21,4 +21,6 @@ package com.terracotta.diagnostic;
 
 public interface Diagnostics extends org.terracotta.connection.Diagnostics {
   String list(String name);
+  
+  String invoke(String name, String action, String...args);
 }

@@ -28,6 +28,7 @@ import com.tc.util.StringUtil;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -97,16 +98,26 @@ public class JMXSubsystem {
     }
   }
   
-  public String call(String target, String cmd, String arg) {
+  public String call(String target, String cmd) {
     try {
-      return callMBean(getObjectName(target), cmd, arg);
+      return callMBean(getObjectName(target), cmd);
     } catch (Throwable t) {
       String error = "Invalid JMX call:" + cmd + " " + t.getMessage();
       warn(t, error, target);
       return error;
     }
   }
-
+  
+  public String call(String target, String cmd, String...args) {
+    try {
+      return callMBean(getObjectName(target), cmd, args);
+    } catch (Throwable t) {
+      String error = "Invalid JMX call:" + cmd + " " + t.getMessage();
+      warn(t, error, target);
+      return error;
+    }
+  }
+  
   public String info(String name) {
     try {
       return printInfo(getObjectName(name));
@@ -146,7 +157,7 @@ public class JMXSubsystem {
     }
   }
   
-  private String callMBean(ObjectName name, String cmd, String arg) throws InstanceNotFoundException, MBeanException, ReflectionException, AttributeNotFoundException {
+  private String callMBean(ObjectName name, String cmd, String...args) throws InstanceNotFoundException, MBeanException, ReflectionException, AttributeNotFoundException {
     Object result = null;
     
     if (cmd.startsWith("get")) {
@@ -154,10 +165,12 @@ public class JMXSubsystem {
     } else if (cmd.startsWith("is")) {
       result = server.getAttribute(name, cmd.substring(2));
     } else {
-      if (arg == null) {
+      if (args == null || args.length == 0 || args[0] == null) {
         result = server.invoke(name, cmd, new Object[0], new String[0]);
       } else {
-        result = server.invoke(name, cmd, new Object[] {arg}, new String[] {String.class.getName()});
+        String[] sig = new String[args.length];
+        Arrays.fill(sig, String.class.getName());
+        result = server.invoke(name, cmd, args, sig);
       }
     }
 
