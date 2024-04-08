@@ -313,21 +313,15 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   }
 
   private long doReadInternal() throws IOException {
-    long totalBytesReadFromBuffer = 0;
-    long read;
-    do {
-      try {
-        read = doReadAndPackage();
-        totalBytesReadFromBuffer += read;
-      } catch (IOException ioe) {
-        closeReadOnException(ioe);
-        break;
-      }
-    } while (read != 0);
-
-    this.totalRead.addAndGet(totalBytesReadFromBuffer);
-    this.messagesRead.increment();
-    return totalBytesReadFromBuffer;
+    try {
+      long read = doReadAndPackage();
+      this.totalRead.addAndGet(read);
+      this.messagesRead.increment();
+      return read;
+    } catch (IOException ioe) {
+      closeReadOnException(ioe);
+    }
+    return 0L;
   }
 
   @Override
@@ -439,6 +433,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         addNetworkData(ref);
       }
     }
+    logger.debug("{} packaged {} bytes for {}", Thread.currentThread(), size, this);
     return size;
   }
   
