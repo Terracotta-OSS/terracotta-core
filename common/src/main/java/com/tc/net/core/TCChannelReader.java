@@ -28,5 +28,5 @@ import java.io.IOException;
  * @author teck
  */
 interface TCChannelReader {
-  public int doRead() throws IOException;
+  public long doRead() throws IOException;
 }

@@ -55,7 +55,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     this.list = this.data.iterator();
     this.current = this.list.hasNext() ? this.list.next() : TCByteBufferFactory.getInstance(0);
 
-    long length = StreamSupport.stream(this.data.spliterator(), false).map(TCByteBuffer::remaining).map(Integer::longValue).reduce(0L, Long::sum);
+    long length = StreamSupport.stream(this.data.spliterator(), false).mapToInt(TCByteBuffer::remaining).asLongStream().sum();
 
     if (length > Integer.MAX_VALUE) { throw new IllegalArgumentException("too much data: " + length); }
 
@@ -85,7 +85,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
 
   @Override
   public int available() {
-    return StreamSupport.stream(this.data.spliterator(), false).map(TCByteBuffer::remaining).reduce(0, Integer::sum);
+    return StreamSupport.stream(this.data.spliterator(), false).mapToInt(TCByteBuffer::remaining).sum();
   }
 
   @Override
@@ -164,7 +164,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     }
     
     TCReference dup = data.duplicate(len);
-    int run = dup.available();
+    long run = dup.available();
     skip(run);
     
     if (run != len) {

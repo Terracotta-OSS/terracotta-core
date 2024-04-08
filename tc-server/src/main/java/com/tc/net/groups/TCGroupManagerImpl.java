@@ -36,8 +36,8 @@ import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.BufferManagerFactory;
-import com.tc.net.core.ClearTextBufferManagerFactory;
+import com.tc.net.core.SocketEndpointFactory;
+import com.tc.net.core.ClearTextSocketEndpointFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -133,7 +133,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private final StageManager                                stageManager;
   private final AtomicBoolean                               alreadyJoined               = new AtomicBoolean(false);
   private final WeightGeneratorFactory                      weightGeneratorFactory;
-  private final BufferManagerFactory                        bufferManagerFactory;
+  private final SocketEndpointFactory                        bufferManagerFactory;
 
   private CommunicationsManager                             communicationsManager;
   private TCConnectionManager                               connectionManager;
@@ -149,17 +149,21 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
    * Setup a communication manager which can establish channel from either sides.
    */
   public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, StageManager stageManager,
+                            TCConnectionManager comms,
                             ServerID thisNodeID, Node thisNode,
-                            WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory) {
-    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, thisNode, weightGenerator,
+                            WeightGeneratorFactory weightGenerator, SocketEndpointFactory bufferManagerFactory) {
+    this(configSetupManager, new NullConnectionPolicy(), stageManager, comms, thisNodeID, thisNode, weightGenerator,
          bufferManagerFactory);
   }
 
   public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, ConnectionPolicy connectionPolicy,
-                            StageManager stageManager, ServerID thisNodeID, Node thisNode,
-                            WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory) {
+                            StageManager stageManager, 
+                            TCConnectionManager comms,
+                            ServerID thisNodeID, Node thisNode,
+                            WeightGeneratorFactory weightGenerator, SocketEndpointFactory bufferManagerFactory) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
+    this.connectionManager = comms;
     this.thisNodeID = thisNodeID;
     this.bufferManagerFactory = bufferManagerFactory;
     this.version = configSetupManager.getProductInfo().version();
@@ -200,7 +204,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
                             StageManager stageManager, WeightGeneratorFactory weightGenerator, Node[] servers) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
-    this.bufferManagerFactory = new ClearTextBufferManagerFactory();
+    this.bufferManagerFactory = new ClearTextSocketEndpointFactory();
     this.configuredNodes = ()->new HashSet<>(Arrays.asList(servers));
 
     this.groupPort = groupPort;
@@ -226,8 +230,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     HealthCheckerConfig hcconfig = new HealthCheckerConfigImpl(tcProperties
                                                               .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY), ServerEnv.getServer().getIdentifier() + " - TCGroupManager");
     
-    connectionManager = new TCConnectionManagerImpl(ServerEnv.getServer().getIdentifier() + " - " + CommunicationsManager.COMMSMGR_GROUPS, serverCount <= 1 ? 0 :
+    if (connectionManager == null) {
+      connectionManager = new TCConnectionManagerImpl(ServerEnv.getServer().getIdentifier() + " - " + CommunicationsManager.COMMSMGR_GROUPS, serverCount <= 1 ? 0 :
         serverCount, bufferManagerFactory);
+    }
     communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), messageRouter,
                                                           networkStackHarnessFactory, 
                                                           this.connectionManager,

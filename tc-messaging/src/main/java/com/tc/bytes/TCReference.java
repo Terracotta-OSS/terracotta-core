@@ -18,8 +18,9 @@
  */
 package com.tc.bytes;
 
-import com.tc.util.Assert;
+import java.nio.ByteBuffer;
 import java.util.Iterator;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
@@ -43,11 +44,46 @@ public interface TCReference extends Iterable<TCByteBuffer>, AutoCloseable {
     }
     return this;
   }
+
+  default TCReference limit(int length) {
+    Iterator<TCByteBuffer> it = iterator();
+    int runTo = length;
+    while (it.hasNext()) {
+      TCByteBuffer curs = it.next();
+      int min = Math.min(runTo, curs.capacity());
+      curs.limit(min);
+      runTo -= curs.limit();
+    }
+    return this;
+  }
   
-  default int available() {
-    return StreamSupport.stream(spliterator(), false).map(TCByteBuffer::remaining).reduce(0, Integer::sum);
+  default long available() {
+    return stream().mapToInt(TCByteBuffer::remaining).asLongStream().sum();
   }
 
+  default boolean hasRemaining() {
+    return stream().anyMatch(TCByteBuffer::hasRemaining);
+  }
+  
+  default ByteBuffer[] toByteBufferArray() {
+    return stream().map(TCByteBuffer::getNioBuffer).toArray(ByteBuffer[]::new);
+  }
+  
+  default TCByteBuffer[] toArray() {
+    return stream().toArray(TCByteBuffer[]::new);
+  }
+  
+  default Stream<TCByteBuffer> stream() {
+    return StreamSupport.stream(spliterator(), false);
+  }
+  
+  default void returnByteBufferArray(ByteBuffer[] array) {
+    TCByteBuffer[] src = toArray();
+    for (int x=0;x<src.length;x++) {
+      src[x].returnNioBuffer(array[x]);
+    }
+  }
+  
   @Override
   public void close();
 }

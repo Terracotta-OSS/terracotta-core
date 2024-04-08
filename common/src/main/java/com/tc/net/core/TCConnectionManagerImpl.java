@@ -68,19 +68,19 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   private final ConnectionEvents        connEvents;
   private final ListenerEvents          listenerEvents;
   private final SocketParams            socketParams;
-  private final BufferManagerFactory    bufferManagerFactory;
+  private final SocketEndpointFactory    socketEndpointFactory;
 
   private final TCDirectByteBufferCache buffers = new TCDirectByteBufferCache(TCByteBufferFactory.getFixedBufferSize(), 16 * 1024);
 
   public TCConnectionManagerImpl() {
-    this("ConnectionMgr", 0, MESSAGE_PACKUP ? new CachingClearTextBufferManagerFactory() : new ClearTextBufferManagerFactory());
+    this("ConnectionMgr", 0, new ClearTextSocketEndpointFactory());
   }
 
-  public TCConnectionManagerImpl(String name, int workerCommCount, BufferManagerFactory bufferManagerFactory) {
+  public TCConnectionManagerImpl(String name, int workerCommCount, SocketEndpointFactory socketEndpointFactory) {
     this.connEvents = new ConnectionEvents();
     this.listenerEvents = new ListenerEvents();
     this.socketParams = new SocketParams();
-    this.bufferManagerFactory = bufferManagerFactory;
+    this.socketEndpointFactory = socketEndpointFactory;
     this.comm = new TCCommImpl(name, workerCommCount, socketParams);
     this.comm.start();
   }
@@ -94,16 +94,16 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     state.put("processors", comm.getState());
     state.put("buffers.cached", buffers.size());
     state.put("buffers.referenced", buffers.referenced());
-    if (bufferManagerFactory instanceof PrettyPrintable) {
-      state.put("bufferManager", ((PrettyPrintable)bufferManagerFactory).getStateMap());
+    if (socketEndpointFactory instanceof PrettyPrintable) {
+      state.put("bufferManager", ((PrettyPrintable)socketEndpointFactory).getStateMap());
     } else {
-      state.put("bufferManager", bufferManagerFactory.toString());
+      state.put("bufferManager", socketEndpointFactory.toString());
     }
     return state;
   }
 
   protected TCConnection createConnectionImpl(TCProtocolAdaptor adaptor, TCConnectionEventListener listener) {
-    return new TCConnectionImpl(listener, adaptor, this, comm.nioServiceThreadForNewConnection(), socketParams, bufferManagerFactory);
+    return new TCConnectionImpl(listener, adaptor, this, comm.nioServiceThreadForNewConnection(), socketParams, socketEndpointFactory);
   }
 
   @SuppressWarnings("resource")
@@ -128,7 +128,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
 
     CoreNIOServices commThread = comm.nioServiceThreadForNewListener();
 
-    TCListenerImpl rv = new TCListenerImpl(ssc, factory, getConnectionListener(), this, commThread, bufferManagerFactory);
+    TCListenerImpl rv = new TCListenerImpl(ssc, factory, getConnectionListener(), this, commThread, socketEndpointFactory);
 
     commThread.registerListener(rv, ssc);
 

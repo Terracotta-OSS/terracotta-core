@@ -21,7 +21,7 @@ package com.tc.object;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.TestThrowableHandler;
 import com.tc.net.ClientID;
-import com.tc.net.core.ClearTextBufferManagerFactory;
+import com.tc.net.core.ClearTextSocketEndpointFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.util.Assert;
@@ -77,7 +77,7 @@ public class DistributedObjectClientTest extends TestCase {
       TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class)));
       Properties connectionProperties = new Properties();
       connectionProperties.put(ConnectionPropertyNames.CONNECTION_TYPE, ProductID.PERMANENT);
-      ClientBuilder builder = new StandardClientBuilder(connectionProperties, new ClearTextBufferManagerFactory()) {
+      ClientBuilder builder = new StandardClientBuilder(connectionProperties, new ClearTextSocketEndpointFactory()) {
         @Override
         public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr, int socketConnectTimeout) {
           ClientMessageChannel channel = Mockito.mock(ClientMessageChannel.class);

@@ -20,12 +20,14 @@ package com.tc.net.protocol.transport;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.bytes.TCReference;
 import com.tc.bytes.TCReferenceSupport;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.tcm.TCActionNetworkMessage;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
+import java.util.Iterator;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -57,15 +59,31 @@ public class WireProtocoGroupMessageTest {
     WireProtocolAdaptorImpl adaptor = new WireProtocolAdaptorImpl((message) -> {
       System.out.println(message);
     });
-    adaptor.getReadBuffers()[0].put(grp.getHeader().getDataBuffer());
-    adaptor.addReadData(src, new TCByteBuffer[] {adaptor.getReadBuffers()[0]}, grp.getHeaderLength());
-    TCByteBuffer m = adaptor.getReadBuffers()[0];
-    for (TCByteBuffer buffer : grp.getPayload()) {
-      m.put(buffer);
+    TCByteBuffer headerData = TCByteBufferFactory.getInstance(grp.getHeader().getDataBuffer().capacity());
+    headerData.limit(grp.getHeader().getDataBuffer().limit());
+    
+    try (TCReference headerRef = TCReferenceSupport.createGCReference(headerData)) {
+      headerData.put(grp.getHeader().getDataBuffer());
+      adaptor.addReadData(src, headerRef);
     }
-    adaptor.addReadData(src, new TCByteBuffer[] {m}, grp.getDataLength());    
+    
+    TCByteBuffer payloadData = TCByteBufferFactory.getInstance(grp.getDataLength());
+    try (TCReference payloadRef = TCReferenceSupport.createGCReference(payloadData)) {
+      for (TCByteBuffer buffer : grp.getPayload()) {
+        while (buffer.hasRemaining()) {
+          int lim = buffer.limit();
+          buffer.limit(buffer.position() + Math.min(buffer.remaining(), payloadData.remaining()));
+          payloadData.put(buffer);
+          buffer.limit(lim);
+        }
+      }
+      adaptor.addReadData(src, payloadRef);    
+    }
   }
   
+  private static TCReference testAllocator(int size) {
+    return TCReferenceSupport.createGCReference(TCByteBufferFactory.getInstance(size));
+  }
   @Test
   public void testCancellation() throws Exception {
     TCConnection src = mock(TCConnection.class);

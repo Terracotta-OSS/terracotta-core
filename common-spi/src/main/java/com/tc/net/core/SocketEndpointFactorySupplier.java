@@ -16,20 +16,14 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.net.protocol;
+package com.tc.net.core;
 
-import com.tc.bytes.TCReference;
-import com.tc.net.core.TCConnection;
+import java.util.Properties;
 
 /**
- * Message adaptor/parser for incoming data from TCConnection
- * 
- * @author teck
  */
-public interface TCProtocolAdaptor {
+public interface SocketEndpointFactorySupplier {
 
-  public void addReadData(TCConnection source, TCReference data) throws TCProtocolException;
+  SocketEndpointFactory createSocketEndpointFactory(Properties properties);
 
-  public int getExpectedBytes();
 }
-

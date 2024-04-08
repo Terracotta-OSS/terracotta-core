@@ -18,10 +18,10 @@
  */
 package com.tc.object;
 
-import com.tc.net.core.BufferManagerFactory;
-import com.tc.net.core.BufferManagerFactorySupplier;
-import com.tc.net.core.ClearTextBufferManagerFactory;
-import com.tc.net.core.DefaultBufferManagerFactory;
+import com.tc.net.core.SocketEndpointFactory;
+import com.tc.net.core.SocketEndpointFactorySupplier;
+import com.tc.net.core.ClearTextSocketEndpointFactory;
+import com.tc.net.core.DefaultSocketEndpointFactory;
 import com.tc.net.core.ProductID;
 import com.terracotta.diagnostic.DiagnosticClientBuilder;
 
@@ -31,19 +31,19 @@ import org.terracotta.connection.ConnectionPropertyNames;
 public class StandardClientBuilderFactory implements ClientBuilderFactory {
 
   private final String scheme;
-  private final BufferManagerFactorySupplier supplier;
+  private final SocketEndpointFactorySupplier supplier;
 
   public StandardClientBuilderFactory(String scheme) {
-    DefaultBufferManagerFactory.setBufferManagerFactory(new ClearTextBufferManagerFactory());
-    BufferManagerFactorySupplier base = ClientBuilderFactory.get(BufferManagerFactorySupplier.class);
+    DefaultSocketEndpointFactory.setSocketEndpointFactory(new ClearTextSocketEndpointFactory());
+    SocketEndpointFactorySupplier base = ClientBuilderFactory.get(SocketEndpointFactorySupplier.class);
     this.scheme = scheme;
     if (base == null) {
-      supplier = (p)->new ClearTextBufferManagerFactory();
+      supplier = (p)->new ClearTextSocketEndpointFactory();
     } else {
        supplier = p -> {
-        BufferManagerFactory factory = base.createBufferManagerFactory(p);
+        SocketEndpointFactory factory = base.createSocketEndpointFactory(p);
         if (factory == null) {
-          return new ClearTextBufferManagerFactory();
+          return new ClearTextSocketEndpointFactory();
         }
         return factory;
       };
@@ -54,13 +54,13 @@ public class StandardClientBuilderFactory implements ClientBuilderFactory {
   public ClientBuilder create(Properties connectionProperties) {
     String type = connectionProperties.getProperty(ConnectionPropertyNames.CONNECTION_TYPE, scheme);
     if (type.equalsIgnoreCase("diagnostic")) {
-      return new DiagnosticClientBuilder(connectionProperties, supplier.createBufferManagerFactory(connectionProperties));
+      return new DiagnosticClientBuilder(connectionProperties, supplier.createSocketEndpointFactory(connectionProperties));
     } else if (type.equalsIgnoreCase("terracotta")) {
-      return new StandardClientBuilder(connectionProperties, supplier.createBufferManagerFactory(connectionProperties));
+      return new StandardClientBuilder(connectionProperties, supplier.createSocketEndpointFactory(connectionProperties));
     } else {
       for (ProductID pid : ProductID.values()) {
         if (pid.name().equalsIgnoreCase(type)) {
-          return new StandardClientBuilder(connectionProperties, supplier.createBufferManagerFactory(connectionProperties));
+          return new StandardClientBuilder(connectionProperties, supplier.createSocketEndpointFactory(connectionProperties));
         }
       }
     }

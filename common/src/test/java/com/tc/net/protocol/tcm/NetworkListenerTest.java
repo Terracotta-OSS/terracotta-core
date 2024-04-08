@@ -18,7 +18,7 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.net.core.ClearTextBufferManagerFactory;
+import com.tc.net.core.ClearTextSocketEndpointFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
@@ -50,7 +50,7 @@ public class NetworkListenerTest extends TestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    connMgr = new TCConnectionManagerImpl("TestCommMgr", 0, new ClearTextBufferManagerFactory());
+    connMgr = new TCConnectionManagerImpl("TestCommMgr", 0, new ClearTextSocketEndpointFactory());
     commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                              new PlainNetworkStackHarnessFactory(), connMgr, new NullConnectionPolicy());
   }

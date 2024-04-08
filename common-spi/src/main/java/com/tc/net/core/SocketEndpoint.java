@@ -18,22 +18,24 @@
  */
 package com.tc.net.core;
 
-import com.tc.util.TCServiceLoader;
+import java.io.Closeable;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  *
  */
-public class DefaultBufferManagerFactory {
-  private static BufferManagerFactory DEFAULT;
+public interface SocketEndpoint extends Closeable {
+    
+  ResultType writeFrom(ByteBuffer[] ref) throws IOException;
   
-  public static void setBufferManagerFactory(BufferManagerFactory d) {
-    DEFAULT = d;
-  }
-  
-  public static BufferManagerFactory getBufferManagerFactory() {
-    if (DEFAULT == null) {
-      DEFAULT = (BufferManagerFactory)TCServiceLoader.loadServices(BufferManagerFactory.class).stream().findFirst().orElseThrow(()->new RuntimeException("not found"));
-    }
-    return DEFAULT;
+  ResultType readTo(ByteBuffer[] ref) throws IOException;
+
+  enum ResultType {
+    EOF,  // end of file
+    ZERO, // zero bytes produced or consumed
+    SUCCESS, // some bytes produced or consumed
+    UNDERFLOW, // may occur on writeFrom, provide more data to be consumed
+    OVERFLOW,  // may occur on readTo, provide more capacity to read into
   }
 }

@@ -18,10 +18,7 @@
  */
 package com.tc.net.basic;
 
-import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCReference;
-import com.tc.net.core.BufferManager;
-import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionErrorEvent;
 import com.tc.net.core.event.TCConnectionEvent;
@@ -60,6 +57,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.tc.net.core.SocketEndpoint;
+import com.tc.net.core.SocketEndpointFactory;
+import com.tc.net.core.TCSocketEndpointReader;
 
 /**
  *
@@ -74,9 +74,9 @@ public class BasicConnection implements TCConnection {
   private final Consumer<TCConnection> closeRunnable;
   private final Consumer<WireProtocolMessage> write;
   private final TCProtocolAdaptor adaptor;
-  private volatile BufferManager buffer;
-  private final BufferManagerFactory bufferManagerFactory;
-  private Socket src;
+  private volatile SocketEndpoint socket;
+  private final SocketEndpointFactory socketEndpointFactory;
+  private volatile Socket src;
   private boolean established = false;
   private boolean connected = false;
   private final List<TCConnectionEventListener> listeners = new ArrayList<>();
@@ -85,9 +85,9 @@ public class BasicConnection implements TCConnection {
   private final String id;
   
   
-  public BasicConnection(String id, TCProtocolAdaptor adapter, BufferManagerFactory buffers, Consumer<TCConnection> close) {
+  public BasicConnection(String id, TCProtocolAdaptor adapter, SocketEndpointFactory buffers, Consumer<TCConnection> close) {
     this.id = id;
-    this.bufferManagerFactory = buffers;
+    this.socketEndpointFactory = buffers;
     Object writeMutex = new Object();
     this.write = (message)->{
       if (!message.prepareToSend()) {
@@ -97,33 +97,33 @@ public class BasicConnection implements TCConnection {
         try {
           if (this.src != null) {
             boolean interrupted = Thread.interrupted();
-            int totalLen = message.getTotalLength();
-            int moved = 0;
-            int sent = 0;
             try (TCReference data = message.getEntireMessageData().duplicate()) {
-              while (moved < totalLen) {
-                for (TCByteBuffer b : data) {
-                  if (!b.hasRemaining()) {
-                    // if there is no data here to write move to next
-                    continue;
-                  }
-                  ByteBuffer bb = b.getNioBuffer();
-                  moved += buffer.forwardToWriteBuffer(bb);
-                  b.returnNioBuffer(bb);
-                  if (b.hasRemaining()) {
-                    // if there is still data here, flush the buffer and try again to complete
-                    break;
+              long msgSize = data.available();
+              ByteBuffer[] target = data.toByteBufferArray();
+              try {
+                while (data.hasRemaining()) {
+                  switch(this.socket.writeFrom(target)) {
+                    case EOF:
+                      throw new EOFException();
+                    case OVERFLOW:
+                      // unexpected
+                      throw new IOException();
+                    case UNDERFLOW:
+                      if (msgSize > 0) {
+                        throw new IOException("underflow");
+                      }
+                      break;
+                    case SUCCESS:
+                    case ZERO:
+                      break;
                   }
                 }
-                sent += buffer.sendFromBuffer();
+              } finally {
+                data.returnByteBufferArray(target);
               }
-              while (sent < totalLen) {
-                // flush everything out of the buffer
-                sent += buffer.sendFromBuffer();
-              }
-              if (interrupted) {
-                Thread.currentThread().interrupt();
-              }
+            }
+            if (interrupted) {
+              Thread.currentThread().interrupt();
             }
           }
         } catch (IOException ioe) {
@@ -190,8 +190,8 @@ public class BasicConnection implements TCConnection {
   public Future<Void> asynchClose() {
     try {
       this.closeRunnable.accept(this);
-      shutdownBuffer();
       if (src != null) {
+        close(socket);
         SocketChannel channel = src.getChannel();
         tryOp(channel::shutdownInput);
         tryOp(channel::shutdownOutput);
@@ -222,19 +222,6 @@ public class BasicConnection implements TCConnection {
       LOGGER.debug("failed", t);
     }
   }  
-  
-  private boolean shutdownBuffer() {
-    BufferManager buff = this.buffer;
-    if (buff != null) {
-      try {
-        buff.close();
-        return true;
-      } catch (IOException ie) {
-        LOGGER.debug("failed to close buffer", ie);
-      }
-    }
-    return false;
-  }
     
   private Future<Void> shutdownAndAwaitTermination() {
     ExecutorService reader = readerExec;
@@ -307,8 +294,8 @@ public class BasicConnection implements TCConnection {
     // always rebuild the socket address with exerything that comes with it UnkownHostException etc
     SocketChannel channel = SocketChannel.open(new InetSocketAddress(InetAddress.getByName(addr.getHostString()), addr.getPort()));
     src = channel.socket();
-    this.buffer = bufferManagerFactory.createBufferManager(channel, true);
-    if (this.buffer == null) {
+    this.socket = socketEndpointFactory.createSocketEndpoint(channel, true);
+    if (this.socket == null) {
       throw new IOException("buffer manager not provided");
     }
     this.connected = src.isConnected();
@@ -387,55 +374,34 @@ public class BasicConnection implements TCConnection {
     readerExec.submit(() -> {
       LOGGER.debug("STARTING {} reader connected:{} established:{}", System.identityHashCode(this), connected, established);
       boolean exiting = false;
-      while (!isClosed()) {
-        LOGGER.debug("STATUS {} exiting:{} connected:{} established:{}", System.identityHashCode(this), exiting, connected, established);
-        if (exiting) {
-          return;
-        }
-        try {
-          long amount = buffer.recvToBuffer();
-          if (amount > 0) {
-            if (amount > Integer.MAX_VALUE) {
-              throw new AssertionError("overflow long");
-            }
-            int transfer = 0;
-            while (transfer < amount) {
-              int i = 0;
-              int read = 0;
-              TCByteBuffer[] buffers = adaptor.getReadBuffers();
-              while (i < buffers.length) {
-                read += buffer.forwardFromReadBuffer(buffers[i].getNioBuffer());
-                if (!buffers[i].hasRemaining()) {
-                  i += 1;
-                } else {
-                  break;
-                }
-              }
-              adaptor.addReadData(this, buffers, read);
-              transfer += read;
-            }
-            markReceived();
-          } else {
-            if (amount < 0) {
-              throw new EOFException();
-            }
+      try (TCSocketEndpointReader reader = new TCSocketEndpointReader()) {
+        while (!isClosed()) {
+          LOGGER.debug("STATUS {} exiting:{} connected:{} established:{}", System.identityHashCode(this), exiting, connected, established);
+          if (exiting) {
+            return;
           }
-        } catch (EOFException eof) {
-          if (!isClosed()) {
-            fireEOF();
-            close();
+          try (TCReference ref = reader.readFromSocket(socket, adaptor.getExpectedBytes())) {
+            if (ref != null) {
+              adaptor.addReadData(this, ref);
+              markReceived();
+            }
+          } catch (EOFException eof) {
+            if (!isClosed()) {
+              fireEOF();
+              close();
+            }
+            exiting = true;
+          } catch (TCProtocolException | IOException ioe) {
+            if (!isClosed()) {
+              fireError(ioe, null);
+              LOGGER.debug("error reading from connection", ioe);
+              close();
+            }
+            exiting = true;
           }
-          exiting = true;
-        } catch (TCProtocolException | IOException ioe) {
-          if (!isClosed()) {
-            fireError(ioe, null);
-            LOGGER.debug("error reading from connection", ioe);
-            close();
+          if (exiting) {
+            LOGGER.debug("anticipate exiting connected:{} established:{}", connected, established);
           }
-          exiting = true;
-        }
-        if (exiting) {
-          LOGGER.debug("anticipate exiting connected:{} established:{}", connected, established);
         }
       }
       LOGGER.debug("EXITED {} connected:{} established:{}", System.identityHashCode(this), connected, established);
@@ -479,10 +445,10 @@ public class BasicConnection implements TCConnection {
     state.put("closed", isClosed());
     state.put("connected", isConnected());
     state.put("transportConnected", isTransportEstablished());
-    if (buffer instanceof PrettyPrintable) {
-      state.put("buffer", ((PrettyPrintable)this.buffer).getStateMap());
+    if (socket instanceof PrettyPrintable) {
+      state.put("buffer", ((PrettyPrintable)this.socket).getStateMap());
     } else {
-      state.put("buffer", this.buffer.toString());
+      state.put("buffer", this.socket.toString());
     }
     return state;
   }  

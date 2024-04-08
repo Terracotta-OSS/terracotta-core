@@ -16,20 +16,17 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.net.protocol;
+package com.tc.net.core;
 
-import com.tc.bytes.TCReference;
-import com.tc.net.core.TCConnection;
+import java.io.IOException;
+import java.nio.channels.SocketChannel;
 
 /**
- * Message adaptor/parser for incoming data from TCConnection
- * 
- * @author teck
  */
-public interface TCProtocolAdaptor {
+public class ClearTextSocketEndpointFactory implements SocketEndpointFactory {
 
-  public void addReadData(TCConnection source, TCReference data) throws TCProtocolException;
-
-  public int getExpectedBytes();
+  @Override
+  public SocketEndpoint createSocketEndpoint(SocketChannel socketChannel, boolean client) throws IOException {
+    return new ClearTextSocketEndpoint(socketChannel);
+  }
 }
-

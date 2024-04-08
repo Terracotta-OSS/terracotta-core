@@ -76,7 +76,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
   }
 
   private synchronized ClientMessageTransport createClient(String clientName) {
-    TCConnectionManager connection = new TCConnectionManagerImpl("Client-TestCommMgr", 0, new ClearTextBufferManagerFactory());
+    TCConnectionManager connection = new TCConnectionManagerImpl("Client-TestCommMgr", 0, new ClearTextSocketEndpointFactory());
     clientConnectionMgrs.add(connection);
     CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                    new TransportNetworkStackHarnessFactory(),
@@ -103,7 +103,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
   public void testReaderandWriterCommThread() throws Exception {
     // comms manager with 4 worker comms
-    TCConnectionManager connMgr = new TCConnectionManagerImpl("Server-TestCommsMgr", 4, new ClearTextBufferManagerFactory());
+    TCConnectionManager connMgr = new TCConnectionManagerImpl("Server-TestCommsMgr", 4, new ClearTextSocketEndpointFactory());
     CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                    new TransportNetworkStackHarnessFactory(),
                                                                    connMgr,
@@ -155,7 +155,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
   }
 
   public void testWorkerCommDistributionAfterClose() throws Exception {
-    TCConnectionManager connMgr = new TCConnectionManagerImpl("Server-TestCommsMgr", 3, new ClearTextBufferManagerFactory());
+    TCConnectionManager connMgr = new TCConnectionManagerImpl("Server-TestCommsMgr", 3, new ClearTextSocketEndpointFactory());
     // comms manager with 3 worker comms
     CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                    getNetworkStackHarnessFactory(),
@@ -216,7 +216,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
   @Ignore("this test expects add more weight from a thread not able to do it")
   public void WorkerCommDistributionAfterAddMoreWeight() throws Exception {
-    TCConnectionManager connMgr = new TCConnectionManagerImpl("Server-TestCommsMgr", 3, new ClearTextBufferManagerFactory());
+    TCConnectionManager connMgr = new TCConnectionManagerImpl("Server-TestCommsMgr", 3, new ClearTextSocketEndpointFactory());
     // comms manager with 3 worker comms
     CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                    getNetworkStackHarnessFactory(),
@@ -285,7 +285,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
   }
 
   private ClientMessageChannel createClientMsgCh() {
-    TCConnectionManager connection = new TCConnectionManagerImpl("Client-TestCommMgr", 0, new ClearTextBufferManagerFactory());
+    TCConnectionManager connection = new TCConnectionManagerImpl("Client-TestCommMgr", 0, new ClearTextSocketEndpointFactory());
     clientConnectionMgrs.add(connection);
     CommunicationsManager clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                       getNetworkStackHarnessFactory(),
@@ -309,7 +309,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                  .getPropertiesFor(TCPropertiesConsts.L2_L1_HEALTH_CHECK_CATEGORY).addAllPropertiesTo(props);
       props.list(System.out);
       HealthCheckerConfigImpl config = new HealthCheckerConfigImpl(1000, 1000, 1, "test server", false, 1, 1);
-      TCConnectionManager connMgr = new TCConnectionManagerImpl("Server-TestCommsMgr", 3, new ClearTextBufferManagerFactory());
+      TCConnectionManager connMgr = new TCConnectionManagerImpl("Server-TestCommsMgr", 3, new ClearTextSocketEndpointFactory());
       CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                      new TCMessageRouterImpl(),
                                                                      getNetworkStackHarnessFactory(),

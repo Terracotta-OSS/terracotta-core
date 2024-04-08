@@ -20,7 +20,7 @@ package com.terracotta.diagnostic;
 
 
 import com.tc.net.basic.BasicConnectionManager;
-import com.tc.net.core.BufferManagerFactory;
+import com.tc.net.core.SocketEndpointFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.object.ClientEntityManager;
@@ -32,7 +32,7 @@ import java.util.Properties;
 
 public class DiagnosticClientBuilder extends StandardClientBuilder {
 
-  public DiagnosticClientBuilder(Properties connectionProperties, BufferManagerFactory buffers) {
+  public DiagnosticClientBuilder(Properties connectionProperties, SocketEndpointFactory buffers) {
     super(connectionProperties, buffers);
   }
   
@@ -48,6 +48,6 @@ public class DiagnosticClientBuilder extends StandardClientBuilder {
 
   @Override
   public TCConnectionManager createConnectionManager(String uuid, String name) {
-    return new BasicConnectionManager(name + "/" + uuid, getBufferManagerFactory());
+    return new BasicConnectionManager(name + "/" + uuid, getSocketEndpointFactory());
   }
 }

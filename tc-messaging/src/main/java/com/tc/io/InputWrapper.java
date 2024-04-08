@@ -16,14 +16,24 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.net.core;
+package com.tc.io;
 
-import java.util.Properties;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
+ *
  */
-public interface BufferManagerFactorySupplier {
+public class InputWrapper extends InputStream {
+  
+  private final TCByteBufferInput source;
 
-  BufferManagerFactory createBufferManagerFactory(Properties properties);
-
+  public InputWrapper(TCByteBufferInput sink) {
+    this.source = sink;
+  }
+  
+  @Override
+  public int read() throws IOException {
+    return source.read();
+  }
 }
