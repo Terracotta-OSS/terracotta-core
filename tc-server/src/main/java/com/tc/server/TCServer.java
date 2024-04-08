@@ -88,4 +88,8 @@ public interface TCServer extends Pauseable {
   ProductInfo productInfo();
 
   List<Client> getConnectedClients();
+  
+  void disconnectPeer(String nodeName);
+  
+  void leaveGroup();
 }

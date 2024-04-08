@@ -37,7 +37,6 @@ class PassiveTerracottaClusteredMap implements PassiveServerEntity<MapOperation,
   private final String name;
   private final Map<String, CompoundMap<Object, Object>> root;
   private final CompoundMap<Object, Object> map;
-  private int syncing = -1;
 
   public PassiveTerracottaClusteredMap(String name, int concurrency, Map<String, CompoundMap<Object, Object>> root) {
     this.name = name;
@@ -93,7 +92,7 @@ class PassiveTerracottaClusteredMap implements PassiveServerEntity<MapOperation,
       }
       case SYNC_OP: {
         SyncOperation op = (SyncOperation)input;
-        map.putMapForSegment(syncing, op.getObjectMap());
+        map.putMapForSegment(op.getConcurrency(), op.getObjectMap());
         break;
       }
       default:
@@ -114,13 +113,13 @@ public void endSyncEntity() {
 
   @Override
 public void startSyncConcurrencyKey(int concurrencyKey) {
-    syncing = concurrencyKey;
-  }
+
+}
 
   @Override
 public void endSyncConcurrencyKey(int concurrencyKey) {
-    syncing = -1;
-  }
+
+}
 
   @Override
 public void createNew() {

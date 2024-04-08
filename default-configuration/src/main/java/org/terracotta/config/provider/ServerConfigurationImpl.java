@@ -40,10 +40,10 @@ public class ServerConfigurationImpl implements ServerConfiguration {
   private final BindPort tsaGroupPort;
   private final String host;
   private final String serverName;
-  private final String logs;
+  private final File logs;
   private final int clientReconnectWindow;
 
-  ServerConfigurationImpl(Server server, int clientReconnectWindow) {
+  ServerConfigurationImpl(Server server, boolean consoleLogging, int clientReconnectWindow) {
     String bindAddress = server.getBind();
     this.host = server.getHost();
     if (this.host.equalsIgnoreCase(LOCALHOST) && !WARNED) {
@@ -67,7 +67,7 @@ public class ServerConfigurationImpl implements ServerConfiguration {
 
     this.clientReconnectWindow = clientReconnectWindow;
 
-    this.logs = server.getLogs();
+    this.logs = (consoleLogging) ? null : new File(server.getLogs());
   }
 
   @Override
@@ -97,6 +97,6 @@ public class ServerConfigurationImpl implements ServerConfiguration {
 
   @Override
   public File getLogsLocation() {
-    return new File(this.logs);
+    return this.logs;
   }
 }

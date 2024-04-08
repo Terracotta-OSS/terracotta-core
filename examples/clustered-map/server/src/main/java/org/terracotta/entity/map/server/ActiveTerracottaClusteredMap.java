@@ -188,6 +188,6 @@ public class ActiveTerracottaClusteredMap implements ActiveServerEntity<MapOpera
 
   @Override
   public void synchronizeKeyToPassive(PassiveSynchronizationChannel<MapOperation> syncChannel, int concurrencyKey) {
-    syncChannel.synchronizeToPassive(new SyncOperation(map.mapForSegment(concurrencyKey)));
+    syncChannel.synchronizeToPassive(new SyncOperation(concurrencyKey, map.mapForSegment(concurrencyKey)));
   }
 }

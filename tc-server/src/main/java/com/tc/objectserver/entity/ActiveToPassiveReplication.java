@@ -196,7 +196,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     executeOnPool(() -> {
       sync.begin();
       // start passive sync message
-      LOGGER.debug("starting sync for " + newNode + " on session " + session);
+      LOGGER.debug("Starting sync for " + newNode + " on session " + session);
       List<SyncReplicationActivity.EntityCreationTuple> tuplesForCreation = new ArrayList<>();
       Iterable<ManagedEntity> e = snapshotter.snapshotEntityList(entity -> {
           // We want to create the array of activity data.
@@ -222,7 +222,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
         LOGGER.debug("ending sync for entity " + newNode + "/" + entity.getID());
       }
       //  passive sync done message.  causes passive to go into passive standby mode
-      LOGGER.debug("ending sync " + newNode);
+      LOGGER.info("Finished sync to node: {}", newNode);
       replicateActivity(SyncReplicationActivity.createEndSyncMessage(TCByteBufferFactory.wrap(replicateEntityPersistor())), Collections.singleton(session)).waitForCompleted();
       sync.end();
       sync.commit();

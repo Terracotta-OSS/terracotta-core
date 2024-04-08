@@ -16,28 +16,11 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.l2.ha;
+package org.terracotta.config.provider;
 
-import com.tc.l2.ha.WeightGeneratorFactory.WeightGenerator;
-import com.tc.l2.state.ServerMode;
-import com.tc.objectserver.persistence.ServerPersistentState;
-import com.tc.util.Assert;
-
-public class InitialStateWeightGenerator implements WeightGenerator {
-  private final ServerPersistentState state;
-
-  public InitialStateWeightGenerator(ServerPersistentState state) {
-    Assert.assertNotNull(state);
-    this.state = state;
-  }
-
-  @Override
-  public long getWeight() {
-    // active initially should win
-    if (ServerMode.RELAY == state.getInitialMode()) {
-      return -1;
-    }
-    return ServerMode.ACTIVE == state.getInitialMode() ? 1 : 0;
-  }
-
+/**
+ *
+ */
+public interface RelayMBean {
+  boolean clearRelay();
 }

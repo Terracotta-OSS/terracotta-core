@@ -16,17 +16,35 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
+package com.tc.objectserver.persistence;
 
-package com.tc.async.impl;
-
-import com.tc.async.api.EventHandler;
+import com.tc.l2.state.ServerMode;
+import com.tc.l2.state.StateManager;
 
 /**
+ *
  */
-public interface SinkFilter<EC> {
-  boolean filter(EC context);
+public class ClusterPersistentState implements ServerPersistentState {
   
-  default EventHandler<EC> filterHandler(EventHandler<EC> handler) {
-    return handler;
+  private final ClusterStatePersistor persistor;
+
+  public ClusterPersistentState(ClusterStatePersistor persistor) {
+    this.persistor = persistor;
   }
+
+  @Override
+  public boolean isDBClean() {
+    return persistor.isDBClean();
+  }
+
+  @Override
+  public void setDBClean(boolean clean) {
+    persistor.setDBClean(clean);
+  }
+
+  @Override
+  public ServerMode getInitialMode() {
+    return StateManager.convert(persistor.getInitialState());
+  }
+  
 }
