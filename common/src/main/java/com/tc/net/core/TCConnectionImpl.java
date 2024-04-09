@@ -111,8 +111,8 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private final SetOnceRef<InetSocketAddress> localSocketAddress = new SetOnceRef<>();
   private final SetOnceRef<InetSocketAddress> remoteSocketAddress = new SetOnceRef<>();
   private final SocketParams socketParams;
-  private final AtomicLong totalRead = new AtomicLong(0);
-  private final AtomicLong totalWrite = new AtomicLong(0);
+  private final LongAdder totalRead = new LongAdder();
+  private final LongAdder totalWrite = new LongAdder();
   private final Queue<WriteContext>  writeContexts = new ConcurrentLinkedQueue<>();
   private final ReentrantLock writeContextControl = new ReentrantLock();
 
@@ -179,8 +179,8 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     Map<String, Object> state = new LinkedHashMap<>();
     state.put("localAddress", this.getLocalAddress());
     state.put("remoteAddress", this.getRemoteAddress());
-    state.put("totalRead", this.totalRead.get());
-    state.put("totalWrite", this.totalWrite.get());
+    state.put("totalRead", this.totalRead.sum());
+    state.put("totalWrite", this.totalWrite.sum());
     state.put("connectTime", new Date(this.getConnectTime()));
     state.put("receiveIdleTime", this.getIdleReceiveTime());
     state.put("idleTime", this.getIdleTime());
@@ -315,7 +315,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private long doReadInternal() throws IOException {
     try {
       long read = doReadAndPackage();
-      this.totalRead.addAndGet(read);
+      this.totalRead.add(read);
       this.messagesRead.increment();
       return read;
     } catch (IOException ioe) {
@@ -340,7 +340,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       return 0;
     }
 
-    this.totalWrite.addAndGet(written);
+    this.totalWrite.add(written);
     return written;
   }
 
@@ -602,7 +602,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
     buf.append(" idle=").append(getIdleTime()).append("ms");
 
-    buf.append(" [").append(this.totalRead.get()).append(" read, ").append(this.totalWrite.get()).append(" write]");
+    buf.append(" [").append(this.totalRead.sum()).append(" read, ").append(this.totalWrite.sum()).append(" write]");
 
     buf.append(" buffer=").append(this.socket);
 
