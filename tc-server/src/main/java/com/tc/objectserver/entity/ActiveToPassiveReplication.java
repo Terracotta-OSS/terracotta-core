@@ -408,9 +408,9 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     return waiters;
   }
   // for test
-  void finishPassiveSync(long timeout) throws InterruptedException {
+  boolean finishPassiveSync(long timeout) throws InterruptedException {
     passiveSyncPool.shutdown();
-    passiveSyncPool.awaitTermination(timeout, TimeUnit.MILLISECONDS);
+    return passiveSyncPool.awaitTermination(timeout, TimeUnit.MILLISECONDS);
   }
   
   
