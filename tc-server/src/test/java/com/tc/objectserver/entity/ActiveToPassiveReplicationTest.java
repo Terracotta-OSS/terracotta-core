@@ -109,7 +109,10 @@ public class ActiveToPassiveReplicationTest {
     when(activity.getActivityID()).thenReturn(SyncReplicationActivity.ActivityID.getNextID());
     ActivePassiveAckWaiter ack2 = replication.replicateActivity(nowait, replication.passives());
     Assert.assertTrue(ack2.isCompleted());
-    replication.finishPassiveSync(10000);
+    int turns = 1;
+    while (!replication.finishPassiveSync(10000)) {
+      System.out.println("Still waiting for sync shutdown after " + turns++ + "0s");
+    }
     removal.get();
     Assert.assertTrue(replication.getWaiters().isEmpty());
   }
