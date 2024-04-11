@@ -41,7 +41,6 @@ import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorContext;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandler;
 import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
-import com.tc.net.protocol.transport.TransportHandshakeMessage;
 import com.tc.net.protocol.transport.TransportMessageFactoryImpl;
 import com.tc.net.protocol.transport.TransportNetworkStackHarnessFactory;
 import com.tc.net.protocol.transport.WireProtocolAdaptorFactoryImpl;
@@ -103,7 +102,8 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
   public void testReaderandWriterCommThread() throws Exception {
     // comms manager with 4 worker comms
-    TCConnectionManager connMgr = new TCConnectionManagerImpl("Server-TestCommsMgr", 4, new ClearTextSocketEndpointFactory());
+    logger.debug("Running target test");
+    TCConnectionManager connMgr = new TCConnectionManagerImpl("Target-Server-TestCommsMgr", 4, new ClearTextSocketEndpointFactory());
     CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                    new TransportNetworkStackHarnessFactory(),
                                                                    connMgr,
@@ -130,7 +130,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     waitForWeight(commsMgr, 1, 1);
     waitForWeight(commsMgr, 2, 1);
     waitForWeight(commsMgr, 3, 1);
-
+    
     for (int i = 0; i < 4; i++) {
       CoreNIOServices workerI = ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWorkerComm(i);
       waitForRead(workerI);
@@ -141,8 +141,10 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
       Assert.eval(workerI.getTotalBytesRead() > 0);
       Assert.eval(workerI.getTotalBytesWritten() > 0);
-
+      System.out.println("Activity on " + workerI.getName() + " " + workerI.getReaderComm().getTotalBytesRead() + " " + workerI.getWriterComm().getTotalBytesWritten()+ " " + workerI.getWeight());
     }
+    CoreNIOServices mainL = ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).nioServiceThreadForNewConnection();
+    System.out.println("Activity on " + mainL.getName() + " " + mainL.getReaderComm().getTotalBytesRead() + " " + mainL.getWriterComm().getTotalBytesWritten() + " " + mainL.getWeight());
 
     client1.close();
     client2.close();
@@ -464,6 +466,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
       @Override
       public Boolean call() throws Exception {
         for (ClientMessageTransport transport : transports) {
+          System.out.println("checking connected " + transport.isConnected() + " " + transport.wasOpened());
           if (!transport.isConnected()) {
             return false;
           }
@@ -502,6 +505,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     CallableWaiter.waitOnCallable(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
+        System.out.println("Wait for read " + commThread.getName() + " " + commThread.getReaderComm().getTotalBytesRead() + " " +  + commThread.getWriterComm().getTotalBytesRead());
         return commThread.getReaderComm().getTotalBytesRead() > 0;
       }
     });

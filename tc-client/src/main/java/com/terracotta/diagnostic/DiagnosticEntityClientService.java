@@ -28,12 +28,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.tc.util.concurrent.ThreadUtil;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.terracotta.connection.DiagnosticsConfig;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.Invocation;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
@@ -79,7 +80,11 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
               } else if (methodName.equals("set")) {
                 return "setJMX " + args[0] + " " + args[1] + " " + args[2];
               } else if (methodName.equals("invoke")) {
-                return "invokeJMX " + args[0] + " " + args[1];
+                if (args.length > 2) {
+                  return "invokeJMX " + args[0] + " " + args[1] + Stream.of((Object[])args[2]).map(Object::toString).collect(Collectors.joining(" "," ", ""));
+                } else {
+                  return "invokeJMX " + args[0] + " " + args[1];
+                }
               } else if (methodName.equals("invokeWithArg")) {
                 return "invokeWithArgJMX " + args[0] + " " + args[1] + " " + args[2];
               } else {
