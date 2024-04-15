@@ -55,9 +55,7 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
@@ -68,7 +66,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import com.tc.net.protocol.tcm.TCActionNetworkMessage;
 import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
@@ -103,7 +103,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private final AtomicLong lastDataReceiveTime = new AtomicLong(System.currentTimeMillis());
   private final LongAdder messagesRead = new LongAdder();
   private final AtomicLong connectTime = new AtomicLong(NO_CONNECT_TIME);
-  private final List<TCConnectionEventListener> eventListeners = new CopyOnWriteArrayList<>();
+  private final Set<TCConnectionEventListener> eventListeners = ConcurrentHashMap.newKeySet();
   private final TCProtocolAdaptor protocolAdaptor;
   private final AtomicBoolean isSocketEndpoint = new AtomicBoolean(false);
   private final SetOnceFlag closed = new SetOnceFlag();
@@ -201,8 +201,13 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     return state;
   }
 
-  public void setCommWorker(CoreNIOServices worker) {
-    this.commWorker = worker;
+  public boolean setCommWorker(CoreNIOServices worker) {
+    if (this.commWorker != worker) {
+      this.commWorker = worker;
+      return true;
+    } else {
+      return false;
+    }
   }
 
   private Future<Void> closeImpl(Runnable callback) {
@@ -541,6 +546,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     return new Runnable() {
       @Override
       public void run() {
+        logger.debug("running close callback");
         setConnected(false);
         TCConnectionImpl.this.parent.connectionClosed(TCConnectionImpl.this);
 
@@ -610,15 +616,15 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   }
 
   @Override
-  public final void addListener(TCConnectionEventListener listener) {
-    if (listener == null) { return; }
-    this.eventListeners.add(listener); // don't need sync
+  public final boolean addListener(TCConnectionEventListener listener) {
+    if (listener == null) { return false; }
+    return this.eventListeners.add(listener);
   }
 
   @Override
-  public final void removeListener(TCConnectionEventListener listener) {
-    if (listener == null) { return; }
-    this.eventListeners.remove(listener); // don't need sync
+  public final boolean removeListener(TCConnectionEventListener listener) {
+    if (listener == null) { return false; }
+    return this.eventListeners.remove(listener);
   }
 
   @Override
@@ -888,6 +894,16 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   public void setTransportEstablished() {
     this.commWorker.addConnection(this, this.channel);
     this.transportEstablished.set(true);
+  }
+  
+  public void migrate() {
+    if (this.commWorker.getReaderComm() == Thread.currentThread()) {
+      this.commWorker.addConnection(this, this.channel);
+    } else {
+      this.commWorker.getReaderComm().addSelectorTask(()-> {
+        this.commWorker.addConnection(this, this.channel);
+      });
+    }
   }
 
   @Override

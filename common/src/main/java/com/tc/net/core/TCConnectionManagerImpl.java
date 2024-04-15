@@ -62,7 +62,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   protected static final Logger logger                 = LoggerFactory.getLogger(TCConnectionManager.class);
 
   private final TCCommImpl              comm;
-  private final Set<TCConnection>       connections            = new HashSet<>();
+  private final Set<TCConnectionImpl>       connections            = new HashSet<>();
   private final Set<TCListener>         listeners              = new HashSet<>();
   private final SetOnceFlag             shutdown               = new SetOnceFlag();
   private final ConnectionEvents        connEvents;
@@ -102,7 +102,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     return state;
   }
 
-  protected TCConnection createConnectionImpl(TCProtocolAdaptor adaptor, TCConnectionEventListener listener) {
+  protected TCConnectionImpl createConnectionImpl(TCProtocolAdaptor adaptor, TCConnectionEventListener listener) {
     return new TCConnectionImpl(listener, adaptor, this, comm.nioServiceThreadForNewConnection(), socketParams, socketEndpointFactory);
   }
 
@@ -170,7 +170,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   public final TCConnection createConnection(TCProtocolAdaptor adaptor) throws IOException {
     checkShutdown();
 
-    TCConnection rv = createConnectionImpl(adaptor, connEvents);
+    TCConnectionImpl rv = createConnectionImpl(adaptor, connEvents);
     newConnection(rv);
 
     return rv;
@@ -249,7 +249,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     }
   }
 
-  void newConnection(TCConnection conn) {
+  void newConnection(TCConnectionImpl conn) {
     synchronized (connections) {
       connections.add(conn);
     }
@@ -328,5 +328,9 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   @Override
   public int getBufferCount() {
     return buffers.referenced();
+  }
+  
+  void distribute() {
+    connections.forEach(TCConnectionImpl::migrate);
   }
 }

@@ -617,6 +617,10 @@ public class DistributedObjectServer {
     channelManager.addEventListener(this.connectionIdFactory);
     
     ServerPersistentState serverPersistentState = configuration.isRelaySource() ? new RelayPersistentState() : new ClusterPersistentState(this.persistor.getClusterStatePersistor());
+    
+    if (serverPersistentState.getInitialMode() == ServerMode.ACTIVE && configuration.isRelayDestination()) {
+      throw new TCShutdownServerException("Unable to start as a relay destination.  The server was shutdown as active");
+    }
 
     final boolean availableMode = voteCount < 0;
     final WeightGeneratorFactory weightGeneratorFactory = new WeightGeneratorFactory();
