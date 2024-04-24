@@ -42,7 +42,9 @@ public class ConsistencyManagerWeightGenerator implements WeightGenerator {
   @Override
   public long getWeight() {
     long weight = 0L;
-    if (state.get().isActiveCoordinator()) {
+    if (state.get().getCurrentMode() == ServerMode.RELAY) {
+      weight = -1L;
+    } else if (state.get().isActiveCoordinator()) {
       weight |= 0x08;
     } else if (state.get().getCurrentMode() == ServerMode.PASSIVE) {
       weight |= 0x01;

@@ -213,4 +213,8 @@ public class ClusterStateMessage extends AbstractGroupMessage {
     return msg;
   }
 
+  @Override
+  public String toString() {
+    return "ClusterStateMessage{" + "type=" + getType() + '}';
+  }
 }

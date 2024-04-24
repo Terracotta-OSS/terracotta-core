@@ -65,6 +65,7 @@ import static org.terracotta.config.provider.DefaultConfigurationProvider.Opt.CO
 import static com.tc.server.Directories.TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME;
 import java.util.Arrays;
 import static org.mockito.Mockito.doAnswer;
+import org.terracotta.config.Servers;
 import static org.terracotta.config.provider.DefaultConfigurationProvider.Opt.HELP;
 import org.terracotta.server.Server;
 import org.terracotta.server.ServerEnv;
@@ -100,6 +101,7 @@ public class DefaultConfigurationProviderTest {
   @Before
   public void setUp() throws Exception {
     final TcConfiguration tcConfiguration = mock(TcConfiguration.class);
+    when(tcConfig.getServers()).thenReturn(mock(Servers.class));
     when(tcConfiguration.getServiceConfigurations()).thenReturn(serviceProviderConfigurations);
     when(tcConfiguration.getPlatformConfiguration()).thenReturn(tcConfig);
     when(tcConfiguration.getExtendedConfiguration(any())).thenReturn(extendedConfigurations);
@@ -125,6 +127,7 @@ public class DefaultConfigurationProviderTest {
     final TcConfiguration tcConfiguration = mock(TcConfiguration.class);
     TcConfig config = mock(TcConfig.class);
     when(tcConfiguration.getPlatformConfiguration()).thenReturn(config);
+    when(config.getServers()).thenReturn(mock(Servers.class));
     FailoverPriority priority = mock(FailoverPriority.class);
     when(config.getFailoverPriority()).thenReturn(priority);
     Consistency consistency = mock(Consistency.class);

@@ -60,6 +60,9 @@ import org.slf4j.LoggerFactory;
 import com.tc.net.core.SocketEndpoint;
 import com.tc.net.core.SocketEndpointFactory;
 import com.tc.net.core.TCSocketEndpointReader;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  *
@@ -79,7 +82,7 @@ public class BasicConnection implements TCConnection {
   private volatile Socket src;
   private boolean established = false;
   private boolean connected = false;
-  private final List<TCConnectionEventListener> listeners = new ArrayList<>();
+  private final Set<TCConnectionEventListener> listeners = Collections.synchronizedSet(new HashSet<>());
   private volatile Thread serviceThread;
   private volatile ExecutorService readerExec;
   private final String id;
@@ -161,17 +164,13 @@ public class BasicConnection implements TCConnection {
   }
 
   @Override
-  public synchronized void addListener(TCConnectionEventListener listener) {
-    if (!listeners.contains(listener)) {
-      listeners.add(listener);
-    }
+  public synchronized boolean addListener(TCConnectionEventListener listener) {
+    return listeners.add(listener);
   }
 
   @Override
-  public synchronized void removeListener(TCConnectionEventListener listener) {
-    if (listeners.contains(listener)) {
-      listeners.remove(listener);
-    }
+  public synchronized boolean removeListener(TCConnectionEventListener listener) {
+    return listeners.remove(listener);
   }
 
   @Override

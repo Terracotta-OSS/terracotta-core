@@ -67,8 +67,18 @@ public class TestActiveGroupManager implements GroupManager<GroupMessage> {
   }
 
   @Override
+  public void disconnect() {
+    throw new UnsupportedOperationException("Not supported yet."); 
+  }
+
+  @Override
   public void registerForGroupEvents(GroupEventsListener listener) {
     groupListeners.add(listener);
+  }
+
+  @Override
+  public void unregisterForGroupEvents(GroupEventsListener listener) {
+    groupListeners.remove(listener);
   }
 
   @Override
@@ -196,6 +206,11 @@ public class TestActiveGroupManager implements GroupManager<GroupMessage> {
   public void closeMember(ServerID next) {
 
     //
+  }
+
+  @Override
+  public void closeMember(String name) {
+
   }
 
   @Override

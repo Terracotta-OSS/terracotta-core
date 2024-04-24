@@ -17,6 +17,7 @@
 <modules>
     <module>clustered-map</module>
     <module>extended-server</module>
+    <module>toy</module>
 </modules>
 
     <dependencies>

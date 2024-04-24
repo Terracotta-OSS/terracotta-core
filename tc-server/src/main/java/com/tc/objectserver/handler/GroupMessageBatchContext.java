@@ -26,9 +26,11 @@ import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
+import com.tc.net.groups.GroupMessage;
 import com.tc.net.utils.L2Utils;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 
 public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
@@ -118,6 +120,34 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
         this.handleNetworkDone();
         throw e;
       }
+    }
+  }
+  
+  public boolean sendBatch(Predicate<GroupMessage> sendCheck) throws GroupException {
+    IBatchableGroupMessage<E> messageToSend = getMessageToSend();
+    if (messageToSend != null) {
+      try {
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Sending batch id:{} count:{} size:{}", messageToSend.getSequenceID(), messageToSend.getBatchSize(), messageToSend.getPayloadSize());
+        }
+        AbstractGroupMessage msg = messageToSend.asAbstractGroupMessage();
+        if (sendCheck.test(msg)) {
+          this.groupManager.sendToWithSentCallback(this.target, msg, this::handleNetworkDone);        
+          if (messageToSend.getPayloadSize() > THRESHOLD) {
+            waitForFlush();
+          }
+          return true;
+        } else {
+          return false;
+        }
+      } catch (GroupException e) {
+        LOGGER.warn("replication message failed", e);
+        //  message failed but we still need to reset state
+        this.handleNetworkDone();
+        throw e;
+      }
+    } else {
+      return false;    
     }
   }
   

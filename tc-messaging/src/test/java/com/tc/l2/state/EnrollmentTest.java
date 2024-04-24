@@ -21,6 +21,7 @@ package com.tc.l2.state;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ServerID;
+import com.tc.util.Assert;
 
 import org.junit.Test;
 
@@ -42,7 +43,13 @@ public class EnrollmentTest {
 
       assertEquals(e, e1);
     }
-
   }
-
+  
+  @SuppressWarnings("resource")
+  @Test
+  public void testCompare() throws Exception {
+    Enrollment e1 = new Enrollment(new ServerID("30001", new byte[] { 54, -125, 34, -4 }), true, new long[] {Long.MIN_VALUE, -1, 0, 1, Long.MAX_VALUE});
+    Enrollment e2 = new Enrollment(new ServerID("30001", new byte[] { 54, -125, 34, -4 }), true, new long[] {Long.MIN_VALUE, -1, -1, 1, Long.MAX_VALUE});
+    Assert.assertTrue(e1.wins(e2));
+  }
 }

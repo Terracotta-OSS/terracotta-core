@@ -19,14 +19,14 @@
 package com.tc.l2.ha;
 
 import com.tc.l2.ha.WeightGeneratorFactory.WeightGenerator;
-import com.tc.l2.state.StateManager;
-import com.tc.objectserver.persistence.ClusterStatePersistor;
+import com.tc.l2.state.ServerMode;
+import com.tc.objectserver.persistence.ServerPersistentState;
 import com.tc.util.Assert;
 
 public class InitialStateWeightGenerator implements WeightGenerator {
-  private final ClusterStatePersistor state;
+  private final ServerPersistentState state;
 
-  public InitialStateWeightGenerator(ClusterStatePersistor state) {
+  public InitialStateWeightGenerator(ServerPersistentState state) {
     Assert.assertNotNull(state);
     this.state = state;
   }
@@ -34,7 +34,10 @@ public class InitialStateWeightGenerator implements WeightGenerator {
   @Override
   public long getWeight() {
     // active initially should win
-    return StateManager.ACTIVE_COORDINATOR.equals(state.getInitialState()) ? 1 : 0;
+    if (ServerMode.RELAY == state.getInitialMode()) {
+      return -1;
+    }
+    return ServerMode.ACTIVE == state.getInitialMode() ? 1 : 0;
   }
 
 }

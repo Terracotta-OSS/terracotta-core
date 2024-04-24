@@ -26,9 +26,11 @@ import java.util.Map;
 
 class SyncOperation implements MapOperation {
   private final Map<Object, Object> objects;
+  private final int concurrency;
 
-  public SyncOperation(Map<Object, Object> objects) {
+  public SyncOperation(int concurrency, Map<Object, Object> objects) {
     this.objects = objects;
+    this.concurrency = concurrency;
   }
 
   @Override
@@ -47,5 +49,9 @@ class SyncOperation implements MapOperation {
 
   public Map<Object, Object> getObjectMap() {
     return objects;
+  }
+
+  public int getConcurrency() {
+    return concurrency;
   }
 }

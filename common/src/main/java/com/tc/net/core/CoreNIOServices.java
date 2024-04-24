@@ -252,23 +252,33 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     // MainComm Thread
     if (workerCommMgr == null) { return; }
 
-    readerComm.unregister(channel);
     final CoreNIOServices workerComm = workerCommMgr.getNextWorkerComm();
-    connection.setCommWorker(workerComm);
-    workerComm.addConnection(connection);
-    workerComm.requestReadWriteInterest(connection, channel);
+    try {
+      if (connection.setCommWorker(workerComm)) {
+        readerComm.unregister(channel);
+        if (connection.removeListener(this)) {
+          this.clientWeights.decrementAndGet();
+        }
+
+        workerComm.addConnection(connection);
+        workerComm.requestReadWriteInterest(connection, channel);
+      }
+    } finally {
+      workerComm.deselectForWeighting();
+    }
   }
 
   private void addConnection(TCConnectionImpl connection) {
-    this.clientWeights.incrementAndGet();
-    deselectForWeighting();
-    connection.addListener(this);
+    if (connection.addListener(this)) {
+      this.clientWeights.incrementAndGet();
+    }
   }
 
   @Override
   public void closeEvent(TCConnectionEvent event) {
+    if (event.getSource().removeListener(this)) {
       this.clientWeights.decrementAndGet();
-      event.getSource().removeListener(this);
+    }
   }
 
   @Override
@@ -483,7 +493,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
       if (Thread.currentThread() != this) {
         if (logger.isDebugEnabled()) {
-          logger.debug("queue'ing channel close operation");
+          logger.debug("queue'ing channel close operation " + getName());
         }
 
         addSelectorTask(new Runnable() {
@@ -557,6 +567,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
         // this is just a catch all to make sure that no exceptions will be thrown by this method, please do not remove
         logger.error("Unhandled exception in cleanupChannel()", e);
       } finally {
+        logger.debug("cleanup runner for " + getName());
         try {
           if (callback != null) {
             callback.run();
@@ -599,11 +610,23 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
       Selector localSelector = this.selector;
       Queue<Runnable> localSelectorTasks = this.selectorTasks;
+      int congestionDetected = 0;
 
       while (true) {
         final int numKeys;
         try {
-          numKeys = localSelector.select();
+          if (isReader()) {
+            int localKeys = localSelector.selectNow();
+            if (localKeys == 0 && localSelectorTasks.isEmpty()) {
+              congestionDetected = 0;
+              localKeys = localSelector.select();
+            } else {
+              congestionDetected++;
+            }
+            numKeys = localKeys;
+          } else {
+            numKeys = localSelector.select();
+          }
         } catch (IOException ioe) {
           throw ioe;
         } catch (CancelledKeyException cke) {
@@ -676,7 +699,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
             if (key.isValid() && !isReader() && key.isWritable()) {
               long written = ((TCChannelWriter) key.attachment()).doWrite();
-                bytesMoved += written;
+              bytesMoved += written;
             }
           } catch (CancelledKeyException cke) {
             logger.debug("selection key cancelled key@" + key.hashCode());
@@ -694,9 +717,14 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
               TCListenerImpl lsnr = (TCListenerImpl) key.attachment();
               // just log
             }
-
           }
         } // for
+        if (isReader() && congestionDetected > 10 && workerCommMgr != null && workerCommMgr.isUnbalanced()) {
+          for (SelectionKey key : selectedKeys) {
+            TCConnectionImpl connect = (TCConnectionImpl)key.attachment();
+            connect.migrate();
+          }
+        }
       } // while (true)
     }
 

@@ -61,14 +61,14 @@ class ClusteredMapSyncCodec implements SyncMessageCodec<MapOperation> {
         try {
             InputStream is = new ByteArrayInputStream(payload);
             ObjectInputStream dis = new ObjectInputStream(is);
-            Map<Object, Object> map = new HashMap<Object, Object>();
+            Map<Object, Object> map = new HashMap<>();
             Object key = readKey(dis);
             while (null != key) {
               Object value = dis.readObject();
               map.put(key, value);
               key = readKey(dis);
             }
-            return new SyncOperation(map);
+            return new SyncOperation(concurrencyKey, map);
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
         } catch (ClassNotFoundException e) {
