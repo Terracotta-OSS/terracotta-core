@@ -45,6 +45,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -169,6 +170,10 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
   private synchronized String getListenerString() {
     return this.listenerString;
+  }
+  
+  public long getCongestionScore() {
+    return readerComm.getCongestionScore() + writerComm.getCongestionScore();
   }
 
   public long getTotalBytesRead() {
@@ -349,6 +354,8 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     private final String                        name;
     private long                    bytesMoved    = 0;
     private final COMM_THREAD_MODE              mode;
+    private long congestionScore = 0;
+    private long lastIdleNanos = System.nanoTime();
 
     public CommThread(COMM_THREAD_MODE mode) {
       name = commThreadName + (mode == COMM_THREAD_MODE.NIO_READER ? "_R" : "_W");
@@ -610,23 +617,21 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
       Selector localSelector = this.selector;
       Queue<Runnable> localSelectorTasks = this.selectorTasks;
-      int congestionDetected = 0;
 
       while (true) {
         final int numKeys;
         try {
-          if (isReader()) {
-            int localKeys = localSelector.selectNow();
-            if (localKeys == 0 && localSelectorTasks.isEmpty()) {
-              congestionDetected = 0;
+          int localKeys = localSelector.selectNow();
+          if (localKeys == 0 && localSelectorTasks.isEmpty()) {
+            congestionScore = 0;
+            lastIdleNanos = System.nanoTime();
+            if (!isStopRequested()) {
               localKeys = localSelector.select();
-            } else {
-              congestionDetected++;
             }
-            numKeys = localKeys;
           } else {
-            numKeys = localSelector.select();
+            congestionScore++;
           }
+          numKeys = localKeys;
         } catch (IOException ioe) {
           throw ioe;
         } catch (CancelledKeyException cke) {
@@ -663,7 +668,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
         Util.selfInterruptIfNeeded(isInterrupted);
 
         final Set<SelectionKey> selectedKeys = localSelector.selectedKeys();
-        if ((0 == numKeys) && (0 == selectedKeys.size())) {
+        if ((0 == numKeys) && (selectedKeys.isEmpty())) {
           continue;
         }
 
@@ -719,7 +724,9 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
             }
           }
         } // for
-        if (isReader() && congestionDetected > 10 && workerCommMgr != null && workerCommMgr.isUnbalanced()) {
+        if (isReader() && 
+                congestionScore > 100 && System.nanoTime() - lastIdleNanos > Duration.ofSeconds(2).toNanos() &&
+                workerCommMgr != null && workerCommMgr.isOverweight(getWeight())) {
           for (SelectionKey key : selectedKeys) {
             TCConnectionImpl connect = (TCConnectionImpl)key.attachment();
             connect.migrate();
@@ -783,6 +790,10 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       }
     }
 
+    public long getCongestionScore() {
+      return congestionScore;
+    }
+    
     public long getTotalBytesRead() {
       return this.mode == COMM_THREAD_MODE.NIO_READER ? this.bytesMoved : 0;
     }

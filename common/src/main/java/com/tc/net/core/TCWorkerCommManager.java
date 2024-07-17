@@ -145,15 +145,12 @@ public class TCWorkerCommManager {
     }
   }
   
-  public boolean isUnbalanced() {
-    int min = Integer.MAX_VALUE;
-    int max = 0;
+  public boolean isOverweight(int weight) {
+    if (weight <= totalWorkerComm) return false;
     for (CoreNIOServices c : workerCommThreads) {
-      int w = c.getWeight();
-      min = Math.min(min, w);
-      max = Math.max(max, w);
+      if (c.getWeight() * 2 < weight && c.getCongestionScore() == 0) return true;
     }
-    return (max - min) > totalWorkerComm;
+    return false;
   }
   
   public synchronized void pause() {

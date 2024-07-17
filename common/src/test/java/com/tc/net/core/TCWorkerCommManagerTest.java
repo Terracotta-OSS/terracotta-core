@@ -59,7 +59,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
   }
 
   private synchronized ClientMessageTransport createClient(String clientName) {
-    TCConnectionManager connection = new TCConnectionManagerImpl("Client-TestCommMgr", 0, new ClearTextSocketEndpointFactory());
+    TCConnectionManager connection = new TCConnectionManagerImpl("Client-TestCommMgr-" + clientName, 0, new ClearTextSocketEndpointFactory());
     clientConnectionMgrs.add(connection);
     CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                    new TransportNetworkStackHarnessFactory(),
@@ -131,6 +131,53 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     connMgr.shutdown();
   }
   
+  public void testOverweight() throws Exception {
+    TCConnectionManager connMgr = new TCConnectionManagerImpl("Target-Server-TestCommsMgr", 2, new ClearTextSocketEndpointFactory());
+    CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
+                                                                   new TransportNetworkStackHarnessFactory(),
+                                                                   connMgr,
+                                                                   new NullConnectionPolicy());
+    NetworkListener listener = commsMgr.createListener(new InetSocketAddress(0), (c)->true,
+                                                       new DefaultConnectionIdFactory(), (MessageTransport t)->true);
+    listener.start(Collections.<ConnectionID>emptySet());
+    int port = listener.getBindPort();
+    
+    ClientMessageTransport[] clients = new ClientMessageTransport[32];
+
+    for (int x=0;x<clients.length;x++) {
+      clients[x] = createBasicClient("client" + x);
+    }
+
+    InetSocketAddress serverAddress = InetSocketAddress.createUnresolved("localhost", port);
+
+    for (ClientMessageTransport t : clients) {
+      t.open(serverAddress);
+    }
+
+    waitForConnected(clients);
+    waitForTotalWeights(commsMgr,2, 32);
+    
+    for (int x=0;x<clients.length;x++) {
+      if (x%2 == 0) {
+        clients[x].close();
+      }
+    }
+        
+    waitForTotalWeights(commsMgr,2, 16);
+
+    TCCommImpl comm = (TCCommImpl)connMgr.getTcComm();
+    Assert.assertEquals(0, comm.getWeightForWorkerComm(0));
+    Assert.assertEquals(16, comm.getWeightForWorkerComm(1));
+    
+    TCConnection[] all = connMgr.getAllConnections();
+    for (int x=0;x<all.length/2;x++) {
+      ((TCConnectionImpl)all[x]).migrate();
+    }
+    waitForWeight(commsMgr,0,8);
+    Assert.assertEquals(comm.getWeightForWorkerComm(0), 8);
+    Assert.assertEquals(comm.getWeightForWorkerComm(1), 8);
+  }
+
   public void testReaderandWriterCommThread() throws Exception {
     // comms manager with 4 worker comms
     logger.debug("Running target test");
@@ -367,8 +414,10 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     CallableWaiter.waitOnCallable(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        return ((TCCommImpl)communicationsManager.getConnectionManager()
-            .getTcComm()).getWeightForWorkerComm(commId) == weight;
+        int w = ((TCCommImpl)communicationsManager.getConnectionManager()
+            .getTcComm()).getWeightForWorkerComm(commId);
+        System.out.println("waiting for id:" + commId + " weight " + w + " expected " + weight);
+        return w == weight;
       }
     });
   }
