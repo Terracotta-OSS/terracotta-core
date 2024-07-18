@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.terracotta.internal</groupId>
     <artifactId>build-parent</artifactId>
-    <version>5.11-SNAPSHOT</version>
+    <version>5.11.0</version>
     <relativePath>../../../build-parent</relativePath>
   </parent>
   <groupId>org.terracotta.internal</groupId>
