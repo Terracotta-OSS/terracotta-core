@@ -34,6 +34,7 @@ import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2Dumper;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfo;
+import com.tc.net.ServerID;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -441,7 +442,18 @@ public class TCServerImpl extends SEDA implements TCServer {
   {
     return dso.getConnectedClients();
   }
-
+  
+  @Override
+  public void disconnectPeer(String nodeName) {
+    dsoServer.getGroupManager().closeMember(nodeName);
+  }
+  
+  @Override
+  public void leaveGroup() {
+    dsoServer.getGroupManager().disconnect();
+    dsoServer.getContext().getL2Coordinator().getStateManager().startElectionIfNecessary(ServerID.NULL_ID);
+  }
+  
   @Override
   public void pause(String path) {
     if (path.equalsIgnoreCase("L1")) {
@@ -450,7 +462,7 @@ public class TCServerImpl extends SEDA implements TCServer {
       } catch (NullPointerException npe) {
         
       }
-  } else if (path.equalsIgnoreCase("L2")) {
+    } else if (path.equalsIgnoreCase("L2")) {
       try {
         dsoServer.getGroupManager().getConnectionManager().getTcComm().pause();
       } catch (NullPointerException npe) {

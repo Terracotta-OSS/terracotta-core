@@ -30,7 +30,9 @@ import com.tc.text.PrettyPrintable;
 public interface GroupManager<M extends GroupMessage> extends PrettyPrintable {
 
   public NodeID join(GroupConfiguration groupConfiguration) throws GroupException;
-
+  
+  public void disconnect();
+  
   public ServerID getLocalNodeID();
 
   public void sendAll(M msg);
@@ -57,6 +59,8 @@ public interface GroupManager<M extends GroupMessage> extends PrettyPrintable {
 
   public void registerForGroupEvents(GroupEventsListener listener);
 
+  public void unregisterForGroupEvents(GroupEventsListener listener);
+
   public void zapNode(NodeID nodeID, int type, String reason);
 
   public void setZapNodeRequestProcessor(ZapNodeRequestProcessor processor);
@@ -66,6 +70,8 @@ public interface GroupManager<M extends GroupMessage> extends PrettyPrintable {
   public boolean isServerConnected(String nodeName);
 
   public void closeMember(ServerID serverID);
+  
+  public void closeMember(String name);
   
   public TCConnectionManager getConnectionManager();
 

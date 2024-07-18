@@ -277,16 +277,22 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   @Override
   public synchronized void nodeJoined(NodeID nodeID) {
     String nodeName = ((ServerID) nodeID).getName();
-    nodeStateMap.get(nodeName).nodeJoined();
-    joinedNodes++;
+    DiscoveryStateMachine n = nodeStateMap.get(nodeName);
+    if (n != null) {
+      n.nodeJoined();
+      joinedNodes++;
+    }
   }
 
   @Override
   public synchronized void nodeLeft(NodeID nodeID) {
-    joinedNodes--;
     String nodeName = ((ServerID) nodeID).getName();
-    nodeStateMap.get(nodeName).nodeLeft();
-    notifyAll();
+    DiscoveryStateMachine n = nodeStateMap.get(nodeName);
+    if (n != null) {
+      joinedNodes--;
+      nodeStateMap.get(nodeName).nodeLeft();
+      notifyAll();
+    }
   }
 
   public synchronized Set<Node> pauseDiscovery() {
@@ -315,7 +321,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
 
     return dsm.isMemberInGroup();
   }
-
+  
   private static void debugInfo(String message) {
     L2DebugLogging.log(logger, LogLevel.INFO, message, null);
   }

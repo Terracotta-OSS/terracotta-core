@@ -35,6 +35,9 @@ public class SequenceIDWeightGenerator implements WeightGenerator {
 
   @Override
   public long getWeight() {
+    if (handler == null) {
+      return -1L;
+    }
     return handler.getCurrentSequence();
   }
 }

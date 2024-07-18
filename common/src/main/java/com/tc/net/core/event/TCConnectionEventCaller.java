@@ -24,7 +24,7 @@ import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.util.concurrent.SetOnceFlag;
 
-import java.util.List;
+import java.util.Collection;
 
 // calls each event only once
 public class TCConnectionEventCaller {
@@ -44,7 +44,7 @@ public class TCConnectionEventCaller {
     this.logger = logger;
   }
 
-  public void fireErrorEvent(List<TCConnectionEventListener> eventListeners, TCConnection conn, Exception exception,
+  public void fireErrorEvent(Collection<TCConnectionEventListener> eventListeners, TCConnection conn, Exception exception,
                              TCNetworkMessage context) {
     if (errorEvent.attemptSet()) {
       final TCConnectionErrorEvent event = new TCConnectionErrorEvent(conn, exception, context);
@@ -52,28 +52,28 @@ public class TCConnectionEventCaller {
     }
   }
 
-  public void fireConnectEvent(List<TCConnectionEventListener> eventListeners, TCConnection conn) {
+  public void fireConnectEvent(Collection<TCConnectionEventListener> eventListeners, TCConnection conn) {
     if (connectEvent.attemptSet()) {
       final TCConnectionEvent event = new TCConnectionEvent(conn);
       fireEvent(eventListeners, event, logger, CONNECT);
     }
   }
 
-  public void fireEndOfFileEvent(List<TCConnectionEventListener> eventListeners, TCConnection conn) {
+  public void fireEndOfFileEvent(Collection<TCConnectionEventListener> eventListeners, TCConnection conn) {
     if (eofEvent.attemptSet()) {
       final TCConnectionEvent event = new TCConnectionEvent(conn);
       fireEvent(eventListeners, event, logger, EOF);
     }
   }
 
-  public void fireCloseEvent(List<TCConnectionEventListener> eventListeners, TCConnection conn) {
+  public void fireCloseEvent(Collection<TCConnectionEventListener> eventListeners, TCConnection conn) {
     if (closeEvent.attemptSet()) {
       final TCConnectionEvent event = new TCConnectionEvent(conn);
       fireEvent(eventListeners, event, logger, CLOSE);
     }
   }
 
-  private static void fireEvent(List<TCConnectionEventListener> eventListeners, TCConnectionEvent event, Logger logger, int type) {
+  private static void fireEvent(Collection<TCConnectionEventListener> eventListeners, TCConnectionEvent event, Logger logger, int type) {
     for (TCConnectionEventListener listener : eventListeners) {
       try {
         switch (type) {

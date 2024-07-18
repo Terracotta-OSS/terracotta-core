@@ -145,6 +145,14 @@ public class TCWorkerCommManager {
     }
   }
   
+  public boolean isOverweight(int weight) {
+    if (weight <= totalWorkerComm) return false;
+    for (CoreNIOServices c : workerCommThreads) {
+      if (c.getWeight() * 2 < weight && c.getCongestionScore() == 0) return true;
+    }
+    return false;
+  }
+  
   public synchronized void pause() {
     paused = true;
   }

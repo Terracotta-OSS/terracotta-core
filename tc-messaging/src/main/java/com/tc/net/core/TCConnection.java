@@ -59,13 +59,13 @@ public interface TCConnection extends NetworkMessageSink {
    * 
    * @param listener listener to add
    */
-  public void addListener(TCConnectionEventListener listener);
+  public boolean addListener(TCConnectionEventListener listener);
 
   /**
    * Remove the given event listener. Attempting to remove a listener that is not currently in the listeners set has not
    * effect
    */
-  public void removeListener(TCConnectionEventListener listener);
+  public boolean removeListener(TCConnectionEventListener listener);
 
   /**
    * Close this connection. The actual close happens asynchronously to this call.

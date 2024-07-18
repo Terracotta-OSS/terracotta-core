@@ -139,17 +139,19 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     Assert.assertFalse(node.isNull());
     SessionID current = passiveNodes.get(node);
     //  no session means we are allowed to proceed
-    if (current == null && serverIsValid(node)) {
+    if (current == null) {
       if (!consistencyMgr.requestTransition(ServerMode.ACTIVE, node, ConsistencyManager.Transition.ADD_PASSIVE)) {
         serverCheck.zapNode(node, L2HAZapNodeRequestProcessor.SPLIT_BRAIN, "unable to verify active");
         return SessionID.NULL_ID;
       } else {
-        LOGGER.debug("Starting message sequence on " + node);
+        LOGGER.info("Starting message sequence on " + node);
         SessionID newSession = new SessionID(sessionMaker.incrementAndGet());
         if (passiveNodes.putIfAbsent(node, newSession) == null) {
-          boolean sent = this.replicationSender.addPassive(node, newSession, executionLane(newSession), SyncReplicationActivity.createStartMessage());
-          Assert.assertTrue(sent);
-          return newSession;
+          if (this.replicationSender.addPassive(node, newSession, executionLane(newSession), SyncReplicationActivity.createStartMessage())) {
+            return newSession;
+          } else {
+            passiveNodes.remove(node, newSession);
+          }
         }
       }
     }
@@ -178,12 +180,8 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       executePassiveSync(newNode, session);
       return true;
     } else {
-      if (!passiveNodes.containsKey(newNode)) {
-        LOGGER.info("passive node {} to requesting prime is no longer a valid passive", newNode);
-      } else {
-        LOGGER.info("unable to prime connection to {} for passive sync", newNode);
-        serverCheck.closeMember(newNode);
-      }
+      LOGGER.info("unable to prime connection to {} for passive sync", newNode);
+      serverCheck.closeMember(newNode);
       return false;
     }
   }
@@ -196,7 +194,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     executeOnPool(() -> {
       sync.begin();
       // start passive sync message
-      LOGGER.debug("starting sync for " + newNode + " on session " + session);
+      LOGGER.debug("Starting sync for " + newNode + " on session " + session);
       List<SyncReplicationActivity.EntityCreationTuple> tuplesForCreation = new ArrayList<>();
       Iterable<ManagedEntity> e = snapshotter.snapshotEntityList(entity -> {
           // We want to create the array of activity data.
@@ -222,7 +220,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
         LOGGER.debug("ending sync for entity " + newNode + "/" + entity.getID());
       }
       //  passive sync done message.  causes passive to go into passive standby mode
-      LOGGER.debug("ending sync " + newNode);
+      LOGGER.info("Finished sync to node: {}", newNode);
       replicateActivity(SyncReplicationActivity.createEndSyncMessage(TCByteBufferFactory.wrap(replicateEntityPersistor())), Collections.singleton(session)).waitForCompleted();
       sync.end();
       sync.commit();

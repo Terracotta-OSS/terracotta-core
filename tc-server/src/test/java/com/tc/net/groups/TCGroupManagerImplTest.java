@@ -37,7 +37,6 @@ import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.session.SessionID;
-import com.tc.objectserver.impl.TopologyManager;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
@@ -63,7 +62,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.Ignore;
 import org.junit.Test;
+import static org.mockito.ArgumentMatchers.any;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.spy;
@@ -183,7 +184,49 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     tearGroups();
   }
-
+  
+//  @Ignore
+//  public void testRelayReplicateOpenClose() throws Exception {
+//    setupGroups(2);
+//
+//    groups[0].setDiscover(new NullTCGroupMemberDiscovery());
+//    groups[1].setDiscover(new NullTCGroupMemberDiscovery());
+//
+//    Set<Node> nodeSet1 = new HashSet<>();
+//    nodeSet1.add(nodes[0]);
+//     
+//    Set<Node> nodeSet2 = new HashSet<>();
+//    nodeSet2.add(nodes[1]);
+//    
+//    GroupConfiguration groupConfiguration1 = getGroupConfiguration(nodeSet1, nodes[0]);
+//    GroupConfiguration groupConfiguration2 = getGroupConfiguration(nodeSet2, nodes[1]);
+//
+//    groups[1].join(groupConfiguration2);
+//    // open test
+//    groups[0].join(groupConfiguration1);
+//
+//    Thread.sleep(2000);
+//
+//    assertEquals(1, groups[0].size());
+//    assertEquals(1, groups[1].size());
+//    TCGroupMember member1 = getMember(groups[0], 0);
+//    TCGroupMember member2 = getMember(groups[1], 0);
+//    assertTrue("Expected  " + member1.getLocalNodeID() + " but got " + member2.getPeerNodeID(), member1
+//        .getLocalNodeID().equals(member2.getPeerNodeID()));
+//    assertTrue("Expected  " + member1.getPeerNodeID() + " but got " + member2.getLocalNodeID(), member1.getPeerNodeID()
+//        .equals(member2.getLocalNodeID()));
+//    
+//    // close test
+//    member1.getChannel().close();
+//
+//    while ((groups[0].size() != 0) || (groups[1].size() != 0)) {
+//      System.err.println("XXX " + member1 + "; size: " + groups[0].size());
+//      System.err.println("XXX " + member2 + "; size: " + groups[1].size());
+//    }
+//
+//    tearGroups();
+//  }
+  
   public void testOpenZappedNode() throws Exception {
     setupGroups(2);
 
@@ -938,6 +981,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     GroupConfiguration groupConfiguration = Mockito.mock(GroupConfiguration.class);
     when(groupConfiguration.getNodes()).thenReturn(nodeSet);
     when(groupConfiguration.getCurrentNode()).thenReturn(node);
+    when(groupConfiguration.directConnect(any())).thenCallRealMethod();
     return groupConfiguration;
   }
 }

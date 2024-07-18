@@ -172,7 +172,7 @@ public class ClientLeakIT {
     CLUSTER.getClusterControl().startAllServers();
     CLUSTER.getClusterControl().waitForActive();
 
-    String connectionName = "LEAKTESTCLIENT";
+    String connectionName = "LEAKTESTCLIENT2";
     Properties props = new Properties();
     props.setProperty(ConnectionPropertyNames.CONNECTION_NAME, connectionName);
     Connection leak = ConnectionFactory.connect(CLUSTER.getConnectionURI(), props);

@@ -40,7 +40,7 @@ public class ServerConfigurationTest {
   public void testConfiguration() {
     int reconnectWindow = 100;
     ServerConfigurationImpl serverConfiguration =
-        new ServerConfigurationImpl(createServer(false), reconnectWindow);
+        new ServerConfigurationImpl(createServer(false), false, reconnectWindow);
 
     assertThat(serverConfiguration.getTsaPort().getHostName(), is(LOCALHOST));
     assertThat(serverConfiguration.getGroupPort().getHostName(), is(LOCALHOST));
@@ -55,7 +55,7 @@ public class ServerConfigurationTest {
   @Test
   public void testConfigurationWithWildcards() {
     ServerConfigurationImpl serverConfiguration =
-        new ServerConfigurationImpl(createServer(true), 100);
+        new ServerConfigurationImpl(createServer(true), false, 100);
 
     assertThat(serverConfiguration.getTsaPort().getHostName(), is(LOCALHOST));
     assertThat(serverConfiguration.getGroupPort().getHostName(), is(LOCALHOST));

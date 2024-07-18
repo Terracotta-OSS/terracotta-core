@@ -63,6 +63,26 @@
             </archive>
           </configuration>
         </plugin>
-   </plugins>
+        <plugin>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <version>3.2.0</version>
+            <executions>
+                <execution>
+                  <id>create-distribution</id>
+                  <phase>package</phase>
+                  <goals>
+                    <goal>single</goal>
+                  </goals>
+                  <configuration>
+                    <tarLongFileMode>posix</tarLongFileMode>
+                    <descriptorRefs>
+                      <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <appendAssemblyId>true</appendAssemblyId>
+                  </configuration>
+                </execution>
+            </executions>
+        </plugin>
+  </plugins>
    </build>
 </project>
