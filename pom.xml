@@ -102,20 +102,6 @@ limitations under the License.
     </plugins>
   </build>
 
-  <distributionManagement>
-    <repository>
-      <id>terracotta-os-releases</id>
-      <name>Terracotta OS Releases Repository</name>
-      <url>https://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-releases</url>
-    </repository>
-    <snapshotRepository>
-      <id>terracotta-os-snapshots</id>
-      <uniqueVersion>false</uniqueVersion>
-      <name>Terracotta OS Snapshots Repository</name>
-      <url>https://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-snapshots</url>
-    </snapshotRepository>
-  </distributionManagement>
-
   <repositories>
     <repository>
       <id>terracotta-releases</id>

@@ -34,7 +34,7 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
   private ActiveServerEntity<M, R> entity;
   private MessageCodec<M, R> codec;
   private byte[] configuration;
-  private EndpointDelegate delegate;
+  private EndpointDelegate<R> delegate;
   private final ClientCommunicator clientCommunicator = new TestClientCommunicator();
   private boolean isOpen;
   private AtomicLong idGenerator = new AtomicLong(0);
@@ -65,7 +65,7 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
   }
 
   @Override
-  public void setDelegate(EndpointDelegate delegate) {
+  public void setDelegate(EndpointDelegate<R> delegate) {
     // This is harmless while closed but shouldn't be called so check open.
     checkEndpointOpen();
     Assert.assertNull(this.delegate);
@@ -76,7 +76,7 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
   public Invocation<R> message(M message) {
     // We can't create new invocations when the endpoint is closed.
     checkEndpointOpen();
-    return new InvocationImpl(message);
+    return new InvocationImpl<>(message);
   }
 
   private class FakeClientDescriptor implements ClientDescriptor {

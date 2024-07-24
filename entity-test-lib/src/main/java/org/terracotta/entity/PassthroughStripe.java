@@ -226,7 +226,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
   }
 
   private class FakeEndpoint implements TxIdAwareClientEndpoint<M, R> {
-    private EndpointDelegate delegate;
+    private EndpointDelegate<R> delegate;
     private final String entityName;
     private final ClientDescriptor clientDescriptor;
     private final MessageCodec<M, R> codec;
@@ -265,7 +265,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     }
 
     @Override
-    public void setDelegate(EndpointDelegate delegate) {
+    public void setDelegate(EndpointDelegate<R> delegate) {
       Assert.assertNull(this.delegate);
       this.delegate = delegate;
     }
