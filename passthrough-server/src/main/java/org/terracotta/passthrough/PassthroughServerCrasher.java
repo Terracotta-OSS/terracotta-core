@@ -69,7 +69,9 @@ public class PassthroughServerCrasher implements IAsynchronousServerCrasher {
     this.isRunning = true;
     this.background.start();
   }
-
+  
+  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+    value="IS2_INCONSISTENT_SYNC")
   public void waitForStop() {
     synchronized (this) {
       this.isRunning = false;

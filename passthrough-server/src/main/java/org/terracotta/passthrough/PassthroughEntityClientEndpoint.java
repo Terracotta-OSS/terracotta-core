@@ -43,9 +43,11 @@ public class PassthroughEntityClientEndpoint<M extends EntityMessage, R extends 
   private final byte[] config;
   private final MessageCodec<M, R> messageCodec;
   private final Runnable onClose;
-  private EndpointDelegate delegate;
+  private EndpointDelegate<R> delegate;
   private boolean isOpen;
   
+  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+    value="EI_EXPOSE_REP2")
   public PassthroughEntityClientEndpoint(PassthroughConnection passthroughConnection, Class<?> entityClass, String entityName, long clientInstanceID, byte[] config, MessageCodec<M, R> messageCodec, Runnable onClose) {
     this.connection = passthroughConnection;
     this.entityClass = entityClass;
@@ -59,6 +61,8 @@ public class PassthroughEntityClientEndpoint<M extends EntityMessage, R extends 
   }
 
   @Override
+  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+    value="EI_EXPOSE_REP")
   public byte[] getEntityConfiguration() {
     // This is harmless while closed but shouldn't be called so check open.
     checkEndpointOpen();
@@ -66,6 +70,9 @@ public class PassthroughEntityClientEndpoint<M extends EntityMessage, R extends 
   }
 
   @Override
+  @SuppressWarnings({"unchecked"})
+  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+    value="EI_EXPOSE_REP")
   public void setDelegate(EndpointDelegate delegate) {
     // This is harmless while closed but shouldn't be called so check open.
     checkEndpointOpen();

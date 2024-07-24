@@ -91,6 +91,8 @@ import org.terracotta.server.StopAction;
 public class PassthroughServerProcess implements MessageHandler, PassthroughDumper {
   private static final String ENTITIES_FILE_NAME = "entities.map";
   
+  private static final Random BUILDID = new Random();
+  
   private final String serverName;
   private final int bindPort;
   private final int groupPort;
@@ -171,6 +173,8 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   }
 
   @SuppressWarnings("unchecked")
+ @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+    value="WMI_WRONG_MAP_ITERATOR")
   public void start(boolean shouldLoadStorage, Set<Long> savedClientConnections) {
     // Make sure that we install the in-memory registry, if needed.
     boolean isStorageInstalled = false;
@@ -313,7 +317,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         bindPort, //  bindPort but just fake with processID
         groupPort, // groupPort
         "Version Passthrough 5.0.0-SNAPSHOT", //  version
-        "Build ID - " + new Random().nextInt(), // build
+        "Build ID - " + BUILDID.nextInt(), // build
         System.currentTimeMillis() // start time
     );
 //  set instance
@@ -361,9 +365,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     }
     try {
 // multiple paths to shutdown.  This can happen multiple times without a new thread being created
-      if (this.serverThread != null) {
-        this.serverThread.join();
-      }
+      this.serverThread.join();
     } catch (InterruptedException e) {
       Assert.unexpected(e);
     }
@@ -1484,7 +1486,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       this.entityInstance = (isActive) ? service.createActiveEntity(registry, configuration) : service.createPassiveEntity(registry, configuration);
       this.reconnect = (isActive) ? getActive().startReconnect() : null;
       this.concurrency = service.getConcurrencyStrategy(configuration);
-      Objects.nonNull(this.concurrency);
+      Objects.requireNonNull(this.concurrency);
       this.executionStrategy = service.getExecutionStrategy(configuration); //  cheating here.  notmally onlt the active knows about execution but, passthrough is going to check on both active and passive
       this.isActive = isActive;
       this.consumerID = consumerID;

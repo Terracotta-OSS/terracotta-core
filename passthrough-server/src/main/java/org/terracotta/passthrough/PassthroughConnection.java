@@ -175,7 +175,7 @@ public class PassthroughConnection implements Connection {
   }
 
   @SuppressWarnings({ "unchecked" })
-  public <T, U> T createEntityInstance(Class<T> cls, String name, final long clientInstanceID, long clientSideVersion, byte[] config, U userData) {
+  public <T, U> T createEntityInstance(Class<?> cls, String name, final long clientInstanceID, long clientSideVersion, byte[] config, U userData) {
     EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, U> service = (EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, U>) getEntityClientService(cls);
     return (T) storeNewEndpointAndCreateInstance(cls, name, clientInstanceID, config, service, userData);
   }
@@ -417,11 +417,11 @@ public class PassthroughConnection implements Connection {
     }
   }
 
-  @SuppressWarnings({ "rawtypes"})
+  @SuppressWarnings({ "rawtypes", "unchecked"})
   public EntityRef<?,?,?> getEntityRef(String type, long version, String name) {
     Class<?> clazz = loadEntityType(type);
     EntityClientService service = (clazz != null) ? getEntityClientService(clazz) : null;
-    return new PassthroughEntityRef(this, service, type, version, name);
+    return new PassthroughEntityRef<>(this, service, type, version, name);
   }
 
   @Override

@@ -110,7 +110,7 @@ public class PassthroughTransactionOrderManager {
         }
       }
       clientTransactionList = Collections.unmodifiableList(new ArrayList<ClientTransaction>(sortMap.values()));
-      receivedTransactionCount = sortMap.size() != 0 ? sortMap.lastKey() : new Long(0L);
+      receivedTransactionCount = sortMap.size() != 0 ? sortMap.lastKey() : 0L;
     } else {
       clientTransactionList = Collections.emptyList();
       receivedTransactionCount = 0L;

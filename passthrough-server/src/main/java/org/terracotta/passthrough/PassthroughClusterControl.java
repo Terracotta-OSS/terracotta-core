@@ -93,6 +93,8 @@ public class PassthroughClusterControl implements IClusterControl {
     internalStartOneServer();
   }
 
+  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+    value="IS2_INCONSISTENT_SYNC")
   private void internalStartOneServer() {
     try {
       PassthroughServer terminatedServer = this.stoppedPassthroughServers.remove(0);

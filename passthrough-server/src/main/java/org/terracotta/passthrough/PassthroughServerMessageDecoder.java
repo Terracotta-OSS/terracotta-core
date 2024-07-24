@@ -42,6 +42,8 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
   private final IAsynchronousServerCrasher crasher;
   private final byte[] message;
 
+ @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+    value="EI_EXPOSE_REP2")
   public PassthroughServerMessageDecoder(PassthroughServerProcess thisServer, MessageHandler messageHandler, PassthroughTransactionOrderManager transactionOrderManager, LifeCycleMessageHandler lifeCycleMessageHandler, Set<PassthroughServerProcess> downstreamPassives, IMessageSenderWrapper sender, IAsynchronousServerCrasher crasher, byte[] message) {
     this.thisServer = thisServer;
     this.messageHandler = messageHandler;

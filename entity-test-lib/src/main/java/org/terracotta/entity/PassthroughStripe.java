@@ -52,8 +52,6 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
 
   private int nextClientID = 1;
   private int consumerID = 1;
-  private AtomicLong txIdGenerator=new AtomicLong(0);
-  private long eldestTxid=-1;
 
   public PassthroughStripe(EntityServerService<M, R> service, Class<?> clazz) {
     Assert.assertTrue(service.handlesEntityType(clazz.getName()));
@@ -321,7 +319,11 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     @SuppressWarnings("unchecked")
     @Override
     public boolean equals(Object obj) {
-      return ((FakeClientDescriptor)obj).id == this.id;
+      if (obj != null && obj instanceof PassthroughStripe.FakeClientDescriptor) {
+        return ((PassthroughStripe.FakeClientDescriptor)obj).id == this.id;
+      } else {
+        return false;
+      }
     }
 
     @Override

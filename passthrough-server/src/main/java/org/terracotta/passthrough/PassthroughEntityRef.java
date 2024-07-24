@@ -83,7 +83,7 @@ public class PassthroughEntityRef<T extends Entity, C, U> implements EntityRef<T
       Assert.unexpected(e);
     }
     try {
-      Class<T> type = (Class<T>)Class.forName(this.clazz);
+      Class<?> type = Class.forName(this.clazz);
       return this.passthroughConnection.createEntityInstance(type, this.name, clientInstanceID, this.version, rawConfig, userData);
     } catch (ClassNotFoundException notfound) {
       throw new EntityNotFoundException(clazz, name, notfound);

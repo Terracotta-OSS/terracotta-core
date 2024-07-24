@@ -40,6 +40,7 @@ public class PassthroughMessengerServiceProvider implements PassthroughImplement
   }
 
   @Override
+  @SuppressWarnings({ "unchecked" })
   public <T> T getService(String entityClassName, String entityName, long consumerID, DeferredEntityContainer container, ServiceConfiguration<T> configuration) {
     boolean chain = false;
     if (configuration instanceof Supplier) {

@@ -164,7 +164,11 @@ public class PassthroughMessengerService implements IEntityMessenger<EntityMessa
                 }
             }
             });
+          break;
+          default:
           }
+
+          
         } catch (IOException io) {
           throw new RuntimeException(io);
         }
@@ -174,6 +178,7 @@ public class PassthroughMessengerService implements IEntityMessenger<EntityMessa
   }
 
   @Override
+  @SuppressWarnings({ "unchecked" })
   public void messageSelfAndDeferRetirement(EntityMessage originalMessageToDefer, EntityMessage newMessageToSchedule, Consumer response) throws MessageCodecException {
     retirementManager.deferCurrentMessage(newMessageToSchedule);
     PassthroughMessage passthroughMessage = makePassthroughMessage(newMessageToSchedule);

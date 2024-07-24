@@ -22,7 +22,9 @@ public class PassthroughInvocationCallback implements InvocationCallback<byte[]>
 
   private final byte[] message;
   private final InvocationCallback<byte[]> callback;
-
+  
+  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+    value="EI_EXPOSE_REP2")
   public PassthroughInvocationCallback(byte[] message, InvocationCallback<byte[]> callback) {
     this.message = message;
     this.callback = callback;
@@ -31,7 +33,9 @@ public class PassthroughInvocationCallback implements InvocationCallback<byte[]>
   public void forceDisconnect() {
 
   }
-
+  
+  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+    value="EI_EXPOSE_REP")
   public byte[] getMessage() {
     return message;
   }

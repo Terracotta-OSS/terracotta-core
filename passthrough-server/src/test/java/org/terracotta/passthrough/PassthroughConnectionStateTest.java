@@ -25,7 +25,6 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 public class PassthroughConnectionStateTest {
   @Test
@@ -53,6 +52,7 @@ public class PassthroughConnectionStateTest {
     sendOneMessageAndVerify(passthroughConnectionState, byteArgumentCaptor, 22, 22);
   }
 
+  @SuppressWarnings({ "unchecked" })
   private static void sendOneMessageAndVerify(PassthroughConnectionState passthroughConnectionState, ArgumentCaptor<byte[]> byteArgumentCaptor, long expectedOldTxnID, long expectedCurTxnID) {
     passthroughConnectionState.sendNormal(mock(PassthroughConnection.class), PassthroughMessageCodec.createAckMessage(), mock(InvocationCallback.class));
     TestTxnInfo testTxnInfo = PassthroughMessageCodec.decodeRawMessage((type, shouldReplicate, transactionID, oldestTransactionID, input) -> new TestTxnInfo(oldestTransactionID, transactionID), byteArgumentCaptor

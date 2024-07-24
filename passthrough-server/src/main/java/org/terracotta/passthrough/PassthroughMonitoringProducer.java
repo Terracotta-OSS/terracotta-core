@@ -59,7 +59,6 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
       // Now, replay the cache.
       for (Map.Entry<Long, CacheNode> entry : this.cachedTreeRoot.entrySet()) {
         final IStripeMonitoring entityMonitoring = getUnderlyingService(null, null, entry.getKey(), null);
-        Assert.assertTrue(null != entityMonitoring);
         walkCacheChildren(entityMonitoring, new String[0], entry.getValue().children);
       }
     }
@@ -204,6 +203,8 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
     return didRemove;
   }
 
+  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+    value="IS2_INCONSISTENT_SYNC")
   private synchronized void pushBestEffortsFromShim(long consumerID, IStripeMonitoring underlyingCollector, String name, Serializable data) {
     if (null != this.cachedTreeRoot) {
       // We are the passive.

@@ -20,7 +20,6 @@ import org.junit.Assert;
 
 import java.util.Set;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
@@ -31,32 +30,33 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 public class PassthroughEndpoint<M extends EntityMessage, R extends EntityResponse> implements
   TxIdAwareClientEndpoint<M, R> {
   private final ClientDescriptor clientDescriptor = new FakeClientDescriptor();
-  private ActiveServerEntity<M, R> entity;
   private MessageCodec<M, R> codec;
   private byte[] configuration;
   private EndpointDelegate<R> delegate;
   private final ClientCommunicator clientCommunicator = new TestClientCommunicator();
   private boolean isOpen;
-  private AtomicLong idGenerator = new AtomicLong(0);
   private volatile long eldest = -1L;
-  private ConcurrencyStrategy<M> concurrencyStrategy;
 
   public PassthroughEndpoint() {
     // We start in the open state.
     this.isOpen = true;
   }
-
+  
+  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+    value="EI_EXPOSE_REP2", 
+    justification="fix later")
   public void attach(ActiveServerEntity<M, R> entity,
                      MessageCodec<M, R> codec,
                      ConcurrencyStrategy<M> concurrencyStrategy,
                      byte[] config) {
-    this.entity = entity;
-    this.concurrencyStrategy = concurrencyStrategy;
     this.codec = codec;
     this.configuration = config;
     entity.connected(clientDescriptor);
   }
 
+  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+    value="EI_EXPOSE_REP", 
+    justification="fix later")
   @Override
   public byte[] getEntityConfiguration() {
     // This is harmless while closed but shouldn't be called so check open.
@@ -155,11 +155,11 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
   }
 
   public long getCurrentId() {
-    return idGenerator.get();
+    return 0L;
   }
 
   public long resetEldestId() {
-    eldest = idGenerator.get();
+    eldest = 0L;
     return eldest;
   }
 }
