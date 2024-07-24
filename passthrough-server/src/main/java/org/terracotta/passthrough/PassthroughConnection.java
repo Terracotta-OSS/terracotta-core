@@ -1,20 +1,18 @@
 /*
+ * Copyright Terracotta, Inc.
+ * Copyright Super iPaaS Integration LLC, an IBM Company 2024
  *
- *  The contents of this file are subject to the Terracotta Public License Version
- *  2.0 (the "License"); You may not use this file except in compliance with the
- *  License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  http://terracotta.org/legal/terracotta-public-license.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Software distributed under the License is distributed on an "AS IS" basis,
- *  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- *  the specific language governing rights and limitations under the License.
- *
- *  The Covered Software is Entity API.
- *
- *  The Initial Developer of the Covered Software is
- *  Terracotta, Inc., a Software AG company
- *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.terracotta.passthrough;
 
@@ -177,7 +175,7 @@ public class PassthroughConnection implements Connection {
   }
 
   @SuppressWarnings({ "unchecked" })
-  public <T, U> T createEntityInstance(Class<T> cls, String name, final long clientInstanceID, long clientSideVersion, byte[] config, U userData) {
+  public <T, U> T createEntityInstance(Class<?> cls, String name, final long clientInstanceID, long clientSideVersion, byte[] config, U userData) {
     EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, U> service = (EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, U>) getEntityClientService(cls);
     return (T) storeNewEndpointAndCreateInstance(cls, name, clientInstanceID, config, service, userData);
   }
@@ -419,11 +417,11 @@ public class PassthroughConnection implements Connection {
     }
   }
 
-  @SuppressWarnings({ "rawtypes"})
+  @SuppressWarnings({ "rawtypes", "unchecked"})
   public EntityRef<?,?,?> getEntityRef(String type, long version, String name) {
     Class<?> clazz = loadEntityType(type);
     EntityClientService service = (clazz != null) ? getEntityClientService(clazz) : null;
-    return new PassthroughEntityRef(this, service, type, version, name);
+    return new PassthroughEntityRef<>(this, service, type, version, name);
   }
 
   @Override

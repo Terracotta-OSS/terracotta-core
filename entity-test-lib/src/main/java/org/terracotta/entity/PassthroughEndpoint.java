@@ -1,20 +1,18 @@
 /*
+ * Copyright Terracotta, Inc.
+ * Copyright Super iPaaS Integration LLC, an IBM Company 2024
  *
- *  The contents of this file are subject to the Terracotta Public License Version
- *  2.0 (the "License"); You may not use this file except in compliance with the
- *  License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  http://terracotta.org/legal/terracotta-public-license.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Software distributed under the License is distributed on an "AS IS" basis,
- *  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- *  the specific language governing rights and limitations under the License.
- *
- *  The Covered Software is Entity API.
- *
- *  The Initial Developer of the Covered Software is
- *  Terracotta, Inc., a Software AG company
- *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.terracotta.entity;
 
@@ -22,7 +20,6 @@ import org.junit.Assert;
 
 import java.util.Set;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
@@ -33,32 +30,33 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 public class PassthroughEndpoint<M extends EntityMessage, R extends EntityResponse> implements
   TxIdAwareClientEndpoint<M, R> {
   private final ClientDescriptor clientDescriptor = new FakeClientDescriptor();
-  private ActiveServerEntity<M, R> entity;
   private MessageCodec<M, R> codec;
   private byte[] configuration;
-  private EndpointDelegate delegate;
+  private EndpointDelegate<R> delegate;
   private final ClientCommunicator clientCommunicator = new TestClientCommunicator();
   private boolean isOpen;
-  private AtomicLong idGenerator = new AtomicLong(0);
   private volatile long eldest = -1L;
-  private ConcurrencyStrategy<M> concurrencyStrategy;
 
   public PassthroughEndpoint() {
     // We start in the open state.
     this.isOpen = true;
   }
-
+  
+  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+    value="EI_EXPOSE_REP2", 
+    justification="fix later")
   public void attach(ActiveServerEntity<M, R> entity,
                      MessageCodec<M, R> codec,
                      ConcurrencyStrategy<M> concurrencyStrategy,
                      byte[] config) {
-    this.entity = entity;
-    this.concurrencyStrategy = concurrencyStrategy;
     this.codec = codec;
     this.configuration = config;
     entity.connected(clientDescriptor);
   }
 
+  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+    value="EI_EXPOSE_REP", 
+    justification="fix later")
   @Override
   public byte[] getEntityConfiguration() {
     // This is harmless while closed but shouldn't be called so check open.
@@ -67,7 +65,7 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
   }
 
   @Override
-  public void setDelegate(EndpointDelegate delegate) {
+  public void setDelegate(EndpointDelegate<R> delegate) {
     // This is harmless while closed but shouldn't be called so check open.
     checkEndpointOpen();
     Assert.assertNull(this.delegate);
@@ -78,7 +76,7 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
   public Invocation<R> message(M message) {
     // We can't create new invocations when the endpoint is closed.
     checkEndpointOpen();
-    return new InvocationImpl(message);
+    return new InvocationImpl<>(message);
   }
 
   private class FakeClientDescriptor implements ClientDescriptor {
@@ -157,11 +155,11 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
   }
 
   public long getCurrentId() {
-    return idGenerator.get();
+    return 0L;
   }
 
   public long resetEldestId() {
-    eldest = idGenerator.get();
+    eldest = 0L;
     return eldest;
   }
 }

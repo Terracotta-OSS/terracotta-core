@@ -1,20 +1,18 @@
 /*
+ * Copyright Terracotta, Inc.
+ * Copyright Super iPaaS Integration LLC, an IBM Company 2024
  *
- *  The contents of this file are subject to the Terracotta Public License Version
- *  2.0 (the "License"); You may not use this file except in compliance with the
- *  License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  http://terracotta.org/legal/terracotta-public-license.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Software distributed under the License is distributed on an "AS IS" basis,
- *  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- *  the specific language governing rights and limitations under the License.
- *
- *  The Covered Software is Entity API.
- *
- *  The Initial Developer of the Covered Software is
- *  Terracotta, Inc., a Software AG company
- *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.terracotta.passthrough;
 
@@ -92,6 +90,8 @@ import org.terracotta.server.StopAction;
  */
 public class PassthroughServerProcess implements MessageHandler, PassthroughDumper {
   private static final String ENTITIES_FILE_NAME = "entities.map";
+  
+  private static final Random BUILDID = new Random();
   
   private final String serverName;
   private final int bindPort;
@@ -173,6 +173,8 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   }
 
   @SuppressWarnings("unchecked")
+ @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+    value="WMI_WRONG_MAP_ITERATOR")
   public void start(boolean shouldLoadStorage, Set<Long> savedClientConnections) {
     // Make sure that we install the in-memory registry, if needed.
     boolean isStorageInstalled = false;
@@ -315,7 +317,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         bindPort, //  bindPort but just fake with processID
         groupPort, // groupPort
         "Version Passthrough 5.0.0-SNAPSHOT", //  version
-        "Build ID - " + new Random().nextInt(), // build
+        "Build ID - " + BUILDID.nextInt(), // build
         System.currentTimeMillis() // start time
     );
 //  set instance
@@ -363,9 +365,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     }
     try {
 // multiple paths to shutdown.  This can happen multiple times without a new thread being created
-      if (this.serverThread != null) {
-        this.serverThread.join();
-      }
+      this.serverThread.join();
     } catch (InterruptedException e) {
       Assert.unexpected(e);
     }
@@ -1486,7 +1486,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       this.entityInstance = (isActive) ? service.createActiveEntity(registry, configuration) : service.createPassiveEntity(registry, configuration);
       this.reconnect = (isActive) ? getActive().startReconnect() : null;
       this.concurrency = service.getConcurrencyStrategy(configuration);
-      Objects.nonNull(this.concurrency);
+      Objects.requireNonNull(this.concurrency);
       this.executionStrategy = service.getExecutionStrategy(configuration); //  cheating here.  notmally onlt the active knows about execution but, passthrough is going to check on both active and passive
       this.isActive = isActive;
       this.consumerID = consumerID;

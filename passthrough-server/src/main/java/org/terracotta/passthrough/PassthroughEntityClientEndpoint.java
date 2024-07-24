@@ -1,20 +1,18 @@
 /*
+ * Copyright Terracotta, Inc.
+ * Copyright Super iPaaS Integration LLC, an IBM Company 2024
  *
- *  The contents of this file are subject to the Terracotta Public License Version
- *  2.0 (the "License"); You may not use this file except in compliance with the
- *  License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  http://terracotta.org/legal/terracotta-public-license.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Software distributed under the License is distributed on an "AS IS" basis,
- *  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- *  the specific language governing rights and limitations under the License.
- *
- *  The Covered Software is Entity API.
- *
- *  The Initial Developer of the Covered Software is
- *  Terracotta, Inc., a Software AG company
- *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.terracotta.passthrough;
 
@@ -45,9 +43,11 @@ public class PassthroughEntityClientEndpoint<M extends EntityMessage, R extends 
   private final byte[] config;
   private final MessageCodec<M, R> messageCodec;
   private final Runnable onClose;
-  private EndpointDelegate delegate;
+  private EndpointDelegate<R> delegate;
   private boolean isOpen;
   
+  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+    value="EI_EXPOSE_REP2")
   public PassthroughEntityClientEndpoint(PassthroughConnection passthroughConnection, Class<?> entityClass, String entityName, long clientInstanceID, byte[] config, MessageCodec<M, R> messageCodec, Runnable onClose) {
     this.connection = passthroughConnection;
     this.entityClass = entityClass;
@@ -61,6 +61,8 @@ public class PassthroughEntityClientEndpoint<M extends EntityMessage, R extends 
   }
 
   @Override
+  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+    value="EI_EXPOSE_REP")
   public byte[] getEntityConfiguration() {
     // This is harmless while closed but shouldn't be called so check open.
     checkEndpointOpen();
@@ -68,6 +70,9 @@ public class PassthroughEntityClientEndpoint<M extends EntityMessage, R extends 
   }
 
   @Override
+  @SuppressWarnings({"unchecked"})
+  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+    value="EI_EXPOSE_REP")
   public void setDelegate(EndpointDelegate delegate) {
     // This is harmless while closed but shouldn't be called so check open.
     checkEndpointOpen();

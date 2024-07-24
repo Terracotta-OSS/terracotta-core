@@ -1,20 +1,18 @@
 /*
+ * Copyright Terracotta, Inc.
+ * Copyright Super iPaaS Integration LLC, an IBM Company 2024
  *
- *  The contents of this file are subject to the Terracotta Public License Version
- *  2.0 (the "License"); You may not use this file except in compliance with the
- *  License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  http://terracotta.org/legal/terracotta-public-license.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Software distributed under the License is distributed on an "AS IS" basis,
- *  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- *  the specific language governing rights and limitations under the License.
- *
- *  The Covered Software is Entity API.
- *
- *  The Initial Developer of the Covered Software is
- *  Terracotta, Inc., a Software AG company
- *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.terracotta.passthrough;
 
@@ -61,7 +59,6 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
       // Now, replay the cache.
       for (Map.Entry<Long, CacheNode> entry : this.cachedTreeRoot.entrySet()) {
         final IStripeMonitoring entityMonitoring = getUnderlyingService(null, null, entry.getKey(), null);
-        Assert.assertTrue(null != entityMonitoring);
         walkCacheChildren(entityMonitoring, new String[0], entry.getValue().children);
       }
     }
@@ -206,6 +203,8 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
     return didRemove;
   }
 
+  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+    value="IS2_INCONSISTENT_SYNC")
   private synchronized void pushBestEffortsFromShim(long consumerID, IStripeMonitoring underlyingCollector, String name, Serializable data) {
     if (null != this.cachedTreeRoot) {
       // We are the passive.
