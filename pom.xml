@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright 2016 Terracotta, Inc., a Software AG company.
+Copyright 2016 Terracotta, Inc.
+Copyright Super iPaaS Integration LLC, an IBM Company 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -72,20 +73,13 @@ limitations under the License.
       </plugin>
     </plugins>
   </build>
-
-  <distributionManagement>
+  
+  <repositories>
     <repository>
-      <id>terracotta-os-releases</id>
-      <name>Terracotta OS Releases Repository</name>
-      <url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-releases</url>
+      <id>terracotta-releases</id>
+      <url>http://www.terracotta.org/download/reflector/releases</url>
     </repository>
-    <snapshotRepository>
-      <id>terracotta-os-snapshots</id>
-      <uniqueVersion>false</uniqueVersion>
-      <name>Terracotta OS Snapshots Repository</name>
-      <url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-snapshots</url>
-    </snapshotRepository>
-  </distributionManagement>
+  </repositories>
 
   <scm>
     <connection>scm:git:https://github.com/Terracotta-OSS/galvan.git</connection>
