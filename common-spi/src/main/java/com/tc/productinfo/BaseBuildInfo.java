@@ -65,7 +65,7 @@ public class BaseBuildInfo implements BuildInfo {
 
   @Override
   public String getCopyright() {
-    return "Copyright (c) 2003-2020 Terracotta, Inc. All rights reserved.";
+    return "";
   }
 
   @Override
