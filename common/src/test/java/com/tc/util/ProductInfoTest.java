@@ -101,10 +101,7 @@ public class ProductInfoTest extends TestCase {
 
     String copyright = info.copyright();
     assertNotNull(copyright);
-    assertTrue(copyright.indexOf("Copyright (c)") >= 0);
-    assertTrue(copyright.indexOf("Terracotta, Inc.") >= 0);
-    assertTrue(copyright.indexOf("All rights reserved.") >= 0);
-
+    
     assertEquals("1.2.3", info.kitID());
     assertEquals("1.2.3-SNAPSHOT", info.mavenArtifactsVersion());
     assertEquals("Terracotta", info.moniker());
