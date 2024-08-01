@@ -34,8 +34,8 @@ limitations under the License.
     <terracotta-os-releases-url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-releases</terracotta-os-releases-url>
 
     <!-- External dependency versions for the project -->
-    <ipc-eventbus.version>1.1.1</ipc-eventbus.version>
-    <terracotta-utilities.base.version>0.0.13</terracotta-utilities.base.version>
+    <ipc-eventbus.version>1.1.4</ipc-eventbus.version>
+    <terracotta-utilities.base.version>0.0.19</terracotta-utilities.base.version>
     <terracotta-utilities.range.version>[${terracotta-utilities.base.version},)</terracotta-utilities.range.version>
     <logback.base.version>1.2.11</logback.base.version>
     <logback.range.version>[${logback.base.version},1.2.9999)</logback.range.version>
