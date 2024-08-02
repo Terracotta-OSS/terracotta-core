@@ -44,7 +44,6 @@ limitations under the License.
     <slf4j.range.version>[${slf4j.base.version},1.7.9999)</slf4j.range.version>
     <logback.base.version>1.2.11</logback.base.version>
     <logback.range.version>[${logback.base.version},1.2.9999)</logback.range.version>
-    <management-core-version>2.0.8</management-core-version>
 
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
     <copy-maven-plugin.version>0.2.3.8</copy-maven-plugin.version>
