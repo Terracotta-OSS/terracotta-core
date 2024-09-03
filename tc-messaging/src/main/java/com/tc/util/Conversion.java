@@ -44,11 +44,7 @@ public class Conversion {
 
   private static final Pattern MEMORY_SIZE_PATTERN  = Pattern.compile("[0-9]*([.][0-9]+)? *([bkmg])?");
   private static final Pattern SIZE_MODIFIER_PATTERN = Pattern.compile("[bkmg]");
-  private final static DecimalFormat twoDForm = new DecimalFormat();
   private static final byte[]        EMPTY_BYTE_ARRAY      = new byte[] {};
-  static {
-    twoDForm.applyLocalizedPattern("#" + new DecimalFormatSymbols().getDecimalSeparator() + "##");
-  }
 
   private static int makeInt(byte b3, byte b2, byte b1, byte b0) {
     return ((((b3 & 0xff) << 24) | ((b2 & 0xff) << 16) | ((b1 & 0xff) << 8) | ((b0 & 0xff) << 0)));
@@ -430,6 +426,8 @@ public class Conversion {
   }
 
   public static String memoryBytesAsSize(long bytes) throws NumberFormatException {
+    DecimalFormat twoDForm = new DecimalFormat();
+    twoDForm.applyLocalizedPattern("#" + new DecimalFormatSymbols().getDecimalSeparator() + "##");
     if (bytes < KILO.asBytes()) {
       return bytes + "b";
     } else if (bytes < MEGA.asBytes()) {
