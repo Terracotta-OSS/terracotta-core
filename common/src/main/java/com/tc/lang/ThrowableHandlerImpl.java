@@ -99,22 +99,6 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
   public void handleThrowable(final Thread thread, final Throwable t) {
     handlePossibleOOME(t);
 
-    if (isThreadGroupDestroyed(thread, t)) {
-      logger.warn("Ignoring an attempt to start a JMX thread during shutdown.", t);
-      return;
-    }
-
-    if (isJMXTerminatedException(t)) {
-      logger.warn("Ignoring a Thread Service termination error from JMX.", t);
-      return;
-    }
-
-    if (isNotificationFetcherThread(thread)) {
-      // DEV-5006 -- Do not exit L2.
-      logger.warn("Got Exception in JMX Notification forwarding", t);
-      return;
-    }
-
     final CallbackOnExitState throwableState = new CallbackOnExitState(t);
     scheduleExit(throwableState);
 
@@ -135,19 +119,6 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
     }
 
     exit(throwableState);
-  }
-
-  private static boolean isThreadGroupDestroyed(Thread thread, Throwable t) {
-    // see EHCTERR-32
-    if (t instanceof IllegalThreadStateException) {
-      StackTraceElement[] stack = t.getStackTrace();
-      StackTraceElement bottom = stack[stack.length - 1];
-      if (stack[0].getClassName().equals("java.lang.ThreadGroup") && stack[0].getMethodName().equals("addUnstarted")
-          && bottom.getClassName().equals("javax.management.remote.generic.GenericConnectorServer$Receiver")
-          && bottom.getMethodName().equals("run")) { return true; }
-    }
-
-    return false;
   }
 
   /**
@@ -226,27 +197,5 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
     // let all the logging finish
     ThreadUtil.reallySleep(2000);
     System.exit(status);
-  }
-
-  private static boolean isNotificationFetcherThread(Thread thread) {
-    // UGLY Way to Ignore exception in JMX Notification Forwarder Thread.
-    try {
-      Field runnableField = thread.getClass().getDeclaredField("target");
-      runnableField.setAccessible(true);
-      Object runnable = runnableField.get(thread);
-      if (runnable != null && runnable.getClass().getSimpleName().equals("NotifFetcher")) {
-        return true;
-      } else {
-        return false;
-      }
-    } catch (Throwable e) {
-      return false;
-    }
-
-  }
-
-  private static boolean isJMXTerminatedException(Throwable throwable) {
-    return throwable instanceof IllegalStateException &&
-           throwable.getMessage().contains("The Thread Service has been terminated.");
   }
 }
