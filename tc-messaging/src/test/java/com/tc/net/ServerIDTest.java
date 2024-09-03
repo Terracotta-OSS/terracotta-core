@@ -1,14 +1,30 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.net;
 
+import com.tc.bytes.TCReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 import com.tc.io.TCByteBufferInputStream;
@@ -24,6 +40,7 @@ import static org.junit.Assert.assertTrue;
 
 public class ServerIDTest {
 
+  @SuppressWarnings("resource")
   @Test
   public void test() throws Exception {
 
@@ -41,7 +58,7 @@ public class ServerIDTest {
     assertFalse(n3.equals(n4));
     assertTrue(n2.equals(n2));
 
-    HashSet set = new HashSet();
+    Set<NodeID> set = new HashSet<NodeID>();
     assertTrue(set.add(n1));
     assertTrue(set.add(n2));
     assertTrue(set.add(n3));
@@ -62,28 +79,30 @@ public class ServerIDTest {
     serializer.serializeTo(bo);
     serializer = new NodeIDSerializer(ServerID.NULL_ID);
     serializer.serializeTo(bo);
-
-    TCByteBufferInputStream bi = new TCByteBufferInputStream(bo.toArray());
-    serializer = new NodeIDSerializer();
-    serializer.deserializeFrom(bi);
-    NodeID r1 = serializer.getNodeID();
-    assertEquals(n1, r1);
-    serializer = new NodeIDSerializer();
-    serializer.deserializeFrom(bi);
-    NodeID r2 = serializer.getNodeID();
-    assertEquals(n2, r2);
-    serializer = new NodeIDSerializer();
-    serializer.deserializeFrom(bi);
-    NodeID r3 = serializer.getNodeID();
-    assertEquals(n3, r3);
-    serializer = new NodeIDSerializer();
-    serializer.deserializeFrom(bi);
-    NodeID r4 = serializer.getNodeID();
-    assertEquals(n4, r4);
-    serializer = new NodeIDSerializer();
-    serializer.deserializeFrom(bi);
-    NodeID r5 = serializer.getNodeID();
-    assertEquals(ServerID.NULL_ID, r5);
+    bo.close();
+    
+    try (TCReference ref = bo.accessBuffers(); TCByteBufferInputStream bi = new TCByteBufferInputStream(ref)) {
+      serializer = new NodeIDSerializer();
+      serializer.deserializeFrom(bi);
+      NodeID r1 = serializer.getNodeID();
+      assertEquals(n1, r1);
+      serializer = new NodeIDSerializer();
+      serializer.deserializeFrom(bi);
+      NodeID r2 = serializer.getNodeID();
+      assertEquals(n2, r2);
+      serializer = new NodeIDSerializer();
+      serializer.deserializeFrom(bi);
+      NodeID r3 = serializer.getNodeID();
+      assertEquals(n3, r3);
+      serializer = new NodeIDSerializer();
+      serializer.deserializeFrom(bi);
+      NodeID r4 = serializer.getNodeID();
+      assertEquals(n4, r4);
+      serializer = new NodeIDSerializer();
+      serializer.deserializeFrom(bi);
+      NodeID r5 = serializer.getNodeID();
+      assertEquals(ServerID.NULL_ID, r5);
+    }
   }
 
   private ServerID makeNodeID(String name) {
@@ -99,8 +118,8 @@ public class ServerIDTest {
     assertTrue(n1.compareTo(n2) != 0);
     assertTrue(n1.compareTo(new ClientID(0)) != 0);
 
-    List all = new ArrayList();
-    TreeSet ss = new TreeSet();
+    List<NodeID> all = new ArrayList<NodeID>();
+    SortedSet<NodeID> ss = new TreeSet<NodeID>();
     all.add(n1);
     all.add(n2);
     ss.add(n1);
@@ -115,10 +134,10 @@ public class ServerIDTest {
     assertIsSorted(all);
   }
 
-  private void assertIsSorted(Collection nodeIDs) {
+  private void assertIsSorted(Collection<NodeID> nodeIDs) {
     ServerID last = null;
-    for (Iterator i = nodeIDs.iterator(); i.hasNext();) {
-      ServerID next = (ServerID) i.next();
+    for (NodeID nid : nodeIDs) {
+      ServerID next = (ServerID) nid;
       if (last == null) {
         last = next;
       } else {

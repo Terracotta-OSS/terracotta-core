@@ -1,57 +1,63 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.object.msg;
 
-import com.tc.net.protocol.tcm.TCMessage;
-import com.tc.object.ObjectID;
-import com.tc.object.locks.ClientServerExchangeLockContext;
-import com.tc.object.tx.TransactionID;
-import com.tc.util.ObjectIDSet;
-import com.tc.util.SequenceID;
+import com.tc.entity.ResendVoltronEntityMessage;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import com.tc.net.protocol.tcm.TCAction;
 
-public interface ClientHandshakeMessage extends TCMessage {
 
-  List<SequenceID> getTransactionSequenceIDs();
-
-  ObjectIDSet getObjectIDs();
-
-  void setObjectIDs(ObjectIDSet objectIDs);
-
-  ObjectIDSet getObjectIDsToValidate();
-
-  void setObjectIDsToValidate(ObjectIDSet objectIDsToValidate);
-
-  void addLockContext(ClientServerExchangeLockContext ctxt);
-
-  Collection<ClientServerExchangeLockContext> getLockContexts();
-
+public interface ClientHandshakeMessage extends TCAction {
+  
+  void setReconnect(boolean isReconnect);
+  
+  boolean isReconnect();
+  
+  void setUUID(String uuid);
+  
+  String getUUID();
+  
+  String getName();
+  
+  void setName(String name);
+  
   void setClientVersion(String v);
 
   String getClientVersion();
 
-  void addTransactionSequenceIDs(List<SequenceID> transactionSequenceIDs);
+  void setClientRevision(String v);
 
-  void addResentTransactionIDs(List<TransactionID> resentTransactionIDs);
+  String getClientRevision();
 
-  List<TransactionID> getResentTransactionIDs();
+  void setClientPID(int pid);
 
-  void setIsObjectIDsRequested(boolean request);
-
-  boolean isObjectIDsRequested();
-
-  void setServerHighWaterMark(long serverHighWaterMark);
-
-  long getServerHighWaterMark();
-
-  void setEnterpriseClient(boolean isEnterpirseClient);
-
-  boolean enterpriseClient();
+  int getClientPID();
 
   long getLocalTimeMills();
+  
+  String getClientAddress();
 
+  void addReconnectReference(ClientEntityReferenceContext context);
+
+  Collection<ClientEntityReferenceContext> getReconnectReferences();
+
+  void addResendMessage(ResendVoltronEntityMessage message);
+
+  Collection<ResendVoltronEntityMessage> getResendMessages();
 }

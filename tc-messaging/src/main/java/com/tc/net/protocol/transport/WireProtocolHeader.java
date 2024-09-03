@@ -1,15 +1,28 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.net.protocol.transport;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.net.protocol.AbstractTCNetworkHeader;
 import com.tc.net.protocol.TCNetworkMessage;
-import com.tc.net.protocol.delivery.OOOProtocolMessage;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
+import com.tc.net.protocol.tcm.TCMessageHeader;
 
 /**
  * This class models the header portion of a TC wire protocol message. NOTE: This class makes no attempt to be thread
@@ -70,9 +83,9 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
 
   public static short getProtocolForMessageClass(TCNetworkMessage msg) {
     // TODO: is there a better way to do this (ie. not using instanceof)?
-    if (msg instanceof TCMessage) {
+    if (msg.getHeader() instanceof TCMessageHeader) {
       return PROTOCOL_TCM;
-    } else if (msg instanceof OOOProtocolMessage) { return PROTOCOL_OOOP; }
+    }
 
     return PROTOCOL_UNKNOWN;
   }
@@ -201,6 +214,11 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
     computeAdler32Checksum(12, true);
   }
 
+  public void finalizeHeader(int totalLength) {
+    setTotalPacketLength(totalLength);
+    computeChecksum();
+  }
+
   public boolean isChecksumValid() {
     return getChecksum() == computeAdler32Checksum(12, false);
   }
@@ -261,11 +279,11 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
                                                                                                + ")"); }
 
     // validate the checksum
-    if (!isChecksumValid()) { throw new WireProtocolHeaderFormatException("Invalid Checksum"); }
+    if (!isChecksumValid()) { throw new WireProtocolHeaderFormatException(describe(false, "Invalid Checksum")); }
 
-    if (getSourcePort() == 0) { throw new WireProtocolHeaderFormatException("Source port cannot be zero"); }
+    if (getSourcePort() == 0) { throw new WireProtocolHeaderFormatException(describe(false, "Source port cannot be zero")); }
 
-    if (getDestinationPort() == 0) { throw new WireProtocolHeaderFormatException("Destination port cannot be zero"); }
+    if (getDestinationPort() == 0) { throw new WireProtocolHeaderFormatException(describe(false, "Destination port cannot be zero")); }
 
     // if (Arrays.equals(getDestinationAddress(), FOUR_ZERO_BYTES)) { throw new WireProtocolHeaderFormatException(
     // "Destination address cannot be 0.0.0.0"); }
@@ -278,7 +296,19 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
 
   @Override
   public String toString() {
-    StringBuffer buf = new StringBuffer();
+    String errMsg = "no message";
+    boolean valid = true;
+    try {
+      validate();
+    } catch (WireProtocolHeaderFormatException e) {
+      errMsg = e.getMessage();
+      valid = false;
+    }
+    return describe(valid, errMsg);
+  }
+
+  private String describe(boolean valid, String errMsg) {
+    StringBuilder buf = new StringBuilder();
     buf.append("Version: ").append(Conversion.byte2uint(getVersion())).append(", ");
     buf.append("Header Length: ").append(Conversion.byte2uint(getHeaderLength())).append(", ");
     buf.append("TOS: ").append(getTypeOfService()).append(", ");
@@ -315,22 +345,14 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
 
     buf.append("Total Msg Count: " + getMessageCount());
     buf.append("\n");
-
-    String errMsg = "no message";
-    boolean valid = true;
-    try {
-      validate();
-    } catch (WireProtocolHeaderFormatException e) {
-      errMsg = e.getMessage();
-      valid = false;
-    }
+    
     buf.append("Header Validity: ").append(valid).append(" (").append(errMsg).append(")\n");
 
     // TODO: display the options (if any)
 
     return buf.toString();
   }
-
+  
   private String getProtocolString() {
     final short protocol = getProtocol();
     switch (protocol) {

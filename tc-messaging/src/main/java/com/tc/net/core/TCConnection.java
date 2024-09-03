@@ -1,15 +1,32 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.net.core;
 
-import com.tc.net.TCSocketAddress;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.protocol.NetworkMessageSink;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.Map;
+import java.util.concurrent.Future;
 
 /**
  * Common interface for TC network connections
@@ -52,21 +69,14 @@ public interface TCConnection extends NetworkMessageSink {
   /**
    * Close this connection. The actual close happens asynchronously to this call.
    */
-  public void asynchClose();
-
-  /**
-   * Detatch this connection from it's connection manager
-   * 
-   * @throws IOException
-   */
-  public Socket detach() throws IOException;
+  public Future<Void> asynchClose();
 
   /**
    * Close this connection, blocking for at most the given timeout value
    * 
    * @return true/false whether the connection closed in time
    */
-  public boolean close(long timeout);
+  public void close();
 
   /**
    * Connect synchronously to a given destination. If this call fails, connect called be called again. However once a
@@ -77,7 +87,7 @@ public interface TCConnection extends NetworkMessageSink {
    * @throws IOException if there is an error connecting to the destination address
    * @throws TCTimeoutException if a timeout occurs
    */
-  public void connect(TCSocketAddress addr, int timeout) throws IOException, TCTimeoutException;
+  public Socket connect(InetSocketAddress addr, int timeout) throws IOException, TCTimeoutException;
 
   /**
    * Connect asynchronously to the given destination address
@@ -87,7 +97,7 @@ public interface TCConnection extends NetworkMessageSink {
    *         indication of error)
    * @throws IOException if there is an error connecting to the destination
    */
-  public boolean asynchConnect(TCSocketAddress addr) throws IOException;
+  public boolean asynchConnect(InetSocketAddress addr) throws IOException;
 
   /**
    * Whether or not this connection is connected
@@ -108,19 +118,14 @@ public interface TCConnection extends NetworkMessageSink {
    * 
    * @throws IllegalStateException if connection has never been connected
    */
-  public TCSocketAddress getLocalAddress();
+  public InetSocketAddress getLocalAddress();
 
   /**
    * Get remote side connection details
    * 
    * @throws IllegalStateException if connection has never been connected
    */
-  public TCSocketAddress getRemoteAddress();
-
-  /**
-   * Fair distribution of worker comm threads
-   */
-  public void addWeight(int addWeightBy);
+  public InetSocketAddress getRemoteAddress();
 
   /**
    * After TC Transport handshake, a connection is said to be Transport Established
@@ -128,10 +133,10 @@ public interface TCConnection extends NetworkMessageSink {
   public void setTransportEstablished();
 
   public boolean isTransportEstablished();
+  
+  Map<String, ?> getState();
 
-  /**
-   *
-   * @return true iff the connection as been marked for close but hasn't been closed yet
-   */
-  boolean isClosePending();
+  default TCByteBufferOutputStream createOutput() {
+    return new TCByteBufferOutputStream();
+  }
 }

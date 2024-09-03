@@ -1,26 +1,34 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.io;
 
 import java.io.IOException;
 import java.security.SecureRandom;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Random;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
-import com.tc.io.TCByteBufferInput.Mark;
 
 import org.junit.Test;
 
-import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -54,7 +62,7 @@ public class TCByteBufferInputStreamTest {
     }
 
     try {
-      inputStream = new TCByteBufferInputStream(new TCByteBuffer[] { TCByteBufferFactory.getInstance(false, 5), null });
+      inputStream = new TCByteBufferInputStream(new TCByteBuffer[] { TCByteBufferFactory.getInstance(5), null });
       fail();
     } catch (NullPointerException npe) {
       // expected
@@ -66,7 +74,7 @@ public class TCByteBufferInputStreamTest {
     {
       TCByteBufferInputStream bbis = null;
       try {
-        bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(false, 10));
+        bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(10));
         bbis.read(null);
         fail();
       } catch (NullPointerException npe) {
@@ -80,7 +88,7 @@ public class TCByteBufferInputStreamTest {
     {
       TCByteBufferInputStream bbis = null;
       try {
-        bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(false, 10));
+        bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(10));
         bbis.read(null, 1, 10);
         fail();
       } catch (NullPointerException npe) {
@@ -92,7 +100,7 @@ public class TCByteBufferInputStreamTest {
     {
       TCByteBufferInputStream bbis = null;
       try {
-        bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(false, 10));
+        bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(10));
         bbis.read(new byte[10], 10, 1);
         fail();
       } catch (IndexOutOfBoundsException ioobe) {
@@ -103,7 +111,7 @@ public class TCByteBufferInputStreamTest {
     }
 
     try {
-      TCByteBufferInputStream bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(false, 10));
+      TCByteBufferInputStream bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(10));
       try {
         bbis.read(new byte[10], -1, 1);
         fail();
@@ -117,7 +125,7 @@ public class TCByteBufferInputStreamTest {
     {
       TCByteBufferInputStream bbis = null;
       try {
-        bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(false, 10));
+        bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(10));
         bbis.read(new byte[10], 1, -1);
         fail();
       } catch (IndexOutOfBoundsException ioobe) {
@@ -129,7 +137,7 @@ public class TCByteBufferInputStreamTest {
       }
     }
 
-    TCByteBufferInputStream bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(false, 10));
+    TCByteBufferInputStream bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(10));
     try {
       for (int i = 0; i < 10; i++) {
         bbis.close();
@@ -154,126 +162,6 @@ public class TCByteBufferInputStreamTest {
       }
     } finally {
       bbis.close();
-    }
-  }
-
-  @Test
-  public void testToArray() {
-    for (int i = 0; i < 250; i++) {
-      TCByteBuffer[] data = getRandomDataNonZeroLength();
-      TCByteBufferInputStream bbis = new TCByteBufferInputStream(data);
-
-      try {
-        int read = this.random.nextInt(bbis.available());
-        for (int r = 0; r < read; r++) {
-          bbis.read();
-        }
-        TCByteBufferInputStream compare = new TCByteBufferInputStream(bbis.toArray());
-        try {
-          while (compare.available() > 0) {
-            int orig = bbis.read();
-            int comp = compare.read();
-            assertEquals(orig, comp);
-          }
-          assertEquals(0, compare.available());
-          assertEquals(0, bbis.available());
-        } finally {
-          compare.close();
-        }
-      } finally {
-        bbis.close();
-      }
-    }
-  }
-
-  @Test
-  public void testLimit() {
-    for (int i = 0; i < 250; i++) {
-      TCByteBuffer[] data = getRandomDataNonZeroLength();
-      TCByteBufferInputStream bbis = new TCByteBufferInputStream(data);
-
-      try {
-        int read = this.random.nextInt(bbis.available());
-        for (int r = 0; r < read; r++) {
-          bbis.read();
-        }
-        int which = this.random.nextInt(3);
-        switch (which) {
-          case 0: {
-            bbis.limit(0);
-            assertEquals(0, bbis.available());
-            break;
-          }
-          case 1: {
-            int before = bbis.available();
-            bbis.limit(bbis.available());
-            assertEquals(before, bbis.available());
-            break;
-          }
-          case 2: {
-            bbis.limit(this.random.nextInt(bbis.available()));
-            break;
-          }
-          default: {
-            throw new RuntimeException("" + which);
-          }
-        }
-        TCByteBufferInputStream compare = new TCByteBufferInputStream(bbis.toArray());
-        try {
-          while (compare.available() > 0) {
-            int orig = bbis.read();
-            int comp = compare.read();
-            assertEquals(orig, comp);
-          }
-          assertEquals(0, compare.available());
-          assertEquals(0, bbis.available());
-        } finally {
-          compare.close();
-        }
-      } finally {
-        bbis.close();
-      }
-    }
-  }
-
-  @Test
-  public void testDuplicateAndLimitZeroLen() {
-    TCByteBufferInputStream bbis = new TCByteBufferInputStream(new TCByteBuffer[] {});
-
-    try {
-      assertEquals(0, bbis.available());
-      assertEquals(0, bbis.duplicateAndLimit(0).available());
-    } finally {
-      bbis.close();
-    }
-  }
-
-  @Test
-  public void testDuplicateAndLimit() {
-    for (int i = 0; i < 50; i++) {
-      TCByteBuffer[] data = getRandomDataNonZeroLength();
-      TCByteBufferInputStream bbis = new TCByteBufferInputStream(data);
-
-      try {
-        int length = bbis.available();
-        assertTrue(length > 0);
-        int start = this.random.nextInt(length);
-        bbis.skip(start);
-        int limit = this.random.nextInt(bbis.available());
-        TCByteBufferInput dupe = bbis.duplicateAndLimit(limit);
-        for (int n = 0; n < limit; n++) {
-          int dupeByte = dupe.read();
-          int origByte = bbis.read();
-
-          assertTrue(dupeByte != -1);
-          assertTrue(origByte != -1);
-
-          assertEquals(origByte, dupeByte);
-        }
-        assertEquals(0, dupe.available());
-      } finally {
-        bbis.close();
-      }
     }
   }
 
@@ -329,7 +217,7 @@ public class TCByteBufferInputStreamTest {
     final int numBufs = data.length == 0 ? 0 : data.length - 1;
 
     final long totalLength = length(data);
-    TCByteBufferInputStream bbis = new TCByteBufferInputStream(data);
+    TCByteBufferInputStream bbis = new TCByteBufferInputStream(Arrays.asList(data).stream().map(TCByteBuffer::duplicate).toArray(TCByteBuffer[]::new));
     try {
       assertEquals(totalLength, bbis.available());
       assertEquals(totalLength, bbis.getTotalLength());
@@ -395,7 +283,7 @@ public class TCByteBufferInputStreamTest {
     for (int i = 0; i < 250; i++) {
       TCByteBuffer[] data = getRandomDataNonZeroLength();
       final byte b;
-      TCByteBufferInputStream bbis = new TCByteBufferInputStream(data);
+      TCByteBufferInputStream bbis = new TCByteBufferInputStream(Arrays.asList(data).stream().map(TCByteBuffer::duplicate).toArray(TCByteBuffer[]::new));
 
       try {
         assertTrue(bbis.available() > 0);
@@ -406,21 +294,21 @@ public class TCByteBufferInputStreamTest {
         bbis.close();
       }
       byte[] readArray = new byte[1];
-      bbis = new TCByteBufferInputStream(data);
+      bbis = new TCByteBufferInputStream(Arrays.asList(data).stream().map(TCByteBuffer::duplicate).toArray(TCByteBuffer[]::new));
       try {
         bbis.read(readArray);
         assertEquals(b, readArray[0]);
       } finally {
         bbis.close();
       }
-      bbis = new TCByteBufferInputStream(data);
+      bbis = new TCByteBufferInputStream(Arrays.asList(data).stream().map(TCByteBuffer::duplicate).toArray(TCByteBuffer[]::new));
       try {
         bbis.read(readArray, 0, 1);
         assertEquals(b, readArray[0]);
       } finally {
         bbis.close();
       }
-      bbis = new TCByteBufferInputStream(data);
+      bbis = new TCByteBufferInputStream(Arrays.asList(data).stream().map(TCByteBuffer::duplicate).toArray(TCByteBuffer[]::new));
       try {
         int avail = bbis.available();
         bbis.read(new byte[0]);
@@ -435,89 +323,6 @@ public class TCByteBufferInputStreamTest {
     }
   }
 
-  @Test
-  public void testMarkReset() throws IOException {
-    TCByteBuffer[] data = createBuffersWithRandomData(4, 10);
-    TCByteBufferInputStream bbis = new TCByteBufferInputStream(data);
-
-    try {
-      bbis.readInt();
-      bbis.readInt();
-      bbis.readInt(); // should be 2 bytes into 2nd buffer by now
-      try {
-        bbis.tcReset(null);
-        fail();
-      } catch (IllegalArgumentException ise) {
-        // expected
-      }
-      int avail = bbis.available();
-      Mark m = bbis.mark();
-      int i1 = bbis.readInt();
-      int i2 = bbis.readInt();
-      int i3 = bbis.readInt(); // should be 4 bytes into 3rd buffer now
-      bbis.tcReset(m);
-      assertEquals(avail, bbis.available());
-      assertEquals(i1, bbis.readInt());
-      assertEquals(i2, bbis.readInt());
-      assertEquals(i3, bbis.readInt());
-      try {
-        bbis.tcReset(null);
-        fail();
-      } catch (IllegalArgumentException ise) {
-        // expected
-      }
-    } finally {
-      bbis.close();
-    }
-  }
-
-  @Test
-  public void testMarkReset2() throws IOException {
-    // This one stays on the same buffer between mark and reset
-    TCByteBuffer[] data = createBuffersWithRandomData(1, 10);
-    TCByteBufferInputStream bbis = new TCByteBufferInputStream(data);
-
-    try {
-      bbis.readInt();
-      int avail = bbis.available();
-      Mark m = bbis.mark();
-      int i1 = bbis.readInt();
-      bbis.tcReset(m);
-      assertEquals(avail, bbis.available());
-      assertEquals(i1, bbis.readInt());
-    } finally {
-      bbis.close();
-    }
-  }
-
-  @Test
-  public void testMultipleMarks() throws IOException {
-    TCByteBuffer[] data = createBuffersWithRandomData(this.random.nextInt(50), this.random.nextInt(512));
-    TCByteBufferInputStream bbis = new TCByteBufferInputStream(data);
-
-    try {
-      List marks = new ArrayList();
-      List bytes = new ArrayList();
-      while (bbis.available() > 0) {
-        marks.add(bbis.mark());
-        byte[] randBytes = new byte[this.random.nextInt(bbis.available() + 1)];
-        bbis.readFully(randBytes);
-        bytes.add(randBytes);
-        marks.add(bbis.mark());
-      }
-      for (int i = 0, j = 0; i < marks.size(); i++) {
-        Mark start = (Mark) marks.get(i++);
-        Mark end = (Mark) marks.get(i);
-        byte[] expectedBytes = (byte[]) bytes.get(j++);
-        TCByteBuffer[] got = bbis.toArray(start, end);
-        byte[] gotBytes = drain(got);
-        assertThat(gotBytes, equalTo(expectedBytes));
-      }
-    } finally {
-      bbis.close();
-    }
-  }
-
   private byte[] drain(TCByteBuffer[] bb) throws IOException {
     TCByteBufferInputStream bbis = new TCByteBufferInputStream(bb);
     try {
@@ -529,17 +334,17 @@ public class TCByteBufferInputStreamTest {
     }
   }
 
-  private void testReadBasics(TCByteBuffer[] data) {
-    final int numBufs = data.length == 0 ? 0 : data.length - 1;
+  private void testReadBasics(TCByteBuffer[] srcdata) {
+    final int numBufs = srcdata.length == 0 ? 0 : srcdata.length - 1;
 
-    final long len = length(data);
-    TCByteBufferInputStream bbis = new TCByteBufferInputStream(data);
+    final long len = length(srcdata);
+    TCByteBufferInputStream bbis = new TCByteBufferInputStream(Arrays.asList(srcdata).stream().map(TCByteBuffer::duplicate).toArray(TCByteBuffer[]::new));
     try {
       assertEquals(len, bbis.available());
       assertEquals(len, bbis.getTotalLength());
       int index = 0;
       for (int i = 0; i < len; i++) {
-        for (; !data[index].hasRemaining() && index < numBufs; index++) {
+        for (; !srcdata[index].hasRemaining() && index < numBufs; index++) {
           //
         }
 
@@ -547,18 +352,18 @@ public class TCByteBufferInputStreamTest {
         int fromStream = bbis.read();
         assertFalse(fromStream < 0);
 
-        byte original = data[index].get();
+        byte original = srcdata[index].get();
 
         assertEquals(original, (byte) fromStream);
       }
       if (index < numBufs) {
         for (; index < numBufs; index++) {
-          assertEquals(0, data[index + 1].limit());
+          assertEquals(0, srcdata[index + 1].limit());
         }
       }
       assertEquals(index, numBufs);
       if (numBufs > 0) {
-        assertEquals(0, data[numBufs].remaining());
+        assertEquals(0, srcdata[numBufs].remaining());
       }
       assertEquals(0, bbis.available());
       assertEquals(-1, bbis.read());
@@ -572,7 +377,7 @@ public class TCByteBufferInputStreamTest {
   @Test
   public void testTrailingZeroLength() {
     TCByteBuffer[] data = getRandomData();
-    TCByteBuffer zeroLen = TCByteBufferFactory.getInstance(false, 0);
+    TCByteBuffer zeroLen = TCByteBufferFactory.getInstance(0);
 
     for (int i = 0; i < Math.min(10, data.length); i++) {
       data[data.length - i - 1] = zeroLen;
@@ -588,7 +393,7 @@ public class TCByteBufferInputStreamTest {
   public void testRandomZeroLength() {
     TCByteBuffer[] data = getRandomDataNonZeroLength();
 
-    TCByteBuffer zeroLen = TCByteBufferFactory.getInstance(false, 0);
+    TCByteBuffer zeroLen = TCByteBufferFactory.getInstance(0);
 
     int num = Math.min(25, data.length);
 
@@ -628,7 +433,7 @@ public class TCByteBufferInputStreamTest {
     final int numBufs = data.length == 0 ? 0 : data.length - 1;
 
     final long len = length(data);
-    TCByteBufferInputStream bbis = new TCByteBufferInputStream(data);
+    TCByteBufferInputStream bbis = new TCByteBufferInputStream(Arrays.asList(data).stream().map(TCByteBuffer::duplicate).toArray(TCByteBuffer[]::new));
     try {
       assertEquals(len, bbis.available());
       assertEquals(len, bbis.getTotalLength());
@@ -717,13 +522,26 @@ public class TCByteBufferInputStreamTest {
       testReadArrayBasics(data);
       testReadBasics(data);
       testOffsetReadArray(data);
-      TCByteBuffer[] toArray = bbis.toArray();
-      assertEquals(0, toArray.length);
     } finally {
       bbis.close();
     }
   }
 
+  @Test
+  public void testGetBytesOptimization() {
+    TCByteBuffer[] data = new TCByteBuffer[] {TCByteBufferFactory.wrap("the quick brown fox jumped over the cow".getBytes())};
+
+    TCByteBufferInputStream bbis = new TCByteBufferInputStream(data);
+    try {
+      TCByteBuffer buf = bbis.read(9);
+      for (byte b : "the quick".getBytes()) {
+        assertEquals(b, buf.get());
+      }
+    } finally {
+      bbis.close();
+    }
+  }
+  
   private long length(TCByteBuffer[] data) {
     long rv = 0;
     for (TCByteBuffer element : data) {
@@ -735,7 +553,7 @@ public class TCByteBufferInputStreamTest {
   private TCByteBuffer[] createBuffersWithRandomData(int number, int size) {
     TCByteBuffer[] rv = new TCByteBuffer[number];
     for (int i = 0; i < rv.length; i++) {
-      rv[i] = TCByteBufferFactory.getInstance(false, size);
+      rv[i] = TCByteBufferFactory.getInstance(size);
       byte[] bites = new byte[size];
       this.random.nextBytes(bites);
       rv[i].put(bites);
@@ -752,7 +570,7 @@ public class TCByteBufferInputStreamTest {
     TCByteBuffer[] rv = new TCByteBuffer[num];
 
     for (int i = 0; i < num; i++) {
-      rv[i] = TCByteBufferFactory.getInstance(false, maxSize > 0 ? this.random.nextInt(maxSize) : 0);
+      rv[i] = TCByteBufferFactory.getInstance(maxSize > 0 ? this.random.nextInt(maxSize) : 0);
       this.random.nextBytes(rv[i].array());
     }
 

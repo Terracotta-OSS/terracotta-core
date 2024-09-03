@@ -1,5 +1,19 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.async.impl;
 
@@ -7,7 +21,6 @@ import com.tc.async.api.StageMonitor;
 import com.tc.text.StringFormatter;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 class StageMonitorImpl implements StageMonitor {
@@ -15,7 +28,7 @@ class StageMonitorImpl implements StageMonitor {
   private final String          name;
   private final StringFormatter formatter;
 
-  private final List            snapshots = new ArrayList();
+  private final List<Snapshot>  snapshots = new ArrayList<Snapshot>();
   private long                  begin     = System.currentTimeMillis();
 
   StageMonitorImpl(String name, StringFormatter formatter) {
@@ -28,6 +41,7 @@ class StageMonitorImpl implements StageMonitor {
     snapshots.add(new Snapshot(queueDepth));
   }
 
+  @Override
   public synchronized String dumpAndFlush() {
     long elapsed = System.currentTimeMillis() - begin;
     StringBuffer rv = new StringBuffer();
@@ -64,8 +78,8 @@ class StageMonitorImpl implements StageMonitor {
     long elapsed = System.currentTimeMillis() - begin;
     int min = -1, max = 0;
     long sum = 0;
-    for (Iterator i = snapshots.iterator(); i.hasNext();) {
-      int qd = ((Snapshot) i.next()).getQueueDepth();
+    for (Snapshot snapshot : snapshots) {
+      int qd = snapshot.getQueueDepth();
       if (qd < min || min < 0) min = qd;
       if (qd > max) max = qd;
       sum += qd;

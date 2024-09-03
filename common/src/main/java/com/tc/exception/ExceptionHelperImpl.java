@@ -1,9 +1,22 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.exception;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -12,7 +25,7 @@ import java.util.List;
  */
 public class ExceptionHelperImpl implements ExceptionHelper {
   
-  private final List helpers = new LinkedList();
+  private final List<ExceptionHelper> helpers = new LinkedList<ExceptionHelper>();
   private final ExceptionHelper nullHelper = new NullExceptionHelper();
   
   @Override
@@ -44,9 +57,7 @@ public class ExceptionHelperImpl implements ExceptionHelper {
   }
   
   private ExceptionHelper getHelperFor(Throwable t) {
-    ExceptionHelper helper;
-    for (Iterator i = helpers.iterator(); i.hasNext(); ) {
-      helper = (ExceptionHelper) i.next();
+    for (ExceptionHelper helper : helpers) {
       if (helper.accepts(t)) return helper;
     }
     return nullHelper;

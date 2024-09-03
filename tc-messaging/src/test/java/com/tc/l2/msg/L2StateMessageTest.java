@@ -1,6 +1,19 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.l2.msg;
 
@@ -9,6 +22,7 @@ import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.state.Enrollment;
 import com.tc.net.ServerID;
 
+import com.tc.util.State;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,11 +56,12 @@ public class L2StateMessageTest {
     assertEquals(l2sm.toString(), l2sm1.toString());
   }
 
+  @SuppressWarnings("resource")
   private L2StateMessage writeAndRead(L2StateMessage l2sm) throws Exception {
     TCByteBufferOutputStream bo = new TCByteBufferOutputStream();
     l2sm.serializeTo(bo);
     System.err.println("Written : " + l2sm);
-    TCByteBufferInputStream bi = new TCByteBufferInputStream(bo.toArray());
+    TCByteBufferInputStream bi = new TCByteBufferInputStream(bo.accessBuffers());
     L2StateMessage l2sm1 = new L2StateMessage();
     l2sm1.deserializeFrom(bi);
     System.err.println("Read : " + l2sm1);
@@ -55,35 +70,31 @@ public class L2StateMessageTest {
 
   @Test
   public void testBasicSerialization() throws Exception {
-    L2StateMessage l2sm = (L2StateMessage) L2StateMessage.createElectionStartedMessage(enrollment);
+    L2StateMessage l2sm = L2StateMessage.createElectionStartedMessage(enrollment, new State("dummy"));
     L2StateMessage l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
 
-    l2sm = (L2StateMessage) L2StateMessage.createElectionResultMessage(enrollment);
+    l2sm = L2StateMessage.createElectionResultMessage(enrollment, new State("dummy"));
     l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
 
-    l2sm = (L2StateMessage) L2StateMessage.createElectionWonMessage(enrollment);
+    l2sm = L2StateMessage.createElectionWonMessage(enrollment, new State("dummy"));
     l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
 
-    l2sm = (L2StateMessage) L2StateMessage.createMoveToPassiveStandbyMessage(enrollment);
+    l2sm = L2StateMessage.createAbortElectionMessage(l2StateMessage, enrollment, new State("dummy"));
     l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
 
-    l2sm = (L2StateMessage) L2StateMessage.createAbortElectionMessage(l2StateMessage, enrollment);
+    l2sm = L2StateMessage.createElectionStartedMessage(l2StateMessage, enrollment, new State("dummy"));
     l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
 
-    l2sm = (L2StateMessage) L2StateMessage.createElectionStartedMessage(l2StateMessage, enrollment);
+    l2sm = L2StateMessage.createResultConflictMessage(l2StateMessage, enrollment, new State("dummy"));
     l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
 
-    l2sm = (L2StateMessage) L2StateMessage.createResultConflictMessage(l2StateMessage, enrollment);
-    l2sm1 = writeAndRead(l2sm);
-    validate(l2sm, l2sm1);
-
-    l2sm = (L2StateMessage) L2StateMessage.createResultAgreedMessage(l2StateMessage, enrollment);
+    l2sm = L2StateMessage.createResultAgreedMessage(l2StateMessage, enrollment, new State("dummy"));
     l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
   }

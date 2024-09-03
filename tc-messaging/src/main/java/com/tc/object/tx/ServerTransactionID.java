@@ -1,10 +1,25 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.object.tx;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.bytes.TCReference;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
@@ -16,7 +31,7 @@ import com.tc.util.Assert;
  * A class that represents a particular client transaction from the server's perspective (ie. the combination of NodeID
  * and a client TransactionID)
  */
-public class ServerTransactionID implements Comparable {
+public class ServerTransactionID implements Comparable<ServerTransactionID> {
   public static final ServerTransactionID NULL_ID = new ServerTransactionID(ClientID.NULL_ID, TransactionID.NULL_ID);
 
   private final TransactionID             txnID;
@@ -73,26 +88,28 @@ public class ServerTransactionID implements Comparable {
    * Utility method for serialization.
    */
   public byte[] getBytes() {
-    TCByteBufferOutputStream out = new TCByteBufferOutputStream(64, 256, false);
+    TCByteBufferOutputStream out = new TCByteBufferOutputStream(64, 256);
     NodeIDSerializer nodeIDSerializer = new NodeIDSerializer(sourceID);
     nodeIDSerializer.serializeTo(out);
     out.writeLong(txnID.toLong());
     out.close();
-    TCByteBuffer[] bufs = out.toArray();
     byte[] toRet = new byte[out.getBytesWritten()];
     int idx = 0;
-    for (TCByteBuffer buf : bufs) {
-      int length = buf.limit();
-      buf.get(toRet, idx, buf.limit());
-      idx += length;
+    try (TCReference ref = out.accessBuffers()) {
+      for (TCByteBuffer buf : ref) {
+        int length = buf.limit();
+        buf.get(toRet, idx, buf.limit());
+        idx += length;
+      }
+      Assert.assertEquals(idx, out.getBytesWritten());
     }
-    Assert.assertEquals(idx, out.getBytesWritten());
     return toRet;
   }
 
   /**
    * Utility method for deserialization.
    */
+  @SuppressWarnings("resource")
   public static ServerTransactionID createFrom(byte[] data) {
     try {
       TCByteBufferInputStream in = new TCByteBufferInputStream(TCByteBufferFactory.wrap(data));
@@ -105,8 +122,7 @@ public class ServerTransactionID implements Comparable {
   }
 
   @Override
-  public int compareTo(Object o) {
-    ServerTransactionID other = (ServerTransactionID) o;
+  public int compareTo(ServerTransactionID other) {
     int cmp = sourceID.compareTo(other.sourceID);
     if (cmp == 0) {
       return txnID.compareTo(other.txnID);

@@ -1,12 +1,27 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.properties;
 
-import org.apache.commons.io.IOUtils;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.tc.util.io.IOUtils;
 import com.tc.util.properties.TCPropertyStore;
 
 import java.io.File;
@@ -14,17 +29,13 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * This class is an easy way to read properties that will help tune DSO. It first loads properties from the
@@ -34,7 +45,9 @@ import java.util.Properties;
  */
 public class TCPropertiesImpl implements TCProperties {
 
-  private static final TCLogger         logger                     = newLoggingProxy();
+  private static final Logger logger = LoggerFactory.getLogger(TCPropertiesImpl.class);
+
+  private static final Set<String> TC_PROPERTIES_WITH_NO_DEFAULTS = new HashSet<String>(Arrays.asList(TCPropertiesConsts.TC_PROPERTIES_WITH_NO_DEFAULTS));
 
   public static final String            SYSTEM_PROP_PREFIX         = "com.tc.";
 
@@ -75,10 +88,11 @@ public class TCPropertiesImpl implements TCProperties {
     // this happens last -- system properties have highest precedence
     processSystemProperties();
 
+    printLocalProperties();
     warnForOldProperties();
   }
 
-  public static String tcSysProp(final String prop) {
+  public static String tcSysProp(String prop) {
     return SYSTEM_PROP_PREFIX + prop;
   }
 
@@ -125,34 +139,29 @@ public class TCPropertiesImpl implements TCProperties {
       return;
     }
 
-    // flip the logger proxy to the real deal
-    try {
-      ((LoggingInvocationHandler) Proxy.getInvocationHandler(logger)).switchToRealLogger();
-    } catch (Exception e) {
-      throw new AssertionError(e);
-    }
-
-    logger.info("Loaded TCProperties : " + toString());
+    logger.debug("Loaded TCProperties : " + toString());
   }
 
   private void applyConfigOverrides(Map<String, String> overwriteProps) {
-    int noOfProperties = overwriteProps.size();
-
-    if (noOfProperties == 0) {
-      logger.info("tc-config doesn't have any tc-property. No tc-property will be overridden");
+    if (overwriteProps.isEmpty()) {
+      logger.debug("tc-config doesn't have any tc-property. No tc-property will be overridden");
       return;
     }
 
     for (Entry<String, String> prop : overwriteProps.entrySet()) {
       String propertyName = prop.getKey();
       String propertyValue = prop.getValue();
-      if (!this.props.containsKey(propertyName)) {
+      if (!this.props.containsKey(propertyName) && !TC_PROPERTIES_WITH_NO_DEFAULTS.contains(propertyName)) {
         logger.warn("The property \"" + propertyName
                     + "\" is not present in set of defined tc properties. Probably this is misspelled");
       }
       if (!this.localTcProperties.containsKey(propertyName)) {
-        logger.info("The property \"" + propertyName + "\" was overridden to " + propertyValue + " from "
-                    + props.getProperty(propertyName) + " by the tc-config file");
+        if(TC_PROPERTIES_WITH_NO_DEFAULTS.contains(propertyName)) {
+          logger.info("The property \"" + propertyName + "\" was set to " + propertyValue + " by the tc-config file");
+        } else {
+          logger.info("The property \"" + propertyName + "\" was overridden to " + propertyValue + " from "
+                      + props.getProperty(propertyName) + " by the tc-config file");
+        }
         setProperty(propertyName, propertyValue);
       } else {
         logger.warn("The property \"" + propertyName + "\" was set by local settings to "
@@ -215,7 +224,7 @@ public class TCPropertiesImpl implements TCProperties {
     InputStream in = null;
     try {
       in = url.openStream();
-      logger.info("Loading default properties from " + propFile);
+      logger.debug("Loading default properties from " + propFile);
       props.load(in);
     } catch (IOException e) {
       throw new AssertionError(e);
@@ -244,7 +253,7 @@ public class TCPropertiesImpl implements TCProperties {
     String val = props.getProperty(key);
     if (val == null && !missingOkay) { throw new AssertionError("TCProperties : Property not found for " + key); }
     if (!initialized) {
-      logger.info("The property \"" + key + "\" was read before initialization completed. \"" + key + "\" = " + val);
+      logger.debug("The property \"" + key + "\" was read before initialization completed. \"" + key + "\" = " + val);
     }
     return val;
   }
@@ -273,6 +282,12 @@ public class TCPropertiesImpl implements TCProperties {
       }
     }
     return sb.toString();
+  }
+  
+  private void printLocalProperties() {
+    if (!localTcProperties.isEmpty()) {
+      logger.info("using the following local tc properties = {" + sortedPropertiesToString() + " }");
+    }
   }
 
   @Override
@@ -319,65 +334,4 @@ public class TCPropertiesImpl implements TCProperties {
     String val = getProperty(key);
     return Float.valueOf(val).floatValue();
   }
-
-  private static TCLogger newLoggingProxy() {
-    LoggingInvocationHandler handler = new LoggingInvocationHandler();
-    Class[] interfaces = new Class[] { TCLogger.class };
-    ClassLoader loader = TCPropertiesImpl.class.getClassLoader();
-    return (TCLogger) Proxy.newProxyInstance(loader, interfaces, handler);
-  }
-
-  /**
-   * The whole point of this class is to delay initializing logging until TCProperties have been initialized. This proxy
-   * will buffer calls to logger until the switch method is called
-   */
-  private static class LoggingInvocationHandler implements InvocationHandler {
-    private final List calls    = new ArrayList();
-    private boolean    switched = false;
-    private TCLogger   realLogger;
-
-    @Override
-    public synchronized Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-      if (switched) { return method.invoke(realLogger, args); }
-
-      if ((method.getReturnType() != Void.TYPE) && !switched) {
-        // if we haven't switched, it isn't clear what the return values should be
-        throw new UnsupportedOperationException("only void return type methods can be called before the switch");
-      }
-
-      calls.add(new Call(method, args));
-      return null;
-    }
-
-    synchronized void switchToRealLogger() throws Exception {
-      if (switched) { throw new IllegalStateException("Already switched"); }
-
-      realLogger = TCLogging.getLogger(TCProperties.class);
-
-      for (Iterator i = calls.iterator(); i.hasNext();) {
-        Call call = (Call) i.next();
-        call.execute(realLogger);
-      }
-
-      calls.clear();
-      switched = true;
-    }
-
-    private static class Call {
-
-      private final Method   method;
-      private final Object[] args;
-
-      Call(Method method, Object[] args) {
-        this.method = method;
-        this.args = args;
-      }
-
-      void execute(TCLogger target) throws Exception {
-        method.invoke(target, args);
-      }
-    }
-
-  }
-
 }

@@ -1,5 +1,19 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.text;
 
@@ -7,7 +21,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 public class PrettyPrinterImpl implements PrettyPrinter {
@@ -16,30 +29,28 @@ public class PrettyPrinterImpl implements PrettyPrinter {
 
   private final StringBuffer    prefix;
   private final PrintWriter     out;
-  private final IdentityHashMap visited;
+  private final IdentityHashMap<Object, String> visited;
 
   private final PrintPolicy     defaultPolicy = new BasicPrintPolicy();
-  private final Collection      policies;
+  private final Collection<PrintPolicy> policies;
 
   private boolean               autoflush     = true;
 
   public PrettyPrinterImpl(PrintWriter out) {
-    this(INDENT, out, new IdentityHashMap());
+    this(INDENT, out, new IdentityHashMap<Object, String>());
   }
 
-  private PrettyPrinterImpl(String prefix, PrintWriter out, IdentityHashMap visited) {
+  private PrettyPrinterImpl(String prefix, PrintWriter out, IdentityHashMap<Object, String> visited) {
     this.prefix = new StringBuffer(prefix);
     this.out = out;
     this.visited = visited;
     this.policies = initPolicies();
   }
 
-  @Override
   public synchronized void autoflush(boolean b) {
     this.autoflush = b;
   }
 
-  @Override
   public synchronized boolean autoflush() {
     return this.autoflush;
   }
@@ -60,7 +71,6 @@ public class PrettyPrinterImpl implements PrettyPrinter {
     }
   }
 
-  @Override
   public PrettyPrinter print(Object o) {
     this.out.print(o);
     if (autoflush()) this.out.flush();
@@ -74,19 +84,16 @@ public class PrettyPrinterImpl implements PrettyPrinter {
     return this;
   }
 
-  @Override
   public PrettyPrinter println() {
     this.out.println();
     if (autoflush()) this.out.flush();
     return this;
   }
 
-  @Override
   public PrettyPrinter indent() {
     return print(prefix);
   }
 
-  @Override
   public PrettyPrinter duplicateAndIndent() {
     PrettyPrinterImpl rv = duplicate();
     rv.indentPrefix();
@@ -104,7 +111,6 @@ public class PrettyPrinterImpl implements PrettyPrinter {
     return prettyPrinterImpl;
   }
 
-  @Override
   public PrettyPrinter visit(Object o) {
     if (accountFor(o)) {
       print("ALREADY VISITED: " + o);
@@ -121,8 +127,7 @@ public class PrettyPrinterImpl implements PrettyPrinter {
 
   private PrintPolicy findPolicyFor(Object o) {
     if (o == null) return defaultPolicy;
-    for (Iterator i = policies.iterator(); i.hasNext();) {
-      PrintPolicy policy = (PrintPolicy) i.next();
+    for (PrintPolicy policy : policies) {
       if (policy.accepts(o)) { return policy; }
     }
     return defaultPolicy;
@@ -131,8 +136,8 @@ public class PrettyPrinterImpl implements PrettyPrinter {
   /**
    * Creates a policy path. Each policy is searched in order.
    */
-  private Collection initPolicies() {
-    Collection rv = new ArrayList();
+  private Collection<PrintPolicy> initPolicies() {
+    Collection<PrintPolicy> rv = new ArrayList<PrintPolicy>();
     rv.add(new PrettyPrintablePrintPolicy());
     rv.add(new ShallowMapPrintPolicy());
     rv.add(new ShallowCollectionPrintPolicy());
@@ -164,7 +169,7 @@ public class PrettyPrinterImpl implements PrettyPrinter {
 
     @Override
     public PrettyPrinter visit(PrettyPrinter pp, Object o) {
-      return pp.print(o.getClass().getName()).print(".size()=").print(((Map) o).size() + "");
+      return pp.println(o.getClass().getName()).println(".size()=").println(((Map<?, ?>) o).size() + "");
     }
 
     @Override
@@ -178,7 +183,7 @@ public class PrettyPrinterImpl implements PrettyPrinter {
 
     @Override
     public PrettyPrinter visit(PrettyPrinter pp, Object o) {
-      return pp.print(o.getClass().getName()).print(".size()=").print(((Collection) o).size() + "");
+      return pp.println(o.getClass().getName()).println(".size()=").println(((Collection<?>) o).size() + "");
     }
 
     @Override
@@ -192,7 +197,7 @@ public class PrettyPrinterImpl implements PrettyPrinter {
 
     @Override
     public PrettyPrinter visit(PrettyPrinter pp, Object o) {
-      return pp.print(o);
+      return pp.println(o);
     }
 
     @Override

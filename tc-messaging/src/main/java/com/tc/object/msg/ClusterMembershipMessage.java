@@ -1,17 +1,31 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.object.msg;
 
-import com.tc.bytes.TCByteBuffer;
+import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.license.ProductID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.session.SessionID;
+import com.tc.net.core.ProductID;
 
 import java.io.IOException;
 
@@ -24,20 +38,20 @@ public class ClusterMembershipMessage extends DSOMessageBase {
   private NodeID            nodeID;
   private ProductID         productId;
 
-  public ClusterMembershipMessage(final SessionID sessionID, final MessageMonitor monitor, final TCByteBufferOutputStream out, final MessageChannel channel,
-                                  final TCMessageType type) {
+  public ClusterMembershipMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel,
+                                  TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
-  public ClusterMembershipMessage(final SessionID sessionID, final MessageMonitor monitor, final MessageChannel channel,
-                                  final TCMessageHeader header, final TCByteBuffer[] data) {
+  public ClusterMembershipMessage(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,
+                                  TCMessageHeader header, TCByteBufferInputStream data) {
     super(sessionID, monitor, channel, header, data);
   }
 
-  public void initialize(final int eventType, final NodeID nodeID, final ProductID productId) {
-    this.eventType = eventType;
-    this.nodeID = nodeID;
-    this.productId = productId;
+  public void initialize(int type, NodeID nid, ProductID pid) {
+    this.eventType = type;
+    this.nodeID = nid;
+    this.productId = pid;
   }
 
   @Override
@@ -48,7 +62,7 @@ public class ClusterMembershipMessage extends DSOMessageBase {
   }
 
   @Override
-  protected boolean hydrateValue(final byte name) throws IOException {
+  protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case EVENT_TYPE:
         eventType = getIntValue();
@@ -84,28 +98,23 @@ public class ClusterMembershipMessage extends DSOMessageBase {
     return productId;
   }
 
-  @Override
-  protected String describePayload() {
-    return EventType.toString(eventType) + " nodeId=" + nodeID;
-  }
-
   public static class EventType {
     public static final int NODE_CONNECTED    = 0;
     public static final int NODE_DISCONNECTED = 1;
 
-    public static boolean isValidType(final int t) {
+    public static boolean isValidType(int t) {
       return t >= NODE_CONNECTED && t <= NODE_DISCONNECTED;
     }
 
-    public static boolean isNodeConnected(final int t) {
+    public static boolean isNodeConnected(int t) {
       return t == NODE_CONNECTED;
     }
 
-    public static boolean isNodeDisconnected(final int t) {
+    public static boolean isNodeDisconnected(int t) {
       return t == NODE_DISCONNECTED;
     }
 
-    public static String toString(final int eventType) {
+    public static String toString(int eventType) {
       switch (eventType) {
         case NODE_CONNECTED:
           return "NODE_CONNECTED";

@@ -1,18 +1,34 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.license.ProductID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.transport.ConnectionID;
+import com.tc.net.core.ProductID;
+import com.tc.object.session.SessionID;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
 /**
@@ -23,19 +39,17 @@ import java.net.UnknownHostException;
  */
 public interface MessageChannel {
 
-  public TCSocketAddress getLocalAddress();
+  public InetSocketAddress getLocalAddress();
 
-  public TCSocketAddress getRemoteAddress();
+  public InetSocketAddress getRemoteAddress();
 
   public void addListener(ChannelEventListener listener);
-
-  public ChannelID getChannelID();
   
   public boolean isOpen();
 
   public boolean isClosed();
 
-  public TCMessage createMessage(TCMessageType type);
+  public TCAction createMessage(TCMessageType type);
   
   public Object getAttachment(String key);
 
@@ -60,13 +74,13 @@ public interface MessageChannel {
   // ////////////////////////////////
   public boolean isConnected();
 
-  public void send(TCNetworkMessage message);
+  public void send(TCNetworkMessage message) throws IOException;
+  
+  public NetworkStackID open(InetSocketAddress serverAddress) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException;
 
-  public NetworkStackID open() throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException,
-      IOException, CommStackMismatchException;
-
-  public NetworkStackID open(char[] password) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException,
-      IOException, CommStackMismatchException;
+  public NetworkStackID open(Iterable<InetSocketAddress> serverAddresses) throws MaxConnectionsExceededException,
+      TCTimeoutException,
+      UnknownHostException, IOException, CommStackMismatchException;
 
   public void close();
   
@@ -75,6 +89,12 @@ public interface MessageChannel {
   public void setLocalNodeID(NodeID source);
   
   public NodeID getRemoteNodeID();
+  
+  public ProductID getProductID();
+  
+  public ConnectionID getConnectionID();
+  
+  public ChannelID getChannelID();
 
-  public ProductID getProductId();
+  public SessionID getSessionID();
 }

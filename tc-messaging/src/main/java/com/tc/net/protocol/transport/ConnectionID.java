@@ -1,12 +1,27 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.net.protocol.transport;
 
 import com.tc.io.TCDataInput;
 import com.tc.io.TCDataOutput;
-import com.tc.license.ProductID;
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.core.ProductID;
 
 import java.io.IOException;
 
@@ -19,28 +34,21 @@ public class ConnectionID {
   private final String             serverID;
   private final String             jvmID;
   private final Exception          initEx;
-  private final String             username;
   private final ProductID          productId;
-
-  private volatile char[]          password;
 
   private static final String      NULL_SERVER_ID = "ffffffffffffffffffffffffffffffff";
   public static final String       NULL_JVM_ID    = "ffffffffffffffffffffffffffffffffffffffffffffffff";
-  private static final ProductID   DEFAULT_PRODUCT_ID = ProductID.USER;
+  private static final ProductID   DEFAULT_PRODUCT_ID = ProductID.PERMANENT;
   public static final ConnectionID NULL_ID        = new ConnectionID(NULL_JVM_ID, ChannelID.NULL_ID.toLong(),
                                                                      NULL_SERVER_ID);
 
   private static final char        SEP            = '.';
 
   public ConnectionID(String jvmID, long channelID, String serverID) {
-    this(jvmID, channelID, serverID, null, null, null);
+    this(jvmID, channelID, serverID, null);
   }
 
-  public ConnectionID(String jvmID, long channelID, String serverID, String username, String password) {
-    this(jvmID, channelID, serverID, username, password == null ? null : password.toCharArray(), null);
-  }
-
-  public ConnectionID(String jvmID, long channelID, String serverID, String username, char[] password, final ProductID productId) {
+  public ConnectionID(String jvmID, long channelID, String serverID, ProductID productId) {
     this.jvmID = jvmID;
     this.channelID = channelID;
     this.serverID = serverID;
@@ -50,8 +58,6 @@ public class ConnectionID {
     } else {
       initEx = null;
     }
-    this.username = username;
-    this.password = password;
 
     if (productId == null) {
       this.productId = DEFAULT_PRODUCT_ID;
@@ -60,16 +66,8 @@ public class ConnectionID {
     }
   }
 
-  public void authenticated() {
-    this.password = null;
-  }
-
-  public void setPassword(final char[] password) {
-    this.password = password;
-  }
-
-  public ConnectionID(String jvmID, long channelID, String username, char[] password, final ProductID productId) {
-    this(jvmID, channelID, NULL_SERVER_ID, username, password, productId);
+  public ConnectionID(String jvmID, long channelID, ProductID productId) {
+    this(jvmID, channelID, NULL_SERVER_ID, productId);
   }
 
   public ConnectionID(String jvmID, long channelID) {
@@ -78,11 +76,15 @@ public class ConnectionID {
 
   @Override
   public String toString() {
-    return "ConnectionID" + (isSecured() ? ".secured(" : "(") + getID() + ")[" + "]";
+    return "ConnectionID(" + getID() + ")";
   }
 
   public boolean isNull() {
     return NULL_ID.equals(this);
+  }
+  
+  public boolean isValid() {
+    return !isNull();
   }
 
   public boolean isNewConnection() {
@@ -133,22 +135,8 @@ public class ConnectionID {
   }
 
   public String getID() {
-    return getID(false);
-  }
-
-  public String getID(final boolean withCredentials) {
-    StringBuilder sb = new StringBuilder(withCredentials ? 128 : 64);
+    StringBuilder sb = new StringBuilder(64);
     sb.append(this.channelID).append(SEP).append(this.serverID).append(SEP).append(this.jvmID).append(SEP).append(productId);
-    if (withCredentials) {
-      sb.append(SEP);
-      if(username != null) {
-        sb.append(username.replace(DOT, DOT_PLACEHOLDER));
-      }
-      sb.append(SEP);
-      if(password != null) {
-        sb.append(password);
-      }
-    }
     return sb.toString();
   }
 
@@ -157,14 +145,8 @@ public class ConnectionID {
     out.writeString(serverID);
     out.writeString(jvmID);
     out.writeString(productId.name());
-    out.writeBoolean(username != null);
-    if (username != null) {
-      out.writeString(username);
-    }
-    out.writeBoolean(password != null);
-    if (password != null) {
-      out.writeString(String.valueOf(password));
-    }
+    out.writeBoolean(false);  // legacy username
+    out.writeBoolean(false);  //  legacy password
   }
 
   public static ConnectionID readFrom(TCDataInput in) throws IOException {
@@ -175,27 +157,23 @@ public class ConnectionID {
     String username = null;
     char[] password = null;
     if (in.readBoolean()) {
-      username = in.readString();
+      throw new AssertionError();
     }
     if (in.readBoolean()) {
-      password = in.readString().toCharArray();
+      throw new AssertionError();
     }
-    return new ConnectionID(jvmID, channelID, serverID, username, password, productId);
-  }
-
-  public String getUsername() {
-    return username;
-  }
-
-  public char[] getPassword() {
-    return password;
-  }
-
-  public boolean isSecured() {
-    return username != null;
+    return new ConnectionID(jvmID, channelID, serverID, productId);
   }
 
   public ProductID getProductId() {
     return productId;
+  }
+  
+  public ClientID getClientID() {
+    return new ClientID(channelID);
+  }
+  
+  public ConnectionID changeProductId(ProductID product) {
+    return new ConnectionID(jvmID, channelID, serverID, product);
   }
 }

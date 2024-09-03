@@ -1,14 +1,23 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.util;
 
 import java.net.Socket;
-import java.text.ParseException;
-
-import com.tc.util.ClassUtils.ClassSpec;
-
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -58,7 +67,6 @@ public class ClassUtilsTest {
 
   @Test
   public void testIsPrimitiveArray() {
-
     assertTrue(ClassUtils.isPrimitiveArray(new byte[0]));
     assertTrue(ClassUtils.isPrimitiveArray(new boolean[1]));
     assertTrue(ClassUtils.isPrimitiveArray(new char[2]));
@@ -75,40 +83,6 @@ public class ClassUtilsTest {
 
     assertFalse(ClassUtils.isPrimitiveArray(null));
     assertFalse(ClassUtils.isPrimitiveArray(new Object()));
-  }
-
-  @Test
-  public void testParseFullyQualifiedFieldName() throws Exception {
-    String shortFieldName = "baz";
-    String fullyQualifiedClassname = "foo.Bar";
-    String fullyQualifiedFieldname = fullyQualifiedClassname + "." + shortFieldName;
-    ClassUtils.parseFullyQualifiedFieldName(fullyQualifiedFieldname);
-
-    ClassSpec spec = ClassUtils.parseFullyQualifiedFieldName(fullyQualifiedFieldname);
-    assertEquals(shortFieldName, spec.getShortFieldName());
-    assertEquals(fullyQualifiedClassname, spec.getFullyQualifiedClassName());
-
-    try {
-      spec = ClassUtils.parseFullyQualifiedFieldName(shortFieldName);
-      fail("Expected a ParseException");
-    } catch (ParseException e) {
-      // expected
-    }
-
-    try {
-      spec = ClassUtils.parseFullyQualifiedFieldName("foo.");
-      fail("Excpected a ParseException");
-    } catch (ParseException e) {
-      // expected
-    }
-
-    try {
-      spec = ClassUtils.parseFullyQualifiedFieldName(".foo");
-      fail("Excpected a ParseException");
-    } catch (ParseException e) {
-      // expected
-    }
-
   }
 
 }

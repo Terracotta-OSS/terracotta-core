@@ -1,13 +1,26 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.net;
 
 import com.tc.process.StreamCollector;
 import com.tc.util.FindbugsSuppressWarnings;
+import com.tc.util.io.IOUtils;
 import com.tc.util.runtime.Os;
-import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -39,9 +52,7 @@ public class EphemeralPorts {
     if (Os.isMac()) { return new Mac().getRange(); }
     if (Os.isWindows()) { return new Windows().getRange(); }
     if (Os.isAix()) { return new Aix().getRange(); }
-
-    // XXX: Fold this into OS class when it is not longer in tim-api
-    if (System.getProperty("os.name").toLowerCase().startsWith("hp-ux")) { return new SolarisAndHPUX(true).getRange(); }
+    if (Os.isHpux()) { return new SolarisAndHPUX(true).getRange(); }
 
     throw new AssertionError("No support for this OS: " + Os.getOsName());
   }

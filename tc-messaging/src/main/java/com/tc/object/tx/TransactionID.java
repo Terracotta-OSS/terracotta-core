@@ -1,15 +1,29 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.object.tx;
 
 import com.tc.util.AbstractIdentifier;
 
 /**
- * @author steve
  */
 public class TransactionID extends AbstractIdentifier {
   public final static TransactionID NULL_ID = new TransactionID();
+  public final static TransactionID FIRST_ID = new TransactionID(0L);
 
   public TransactionID(long id) {
     super(id);
@@ -23,9 +37,4 @@ public class TransactionID extends AbstractIdentifier {
   public String getIdentifierType() {
     return "TransactionID";
   }
-
-  public TransactionID next() {
-    return new TransactionID(toLong() + 1);
-  }
-
 }

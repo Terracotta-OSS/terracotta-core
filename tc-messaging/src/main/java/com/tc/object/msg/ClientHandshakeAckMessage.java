@@ -1,33 +1,35 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.object.msg;
 
 import com.tc.net.ClientID;
-import com.tc.net.GroupID;
-import com.tc.net.StripeID;
-import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.net.NodeID;
 
-import java.util.Map;
 import java.util.Set;
 
-public interface ClientHandshakeAckMessage extends TCMessage {
+public interface ClientHandshakeAckMessage extends ClientHandshakeResponse {
 
-  public boolean getPersistentServer();
-
-  public void initialize(boolean persistent, Set<ClientID> allNodes, ClientID thisNodeID, String serverVersion,
-                         GroupID thisGroup, StripeID stripeID, Map<GroupID, StripeID> stripeIDMap);
+  public void initialize(Set<? extends NodeID> allNodes, ClientID thisNodeID, String serverVersion);
 
   public ClientID[] getAllNodes();
 
   public ClientID getThisNodeId();
 
   public String getServerVersion();
-
-  public GroupID getGroupID();
-
-  public StripeID getStripeID();
-  
-  public Map<GroupID, StripeID> getStripeIDMap();
 
 }

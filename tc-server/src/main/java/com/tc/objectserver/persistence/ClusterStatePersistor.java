@@ -1,0 +1,121 @@
+/*
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+package com.tc.objectserver.persistence;
+
+import com.tc.l2.state.StateManager;
+import com.tc.net.StripeID;
+import com.tc.util.State;
+import com.tc.util.version.Version;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import org.terracotta.persistence.IPlatformPersistence;
+
+
+public class ClusterStatePersistor {
+  private static final String MAP_FILE_NAME = "ClusterStatePersistor.map";
+  private static final String DB_CLEAN_KEY = "dbclean";
+  private static final String L2_STATE_KEY = "l2state";
+  private static final String STRIPE_ID_KEY = "stripeid";
+  private static final String VERSION_KEY = "version";
+
+  private final IPlatformPersistence storageManager;
+  private final HashMap<String, String> map;
+  private State initialState;
+
+  @SuppressWarnings("unchecked")
+  public ClusterStatePersistor(IPlatformPersistence storageManager) {
+    this.storageManager = storageManager;
+    HashMap<String, String> map = null;
+    try {
+      map = (HashMap<String, String>) this.storageManager.loadDataElement(MAP_FILE_NAME);
+    } catch (IOException e) {
+      // We don't expect this during startup so just throw it as runtime.
+      throw new RuntimeException("Failure reading ClusterStatePersistor map file", e);
+    }
+    this.map = (null != map) ? map : new HashMap<String, String>();
+    this.initialState = getCurrentL2State();
+  }
+
+  public void setStripeID(StripeID stripeID) {
+    putAndStore(STRIPE_ID_KEY, stripeID.getName());
+  }
+
+  public StripeID getStripeID() {
+    String s = map.get(STRIPE_ID_KEY);
+    return s == null ? StripeID.NULL_ID : new StripeID(s);
+  }
+
+  public State getInitialState() {
+    return initialState;
+  }
+
+  public void setCurrentL2State(State state) {
+    // do not persist stop state
+    if (!StateManager.STOP_STATE.equals(state)) {
+      putAndStore(L2_STATE_KEY, state.getName());
+    }
+  }
+
+  public State getCurrentL2State() {
+    String s = map.get(L2_STATE_KEY);
+    return s == null ? null : new State(s);
+  }
+
+  public boolean isDBClean() {
+    String s = map.get(DB_CLEAN_KEY);
+    return s == null || Boolean.valueOf(s);
+  }
+
+  public Version getVersion() {
+    String v = map.get(VERSION_KEY);
+    return v == null ? null : new Version(v);
+  }
+
+  public void setVersion(Version v) {
+    putAndStore(VERSION_KEY, v.major() + "." + v.minor() + "." + v.micro());
+  }
+
+  public void setDBClean(boolean dbClean) {
+    putAndStore(DB_CLEAN_KEY, String.valueOf(dbClean));
+  }
+
+  public void clear() {
+    map.clear();
+    initialState = null;
+  }
+  
+  void reportStateToMap(Map<String, Object> props) {
+    props.put("StripeID", String.valueOf(getStripeID()));
+    props.put("Version", String.valueOf(getVersion()));
+    props.put("Initial State", String.valueOf(getInitialState()));
+    props.put("Current State", String.valueOf(getCurrentL2State()));
+    props.put("isDBClean", isDBClean());
+  }
+
+  // This isn't called from different threads but we can easily synchronize around the putAndStore.
+  private synchronized void putAndStore(String key, String value) {
+    this.map.put(key, value);
+    try {
+      this.storageManager.storeDataElement(MAP_FILE_NAME, this.map);
+    } catch (IOException e) {
+      // In general, we have no way of solving this problem so throw it.
+      throw new RuntimeException("Failure storing ClusterStatePersistor map file", e);
+    }
+  }
+}

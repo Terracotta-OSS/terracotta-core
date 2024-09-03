@@ -1,0 +1,2 @@
+com.terracotta.connection.api.TerracottaConnectionService
+com.terracotta.connection.api.DiagnosticConnectionService

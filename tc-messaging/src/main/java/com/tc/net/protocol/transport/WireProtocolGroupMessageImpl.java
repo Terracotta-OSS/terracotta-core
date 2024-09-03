@@ -1,5 +1,19 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.net.protocol.transport;
 
@@ -34,117 +48,113 @@ package com.tc.net.protocol.transport;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.bytes.TCReference;
+import com.tc.bytes.TCReferenceSupport;
+import com.tc.io.TCByteBufferInputStream;
 import com.tc.net.core.TCConnection;
-import com.tc.net.protocol.AbstractTCNetworkMessage;
-import com.tc.net.protocol.TCNetworkHeader;
 import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.TCNetworkMessageImpl;
+import com.tc.net.protocol.TCProtocolException;
+import com.tc.net.protocol.tcm.TCActionNetworkMessage;
+import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
-public class WireProtocolGroupMessageImpl extends AbstractTCNetworkMessage implements WireProtocolGroupMessage {
+public class WireProtocolGroupMessageImpl extends TCNetworkMessageImpl implements WireProtocolGroupMessage {
 
   private final TCConnection                sourceConnection;
-  private final ArrayList<TCNetworkMessage> messagePayloads;
+  private final List<TCActionNetworkMessage> messagePayloads;
 
-  public static WireProtocolGroupMessageImpl wrapMessages(final ArrayList<TCNetworkMessage> msgPayloads,
+  public static WireProtocolGroupMessageImpl wrapMessages(List<TCActionNetworkMessage> msgPayloads,
                                                           TCConnection source) {
     WireProtocolHeader header = new WireProtocolHeader();
     header.setProtocol(WireProtocolHeader.PROTOCOL_MSGGROUP);
-    header.setMessageCount(msgPayloads.size());
 
-    int totalByteBuffers = 0;
-    for (int i = 0; i < msgPayloads.size(); i++) {
-      totalByteBuffers += msgPayloads.get(i).getEntireMessageData().length;
-    }
-
-    TCByteBuffer[] msgs = new TCByteBuffer[msgPayloads.size() + totalByteBuffers];
-    int i = 0;
-    int copyPos = 0;
-    while (i < msgPayloads.size()) {
-      TCByteBuffer tcb = TCByteBufferFactory.getInstance(false, (Integer.SIZE + Short.SIZE) / 8);
-      tcb.putInt(msgPayloads.get(i).getTotalLength());
-      tcb.putShort(WireProtocolHeader.getProtocolForMessageClass(msgPayloads.get(i)));
-      tcb.flip();
-
-      msgs[copyPos++] = tcb;
-      // referring to the original payload buffers
-      for (int j = 0; j < msgPayloads.get(i).getEntireMessageData().length; j++) {
-        msgs[copyPos++] = msgPayloads.get(i).getEntireMessageData()[j];
-      }
-      i++;
-    }
-
-    return new WireProtocolGroupMessageImpl(source, header, msgs, msgPayloads);
+    return new WireProtocolGroupMessageImpl(source, header, msgPayloads);
   }
 
   // used by the reader
-  protected WireProtocolGroupMessageImpl(final TCConnection source, final TCNetworkHeader header,
-                                         final TCByteBuffer[] messagePayloadByteBuffers) {
-    this(source, header, messagePayloadByteBuffers, null);
-  }
-
-  // used by the writer
-  protected WireProtocolGroupMessageImpl(final TCConnection source, final TCNetworkHeader header,
-                                         final TCByteBuffer[] messagePayloadByteBuffers,
-                                         final ArrayList<TCNetworkMessage> messagePayloads) {
-    super(header, messagePayloadByteBuffers);
+  protected WireProtocolGroupMessageImpl(TCConnection source, WireProtocolHeader header,
+                                         TCReference messagePayloadByteBuffers) {
+    super(header);
+    setPayload(messagePayloadByteBuffers);
     this.sourceConnection = source;
-    this.messagePayloads = (messagePayloads != null ? messagePayloads
-        : getMessagesFromByteBuffers(messagePayloadByteBuffers));
-    recordLength();
+    messagePayloads = null;
+  }
+  // used by the writer
+  protected WireProtocolGroupMessageImpl(TCConnection source, WireProtocolHeader header,
+                                         List<TCActionNetworkMessage> messagePayloads) {
+    super(header);
+    this.sourceConnection = source;
+    this.messagePayloads = messagePayloads;
   }
 
-  private ArrayList<TCNetworkMessage> getMessagesFromByteBuffers(final TCByteBuffer[] messagePayloadByteBuffers) {
-    ArrayList<TCNetworkMessage> messages = new ArrayList<TCNetworkMessage>();
+  @Override
+  public boolean prepareToSend() {
+    setPayload(generatePayload());
+    getWireProtocolHeader().setMessageCount(messagePayloads.size());
+    getWireProtocolHeader().finalizeHeader(getTotalLength());
+    return getWireProtocolHeader().getMessageCount() > 0;
+  }
+  
+  private TCReference generatePayload() {
+    List<TCReference> msgs = new ArrayList<>(messagePayloads.size() * 2);
+    Iterator<TCActionNetworkMessage> msgI = messagePayloads.iterator();
+    while (msgI.hasNext()) {
+      TCActionNetworkMessage msg = msgI.next();
+      if (msg.commit()) {
+        TCByteBuffer tcb = TCByteBufferFactory.getInstance((Integer.SIZE + Short.SIZE) / 8);
+        tcb.putInt(msg.getTotalLength());
+        tcb.putShort(WireProtocolHeader.getProtocolForMessageClass(msg));
+        tcb.flip();
 
-    // XXX: should do without copying stuffs around by passing views to upper layers.
-    // Recycle is little tricky though.
-    byte[] fullMsgsBytes;
-    TCByteBuffer[] msgs = messagePayloadByteBuffers;
-
-    if (msgs.length > 1) {
-      fullMsgsBytes = new byte[((WireProtocolHeader) getHeader()).getTotalPacketLength()
-                               - ((WireProtocolHeader) getHeader()).getHeaderByteLength()];
-      int copyPos = 0;
-      for (int i = 0; i < msgs.length; i++) {
-        System.arraycopy(msgs[i].array(), 0, fullMsgsBytes, copyPos, msgs[i].limit());
-        copyPos += msgs[i].limit();
+        TCReference header = TCReferenceSupport.createGCReference(tcb);
+        msgs.add(header);
+        // not nescessary because its just GC but do for completness 
+        msg.addCompleteCallback(header::close); 
+        // referring to the original payload buffers
+        msgs.add(msg.getEntireMessageData());
+      } else {
+        msg.complete();
+        msgI.remove();
       }
-    } else {
-      fullMsgsBytes = msgs[0].array();
     }
+    return TCReferenceSupport.createAggregateReference(msgs);
+  }
+  
+  private List<TCNetworkMessage> getMessagesFromByteBuffers() throws IOException {
+    ArrayList<TCNetworkMessage> messages = new ArrayList<>();
 
-    TCByteBuffer b = TCByteBufferFactory.wrap(fullMsgsBytes);
-    for (int i = 0; i < getTotalMessageCount(); i++) {
-      int msgLen = b.getInt();
-      short msgProto = b.getShort();
+    TCReference src = getPayload();
 
-      // XXX: we are giving out 4K BB for a smaller msgs too; Though it is recycled, can do some opti., here
-      TCByteBuffer[] bufs = TCByteBufferFactory.getFixedSizedInstancesForLength(false, msgLen);
-      for (TCByteBuffer buf : bufs) {
-        b.get(buf.array(), 0, buf.limit());
+    try (TCByteBufferInputStream msgs = new TCByteBufferInputStream(src)) {
+      for (int i = 0; i < getWireProtocolHeader().getMessageCount(); i++) {
+        int msgLen = msgs.readInt();
+        short msgProto = msgs.readShort();
+
+        WireProtocolHeader hdr;
+        hdr = (WireProtocolHeader) getWireProtocolHeader().clone();
+        hdr.setTotalPacketLength(hdr.getHeaderByteLength() + msgLen);
+        hdr.setProtocol(msgProto);
+        hdr.setMessageCount(1);
+        hdr.computeChecksum();
+        WireProtocolMessage msg = new WireProtocolMessageImpl(this.sourceConnection, hdr, msgs.readReference(msgLen));
+        messages.add(msg);
       }
+    }
 
-      WireProtocolHeader hdr;
-      hdr = (WireProtocolHeader) ((WireProtocolHeader) getHeader()).clone();
-      hdr.setTotalPacketLength(hdr.getHeaderByteLength() + msgLen);
-      hdr.setProtocol(msgProto);
-      hdr.setMessageCount(1);
-      hdr.computeChecksum();
-      WireProtocolMessage msg = new WireProtocolMessageImpl(this.sourceConnection, hdr, bufs);
-      messages.add(msg);
-    }
-    fullMsgsBytes = null;
-    for (TCByteBuffer buf : msgs) {
-      buf.recycle();
-    }
     return messages;
   }
 
   @Override
-  public Iterator<TCNetworkMessage> getMessageIterator() {
-    return this.messagePayloads.iterator();
+  public Iterator<TCNetworkMessage> getMessageIterator() throws TCProtocolException {
+    try {
+      return getMessagesFromByteBuffers().iterator();
+    } catch (IOException ioe) {
+      throw new TCProtocolException(ioe);
+    }
   }
 
   @Override
@@ -167,23 +177,16 @@ public class WireProtocolGroupMessageImpl extends AbstractTCNetworkMessage imple
     return ((WireProtocolHeader) getHeader()).getProtocol();
   }
 
-  protected void recordLength() {
-    TCNetworkMessage msgPayload = getMessagePayload();
-    // if the payload is null, then we need to record our own length as the packet length. Otherwise, we need to add the
-    // our header length + the length of the our payload message length.
-    int packetLength = msgPayload == null ? getTotalLength() : getHeader().getHeaderByteLength()
-                                                               + msgPayload.getTotalLength();
-
-    ((WireProtocolHeader) getHeader()).setTotalPacketLength(packetLength);
+  @Override
+  public void complete() {
+    if (this.messagePayloads != null) {
+      this.messagePayloads.forEach(TCNetworkMessage::complete);
+    }
+    super.complete();
   }
 
   @Override
-  public void doRecycleOnWrite() {
-    getWireProtocolHeader().recycle();
-    // recycle individual messages
-    for (TCNetworkMessage networkMessage : messagePayloads) {
-      ((AbstractTCNetworkMessage) networkMessage).doRecycleOnWrite();
-    }
+  public boolean isValid() {
+    return !this.messagePayloads.stream().allMatch(TCActionNetworkMessage::isCancelled);
   }
-
 }

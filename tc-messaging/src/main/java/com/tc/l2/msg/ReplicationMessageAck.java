@@ -1,0 +1,125 @@
+/*
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+package com.tc.l2.msg;
+
+import com.tc.io.TCByteBufferInput;
+import com.tc.io.TCByteBufferOutput;
+import com.tc.net.groups.AbstractGroupMessage;
+import com.tc.util.Assert;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class ReplicationMessageAck extends AbstractGroupMessage implements IBatchableGroupMessage<ReplicationAckTuple> {
+  //message types  
+  public static final int INVALID               = 0; // Sent to replicate a request on the passive
+  public static final int START_SYNC                = 4; // Sent from the passive when it wants the active to start passive sync.
+  public static final int BATCH                = 5; // Sent from the passive to ack a batch of messages.
+
+  // Factory methods.
+  public static ReplicationMessageAck createSyncRequestMessage() {
+    return new ReplicationMessageAck(START_SYNC);
+  }
+
+  public static ReplicationMessageAck createBatchAck() {
+    return new ReplicationMessageAck(BATCH);
+  }
+
+
+  private List<ReplicationAckTuple> batch;
+
+  public ReplicationMessageAck() {
+    super(INVALID);
+  }
+
+//  this type requests passive sync from the active  
+  private ReplicationMessageAck(int type) {
+    super(type);
+    if (BATCH == type) {
+      this.batch = new ArrayList<ReplicationAckTuple>();
+    }
+  }
+
+  // Note that this does change the instance, so synchronized would be required if it were being called by multiple threads.
+  // However, due to other races in how the using code decides to stop changing a message, it makes more sense for them to serialize on that level.
+  @Override
+  public void addToBatch(ReplicationAckTuple element) {
+    Assert.assertTrue(BATCH == this.getType());
+    this.batch.add(element);
+  }
+
+  @Override
+  public int getBatchSize() {
+    return this.batch.size();
+  }
+
+  public List<ReplicationAckTuple> getBatch() {
+    return this.batch;
+  }
+  
+  @Override
+  public void setSequenceID(long rid) {
+    //  unused
+  }
+
+  @Override
+  public long getSequenceID() {
+    return -1L;
+  }
+  
+  @Override
+  protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
+    if (BATCH == this.getType()) {
+      int batchSize = in.readInt();
+      // We should never send an empty message.
+      Assert.assertTrue(batchSize > 0);
+      this.batch = new ArrayList<ReplicationAckTuple>();
+      for (int i = 0; i < batchSize; ++i) {
+        SyncReplicationActivity.ActivityID respondTo = new SyncReplicationActivity.ActivityID(in.readLong());
+        ReplicationResultCode result = ReplicationResultCode.decode(in.readInt());
+        this.batch.add(new ReplicationAckTuple(respondTo, result));
+      }
+    }
+  }
+
+  @Override
+  protected void basicSerializeTo(TCByteBufferOutput out) {
+    if (BATCH == this.getType()) {
+      int size = this.batch.size();
+      // We should never send an empty message.
+      Assert.assertTrue(size > 0);
+      out.writeInt(size);
+      for (ReplicationAckTuple tuple : this.batch) {
+        out.writeLong(tuple.respondTo.id);
+        out.writeInt(tuple.result.code());
+      }
+    }
+  }
+
+  @Override
+  public AbstractGroupMessage asAbstractGroupMessage() {
+    return this;
+  }
+
+  @Override
+  public long getPayloadSize() {
+    return 0L;
+  }
+}

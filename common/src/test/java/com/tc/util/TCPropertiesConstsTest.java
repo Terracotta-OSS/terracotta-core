@@ -1,5 +1,19 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.util;
 
@@ -10,8 +24,8 @@ import com.tc.test.TCTestCase;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Properties;
 import java.util.Set;
 
@@ -26,80 +40,17 @@ public class TCPropertiesConstsTest extends TCTestCase {
   @Override
   protected void setUp() {
     loadDefaults(DEFAULT_TC_PROPERTIES_FILE);
-    exemptedProperties.add(TCPropertiesConsts.LICENSE_PATH);
-    exemptedProperties.add(TCPropertiesConsts.PRODUCTKEY_PATH);
-    exemptedProperties.add(TCPropertiesConsts.PRODUCTKEY_RESOURCE_PATH);
 
-    exemptedProperties.add(TCPropertiesConsts.L1_CLUSTEREVENT_EXECUTOR_MAX_THREADS);
-    exemptedProperties.add(TCPropertiesConsts.L1_CLUSTEREVENT_EXECUTOR_MAX_WAIT_SECONDS);
-    
-    exemptedProperties.add(TCPropertiesConsts.L1_SEDA_PINNED_ENTRY_FAULT_STAGE_THREADS);
-    exemptedProperties.add(TCPropertiesConsts.L1_SERVERMAPMANAGER_FAULT_INVALIDATED_PINNED_ENTRIES);
-    exemptedProperties.add(TCPropertiesConsts.L1_OBJECTMANAGER_REMOVED_OBJECTS_SEND_TIMER);
-    exemptedProperties.add(TCPropertiesConsts.L1_OBJECTMANAGER_REMOVED_OBJECTS_THRESHOLD);
+    exemptedProperties.addAll(Arrays.asList(TCPropertiesConsts.TC_PROPERTIES_WITH_NO_DEFAULTS));
 
-    exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_CRITICALTHRESHOLD);
-    exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_RESOURCEPOLLINGINTERVAL);
-    exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_HALTTHRESHOLD);
-    exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_OFFHEAP_STOPPAGE);
-    exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_STORAGE_STOPPAGE);
-
-    exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_ENABLED);
-    exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_INVALIDATE_STRONG_CACHE_ENABLED);
-    exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_REQUEST_PREFETCH_ENABLED);
-    exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_OIDSET_TYPE);
-    exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_CLIENT_STATE_VERBOSE_THRESHOLD);
-
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_SKIP_JVMARG_CHECK);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECTDB_CONCURRENCY);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECTDB_INITIAL_DATASIZE);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECTDB_TABLESIZE);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_DISABLED);
-
-    exemptedProperties.add(TCPropertiesConsts.L2_SEDA_APPLY_STAGE_THREADS);
-    exemptedProperties.add(TCPropertiesConsts.L2_SEDA_SERVER_MAP_CAPACITY_EVICTION_STAGE_THREADS);
-    exemptedProperties.add(TCPropertiesConsts.L2_SEDA_MANAGEDOBJECTREQUESTSTAGE_THREADS);
-    exemptedProperties.add(TCPropertiesConsts.L2_SEDA_MANAGEDOBJECTRESPONSESTAGE_THREADS);
-
-    exemptedProperties.add(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT);
-
-    exemptedProperties.add(TCPropertiesConsts.L2_ALLOCATION_DISABLE_PARTIAL_MAPS);
-    exemptedProperties.add(TCPropertiesConsts.L2_ALLOCATION_DISABLE_PARTIAL_OBJECTS);
-    exemptedProperties.add(TCPropertiesConsts.L2_ALLOCATION_ENABLE_OBJECTS_HOTSET);
-    exemptedProperties.add(TCPropertiesConsts.L2_ALLOCATION_DISABLE_MAPS_HOTSET);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_MAX_CHUNK_SIZE);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_MIN_CHUNK_SIZE);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_MAX_PAGE_SIZE);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_MIN_PAGE_SIZE);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_MAX_PAGE_COUNT);
-    
-    exemptedProperties.add(TCPropertiesConsts.SEARCH_USE_COMMIT_THREAD);
-    exemptedProperties.add(TCPropertiesConsts.SEARCH_QUERY_WAIT_FOR_TXNS);
-    exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MERGE_FACTOR);
-    exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MAX_MERGE_THREADS);
-    exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MAX_MERGE_DOCS);
-    exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_DISABLE_FIELD_COMPRESSION);
-    exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MAX_BUFFERED_DOCS);
-    exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MAX_BOOLEAN_CLAUSES);
-    exemptedProperties.add(TCPropertiesConsts.L1_SEARCH_MAX_OPEN_RESULT_SETS);
-    exemptedProperties.add(TCPropertiesConsts.L2_SEARCH_MAX_PAGED_RESULT_SETS);
-    exemptedProperties.add(TCPropertiesConsts.L2_SEARCH_MAX_RESULT_PAGE_SIZE);
-
-    exemptedProperties.add(TCPropertiesConsts.L2_FRS_PREFIX);
-    exemptedProperties.add(TCPropertiesConsts.L2_FRS_COMPACTOR_POLICY);
-    exemptedProperties.add(TCPropertiesConsts.L2_FRS_COMPACTOR_LSNGAP_MAX_LOAD);
-    exemptedProperties.add(TCPropertiesConsts.L2_FRS_COMPACTOR_LSNGAP_MIN_LOAD);
-    exemptedProperties.add(TCPropertiesConsts.L2_FRS_COMPACTOR_SIZEBASED_THRESHOLD);
-    exemptedProperties.add(TCPropertiesConsts.L2_FRS_COMPACTOR_SIZEBASED_AMOUNT);
-
-    exemptedProperties.add(TCPropertiesConsts.L2_SERVER_EVENT_BATCHER_INTERVAL_MS);
-    exemptedProperties.add(TCPropertiesConsts.L2_SERVER_EVENT_BATCHER_QUEUE_SIZE);
-    exemptedProperties.add(TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_THREADS);
-    exemptedProperties.add(TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_QUEUE_SIZE);
-
-    exemptedProperties.add(TCPropertiesConsts.CAS_LOGGING_ENABLED);
-
-    exemptedProperties.add(TCPropertiesConsts.EHCACHE_CLUSTERED_CONFIG_OVERRIDE_MODE);
+    // exempt all subcategories
+    exemptedProperties.add(TCPropertiesConsts.L1_CATEGORY);
+    exemptedProperties.add(TCPropertiesConsts.L2_CATEGORY);
+    exemptedProperties.add(TCPropertiesConsts.L1_L2_HEALTH_CHECK_CATEGORY);
+    exemptedProperties.add(TCPropertiesConsts.L2_L1_HEALTH_CHECK_CATEGORY);
+    exemptedProperties.add(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY);
+    exemptedProperties.add(TCPropertiesConsts.LOGGING_CATEGORY);
+    exemptedProperties.add(TCPropertiesConsts.NETCORE_CATEGORY);
   }
 
   private void loadDefaults(String propFile) {
@@ -130,9 +81,10 @@ public class TCPropertiesConstsTest extends TCTestCase {
       }
     }
     tcPropertiesConsts.remove(TCPropertiesConsts.OLD_PROPERTIES.toString());
-    Set tcProperties = props.keySet();
-    for (Iterator<String> iter = tcProperties.iterator(); iter.hasNext();) {
-      String tcProperty = iter.next();
+    tcPropertiesConsts.remove(TCPropertiesConsts.TC_PROPERTIES_WITH_NO_DEFAULTS.toString());
+    
+    Set<String> tcProperties = getKeys(props);
+    for (String tcProperty : tcProperties) {
       Assert
           .assertTrue("There is no constant declared for " + tcProperty + " in " + TCPropertiesConsts.class.getName(),
                       tcPropertiesConsts.contains(tcProperty));
@@ -155,5 +107,13 @@ public class TCPropertiesConstsTest extends TCTestCase {
         }
       }
     }
+  }
+
+  private static Set<String> getKeys(Properties props) {
+    Set<String> keys = new HashSet<String>();
+    for (Object key : props.keySet()) {
+      keys.add((String) key);
+    }
+    return keys;
   }
 }

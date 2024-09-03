@@ -1,2 +1,0 @@
-# testname one per line
-TransactionBatchTest

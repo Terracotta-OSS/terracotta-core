@@ -1,28 +1,36 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.logging;
 
-import com.tc.handler.LockInfoDumpHandler;
-import com.tc.util.runtime.LockInfoByThreadID;
-import com.tc.util.runtime.LockInfoByThreadIDImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.util.runtime.ThreadDumpUtil;
-import com.tc.util.runtime.ThreadIDMap;
 
 public class ThreadDumpHandler implements CallbackOnExitHandler {
 
-  private static final TCLogger     logger = TCLogging.getLogger(ThreadDumpHandler.class);
-  private final LockInfoDumpHandler lockInfoDumpHandler;
+  private static final Logger logger = LoggerFactory.getLogger(ThreadDumpHandler.class);
 
-  public ThreadDumpHandler(LockInfoDumpHandler lockInfoDumpHandler) {
-    this.lockInfoDumpHandler = lockInfoDumpHandler;
+  public ThreadDumpHandler() {
   }
 
   @Override
   public void callbackOnExit(CallbackOnExitState state) {
-    LockInfoByThreadID lockInfo = new LockInfoByThreadIDImpl();
-    ThreadIDMap threadIDMap = this.lockInfoDumpHandler.getThreadIDMap();
-    lockInfoDumpHandler.addAllLocksTo(lockInfo);
-    logger.error(ThreadDumpUtil.getThreadDump(lockInfo, threadIDMap));
+    logger.error(ThreadDumpUtil.getThreadDump());
   }
 }

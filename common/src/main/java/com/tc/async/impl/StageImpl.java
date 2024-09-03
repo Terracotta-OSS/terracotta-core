@@ -1,69 +1,101 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.async.impl;
 
+import org.slf4j.Logger;
+
 import com.tc.async.api.ConfigurationContext;
-import com.tc.async.api.EventContext;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
+import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.Stage;
-import com.tc.exception.PlatformRejoinException;
+import com.tc.async.api.StageListener;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
-import com.tc.logging.TCLogger;
+import com.tc.exception.TCServerRestartException;
+import com.tc.exception.TCShutdownServerException;
 import com.tc.logging.TCLoggerProvider;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
+import org.terracotta.tripwire.StageMonitor;
+import org.terracotta.tripwire.TripwireFactory;
 
 /**
  * The SEDA Stage
  */
-public class StageImpl implements Stage {
+public class StageImpl<EC> implements Stage<EC> {
   private static final long    pollTime = 3000; // This is the poor man's solution for
                                                 // stage
   private final String         name;
-  private final EventHandler   handler;
-  private final StageQueueImpl stageQueue;
+  private final EventHandler<EC> handler;
+  private final StageQueue<EC> stageQueue;
   private final WorkerThread[] threads;
   private final ThreadGroup    group;
-  private final TCLogger       logger;
+  private final StageListener  listener;
+  private final Logger logger;
   private final int            sleepMs;
   private final boolean        pausable;
-
+  private volatile boolean     paused;
+  private volatile boolean     shutdown = true;
+  private final LongAdder  inflight = new LongAdder();
+  private final long           warnStallTime = TCPropertiesImpl.getProperties()
+                                                     .getLong(TCPropertiesConsts.L2_SEDA_STAGE_STALL_WARNING, 500);
+  private volatile long lastWarnTime = 0;
+  private int spinning = 0;
+  
+  private StageMonitor event;
   /**
    * The Constructor.
    * 
    * @param loggerProvider : logger
    * @param name : The stage name
+   * @param type
    * @param handler : Event handler for this stage
-   * @param threadCount : Number of threads working on this stage
-   * @param threadsToQueueRatio : The ratio determines the number of queues internally used and the number of threads
-   *        per each queue. Ideally you would want this to be same as threadCount, in which case there is only 1 queue
-   *        used internally and all thread are working on the same queue (which doesn't guarantee order in processing)
-   *        or set it to 1 where each thread gets its own queue but the (multithreaded) event contexts are distributed
-   *        based on the key they return.
+   * @param queueCount : Number of threads and queues working on this stage with 1 thread bound to 1 queue
    * @param group : The thread group to be used
    * @param queueFactory : Factory used to create the queues
+   * @param listener
    * @param queueSize : Max queue Size allowed
    */
-  public StageImpl(TCLoggerProvider loggerProvider, String name, EventHandler handler, int threadCount,
-                   int threadsToQueueRatio, ThreadGroup group, QueueFactory queueFactory, int queueSize) {
+  @SuppressWarnings("unchecked")
+  public StageImpl(TCLoggerProvider loggerProvider, String name, Class<EC> type, EventHandler<EC> handler, int queueCount,
+                   ThreadGroup group, QueueFactory queueFactory, StageListener listener, int queueSize, boolean canBeDirect, boolean stallLogging) {
     this.logger = loggerProvider.getLogger(Stage.class.getName() + ": " + name);
     this.name = name;
-    this.handler = handler;
-    this.threads = new WorkerThread[threadCount];
-    if (threadsToQueueRatio > threadCount) {
-      logger.warn("Thread to Queue Ratio " + threadsToQueueRatio + " > Worker Threads " + threadCount);
+    if (queueCount > 1 && !MultiThreadedEventContext.class.isAssignableFrom(type)) {
+      throw new IllegalArgumentException("the requested queue count is greater than one but the event type is not multi-threaded for stage:" + this.name);
     }
-    this.stageQueue = new StageQueueImpl(threadCount, threadsToQueueRatio, queueFactory, loggerProvider, name,
-                                         queueSize);
+    this.threads = new WorkerThread[queueCount];
+    this.handler = handler;
+    this.stageQueue = StageQueue.FACTORY.factory(queueCount, queueFactory, type, eventCreator(canBeDirect), loggerProvider, name, queueSize);
     this.group = group;
+    this.listener = listener;
     this.sleepMs = TCPropertiesImpl.getProperties().getInt("seda." + name + ".sleepMs", 0);
     if (this.sleepMs > 0) {
       logger.warn("Sleep of " + this.sleepMs + "ms enabled for stage " + name);
@@ -72,44 +104,140 @@ public class StageImpl implements Stage {
     if (this.pausable) {
       logger.warn("Stage pausing is enabled for stage " + name);
     }
+    this.event = TripwireFactory.createStageMonitor(name, queueCount);
+    if (!stallLogging) {
+      lastWarnTime = Long.MAX_VALUE;
+    }
+  }
+  
+  private EventCreator<EC> eventCreator(boolean direct) {
+    return (direct) ? new DirectEventCreator<>(baseCreator(), ()->isEmpty()) : baseCreator();
+  }
+  
+  private EventCreator<EC> baseCreator() {
+    return (event) -> {
+      long start = System.nanoTime();
+      inflight.increment();
+      return ()-> {
+        long exec = System.nanoTime();
+        if (exec - start > TimeUnit.MILLISECONDS.toNanos(warnStallTime)) {
+          warnIfWarranted("queue", event, TimeUnit.NANOSECONDS.toMillis(exec-start));
+        }
+        try {
+          handler.handleEvent(event);
+          long end = System.nanoTime();;
+          if (end - exec > TimeUnit.MILLISECONDS.toNanos(warnStallTime)) {
+            warnIfWarranted("executed", event, TimeUnit.NANOSECONDS.toMillis(end-exec));
+          }
+        } finally {
+          inflight.decrement();
+        }
+      };
+    };
+  }
+  
+  private void warnIfWarranted(String type, Object event, long time) {
+    long now = System.currentTimeMillis();
+    if (now - lastWarnTime > 1000) {
+      lastWarnTime = now;
+      logger.warn("Stage: {} has {} event {} for {}ms", name, type, event, time);
+      if (listener != null) {
+        listener.stageStalled(name, time, inflight.intValue());
+      }
+    }
+  }
+  
+  @Override
+  public boolean isEmpty() {
+    return inflight.sum() == 0;
   }
 
   @Override
-  public void destroy() {
+  public int size() {
+    return inflight.intValue();
+  }
+
+  @Override
+  public void setSpinningCount(int spin) {
+    spinning = spin;
+  }
+
+  public void trackExtraStatistics(boolean enable) {
+    stageQueue.enableAdditionalStatistics(enable);
+  }
+
+  @Override
+  public void stop() {
+    synchronized (this) {
+      if (shutdown) {
+        return;
+      }
+      shutdown = true;
+    }
+    stageQueue.close();
+    event.unregister();
     stopThreads();
   }
 
   @Override
-  public void start(ConfigurationContext context) {
-    handler.initializeContext(context);
-    startThreads();
+  public void destroy() {
+    if (!shutdown) {
+      this.stop();
+      handler.destroy();
+    }
   }
 
   @Override
-  public Sink getSink() {
-    return stageQueue;
+  public void start(ConfigurationContext context) {
+    synchronized (this) {
+      if (!shutdown) {
+        return;
+      }
+      shutdown = false;
+    }
+    handler.initializeContext(context);
+    startThreads(context.getIdentifier());
+    event.register();
   }
 
-  private synchronized void startThreads() {
+  @Override
+  public Sink<EC> getSink() {
+    return this.stageQueue;
+  }
+
+  @Override
+  public int pause() {
+    paused = true;
+    return inflight.intValue();
+  }
+
+  @Override
+  public void unpause() {
+    paused = false;
+  }
+ 
+  private synchronized void startThreads(String contextId) {
     for (int i = 0; i < threads.length; i++) {
-      String threadName = "WorkerThread(" + name + ", " + i;
+      String threadName = contextId != null ? contextId + " - " : "";
+      threadName += "WorkerThread(" + name + ", " + i;
       if (threads.length > 1) {
         threadName = threadName + ", " + this.stageQueue.getSource(i).getSourceName() + ")";
       } else {
         threadName = threadName + ")";
       }
-      threads[i] = new WorkerThread(threadName, this.stageQueue.getSource(i), handler, group, logger, sleepMs,
-                                    pausable, name);
+      threads[i] = new WorkerThread<>(threadName, this.stageQueue.getSource(i));
       threads[i].start();
     }
   }
 
-  private void stopThreads() {
+  private synchronized void stopThreads() {
     for (WorkerThread thread : threads) {
-      thread.shutdown();
-      thread.interrupt();
+      try {
+        thread.join();
+      } catch (InterruptedException ie) {
+        throw new RuntimeException(ie);
+      }
     }
-    handler.destroy();
   }
 
   @Override
@@ -121,80 +249,103 @@ public class StageImpl implements Stage {
   public String toString() {
     return "StageImpl(" + name + ")";
   }
+// for testing
+  void waitForIdle() {
+    Arrays.stream(threads).forEach(t->{
+      while (!t.isIdle()) {
+        ThreadUtil.reallySleep(500);
+      }
+    });
+  }
+  
+  @Override
+  public Map<String, ?> getState() {
+    Map<String, Object> data = new LinkedHashMap<>();
+    List<Object> tl = new ArrayList<>(threads.length);
+    Arrays.stream(threads).forEach(t->{if (t != null) tl.add(t.getStats());});
+    data.put("name", name);
+    data.put("threadCount", threads.length);
+    data.put("backlog", inflight.sum());
+    data.put("sink", this.stageQueue.getState());
+    data.put("threads", tl);
+    return data;
+  }
 
-  private static class WorkerThread extends Thread {
+  private class WorkerThread<EC> extends Thread {
     private final Source       source;
-    private final EventHandler handler;
-    private volatile boolean   shutdownRequested = false;
-    private final TCLogger     tcLogger;
-    private final int          sleepMs;
-    private final boolean      pausable;
-    private final String       stageName;
+    private volatile boolean idle = false;
+    // these are single threaded, don't need special handling
+    private long idleTime  = 0;
+    private long runTime = 0;
+    private long count = 0;
 
-    public WorkerThread(String name, Source source, EventHandler handler, ThreadGroup group, TCLogger logger,
-                        int sleepMs, boolean pausable, String stageName) {
+    public WorkerThread(String name, Source source) {
       super(group, name);
-      tcLogger = logger;
       setDaemon(true);
       this.source = source;
-      this.handler = handler;
-      this.sleepMs = sleepMs;
-      this.pausable = pausable;
-      this.stageName = stageName;
-    }
-
-    public void shutdown() {
-      this.shutdownRequested = true;
-    }
-
-    private boolean shutdownRequested() {
-      return this.shutdownRequested;
     }
 
     private void handleStageDebugPauses() {
       if (sleepMs > 0) {
         ThreadUtil.reallySleep(sleepMs);
       }
-      while (pausable && "paused".equalsIgnoreCase(System.getProperty(stageName))) {
-        tcLogger.info("Stage paused, sleeping for 1s");
+      while (paused || (pausable && "paused".equalsIgnoreCase(System.getProperty(name)))) {
+        if (!paused) {
+          logger.info("Stage paused, sleeping for 1s");
+        }
         ThreadUtil.reallySleep(1000);
       }
+    }
+    
+    public boolean isIdle() {
+      return this.idle && this.source.isEmpty();
     }
 
     @Override
     public void run() {
-      while (!shutdownRequested()) {
-        EventContext ctxt = null;
+      int spinCount = 0;
+      boolean spinner = spinning > 0;
+      while (!shutdown || !source.isEmpty()) {
+        Event ctxt = null;
         try {
-          ctxt = source.poll(pollTime);
+          long stopped = System.nanoTime();
+          idle = true;
+          ctxt = (spinner) ? source.poll(0) : source.poll(pollTime);
           if (ctxt != null) {
+            idle = false;
+            long running = System.nanoTime();
             handleStageDebugPauses();
-            if (ctxt instanceof SpecializedEventContext) {
-              ((SpecializedEventContext) ctxt).execute();
-            } else {
-              handler.handleEvent(ctxt);
+            idleTime += (running - stopped);
+            ctxt.call();
+            long finishRun = System.nanoTime();
+            runTime += (finishRun - running);
+            count += 1;
+            event.eventOccurred(size(), (finishRun - running));
+            spinCount = 0;
+            spinner = spinning > 0;
+          } else {
+            idleTime += (System.nanoTime() - stopped);
+            if (spinCount++ >= spinning) {
+              spinner = false;
             }
           }
         } catch (InterruptedException ie) {
-          if (shutdownRequested()) { return; }
+          if (shutdown) { continue; }
           throw new TCRuntimeException(ie);
         } catch (EventHandlerException ie) {
-          if (shutdownRequested()) return;
+          if (shutdown) { continue; }
           throw new TCRuntimeException(ie);
+        } catch (TCServerRestartException restart) {
+          throw restart;
+        } catch (TCShutdownServerException shutdown) {
+          throw shutdown;
         } catch (Exception e) {
           if (isTCNotRunningException(e)) {
-            if (shutdownRequested()) {
-              return;
-            }
-            tcLogger.info("Ignoring " + TCNotRunningException.class.getSimpleName() + " while handling context: "
+            if (shutdown) { continue; }
+            logger.info("Ignoring " + TCNotRunningException.class.getSimpleName() + " while handling context: "
                           + ctxt);
-          } else if (isRejoinInProgressException(e)) {
-            if (shutdownRequested()) {
-              return;
-            }
-            tcLogger.info("Ignoring " + PlatformRejoinException.class.getSimpleName() + " while handling context: "
-                          + ctxt, e);
           } else {
+            logger.error("Uncaught exception in stage", e);
             throw new TCRuntimeException("Uncaught exception in stage", e);
           }
         } finally {
@@ -205,30 +356,32 @@ public class StageImpl implements Stage {
         }
       }
     }
+    
+    private Map<String, ?> getStats() {
+      Map<String, Object> state = new LinkedHashMap<>();
+      state.put("idle", idleTime);
+      state.put("run", runTime);
+      state.put("processed", count);
+      state.put("backlog", source.size());
+      return state;
+    }
   }
+  
+  
 
   private static boolean isTCNotRunningException(Throwable e) {
-    Throwable rootCause = null;
     while (e != null) {
-      rootCause = e;
-      e = e.getCause();
+      if (e instanceof TCNotRunningException) {
+        return true;
+      } else {
+        e = e.getCause();
+      }
     }
-    return rootCause instanceof TCNotRunningException;
-  }
-
-  private static boolean isRejoinInProgressException(Throwable e) {
-    Throwable rootCause = null;
-    while (e != null) {
-      rootCause = e;
-      e = e.getCause();
-    }
-    return rootCause instanceof PlatformRejoinException;
+    return false;
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.print("Queue depth: " + getSink().size() + " " + this.name).flush();
-    return out;
+  public boolean isStarted() {
+    return !shutdown;
   }
-
 }

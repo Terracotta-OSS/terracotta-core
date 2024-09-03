@@ -1,5 +1,19 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.stats;
 
@@ -23,7 +37,7 @@ public abstract class AbstractNotifyingMBean extends AbstractTerracottaMBean {
 
   private long                                 nextSequenceNumber = 1;
 
-  protected AbstractNotifyingMBean(final Class mBeanInterface) throws NotCompliantMBeanException {
+  protected AbstractNotifyingMBean(Class<?> mBeanInterface) throws NotCompliantMBeanException {
     super(mBeanInterface, true);
   }
 
@@ -32,21 +46,21 @@ public abstract class AbstractNotifyingMBean extends AbstractTerracottaMBean {
     return NOTIFICATION_INFO;
   }
 
-  protected synchronized void sendNotification(final String type, final Object source) {
+  protected synchronized void sendNotification(String type, Object source) {
     sendNotification(new Notification(type, source, nextSequenceNumber++));
   }
 
-  protected synchronized void sendNotification(final String msg, final String attr, final String type,
-                                               final Object oldVal, final Object newVal) {
+  protected synchronized void sendNotification(String msg, String attr, String type,
+                                               Object oldVal, Object newVal) {
     sendNotification(new AttributeChangeNotification(this, nextSequenceNumber++, System.currentTimeMillis(), msg, attr,
                                                      type, oldVal, newVal));
   }
   
-  protected synchronized void sendNotification(final String type, final Object source, String message) {
+  protected synchronized void sendNotification(String type, Object source, String message) {
     sendNotification(new Notification(type, source, nextSequenceNumber++, message));
   }
   
-  protected synchronized void sendNotification(final String type, final Object source, final Object userData) {
+  protected synchronized void sendNotification(String type, Object source, Object userData) {
     Notification notification = new Notification(type, source, nextSequenceNumber++);
     notification.setUserData(userData);
     sendNotification(notification);

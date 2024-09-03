@@ -1,9 +1,23 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.object.msg;
 
-import com.tc.bytes.TCByteBuffer;
+import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -17,15 +31,15 @@ public class ClientHandshakeRefusedMessageImpl extends DSOMessageBase implements
   private static final byte REFUSAL_CAUSE = 1;
   private String            refusalCause;
 
-  public ClientHandshakeRefusedMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
-                                           final TCByteBufferOutputStream out, final MessageChannel channel,
-                                           final TCMessageType type) {
+  public ClientHandshakeRefusedMessageImpl(SessionID sessionID, MessageMonitor monitor,
+                                           TCByteBufferOutputStream out, MessageChannel channel,
+                                           TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
-  public ClientHandshakeRefusedMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
-                                           final MessageChannel channel, final TCMessageHeader header,
-                                           final TCByteBuffer[] data) {
+  public ClientHandshakeRefusedMessageImpl(SessionID sessionID, MessageMonitor monitor,
+                                           MessageChannel channel, TCMessageHeader header,
+                                           TCByteBufferInputStream data) {
     super(sessionID, monitor, channel, header, data);
   }
 
@@ -47,7 +61,7 @@ public class ClientHandshakeRefusedMessageImpl extends DSOMessageBase implements
   }
 
   @Override
-  public String getRefualsCause() {
+  public String getRefusalsCause() {
     return this.refusalCause;
   }
 

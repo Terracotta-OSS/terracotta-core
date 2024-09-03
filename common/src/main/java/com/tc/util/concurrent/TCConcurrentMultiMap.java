@@ -1,12 +1,22 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.util.concurrent;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterators;
-import com.tc.text.PrettyPrintable;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.TCConcurrentStore.TCConcurrentStoreCallback;
 
 import java.util.AbstractSet;
@@ -16,7 +26,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A concurrent implementation of a MultiMap (one to many mapping) with configurable concurrency level. Basic methods
@@ -24,7 +33,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * 
  * @author Saravanan Subbiah
  */
-public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
+public class TCConcurrentMultiMap<K, V> {
 
   private final AddCallBack<K, V>            addCallback    = new AddCallBack<K, V>();
   private final AddAllCallBack<K, V>         addAllCallback = new AddAllCallBack<K, V>();
@@ -46,7 +55,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
    * @param initialCapacity the initial capacity.
    * @throws IllegalArgumentException if the initial capacity of elements is negative.
    */
-  public TCConcurrentMultiMap(final int initialCapacity) {
+  public TCConcurrentMultiMap(int initialCapacity) {
     this.store = new TCConcurrentStore<K, Set<V>>(initialCapacity);
   }
 
@@ -57,7 +66,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
    * @param loadFactor the load factor threshold, used to control resizing.
    * @throws IllegalArgumentException if the initial capacity of elements is negative or the load factor is non-positive
    */
-  public TCConcurrentMultiMap(final int initialCapacity, final float loadFactor) {
+  public TCConcurrentMultiMap(int initialCapacity, float loadFactor) {
     this.store = new TCConcurrentStore<K, Set<V>>(initialCapacity, loadFactor);
   }
 
@@ -70,7 +79,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
    * @throws IllegalArgumentException if the initial capacity is negative or the load factor or concurrencyLevel are
    *         non-positive.
    */
-  public TCConcurrentMultiMap(final int initialCapacity, final float loadFactor, final int concurrencyLevel) {
+  public TCConcurrentMultiMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
     this.store = new TCConcurrentStore<K, Set<V>>(initialCapacity, loadFactor, concurrencyLevel);
   }
 
@@ -82,9 +91,13 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
    * @return true, if this is the first mapping for key in this Multimap at this point in time, else false
    * @throws NullPointerException if key or value is null
    */
-  public boolean add(final K key, final V value) {
-    checkNotNull(key, "Key is null");
-    checkNotNull(value, "Value is null");
+  public boolean add(K key, V value) {
+    if(key == null) {
+      throw new NullPointerException("Key is null");
+    }
+    if(value == null) {
+      throw new NullPointerException("Value is null");
+    }
     return (Boolean) this.store.executeUnderWriteLock(key, value, this.addCallback);
   }
 
@@ -95,8 +108,10 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
    * @return true, if there exists no mapping for this key before this call.
    * @throws NullPointerException if key or value is null
    */
-  public boolean addAll(final K key, final Set<V> values) {
-    checkNotNull(key, "Key is null");
+  public boolean addAll(K key, Set<V> values) {
+    if(key == null) {
+      throw new NullPointerException("Key is null");
+    }
     return (Boolean) this.store.executeUnderWriteLock(key, values, this.addAllCallback);
   }
 
@@ -106,9 +121,13 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
    * @returns true if the mapping existed and was successfully removed, false if the mapping didn't exist.
    * @throws NullPointerException if key or value is null
    */
-  public boolean remove(final K key, final V value) {
-    checkNotNull(key, "Key is null");
-    checkNotNull(value, "Value is null");
+  public boolean remove(K key, V value) {
+    if(key == null) {
+      throw new NullPointerException("Key is null");
+    }
+    if(value == null) {
+      throw new NullPointerException("Value is null");
+    }
     return (Boolean)this.store.executeUnderWriteLock(key, value, this.removeCallback);
   }
 
@@ -119,10 +138,12 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
    * @return list of mappings for key
    * @throws NullPointerException if key is null
    */
-  public Set<V> removeAll(final K key) {
-    checkNotNull(key, "Key is null");
+  public Set<V> removeAll(K key) {
+    if(key == null) {
+      throw new NullPointerException("Key is null");
+    }
     final Set<V> set = this.store.remove(key);
-    if (set == null) { return Collections.EMPTY_SET; }
+    if (set == null) { return Collections.emptySet(); }
     return set;
   }
 
@@ -135,10 +156,12 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
    * @return list of mappings for key
    * @throws NullPointerException if key is null
    */
-  public Set<V> get(final K key) {
-    checkNotNull(key, "Key is null");
+  public Set<V> get(K key) {
+    if(key == null) {
+      throw new NullPointerException("Key is null");
+    }
     final Set<V> set = this.store.get(key);
-    if (set == null) { return Collections.EMPTY_SET; }
+    if (set == null) { return Collections.emptySet(); }
     return Collections.unmodifiableSet(set);
   }
 
@@ -148,8 +171,10 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
    * @return true is a mapping exists, false otherwise
    * @throws NullPointerException if key is null
    */
-  public boolean containsKey(final K key) {
-    checkNotNull(key, "Key is null");
+  public boolean containsKey(K key) {
+    if(key == null) {
+      throw new NullPointerException("Key is null");
+    }
     final Set<V> set = this.store.get(key);
     if (set == null) { return false; }
     return true;
@@ -166,8 +191,9 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
 
   private static class AddCallBack<K, V> implements TCConcurrentStoreCallback<K, Set<V>> {
     // Called under segment lock
+    @SuppressWarnings("unchecked")
     @Override
-    public Object callback(final K key, final Object value, final Map<K, Set<V>> segment) {
+    public Object callback(K key, Object value, Map<K, Set<V>> segment) {
       Set<V> set = segment.get(key);
       if (set == null) {
         segment.put(key, singleton((V)value));
@@ -184,7 +210,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
   private static final class AddAllCallBack<K, V> implements TCConcurrentStoreCallback<K, Set<V>> {
     // Called under segment lock
     @Override
-    public Object callback(final K key, final Object values, final Map<K, Set<V>> segment) {
+    public Object callback(K key, Object values, Map<K, Set<V>> segment) {
       boolean newEntry = false;
       Set<V> set = segment.get(key);
       if (set == null) {
@@ -195,6 +221,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
         set = new HashSet<V>(set);
         segment.put(key, set);
       }
+      @SuppressWarnings("unchecked")
       Set<V> values2Add = (Set<V>) values;
       set.addAll(values2Add);
       return newEntry;
@@ -204,7 +231,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
   private static final class RemoveCallBack<K, V> implements TCConcurrentStoreCallback<K, Set<V>> {
     // Called under segment lock
     @Override
-    public Object callback(final K key, final Object value, final Map<K, Set<V>> segment) {
+    public Object callback(K key, Object value, Map<K, Set<V>> segment) {
       final Set<V> set = segment.get(key);
       if (set == null) { return false; }
       if (set instanceof SingletonSet && set.contains(value)) {
@@ -220,13 +247,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
       return removed;
     }
   }
-
-  @Override
-  public PrettyPrinter prettyPrint(final PrettyPrinter out) {
-    out.visit(this.store).flush();
-    return out;
-  }
-
+  
   private static <T> Set<T> singleton(T t) {
     return new SingletonSet<T>(t);
   }
@@ -234,12 +255,12 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
   private static class SingletonSet<V> extends AbstractSet<V> {
     private final V value;
 
-    private SingletonSet(final V value) {
+    private SingletonSet(V value) {
       this.value = value;
     }
 
     @Override
-    public boolean add(final V v) {
+    public boolean add(V v) {
       if (v.equals(value)) {
         return false;
       } else {
@@ -249,7 +270,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
 
     @Override
     public Iterator<V> iterator() {
-      return Iterators.singletonIterator(value);
+      return Collections.singleton(value).iterator();
     }
 
     @Override
@@ -258,7 +279,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
     }
 
     @Override
-    public boolean contains(final Object o) {
+    public boolean contains(Object o) {
       return value.equals(o);
     }
   }

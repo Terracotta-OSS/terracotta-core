@@ -1,5 +1,19 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.util;
 
@@ -23,14 +37,14 @@ import java.util.NoSuchElementException;
  */
 public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implements Iterable<E> {
 
-  public interface LinkedNode<L extends LinkedNode> {
+  public interface LinkedNode<L extends LinkedNode<L>> {
 
     public L getNext();
 
     public L setNext(L next);
   }
 
-  public interface SinglyLinkedListIterator<I extends LinkedNode> extends Iterator<I> {
+  public interface SinglyLinkedListIterator<I extends LinkedNode<I>> extends Iterator<I> {
 
     @Override
     public boolean hasNext();
@@ -60,7 +74,7 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
     return this.head == null;
   }
 
-  public void addFirst(final E first) {
+  public void addFirst(E first) {
     first.setNext(this.head);
     this.head = first;
     if (this.tail == null) {
@@ -83,7 +97,7 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
     return this.head;
   }
 
-  public void addLast(final E last) {
+  public void addLast(E last) {
     if (this.tail == null) {
       addFirst(last);
       return;
@@ -113,7 +127,7 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
     return this.tail;
   }
 
-  public E remove(final E obj) {
+  public E remove(E obj) {
     E current = null;
     E next = this.head;
 
@@ -175,7 +189,7 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
     }
 
     @Override
-    public void addNext(final E e) {
+    public void addNext(E e) {
       if (this.current == null || this.current == this.prev) { throw new IllegalStateException(); }
       e.setNext(this.next);
       this.current.setNext(e);
@@ -186,7 +200,7 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
     }
 
     @Override
-    public void addPrevious(final E e) {
+    public void addPrevious(E e) {
       if (this.current == null || this.current == this.prev) { throw new IllegalStateException(); }
       e.setNext(this.current);
       if (this.prev == null) {

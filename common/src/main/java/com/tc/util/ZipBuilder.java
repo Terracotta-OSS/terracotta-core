@@ -1,9 +1,24 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.util;
 
-import org.apache.commons.io.IOUtils;
+
+import com.tc.util.io.IOUtils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -13,6 +28,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -25,8 +41,8 @@ public class ZipBuilder implements ArchiveBuilder {
 
   private final CRC32           crc32    = new CRC32();
   private final ZipOutputStream zout;
-  private final HashSet         dirSet   = new HashSet();
-  private final HashSet         entrySet = new HashSet();
+  private final Set<String>     dirSet   = new HashSet<String>();
+  private final Set<String>     entrySet = new HashSet<String>();
   private final boolean         verbose;
 
   public ZipBuilder(File archiveFile, boolean useCompression) throws IOException {
@@ -48,20 +64,28 @@ public class ZipBuilder implements ArchiveBuilder {
   @Override
   public final void putTraverseDirectory(File dir, String dirName) throws IOException {
     if (!dir.isDirectory()) throw new IOException("Unexpected Exception: " + dir + "\nis not a directory");
-    putDirEntry(dirName);
+    if (dirName != null && !dirName.isEmpty()) {
+      putDirEntry(dirName);
+      dirName = dirName + File.separator;
+    } else {
+      dirName = "";
+    }
     String[] files = dir.list();
     for (String file2 : files) {
-      File file = new File(dir + File.separator + file2);
+      File file = new File(dir.getAbsolutePath() + File.separator + file2);
       if (file.isDirectory()) {
-        putTraverseDirectory(file, dirName + File.separator + file.getName());
+        putTraverseDirectory(file, dirName + file.getName());
         continue;
       }
-      putEntry(dirName + File.separator + file2, readFile(file));
+      putEntry(dirName + file2, readFile(file));
     }
   }
 
   @Override
   public final void putDirEntry(String file) throws IOException {
+    if (file == null) {
+      return;
+    }
     if (dirSet.contains(file)) return;
     dirSet.add(file);
     String dirEntry = archivePath(file) + "/";
@@ -130,7 +154,13 @@ public class ZipBuilder implements ArchiveBuilder {
         if (entry.isDirectory()) {
           if (!file.mkdirs()) { throw new IOException("failed to create directory " + file.getAbsolutePath()); }
         } else {
-          IOUtils.copy(zis, new FileOutputStream(file));
+          FileOutputStream out= null;
+          try {
+            out = new FileOutputStream(file);
+            IOUtils.copy(zis, out);
+          } finally {
+            IOUtils.closeQuietly(out);
+          }          
         }
         zis.closeEntry();
       }

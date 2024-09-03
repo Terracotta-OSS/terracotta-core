@@ -1,21 +1,34 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.lang;
 
-import com.google.common.base.Throwables;
-import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.exception.DatabaseException;
+import org.slf4j.Logger;
+
 import com.tc.exception.ExceptionHelper;
 import com.tc.exception.ExceptionHelperImpl;
 import com.tc.exception.RuntimeExceptionHelper;
 import com.tc.handler.CallbackStartupExceptionLoggingAdapter;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
-import com.tc.logging.TCLogger;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.TCDataFileLockingException;
+import com.tc.util.Throwables;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.startuplock.FileNotCreatedException;
 import com.tc.util.startuplock.LocationNotCreatedException;
@@ -25,6 +38,7 @@ import java.net.BindException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -39,10 +53,10 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
 
   // instantiating message here to avoid any allocations on OOME
   private static final String                        OOME_ERROR_MSG                  = "Fatal error: out of available memory. Exiting...";
-  protected final TCLogger                           logger;
+  protected final Logger logger;
   private final ExceptionHelperImpl                  helper;
-  private final List<CallbackOnExitHandler>          callbackOnExitDefaultHandlers   = new CopyOnWriteArrayList();
-  private final Map<Class<?>, CallbackOnExitHandler> callbackOnExitExceptionHandlers = new HashMap();
+  private final List<CallbackOnExitHandler>          callbackOnExitDefaultHandlers   = new CopyOnWriteArrayList<CallbackOnExitHandler>();
+  private final Map<Class<?>, CallbackOnExitHandler> callbackOnExitExceptionHandlers = new HashMap<Class<?>, CallbackOnExitHandler>();
   private final Object                               dumpLock                        = new Object();
 
   private static final long                          TIME_OUT                        = TCPropertiesImpl
@@ -57,7 +71,8 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
    * 
    * @param logger Logger
    */
-  public ThrowableHandlerImpl(TCLogger logger) {
+  public ThrowableHandlerImpl(Logger logger) {
+    Objects.requireNonNull(logger);
     this.logger = logger;
     helper = new ExceptionHelperImpl();
     helper.addHelper(new RuntimeExceptionHelper());
@@ -70,11 +85,9 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
   }
 
   protected void registerStartupExceptionCallbackHandlers() {
-    addCallbackOnExitExceptionHandler(ConfigurationSetupException.class, new CallbackStartupExceptionLoggingAdapter());
     String bindExceptionExtraMessage = ".  Please make sure the server isn't already running or choose a different port.";
     addCallbackOnExitExceptionHandler(BindException.class,
                                       new CallbackStartupExceptionLoggingAdapter(bindExceptionExtraMessage));
-    addCallbackOnExitExceptionHandler(DatabaseException.class, new CallbackStartupExceptionLoggingAdapter());
     addCallbackOnExitExceptionHandler(LocationNotCreatedException.class, new CallbackStartupExceptionLoggingAdapter());
     addCallbackOnExitExceptionHandler(FileNotCreatedException.class, new CallbackStartupExceptionLoggingAdapter());
     addCallbackOnExitExceptionHandler(TCDataFileLockingException.class, new CallbackStartupExceptionLoggingAdapter());
@@ -85,7 +98,8 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
     callbackOnExitDefaultHandlers.add(callbackOnExitHandler);
   }
 
-  public void addCallbackOnExitExceptionHandler(Class c, CallbackOnExitHandler exitHandler) {
+  @Override
+  public void addCallbackOnExitExceptionHandler(Class<?> c, CallbackOnExitHandler exitHandler) {
     callbackOnExitExceptionHandlers.put(c, exitHandler);
   }
 
@@ -96,7 +110,7 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
    * @param t Throwable
    */
   @Override
-  public void handleThrowable(final Thread thread, final Throwable t) {
+  public void handleThrowable(Thread thread, Throwable t) {
     handlePossibleOOME(t);
 
     final CallbackOnExitState throwableState = new CallbackOnExitState(t);
@@ -127,7 +141,7 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
    * Considering {@code -XX:OnOutOfMemoryError=<cmd>} option might be also a good idea.
    */
   @Override
-  public void handlePossibleOOME(final Throwable t) {
+  public void handlePossibleOOME(Throwable t) {
     Throwable rootCause = Throwables.getRootCause(t);
     if (rootCause instanceof OutOfMemoryError) {
       try {

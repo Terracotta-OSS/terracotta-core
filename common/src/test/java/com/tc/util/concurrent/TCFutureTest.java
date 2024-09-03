@@ -1,11 +1,29 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.util.concurrent;
 
 import com.tc.util.TCTimeoutException;
 
 import junit.framework.TestCase;
+
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Test cases for TCFuture
@@ -23,12 +41,15 @@ public class TCFutureTest extends TestCase {
   }
 
   public void testTimeout(TCFuture f1) {
-
+    long befoteTimeoutTime = System.currentTimeMillis();
+    long waitTime = 2000L;
     try {
-      f1.get(500);
+      f1.get(waitTime);
       fail("timeout didn't happen");
     } catch (TCTimeoutException e) {
       // expected
+      long afterTimeoutTime = System.currentTimeMillis();
+      assertTrue((afterTimeoutTime - befoteTimeoutTime) >= waitTime);
     } catch (InterruptedException e) {
       fail(e.getMessage());
     } catch (TCExceptionResultException e) {
@@ -79,7 +100,7 @@ public class TCFutureTest extends TestCase {
     testSetMulti(f1);
   }
 
-  public void testSetMulti(final TCFuture f1) {
+  public void testSetMulti(TCFuture f1) {
 
     f1.set(new Object());
 
@@ -100,7 +121,7 @@ public class TCFutureTest extends TestCase {
     testSetAfterCancel(f1);
   }
 
-  public void testSetAfterCancel(final TCFuture f1) {
+  public void testSetAfterCancel(TCFuture f1) {
 
     f1.cancel();
 
@@ -115,7 +136,7 @@ public class TCFutureTest extends TestCase {
     testCancelAfterSet(f1);
   }
 
-  public void testCancelAfterSet(final TCFuture f1) {
+  public void testCancelAfterSet(TCFuture f1) {
 
     f1.set(new Object());
 
@@ -160,7 +181,7 @@ public class TCFutureTest extends TestCase {
     testSetNull(new TCFuture(new Object()));
   }
   
-  public void testSetNull(final TCFuture f1) throws Exception {
+  public void testSetNull(TCFuture f1) throws Exception {
     f1.set(null);
 
     assertTrue(f1.get(100) == null);
@@ -173,7 +194,7 @@ public class TCFutureTest extends TestCase {
   }
   
   
-  public void testSetNullException(final TCFuture f1) {
+  public void testSetNullException(TCFuture f1) {
     try {
       f1.setException(null);
       fail();
@@ -189,7 +210,7 @@ public class TCFutureTest extends TestCase {
     
   }
   
-  public void testExceptionAfterSet(final TCFuture f1) {
+  public void testExceptionAfterSet(TCFuture f1) {
     f1.set(new Object());
 
     Throwable t = new Throwable("throw me");
@@ -207,7 +228,7 @@ public class TCFutureTest extends TestCase {
     testExceptionAfterCancel(new TCFuture(new Object()));
   }
   
-  public void testExceptionAfterCancel(final TCFuture f1) {
+  public void testExceptionAfterCancel(TCFuture f1) {
   f1.cancel();
 
     Throwable t = new Throwable("throw me");
@@ -221,7 +242,7 @@ public class TCFutureTest extends TestCase {
     testExceptionResult(new TCFuture(new Object()));
   }
   
-  public void testExceptionResult(final TCFuture f1) {
+  public void testExceptionResult(TCFuture f1) {
     Throwable t = new Throwable("throw me");
     f1.setException(t);
 
@@ -235,6 +256,48 @@ public class TCFutureTest extends TestCase {
     } catch (TCExceptionResultException e) {
       Throwable thrown = e.getCause();
       assertTrue(thrown == t);
+    }
+  }
+
+  public void testTimeoutDurationSimulatingSpuriousWakeup() {
+    Object lock = new Object();
+    final TCFuture future = new TCFuture(lock);
+    AtomicBoolean stopNotify = new AtomicBoolean(false);
+    AtomicReference<Throwable> exceptionThrown = new AtomicReference<>();
+    AtomicLong waitTime = new AtomicLong();
+    final long expectedWaitTime = 5000L;
+    Thread t1 = new Thread(() -> {
+
+      while (!stopNotify.get()) {
+        synchronized (lock) {
+          lock.notifyAll();
+        }
+        ThreadUtil.reallySleep(10);
+      }
+    });
+
+    Thread t2 = new Thread(() -> {
+      long befoteTimeoutTime = System.currentTimeMillis();
+
+      try {
+        future.get(expectedWaitTime, true);
+      } catch (Throwable e) {
+        exceptionThrown.set(e);
+      } finally {
+        stopNotify.set(true);
+        long afterTimeoutTime = System.currentTimeMillis();
+        waitTime.set(afterTimeoutTime - befoteTimeoutTime);
+      }
+    });
+    t1.start();
+    t2.start();
+    try {
+      t1.join();
+      t2.join();
+      assertTrue(waitTime.get() >= expectedWaitTime);
+      assertTrue(exceptionThrown.get() instanceof TCTimeoutException);
+    }catch (Exception e) {
+      fail(e.getMessage());
     }
   }
 }

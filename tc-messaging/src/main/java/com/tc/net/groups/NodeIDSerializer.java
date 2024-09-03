@@ -1,5 +1,19 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.net.groups;
 
@@ -7,7 +21,6 @@ import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
 import com.tc.net.ClientID;
-import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.StripeID;
@@ -19,7 +32,7 @@ import java.io.IOException;
  * Having it here makes it easy to abstract the differences from everywhere else. The downside is that when a new
  * implementation comes around this class needs to be updated.
  */
-public class NodeIDSerializer implements TCSerializable {
+public class NodeIDSerializer implements TCSerializable<NodeIDSerializer> {
 
   private NodeID            nodeID;
 
@@ -41,8 +54,6 @@ public class NodeIDSerializer implements TCSerializable {
         return new ClientID();
       case NodeID.SERVER_NODE_TYPE:
         return new ServerID();
-      case NodeID.GROUP_NODE_TYPE:
-        return new GroupID();
       case NodeID.STRIPE_NODE_TYPE:
         return new StripeID();
       default:
@@ -51,7 +62,7 @@ public class NodeIDSerializer implements TCSerializable {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+  public NodeIDSerializer deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     byte type = serialInput.readByte();
     this.nodeID = getImpl(type);
     this.nodeID.deserializeFrom(serialInput);

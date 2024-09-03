@@ -1,32 +1,43 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.async.impl;
+
+import org.slf4j.Logger;
 
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.Stage;
+import com.tc.async.api.StageListener;
 import com.tc.async.api.StageManager;
-import com.tc.async.api.StageMonitor;
 import com.tc.logging.DefaultLoggerProvider;
-import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.Stats;
-import com.tc.text.PrettyPrinter;
-import com.tc.text.StringFormatter;
+import com.tc.text.MapListPrettyPrint;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
+import java.util.ArrayList;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,32 +46,47 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author steve
  */
 public class StageManagerImpl implements StageManager {
-
+  private static final int         DEFAULT_MAX_STAGE_CAPACITY = TCPropertiesImpl.getProperties()
+                                                     .getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
   private static final boolean     MONITOR       = TCPropertiesImpl.getProperties()
                                                      .getBoolean(TCPropertiesConsts.TC_STAGE_MONITOR_ENABLED);
   private static final long        MONITOR_DELAY = TCPropertiesImpl.getProperties()
                                                      .getLong(TCPropertiesConsts.TC_STAGE_MONITOR_DELAY);
 
-  private final Map<String, Stage> stages        = new ConcurrentHashMap<String, Stage>();
-  private TCLoggerProvider         loggerProvider;
-  private final ThreadGroup        group;
-  private String[]                 stageNames    = new String[] {};
-  private QueueFactory             queueFactory  = null;
-  private volatile boolean         started;
+  private final Map<String, Stage<?>>   stages        = new ConcurrentHashMap<>();
+  private final Map<String, Class<?>> classVerifications = new ConcurrentHashMap<>();
+  private TCLoggerProvider           loggerProvider = new DefaultLoggerProvider();
+  private final ThreadGroup          group;
+  private String[]                   stageNames    = new String[] {};
+  private final QueueFactory queueFactory;
+  private final StageListener listener;
+  private volatile boolean           started;
 
   public StageManagerImpl(ThreadGroup threadGroup, QueueFactory queueFactory) {
     this.loggerProvider = new DefaultLoggerProvider();
     this.group = threadGroup;
     this.queueFactory = queueFactory;
+    this.listener = new NullStageListener();
 
     if (MONITOR) {
       startMonitor();
     }
   }
 
+  public StageManagerImpl(ThreadGroup threadGroup, QueueFactory queueFactory, StageListener listener) {
+    this.loggerProvider = new DefaultLoggerProvider();
+    this.group = threadGroup;
+    this.queueFactory = queueFactory;
+    this.listener = listener;
+
+    if (MONITOR) {
+      startMonitor();
+    }
+  }
+  
   private void startMonitor() {
-    final TCLogger logger = loggerProvider.getLogger(getClass());
-    Thread t = new Thread("SEDA Stage Monitor") {
+    final Logger logger = loggerProvider.getLogger(getClass());
+    Thread t = new Thread(group, "SEDA Stage Monitor") {
       @Override
       public void run() {
         while (true) {
@@ -78,7 +104,7 @@ public class StageManagerImpl implements StageManager {
             stat.logDetails(logger);
           }
         } catch (Throwable th) {
-          logger.error(th);
+          logger.error("Exception :", th);
         }
       }
     };
@@ -92,82 +118,62 @@ public class StageManagerImpl implements StageManager {
   }
 
   @Override
-  public synchronized Stage createStage(String name, EventHandler handler, int threads, int maxSize) {
-    return createStage(name, handler, threads, threads, maxSize);
+  public <EC> Stage<EC> createStage(String name, Class<EC> verification, EventHandler<EC> handler, int threads) {
+    return this.createStage(name, verification, handler, threads, DEFAULT_MAX_STAGE_CAPACITY, false, true);
   }
 
   @Override
-  public synchronized Stage createStage(String name, EventHandler handler, int threads, int threadsToQueueRatio,
-                                        int maxSize) {
+  public synchronized <EC> Stage<EC> createStage(String name, Class<EC> verification, EventHandler<EC> handler, int queueCount, int maxSize, boolean canBeDirect, boolean stallWarn) {
     if (started) {
       throw new IllegalStateException("A new stage cannot be created, because StageManager is already started.");
     }
-
-    int capacity = maxSize > 0 ? maxSize : Integer.MAX_VALUE;
-    Stage s = new StageImpl(loggerProvider, name, handler, threads, threadsToQueueRatio, group, this.queueFactory,
-                            capacity);
+    // Note that the queue factory is used by all the stages under this manager so it can't be type-safe.
+    Stage<EC> s = new StageImpl<>(loggerProvider, name, verification, handler, queueCount, group, queueFactory, listener, maxSize, canBeDirect, stallWarn);
     addStage(name, s);
+    this.classVerifications.put(name,  verification);
     return s;
   }
 
-  private synchronized void addStage(String name, Stage s) {
+  private synchronized <EC> void addStage(String name, Stage<EC> s) {
     Object prev = stages.put(name, s);
     Assert.assertNull(prev);
-    s.getSink().enableStatsCollection(MONITOR);
     stageNames = stages.keySet().toArray(new String[stages.size()]);
     Arrays.sort(stageNames);
   }
 
   @Override
-  public void startStage(Stage stage, ConfigurationContext context) {
-    stage.start(context);
-  }
-
-  @Override
-  public synchronized void startAll(ConfigurationContext context, List<PostInit> toInit) {
-    for (Object element : toInit) {
-      PostInit mgr = (PostInit) element;
+  public synchronized void startAll(ConfigurationContext context, List<PostInit> toInit, String...exclusion) {
+    for (PostInit mgr : toInit) {
       mgr.initializeContext(context);
 
     }
-    for (Object element : stages.values()) {
-      Stage s = (Stage) element;
-      s.start(context);
+    Arrays.sort(exclusion);
+    for (Stage<?> s : stages.values()) {
+      if (Arrays.binarySearch(exclusion, s.getName()) < 0) {
+        s.start(context);
+      }
     }
     started = true;
   }
 
   @Override
-  public void stopStage(Stage stage) {
-    stage.destroy();
-  }
-
-  @Override
   public void stopAll() {
-    for (Object element : stages.values()) {
-      Stage s = (Stage) element;
-      s.destroy();
+    for (Stage<?> s : stages.values()) {
+      s.stop();
     }
     stages.clear();
+    this.classVerifications.clear();
     started = false;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
-  public void cleanup() {
-    // TODO: ClientConfigurationContext is not visible so can't use ClientConfigurationContext.CLUSTER_EVENTS_STAGE
-    Collection<String> skipStages = new HashSet<String>();
-    skipStages.add("cluster_events_stage");
-    for (Object element : stages.values()) {
-      Stage s = (Stage) element;
-      if (!skipStages.contains(s.getName())) {
-        s.getSink().clear();
-      }
+  public  <EC> Stage<EC> getStage(String name, Class<EC> verification) {
+    Stage<EC> stage = (Stage<EC>) stages.get(name);
+    if (stage != null) {
+      Assert.assertTrue(verification.isAssignableFrom(classVerifications.get(name)));
     }
-  }
-
-  @Override
-  public Stage getStage(String name) {
-    return stages.get(name);
+    return stage;
   }
 
   @Override
@@ -176,46 +182,41 @@ public class StageManagerImpl implements StageManager {
     final Stats[] stats = new Stats[names.length];
 
     for (int i = 0; i < names.length; i++) {
-      stats[i] = getStage(names[i]).getSink().getStats(MONITOR_DELAY);
+      Map<String, ?> data = stages.get(names[i]).getState();
+      stats[i] = new Stats() {
+        @Override
+        public String getDetails() {
+          MapListPrettyPrint pp = new MapListPrettyPrint();
+          pp.println(data);
+          return pp.toString();
+        }
+
+        @Override
+        public void logDetails(Logger statsLogger) {
+          statsLogger.info(getDetails());
+        }
+      };
     }
     return stats;
   }
 
   @Override
-  public Collection<Stage> getStages() {
-    return stages.values();
-  }
-
-  static class StageMonitors {
-
-    private final List            monitors  = Collections.synchronizedList(new LinkedList());
-    private final StringFormatter formatter = new StringFormatter();
-
-    StageMonitors(final TCLogger logger) {
-      return;
-    }
-
-    public StageMonitor newStageMonitor(String name) {
-      return new NullStageMonitor();
-    }
-
-    @Override
-    public String toString() {
-      StringBuffer buf = new StringBuffer();
-      buf.append("StageMonitors").append(formatter.newline());
-      for (Iterator i = Collections.unmodifiableList(monitors).iterator(); i.hasNext();) {
-        buf.append(((StageMonitorImpl) i.next()).dumpAndFlush()).append(formatter.newline());
+  public Map<String, ?> getStateMap() {
+    Map<String,Object> map = new LinkedHashMap<>();
+    map.put("className", this.getClass().getName());
+    map.put("monitor", MONITOR);
+    List<Object> list = new ArrayList<>(stages.size());
+    for (Stage<?> stage : stages.values()) {
+      if (stage.isStarted()) {
+        list.add(stage.getState());
       }
-      return buf.toString();
     }
+    map.put("stages", list);
+    return map;
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.print(this.getClass().getName()).flush();
-    for (Stage stage : getStages()) {
-      out.indent().visit(stage).flush();
-    }
-    return out;
+  public int getDefaultStageMaximumCapacity() {
+    return DEFAULT_MAX_STAGE_CAPACITY;
   }
 }

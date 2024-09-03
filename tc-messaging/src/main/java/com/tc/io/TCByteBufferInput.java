@@ -1,16 +1,26 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.io;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCReference;
 
 public interface TCByteBufferInput extends TCDataInput {
-
-  public interface Mark {
-    // This is just a Marker interface as far as anyone is concerned
-  }
 
   /**
    * Duplicate this stream. The resulting stream will share data with the source stream (ie. no copying), but the two
@@ -19,51 +29,19 @@ public interface TCByteBufferInput extends TCDataInput {
    */
   public TCByteBufferInput duplicate();
 
-  /**
-   * Effectively the same thing as calling duplicate().limit(int), but potentially creating far less garbage (depending
-   * on the size difference between the original stream and the slice you want)
-   */
-  public TCByteBufferInput duplicateAndLimit(final int limit);
-
-  public TCByteBuffer[] toArray();
-
-  public TCByteBuffer[] toArray(Mark start, Mark end);
-
-  /**
-   * Artificially limit the length of this input stream starting at the current read position. This operation is
-   * destructive to the stream contents (ie. data trimmed off by setting limit can never be read with this stream).
-   */
-  public TCDataInput limit(int limit);
-
   public int getTotalLength();
 
   public int available();
 
   public void close();
 
-  public void mark(int readlimit);
-
-  /**
-   * This is a TC special version of mark() to be used in conjunction with tcReset()...We should eventually implement
-   * the general purpose mark(int) method as specified by InputStream. NOTE: It has some unusual semantics that make it
-   * a little trickier to implement (in our case) than you might think (specifically the readLimit field)
-   */
-  public Mark mark();
-
-  public boolean markSupported();
-
   public int read(byte[] b);
+  
+  public TCReference readReference(int len);
+  
+  public TCByteBuffer read(int len);
 
   public int read();
-
-  public void reset();
-
-  /**
-   * Reset this input stream to the position recorded by the mark that is passed an input parameter.
-   * 
-   * @throws IllegalArgumentException if m is null or if it was not created against this stream.
-   */
-  public void tcReset(Mark m);
 
   public long skip(long skip);
 

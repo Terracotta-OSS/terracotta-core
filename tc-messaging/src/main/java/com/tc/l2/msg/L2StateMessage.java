@@ -1,21 +1,33 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.l2.msg;
 
-import com.tc.async.api.EventContext;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.l2.state.Enrollment;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.MessageID;
+import com.tc.util.Assert;
+import com.tc.util.State;
 
 import java.io.IOException;
 
-import com.tc.net.groups.GroupMessage;
-
-public class L2StateMessage extends AbstractGroupMessage implements EventContext {
+public class L2StateMessage extends AbstractGroupMessage {
 
   public static final int START_ELECTION          = 0; // Sent during the start of an election by the initiator
   public static final int ELECTION_RESULT         = 1; // Sent at the end of an election by the initiator
@@ -25,35 +37,39 @@ public class L2StateMessage extends AbstractGroupMessage implements EventContext
   public static final int ABORT_ELECTION          = 4; // Sent in response to START_ELECTION by already elected ACTIVE
   public static final int ELECTION_WON            = 5; // Sent by the node that wins an election
   public static final int ELECTION_WON_ALREADY    = 6; // Sent to new nodes joining after the node wins an election and
-  // turns ACTIVE
-  public static final int MOVE_TO_PASSIVE_STANDBY = 7; // Sent by active to notify passive can become PASSIVE_STANDBY
 
   private Enrollment      enrollment;
+  private State           state;
 
   // To make serialization happy
   public L2StateMessage() {
     super(-1);
   }
 
-  public L2StateMessage(int type, Enrollment e) {
+  public L2StateMessage(int type, Enrollment e, State state) {
     super(type);
+    Assert.assertNotNull(e);
     this.enrollment = e;
+    this.state = state;
   }
 
-  public L2StateMessage(MessageID requestID, int type, Enrollment e) {
+  public L2StateMessage(MessageID requestID, int type, Enrollment e, State state) {
     super(type, requestID);
     this.enrollment = e;
+    this.state = state;
   }
 
   @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     this.enrollment = new Enrollment();
     this.enrollment.deserializeFrom(in);
+    this.state = new State(in.readString());
   }
 
   @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
     this.enrollment.serializeTo(out);
+    out.writeString(this.state.getName());
   }
 
 
@@ -61,9 +77,13 @@ public class L2StateMessage extends AbstractGroupMessage implements EventContext
     return enrollment;
   }
 
+  public State getState() {
+    return state;
+  }
+
   @Override
   public String toString() {
-    return "L2StateMessage [ " + messageFrom() + ", type = " + getTypeString() + ", " + enrollment + "]";
+    return "L2StateMessage [ " + messageFrom() + ", type = " + getTypeString() + ", " + enrollment + ", " + state + "]";
   }
 
   private String getTypeString() {
@@ -82,46 +102,40 @@ public class L2StateMessage extends AbstractGroupMessage implements EventContext
         return "ELECTION_WON";
       case ELECTION_WON_ALREADY:
         return "ELECTION_WON_ALREADY";
-      case MOVE_TO_PASSIVE_STANDBY:
-        return "MOVE_TO_PASSIVE_STANDBY";
       default:
         throw new AssertionError("Unknow Type ! : " + getType());
     }
   }
 
-  public static L2StateMessage createElectionStartedMessage(Enrollment e) {
-    return new L2StateMessage(L2StateMessage.START_ELECTION, e);
+  public static L2StateMessage createElectionStartedMessage(Enrollment e, State state) {
+    return new L2StateMessage(L2StateMessage.START_ELECTION, e, state);
   }
 
-  public static L2StateMessage createElectionResultMessage(Enrollment e) {
-    return new L2StateMessage(L2StateMessage.ELECTION_RESULT, e);
+  public static L2StateMessage createElectionResultMessage(Enrollment e, State state) {
+    return new L2StateMessage(L2StateMessage.ELECTION_RESULT, e, state);
   }
 
-  public static L2StateMessage createAbortElectionMessage(L2StateMessage initiatingMsg, Enrollment e) {
-    return new L2StateMessage(initiatingMsg.getMessageID(), L2StateMessage.ABORT_ELECTION, e);
+  public static L2StateMessage createAbortElectionMessage(L2StateMessage initiatingMsg, Enrollment e, State state) {
+    return new L2StateMessage(initiatingMsg.getMessageID(), L2StateMessage.ABORT_ELECTION, e, state);
   }
 
-  public static L2StateMessage createElectionStartedMessage(L2StateMessage initiatingMsg, Enrollment e) {
-    return new L2StateMessage(initiatingMsg.getMessageID(), L2StateMessage.START_ELECTION, e);
+  public static L2StateMessage createElectionStartedMessage(L2StateMessage initiatingMsg, Enrollment e, State state) {
+    return new L2StateMessage(initiatingMsg.getMessageID(), L2StateMessage.START_ELECTION, e, state);
   }
 
-  public static L2StateMessage createResultConflictMessage(L2StateMessage initiatingMsg, Enrollment e) {
-    return new L2StateMessage(initiatingMsg.getMessageID(), L2StateMessage.RESULT_CONFLICT, e);
+  public static L2StateMessage createResultConflictMessage(L2StateMessage initiatingMsg, Enrollment e, State state) {
+    return new L2StateMessage(initiatingMsg.getMessageID(), L2StateMessage.RESULT_CONFLICT, e, state);
   }
 
-  public static L2StateMessage createResultAgreedMessage(L2StateMessage initiatingMsg, Enrollment e) {
-    return new L2StateMessage(initiatingMsg.getMessageID(), L2StateMessage.RESULT_AGREED, e);
+  public static L2StateMessage createResultAgreedMessage(L2StateMessage initiatingMsg, Enrollment e, State state) {
+    return new L2StateMessage(initiatingMsg.getMessageID(), L2StateMessage.RESULT_AGREED, e, state);
   }
 
-  public static L2StateMessage createElectionWonMessage(Enrollment e) {
-    return new L2StateMessage(L2StateMessage.ELECTION_WON, e);
+  public static L2StateMessage createElectionWonMessage(Enrollment e, State state) {
+    return new L2StateMessage(L2StateMessage.ELECTION_WON, e, state);
   }
 
-  public static L2StateMessage createElectionWonAlreadyMessage(Enrollment e) {
-    return new L2StateMessage(L2StateMessage.ELECTION_WON_ALREADY, e);
-  }
-
-  public static L2StateMessage createMoveToPassiveStandbyMessage(Enrollment e) {
-    return new L2StateMessage(L2StateMessage.MOVE_TO_PASSIVE_STANDBY, e);
+  public static L2StateMessage createElectionWonAlreadyMessage(Enrollment e, State state) {
+    return new L2StateMessage(L2StateMessage.ELECTION_WON_ALREADY, e, state);
   }
 }

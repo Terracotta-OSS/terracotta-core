@@ -1,16 +1,25 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.util;
 
-import com.tc.util.Assert;
-import com.tc.util.Conversion;
 
 import java.text.DecimalFormatSymbols;
 import java.util.Arrays;
-import java.util.Locale;
-
 import com.tc.util.Conversion.MemorySizeUnits;
 import com.tc.util.Conversion.MetricsFormatException;
 
@@ -19,7 +28,6 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * JUnit TestCase to exercise the Conversion class.
@@ -215,7 +223,7 @@ public class ConversionTest {
         int convertedInt = Conversion.bytes2Int(convertedBytes);
         assertEquals(testVal, convertedInt);
       } catch (RuntimeException e) {
-        throw new AssertionError("Failed to convert: " + testVal, e);
+        throw new AssertionError("Failed to convert: " + testVal + " : " + e);
       }
     }
   }
@@ -293,27 +301,20 @@ public class ConversionTest {
 
   @Test
   public void testMemoryBytesAsSize() {
-
     char dfs = new DecimalFormatSymbols().getDecimalSeparator();
-    try {
-      Assert.assertEquals("1k", Conversion.memoryBytesAsSize(MemorySizeUnits.KILO.asBytes()));
-      Assert.assertEquals("1m", Conversion.memoryBytesAsSize(MemorySizeUnits.MEGA.asBytes()));
-      Assert.assertEquals("1g", Conversion.memoryBytesAsSize(MemorySizeUnits.GIGA.asBytes()));
+    Assert.assertEquals("1k", Conversion.memoryBytesAsSize(MemorySizeUnits.KILO.asBytes()));
+    Assert.assertEquals("1m", Conversion.memoryBytesAsSize(MemorySizeUnits.MEGA.asBytes()));
+    Assert.assertEquals("1g", Conversion.memoryBytesAsSize(MemorySizeUnits.GIGA.asBytes()));
 
-      Assert.assertEquals("4k", Conversion.memoryBytesAsSize(MemorySizeUnits.KILO.asBytes() * 4));
-      Assert.assertEquals("8m", Conversion.memoryBytesAsSize(MemorySizeUnits.MEGA.asBytes() * 8));
-      Assert.assertEquals("10g", Conversion.memoryBytesAsSize(MemorySizeUnits.GIGA.asBytes() * 10));
+    Assert.assertEquals("4k", Conversion.memoryBytesAsSize(MemorySizeUnits.KILO.asBytes() * 4));
+    Assert.assertEquals("8m", Conversion.memoryBytesAsSize(MemorySizeUnits.MEGA.asBytes() * 8));
+    Assert.assertEquals("10g", Conversion.memoryBytesAsSize(MemorySizeUnits.GIGA.asBytes() * 10));
 
-      Assert.assertEquals("924b", Conversion.memoryBytesAsSize(MemorySizeUnits.KILO.asBytes() - 100));
-      Assert.assertEquals("1024m", Conversion.memoryBytesAsSize(MemorySizeUnits.GIGA.asBytes() - 100));
-      Assert.assertEquals("901b", Conversion.memoryBytesAsSize(MemorySizeUnits.KILO.asBytes() - 123));
-      Assert.assertEquals("1021" + dfs + "71k", Conversion.memoryBytesAsSize(MemorySizeUnits.MEGA.asBytes() - 2344));
-      Assert.assertEquals("933" + dfs + "84m",
-                          Conversion.memoryBytesAsSize(MemorySizeUnits.GIGA.asBytes() - 94534540));
-    } catch (MetricsFormatException mfe) {
-      Assert.fail("XX current locale : " + Locale.getDefault() + "; Decimal Sep: " + dfs + " failed: " + mfe);
-    }
-
+    Assert.assertEquals("924b", Conversion.memoryBytesAsSize(MemorySizeUnits.KILO.asBytes() - 100));
+    Assert.assertEquals("1024m", Conversion.memoryBytesAsSize(MemorySizeUnits.GIGA.asBytes() - 100));
+    Assert.assertEquals("901b", Conversion.memoryBytesAsSize(MemorySizeUnits.KILO.asBytes() - 123));
+    Assert.assertEquals("1021" + dfs + "71k", Conversion.memoryBytesAsSize(MemorySizeUnits.MEGA.asBytes() - 2344));
+    Assert.assertEquals("933" + dfs + "84m", Conversion.memoryBytesAsSize(MemorySizeUnits.GIGA.asBytes() - 94534540));
   }
 
   @Test

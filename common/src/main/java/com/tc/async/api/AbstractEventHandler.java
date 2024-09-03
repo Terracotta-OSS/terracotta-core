@@ -1,44 +1,48 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.async.api;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
 
 import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * Simple superclass for event handlers that does the iterating over events in the array
  * 
  * @author steve
  */
-public abstract class AbstractEventHandler implements EventHandler {
+public abstract class AbstractEventHandler<EC> implements EventHandler<EC> {
 
-  private ConfigurationContext configContext;
-  private TCLogger             logger;
-
-  @Override
-  public abstract void handleEvent(EventContext context) throws EventHandlerException;
+  private volatile Logger logger;
 
   @Override
-  public void handleEvents(Collection contexts) throws EventHandlerException {
-    for (Iterator i = contexts.iterator(); i.hasNext();) {
-      EventContext eh = (EventContext) i.next();
-      handleEvent(eh);
+  public abstract void handleEvent(EC context) throws EventHandlerException;
+
+  @Override
+  public void handleEvents(Collection<EC> contexts) throws EventHandlerException {
+    for (EC context : contexts) {
+      handleEvent(context);
     }
   }
 
   @Override
   public synchronized final void initializeContext(ConfigurationContext context) {
-    if (context == null) {
-      this.logger = TCLogging.getLogger(this.getClass());
-      logger.warn("Setting config context to null. This is highly unusual");
-    } else {
-      this.logger = context.getLogger(this.getClass());
-    }
-    this.configContext = context;
+    this.logger = context.getLogger(this.getClass());
     initialize(context);
   }
 
@@ -46,20 +50,13 @@ public abstract class AbstractEventHandler implements EventHandler {
     // Subclasses can override this.
   }
 
-  public TCLogger getLogger() {
+  public Logger getLogger() {
     return logger;
   }
 
   @Override
-  public synchronized void destroy() {
-    configContext = null;
-  }
-
-  /**
-   * @return the ConfigurationContext object that was passed to the <code>initialize</code> method.
-   */
-  protected synchronized ConfigurationContext getConfigurationContext() {
-    return configContext;
+  public void destroy() {
+    //
   }
 
 }

@@ -1,0 +1,176 @@
+= Windows Batch File Coding
+
+== Tolerating Special Characters
+
+Coding a Windows `bat` script to tolerate file paths containing special characters
+can be a challenge.  Typical coding techniques result in scripts that do not
+operate properly in the presence of file path names containing special characters.
+
+=== TL;DR
+
+Using the following special characters in Windows file path names are difficult
+to impossible to handle in Windows batch scripts:
+
+* `!` (exclamation mark)
+
+The following special characters can be handled but require proper coding
+techniques:
+
+* 0x20 (space)
+* `%` (percent sign)
+* `^` (circumflex accent, caret) _with restrictions_
+* `(` (left parenthesis), `)` (right parenthesis)
+* `&` (ampersand)
+* `;` (semicolon)
+* `,` (comma)
+
+=== Details
+
+Summarizing from https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file[_Naming Files, Paths, and Namespaces_],
+the following characters are **not** legal in names in the file system:
+
+* 0x00-0x1F (C0 controls)
+* `<` (less-than sign)
+* `>` (greater-than sign)
+* `:` (colon)
+* `"` (quotation mark)
+* `/` (solidus)
+* `\` (reverse solidus)
+* `|` (vertical line)
+* `?` (question mark)
+* `*` (asterisk)
+
+All other characters are LEGAL including the following characters:
+
+* 0x20 (space)
+* `!` (exclamation mark)
+* `#` (number sign)
+* `$` (dollar sign)
+* `%` (percent sign)
+* `&` (ampersand)
+* `'` (apostrophe)
+* `(` (left parenthesis), `)` (right parenthesis)
+* `+` (plus sign)
+* `,` (comma)
+* `-` (hyphen-minus)
+* `.` (full stop)
+* `;` (semicolon)
+* `=` (equals sign)
+* `@` (commercial at)
+* `[` (left square bracket), `]` (right square bracket)
+* `^` (circumflex accent)
+* `_` (low line)
+* +++<code>`</code>+++ (grave accent)
+* `{` (left curly bracket), `}` (right curly bracket)
+* `~` (tilde)
+
+The following legal file path characters bear some significance in Windows BATCH files and require
+special attention:
+
+* 0x20 (space) +
+Used by Windows as a parameter delimiter, a space appearing a variable or parameter value requires
+that variable reference be quoted.  Unless needed for a special case,
+**do not include quotes in the variable value** -- this only causes complications down-stream.
+* `%`  (percent sign) +
+The percent sign is the usual variable delimiter.  However, substitution of percent-delimited
+variables takes place early in batch script interpretation -- before the batch statement is
+parsed.  This means that, when a variable contains parentheses, statement parsing is likely to
+fail due to misplaced parentheses.  **Quoting does not avoid this problem.**  See the discussion
+about parentheses for accommodation details.  Another issue related to the percent sign is a
+variable value containing a percent sign -- percent signs present in arguments to the `call`
+command are processed for variable substitution -- resulting in removal --
+_unless the percent signs are **doubled**_.
+* `^` (circumflex accent, caret) +
+Unbeknownst to many, the caret (circumflex accent) is an escape character in batch scripts.  It
+can be used to "hide" the specialness of many (but not all) characters special to batch scripts.
+But, it retains its "escape" characteristics only when not quoted.  In most cases, quoting a
+string permits a caret to be used from a variable without trouble.  However, as with the
+percent sign, the `call` command treats the caret specially.  Unfortunately, there is no way
+to prevent the `call` command from messing the caret.  Bottom line, you can't use a caret in
+the arguments passed to `call`.
+* `(` (left parenthesis), `)` (right parenthesis) +
+As introduced in the percent sign discussion above, percent-delimited variables containing
+parentheses **cannot** be used in parentheses-delimited batch scripting blocks as one might
+use for `for` and `if/then/else` statements.  To use variables that may contain parentheses
+in a parentheses-delimited block, delayed expansion (exclamation mark delimiters) **must**
+be used.  This is in direct conflict with supporting the exclamation mark in a variable
+(discussed below).
+* `&` (ampersand)
+The ampersand is the statement separator in Windows batch files.  Its significance as the
+command separator is hidden by quoting -- any percent-delimited variables that may contain
+an ampersand must be quoted.
+* `;` (semicolon)
+The semicolon is a parameter value separator.  Variables that may contain a semicolon should
+be quoted.  Even though a file name may contain a semicolon, the semicolon is of special
+significance to file path aggregates like `PATH` and `CLASSPATH` -- the semicolon must
+be generally disallowed for file names.
+* `,` (comma) +
+The comma is a parameter value separator.  Variables that may contain a comma should be
+quoted.
+* `!` (exclamation mark)  +
+The exclamation mark is of significance when `SETLOCAL EnableDelayedExpansion` is in effect.
+As it turns out, there is no way to escape the exclamation mark while delayed expansion is
+enabled so it cannot be used in a delayed expansion block.  Unfortunately, delayed expansion
+is necessary for some scripting techniques and handling variable values containing
+parentheses in the scope of a parentheses-delimited block such as one might use for `for`
+or `if/then/else`. This makes an exclamation mark a character that cannot be readily supported
+in file names.
+
+=== Further Notes
+
+=== `call` Command
+`call` command processing performs percent sign variable substitution on its arguments
+_before_ invoking the targeted command.  Even when quoted, a `call` command string
+containing percent signs will have those percent signs processed for variable
+substitution (removing the percent signs) unless each percent sign is _doubled_.
+There appears no way to protect a caret used in `call` command -- the carets are
+doubled, presumably by `call` and result in an incorrect file path reference.
+
+To accommodate both percent signs and carets, avoidance is the only route to success.
+As an example, When invoking `setenv.bat` in the same directory as the calling batch
+script, changing the current directory to the director containing `setenv.bat` and
+then calling the script is the only way to permit both percent signs and carets
+in the original file path name:
+
+        if exist "!EXEC_DIR!\bin\setenv.bat" (
+          pushd "!EXEC_DIR!\bin" && (
+            call .\setenv.bat
+            popd
+          )
+        )
+
+The `call` command contains no arguments containing percent signs or carets.
+
+=== Coding Technique Summary
+
+. Quote variable references.
+. Use quoting in a way to _avoid_ inclusion of quotes in variable values --
+particularly when dealing with file path names;
+when using `set`, use `set "variable=value"` instead of `set variable="value"`.
+. Use delayed expansion references to variables to prevent interpretation of
+parentheses in variables used in parentheses-delimited blocks like those used
+with `for` and `if/then/else` statements.
+. When using `call`, avoid passing arguments to the `call` command that may contain
+percent signs (`%`) or carets (`^`) -- these get altered by `call`.  To call a
+command/batch script in a directory whose name contains special characters, `cd`
+to that directory and make the call.  If you must pass an argument containing
+a percent sign, you'll need to double the percent signs.  An argument containing
+a caret **cannot** be safely passed.
+. Test your batch scripts with using truly ugly directory paths -- such as
++++<code>dir(with)odd_percent_chars'and[then]some`more^legal&chars=too_leftBrace_brace}pair space#pound$dollar~tilde@at&#38;ampersand+plus</code>+++
++
+[NOTE]
+--
+The percent sign and left curly bracket are _excluded_ from this directory name
+due to faults in the Spring Boot and Logback.
+
+* `org.springframework.boot.logging.logback.DefaultLogbackConfiguration#setRollingPolicy`
+does not properly prepare a file path name for use as a Logback file name pattern (in which
+percent signs are significant). This gap causes log files to be misplaced (at a minimum)
+and may cause logging initialization to quietly fail.
+* `ch.qos.logback.core.rolling.RollingFileAppender#checkForFileAndPatternCollisions`
+does not properly prepare file name patterns for use as a `Pattern` regular expression.
+When the file name pattern contains a left curly bracket (`{`), a `PatternSyntaxException`
+is thrown and logging initialization fails.  Under Spring Boot, this exception may be
+lost.
+--

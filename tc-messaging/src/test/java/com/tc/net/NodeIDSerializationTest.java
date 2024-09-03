@@ -1,5 +1,19 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.net;
 
@@ -21,11 +35,6 @@ public class NodeIDSerializationTest {
     assertTrue(n1.equals(n2));
     assertTrue(n2 instanceof ServerID);
 
-    NodeID n3 = new GroupID(100);
-    NodeID n4 = dupBySerialization(n3);
-    assertTrue(n3.equals(n4));
-    assertTrue(n4 instanceof GroupID);
-
     NodeID n5 = new ClientID(1000);
     NodeID n6 = dupBySerialization(n5);
     assertTrue(n5.equals(n6));
@@ -37,17 +46,19 @@ public class NodeIDSerializationTest {
     assertTrue(n8 instanceof StripeID);
   }
 
+  @SuppressWarnings("resource")
   private NodeID dupBySerialization(NodeID orig) throws Exception {
     TCByteBufferOutputStream out = new TCByteBufferOutputStream();
     NodeIDSerializer nodeIDSerializer = new NodeIDSerializer(orig);
     nodeIDSerializer.serializeTo(out);
     out.close();
 
-    TCByteBufferInputStream in = new TCByteBufferInputStream(out.toArray());
-    NodeIDSerializer nodeIDSerializer2 = new NodeIDSerializer();
-    nodeIDSerializer2.deserializeFrom(in);
-    NodeID dup = nodeIDSerializer2.getNodeID();
-    return dup;
+    try (TCByteBufferInputStream in = new TCByteBufferInputStream(out.accessBuffers())) {
+      NodeIDSerializer nodeIDSerializer2 = new NodeIDSerializer();
+      nodeIDSerializer2.deserializeFrom(in);
+      NodeID dup = nodeIDSerializer2.getNodeID();
+      return dup;
+    }
   }
 
   @Test
@@ -56,12 +67,7 @@ public class NodeIDSerializationTest {
     NodeID n2 = dupByTCSerializable(n1);
     assertTrue(n1.equals(n2));
     assertTrue(n2 instanceof ServerID);
-
-    NodeID n3 = new GroupID(100);
-    NodeID n4 = dupByTCSerializable(n3);
-    assertTrue(n3.equals(n4));
-    assertTrue(n4 instanceof GroupID);
-
+    
     NodeID n5 = new ClientID(1000);
     NodeID n6 = dupByTCSerializable(n5);
     assertTrue(n5.equals(n6));
@@ -73,16 +79,18 @@ public class NodeIDSerializationTest {
     assertTrue(n8 instanceof StripeID);
   }
 
+  @SuppressWarnings("resource")
   private NodeID dupByTCSerializable(NodeID orig) throws Exception {
     NodeIDSerializer serializer = new NodeIDSerializer(orig);
     TCByteBufferOutputStream out = new TCByteBufferOutputStream();
     serializer.serializeTo(out);
     out.close();
 
-    TCByteBufferInputStream in = new TCByteBufferInputStream(out.toArray());
-    serializer = new NodeIDSerializer();
-    NodeID dup = ((NodeIDSerializer) serializer.deserializeFrom(in)).getNodeID();
-    return dup;
+    try (TCByteBufferInputStream in = new TCByteBufferInputStream(out.accessBuffers())) {
+      serializer = new NodeIDSerializer();
+      NodeID dup = serializer.deserializeFrom(in).getNodeID();
+      return dup;
+    }
   }
 
 }

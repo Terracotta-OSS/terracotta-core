@@ -1,13 +1,34 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.net.protocol;
 
+import org.slf4j.Logger;
+
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
-import com.tc.logging.TCLogger;
+import com.tc.bytes.TCReferenceSupport;
+import com.tc.bytes.TCReference;
 import com.tc.net.core.TCConnection;
 import com.tc.util.Assert;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 
 /**
  * Base class for protocol adaptors
@@ -18,34 +39,28 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
   protected static final int      MODE_HEADER       = 1;
   protected static final int      MODE_DATA         = 2;
 
-  private final TCLogger          logger;
+  private final Logger logger;
   private int                     dataBytesNeeded;
   private AbstractTCNetworkHeader header;
   private TCByteBuffer[]          dataBuffers;
   private int                     bufferIndex       = -1;
   private int                     mode;
 
-  public AbstractTCProtocolAdaptor(TCLogger logger) {
+  public AbstractTCProtocolAdaptor(Logger logger) {
     this.logger = logger;
     init();
   }
-
-  @Override
-  public void addReadData(TCConnection source, TCByteBuffer[] data, int length) throws TCProtocolException {
-    processIncomingData(source, data, length);
-  }
+//
+//  @Override
+//  public void addReadData(TCConnection source, TCByteBuffer[] data, int length) throws TCProtocolException {
+//    processIncomingData(source, data, length);
+//  }
 
   @Override
   public final TCByteBuffer[] getReadBuffers() {
     if (mode == MODE_HEADER) { return new TCByteBuffer[] { header.getDataBuffer() }; }
 
     Assert.eval(mode == MODE_DATA);
-
-    if (dataBuffers == null) {
-      dataBuffers = createDataBuffers(dataBytesNeeded);
-      Assert.eval(dataBuffers.length > 0);
-      bufferIndex = 0;
-    }
 
     // only return the subset of buffers that can actually receive more bytes
     final TCByteBuffer[] rv = new TCByteBuffer[dataBuffers.length - bufferIndex];
@@ -67,7 +82,7 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
   abstract protected AbstractTCNetworkHeader getNewProtocolHeader();
 
   // subclasses override this method to return specific message types
-  abstract protected TCNetworkMessage createMessage(TCConnection source, TCNetworkHeader hdr, TCByteBuffer[] data)
+  abstract protected TCNetworkMessage createMessage(TCConnection source, TCNetworkHeader hdr, TCReference data)
       throws TCProtocolException;
 
   abstract protected int computeDataLength(TCNetworkHeader hdr);
@@ -78,26 +93,45 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
     header = getNewProtocolHeader();
   }
 
-  protected final TCNetworkMessage processIncomingData(TCConnection source, TCByteBuffer[] data, final int length)
+  protected final TCNetworkMessage processIncomingData(TCConnection source, TCByteBuffer[] data, int length, Queue<TCByteBuffer> recycle)
       throws TCProtocolException {
-    if (mode == MODE_HEADER) { return processHeaderData(source, data); }
+    if (mode == MODE_HEADER) { return processHeaderData(source, data, recycle); }
 
     Assert.eval(mode == MODE_DATA);
     if (length > dataBytesNeeded) { throw new TCProtocolException("More data read then expected: (" + length + " > "
                                                                   + dataBytesNeeded + ")"); }
-    return processPayloadData(source, data);
+    return processPayloadData(source, data, recycle);
   }
 
-  protected final TCLogger getLogger() {
+  protected final Logger getLogger() {
     return logger;
   }
 
-  private TCByteBuffer[] createDataBuffers(int length) {
+  private TCByteBuffer[] createDataBuffers(int length, Queue<TCByteBuffer> recycle) {
     Assert.eval(mode == MODE_DATA);
-    return TCByteBufferFactory.getFixedSizedInstancesForLength(false, length);
+    if (recycle != null) {
+      int run = 0;
+      List<TCByteBuffer> bufs = new LinkedList<>();
+      TCByteBuffer last = null;
+      while (run < length) {
+        TCByteBuffer buf = recycle.poll();
+        if (buf == null) {
+          buf = TCByteBufferFactory.getInstance(length - run);
+        }
+        bufs.add(buf);
+        run += buf.remaining();
+        last = buf;
+      }
+      if (last != null) {
+        last.limit(last.limit() - (run - length));
+      }
+      return bufs.toArray(new TCByteBuffer[bufs.size()]);
+    } else {
+      return new TCByteBuffer[] {TCByteBufferFactory.getInstance(length)};
+    }
   }
 
-  private TCNetworkMessage processHeaderData(TCConnection source, final TCByteBuffer[] data) throws TCProtocolException {
+  private TCNetworkMessage processHeaderData(TCConnection source, TCByteBuffer[] data, Queue<TCByteBuffer> recycle) throws TCProtocolException {
     Assert.eval(data.length == 1);
     Assert.eval(data[0] == this.header.getDataBuffer());
 
@@ -131,7 +165,11 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
 
         this.mode = MODE_DATA;
         this.dataBytesNeeded = computeDataLength(this.header);
-        this.dataBuffers = null;
+        if (dataBuffers != null) {
+          recycleBuffers(dataBuffers, recycle);
+        }
+        this.dataBuffers = createDataBuffers(dataBytesNeeded, recycle);
+        this.bufferIndex = 0;
 
         if (this.dataBytesNeeded < 0) { throw new TCProtocolException("Negative data size detected: "
                                                                       + this.dataBytesNeeded); }
@@ -149,7 +187,13 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
     }
   }
 
-  private TCNetworkMessage processPayloadData(TCConnection source, final TCByteBuffer[] data) throws TCProtocolException {
+  private static void recycleBuffers(TCByteBuffer[] buffers, Queue<TCByteBuffer> recycle) {
+    for (TCByteBuffer buf : buffers) {
+      recycle.offer(buf.reInit());
+    }
+  }
+  
+  private TCNetworkMessage processPayloadData(TCConnection source, TCByteBuffer[] data, Queue<TCByteBuffer> recycle) throws TCProtocolException {
     for (int i = 0; i < data.length; i++) {
       final TCByteBuffer buffer = data[i];
 
@@ -166,9 +210,9 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
 
     if (0 == dataBytesNeeded) {
       if (bufferIndex != dataBuffers.length) { throw new TCProtocolException("Not all buffers consumed"); }
-
+      TCByteBuffer[] localDataBuffers = this.dataBuffers;
       // message is complete!
-      TCNetworkMessage msg = createMessage(source, header, dataBuffers);
+      TCNetworkMessage msg = createMessage(source, header, TCReferenceSupport.createReference(Arrays.asList(localDataBuffers), recycle == null ? r->{} : recycle::add));
 
       if (logger.isDebugEnabled()) {
         logger.debug("Message complete on connection " + source + ": " + msg.toString());

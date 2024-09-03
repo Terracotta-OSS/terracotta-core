@@ -1,0 +1,4 @@
+terracotta.patch.level=${patch.level}
+terracotta.patch.timestamp=${timestamp}
+terracotta.patch.revision=${buildNumber}
+terracotta.patch.branch=${scmBranch}

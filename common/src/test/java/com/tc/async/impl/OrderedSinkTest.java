@@ -1,43 +1,58 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.async.impl;
 
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.OrderedEventContext;
 import com.tc.async.api.Sink;
-import com.tc.logging.TCLogging;
 import com.tc.test.TCTestCase;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.List;
 
 public class OrderedSinkTest extends TCTestCase {
 
   public void testBasic() throws Exception {
-    MockSink des = new MockSink();
-    Sink s = new OrderedSink(TCLogging.getLogger(OrderedSink.class), des);
+    MockSink<OrderedEventContext> des = new MockSink<OrderedEventContext>();
+    Sink<OrderedEventContext> s = new OrderedSink(LoggerFactory.getLogger(OrderedSink.class), des);
 
     OrderedEventContext oc = new MyOrderedEventContext(1);
-    s.add(oc);
+    s.addToSink(oc);
     assertEvents(des, 1, 1);
 
     oc = new MyOrderedEventContext(3);
-    s.add(oc);
+    s.addToSink(oc);
     assertTrue(des.queue.isEmpty());
 
     oc = new MyOrderedEventContext(4);
-    s.add(oc);
+    s.addToSink(oc);
     assertTrue(des.queue.isEmpty());
 
     oc = new MyOrderedEventContext(2);
-    s.add(oc);
+    s.addToSink(oc);
     assertEvents(des, 2, 3);
 
     oc = new MyOrderedEventContext(2);
     boolean failed = false;
     try {
-      s.add(oc);
+      s.addToSink(oc);
       failed = true;
     } catch (AssertionError ae) {
       // Excepted
@@ -46,30 +61,30 @@ public class OrderedSinkTest extends TCTestCase {
   }
 
   public void testComplex() throws Exception {
-    MockSink des = new MockSink();
-    Sink s = new OrderedSink(TCLogging.getLogger(OrderedSink.class), des);
+    MockSink<OrderedEventContext> des = new MockSink<OrderedEventContext>();
+    Sink<OrderedEventContext> s = new OrderedSink(LoggerFactory.getLogger(OrderedSink.class), des);
     
-    ArrayList l = createOrderedEvents(1000);
+    List<MyOrderedEventContext> l = createOrderedEvents(1000);
     SecureRandom r = new SecureRandom();
 
     while (!l.isEmpty()) {
       int idx = r.nextInt(l.size());
-      OrderedEventContext oc = (OrderedEventContext) l.remove(idx);
-      s.add(oc);
+      MyOrderedEventContext oc = l.remove(idx);
+      s.addToSink(oc);
     }
     
     assertEvents(des, 1, 1000);
   }
 
-  private ArrayList createOrderedEvents(int count) {
-    ArrayList al = new ArrayList(count);
+  private List<MyOrderedEventContext> createOrderedEvents(int count) {
+    List<MyOrderedEventContext> al = new ArrayList<MyOrderedEventContext>(count);
     for (int i = 1; i <= count; i++) {
       al.add(new MyOrderedEventContext(i));
     }
     return al;
   }
 
-  private void assertEvents(MockSink des, int id, int count) {
+  private void assertEvents(MockSink<OrderedEventContext> des, int id, int count) {
     while (count-- > 0) {
       MyOrderedEventContext oc;
       try {

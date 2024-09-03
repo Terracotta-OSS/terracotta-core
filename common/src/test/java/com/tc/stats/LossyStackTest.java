@@ -1,36 +1,45 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.stats;
 
-import org.junit.experimental.categories.Category;
-import org.terracotta.test.categories.CheckShorts;
-
 import junit.framework.TestCase;
 
-@Category(CheckShorts.class)
 public class LossyStackTest extends TestCase {
 
+  @SuppressWarnings("unused")
   public void testException() {
     try {
-      new LossyStack(0);
+      new LossyStack<Object>(0);
       fail();
     } catch (IllegalArgumentException iae) {
       // expected
     }
 
     try {
-      new LossyStack(-4);
+      new LossyStack<Object>(-4);
       fail();
     } catch (IllegalArgumentException iae) {
       // expected
     }
-
   }
 
   public void test() {
-    LossyStack stack = new LossyStack(5);
+    LossyStack<Integer> stack = new LossyStack<Integer>(5);
     assertEquals(0, stack.depth());
     assertTrue(stack.isEmtpy());
     assertNull(stack.peek());
@@ -67,7 +76,7 @@ public class LossyStackTest extends TestCase {
     stack.push(Integer.valueOf(7));
     assertEquals(5, stack.depth());
 
-    Integer[] data = (Integer[]) stack.toArray(new Integer[stack.depth()]);
+    Integer[] data = stack.toArray(new Integer[stack.depth()]);
     assertEquals(5, data.length);
     for (int i = 0; i < data.length; i++) {
       assertEquals(Integer.valueOf(7 - i), data[i]);

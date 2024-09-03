@@ -1,6 +1,19 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.util;
 
@@ -17,13 +30,13 @@ public class StackTest {
 
   @Test
   public void test() throws Exception {
-    Stack tcStack = new Stack();
-    java.util.Stack javaStack = new java.util.Stack();
+    Stack<Object> tcStack = new Stack<Object>();
+    java.util.Stack<Object> javaStack = new java.util.Stack<Object>();
 
     doRandomTests(tcStack, javaStack);
   }
 
-  private void doRandomTests(Stack tcStack, java.util.Stack javaStack) {
+  private void doRandomTests(Stack<Object> tcStack, java.util.Stack<Object> javaStack) {
     SecureRandom sr = new SecureRandom();
     long seed = sr.nextLong();
     Random r = new Random(seed);
@@ -54,30 +67,30 @@ public class StackTest {
         }
       }
     } catch (AssertionError e) {
-      throw new AssertionError("Failure with seed " + seed, e);
+      throw new AssertionError("Failure with seed " + seed + " " + e);
     }
   }
 
-  private void callSearch(Stack tcStack, java.util.Stack javaStack, Random r) {
+  private void callSearch(Stack<Object> tcStack, java.util.Stack<Object> javaStack, Random r) {
     Integer subject = Integer.valueOf(r.nextInt(10000));
     assertEquals(javaStack.search(subject), tcStack.search(subject));
   }
 
-  private void callSize(Stack tcStack, java.util.Stack javaStack) {
+  private void callSize(Stack<Object> tcStack, java.util.Stack<Object> javaStack) {
     assertEquals(javaStack.size(), tcStack.size());
   }
 
-  private void callEmpty(Stack tcStack, java.util.Stack javaStack) {
+  private void callEmpty(Stack<Object> tcStack, java.util.Stack<Object> javaStack) {
     assertEquals(javaStack.empty(), tcStack.empty());
   }
 
-  private void callPush(Stack tcStack, java.util.Stack javaStack, Random r) {
+  private void callPush(Stack<Object> tcStack, java.util.Stack<Object> javaStack, Random r) {
     Integer subject = Integer.valueOf(r.nextInt(10000));
     assertEquals(javaStack.push(subject), tcStack.push(subject));
     assertEquals(javaStack.size(), tcStack.size());
   }
 
-  private void callPeek(Stack tcStack, java.util.Stack javaStack) {
+  private void callPeek(Stack<Object> tcStack, java.util.Stack<Object> javaStack) {
     boolean thrownException = false;
     Object jo = null, to = null;
     Exception je = null, te = null;
@@ -100,7 +113,7 @@ public class StackTest {
     }
   }
 
-  private void callPop(Stack tcStack, java.util.Stack javaStack) {
+  private void callPop(Stack<Object> tcStack, java.util.Stack<Object> javaStack) {
     boolean thrownException = false;
     Object jo = null, to = null;
     Exception je = null, te = null;

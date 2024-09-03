@@ -1,11 +1,25 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.util.runtime;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
-import com.tc.object.locks.ThreadID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.util.Conversion;
 
 import java.io.ByteArrayOutputStream;
@@ -15,7 +29,6 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MonitorInfo;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -25,62 +38,41 @@ public class ThreadDumpUtil {
   public static final String            ZIP_BUFFER_NAME         = "threadDumps.zip";
   private static final short            ZIP_BUFFER_INITIAL_SIZE = 10 * 1024;
 
-  protected static final TCLogger       logger                  = TCLogging.getLogger(ThreadDumpUtil.class);
+  protected static final Logger logger = LoggerFactory.getLogger(ThreadDumpUtil.class);
   protected static final ThreadMXBean   threadMXBean            = ManagementFactory.getThreadMXBean();
   protected static volatile ThreadGroup rootThreadGroup;
 
   public static byte[] getCompressedThreadDump() {
-    return getCompressedThreadDump(new NullLockInfoByThreadIDImpl(), new NullThreadIDMapImpl());
-  }
-
-  public static byte[] getCompressedThreadDump(LockInfoByThreadID lockInfo, ThreadIDMap threadIDMap) {
     ByteArrayOutputStream bOutStream = new ByteArrayOutputStream(ZIP_BUFFER_INITIAL_SIZE);
     ZipOutputStream zout = new ZipOutputStream(bOutStream);
     ZipEntry zEntry = new ZipEntry(ZIP_BUFFER_NAME);
     try {
       zout.putNextEntry(zEntry);
     } catch (IOException e) {
-      logger.error(e);
+      logger.error("Exception: ", e);
       return null;
     }
 
-    String threadDump = getThreadDump(lockInfo, threadIDMap);
+    String threadDump = getThreadDump();
     logger.info(threadDump);
 
     try {
       zout.write(Conversion.string2Bytes(threadDump));
       zout.flush();
     } catch (IOException e) {
-      logger.error(e);
+      logger.error("Exception: ", e);
       return null;
     } finally {
       try {
         zout.closeEntry();
         zout.close();
       } catch (IOException e) {
-        logger.error(e);
+        logger.error("Exception: ", e);
         return null;
       }
     }
 
     return bOutStream.toByteArray();
-  }
-
-  public static String getLockList(LockInfoByThreadID lockInfo, ThreadID tcThreadID) {
-    String lockList = "";
-    ArrayList heldLocks = lockInfo.getHeldLocks(tcThreadID);
-    ArrayList waitOnLocks = lockInfo.getWaitOnLocks(tcThreadID);
-    ArrayList pendingLocks = lockInfo.getPendingLocks(tcThreadID);
-    if (heldLocks.size() != 0) {
-      lockList += "LOCKED : " + heldLocks.toString() + "\n";
-    }
-    if (waitOnLocks.size() != 0) {
-      lockList += "WAITING ON LOCK: " + waitOnLocks.toString() + "\n";
-    }
-    if (pendingLocks.size() != 0) {
-      lockList += "WAITING TO LOCK: " + pendingLocks.toString() + "\n";
-    }
-    return lockList;
   }
 
   /**
@@ -117,11 +109,23 @@ public class ThreadDumpUtil {
     return rootThreadGroup;
   }
 
-  public static String getThreadDump() {
-    return getThreadDump(new NullLockInfoByThreadIDImpl(), new NullThreadIDMapImpl());
+  public static String getThreadDump(Thread t) {
+    final StringBuilder sb = new StringBuilder(100 * 1024);
+    sb.append("name=" + t.getName() + " id=" + t.getId());
+    sb.append('\n');
+
+    final StackTraceElement[] stea = t.getStackTrace();
+    for (StackTraceElement element : stea) {
+      sb.append("\tat ");
+      sb.append(element.toString());
+      sb.append('\n');
+    }
+    sb.append('\n');
+
+    return sb.toString();
   }
 
-  public static String getThreadDump(LockInfoByThreadID lockInfo, ThreadIDMap threadIDMap) {
+  public static String getThreadDump() {
     final StringBuilder sb = new StringBuilder(100 * 1024);
     sb.append(new Date().toString());
     sb.append('\n');
@@ -157,7 +161,6 @@ public class ThreadDumpUtil {
             }
           }
         }
-        sb.append(ThreadDumpUtil.getLockList(lockInfo, threadIDMap.getTCThreadID(threadInfo.getThreadId())));
         if (!threadMXBean.isObjectMonitorUsageSupported() && threadMXBean.isSynchronizerUsageSupported()) {
           sb.append(threadLockedSynchronizers(threadInfo));
         }
@@ -170,7 +173,7 @@ public class ThreadDumpUtil {
     return sb.toString();
   }
 
-  private static void threadHeader(final StringBuilder sb, final ThreadInfo threadInfo) {
+  private static void threadHeader(StringBuilder sb, ThreadInfo threadInfo) {
     final String threadName = threadInfo.getThreadName();
     sb.append("\"");
     sb.append(threadName);
@@ -211,7 +214,7 @@ public class ThreadDumpUtil {
     sb.append('\n');
   }
 
-  private static String threadLockedSynchronizers(final ThreadInfo threadInfo) {
+  private static String threadLockedSynchronizers(ThreadInfo threadInfo) {
     final String NO_SYNCH_INFO = "no locked synchronizers information available\n";
     if (null == threadInfo) { return NO_SYNCH_INFO; }
     try {

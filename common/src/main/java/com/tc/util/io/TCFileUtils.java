@@ -1,15 +1,27 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.util.io;
 
-import org.apache.commons.io.IOUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -68,32 +80,14 @@ public class TCFileUtils {
   }
 
   /**
-   * Given a resource path, returns the File object of that resource
-   */
-  public static File getResourceFile(String resource) { 
-    return org.apache.commons.io.FileUtils.toFile(TCFileUtils.class.getResource(resource));
-  }
-  
-  /**
-   * deletes all files with matching extension. Does not recurse into sub directories.
-   */
-  public static void forceDelete(File directory, String extension) throws IOException {
-    Iterator files = org.apache.commons.io.FileUtils.listFiles(directory, new String[] { extension }, false).iterator();
-    while (files.hasNext()) {
-      File f = (File) files.next();
-      org.apache.commons.io.FileUtils.forceDelete(f);
-    }
-  }
-
-  /**
    * copy one file to another. Can also copy directories
    */
   public static void copyFile(File src, File dest) throws IOException {
-    List queue = new LinkedList();
+    List<CopyTask> queue = new LinkedList<CopyTask>();
     queue.add(new CopyTask(src.getCanonicalFile(), dest.getCanonicalFile()));
 
     while (queue.size() > 0) {
-      CopyTask item = (CopyTask) queue.remove(0);
+      CopyTask item = queue.remove(0);
       if (item.getSrc().isDirectory()) {
         File destDir = item.getDest();
         destDir.mkdirs();
@@ -102,9 +96,9 @@ public class TCFileUtils {
 
         String[] list = item.getSrc().list();
         if (list != null) {
-          for (int i = 0; i < list.length; i++) {
-            File _src = new File(item.getSrc(), list[i]);
-            File _dest = new File(item.getDest(), list[i]);
+          for (String element : list) {
+            File _src = new File(item.getSrc(), element);
+            File _dest = new File(item.getDest(), element);
             queue.add(new CopyTask(_src, _dest));
           }
         } else {

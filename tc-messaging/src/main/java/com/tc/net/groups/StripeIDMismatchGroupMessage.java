@@ -1,11 +1,24 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.net.groups;
 
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
-import com.tc.net.GroupID;
 
 import java.io.IOException;
 
@@ -20,18 +33,16 @@ public class StripeIDMismatchGroupMessage extends AbstractGroupMessage {
 
   private int             errorType;
   private String          reason;
-  private GroupID         groupID;
 
   // To make serialization happy
   public StripeIDMismatchGroupMessage() {
     super(-1);
   }
 
-  public StripeIDMismatchGroupMessage(int type, int errorType, String reason, GroupID groupID) {
+  public StripeIDMismatchGroupMessage(int type, int errorType, String reason) {
     super(type);
     this.reason = reason;
     this.errorType = errorType;
-    this.groupID = groupID;
   }
 
   @Override
@@ -40,20 +51,17 @@ public class StripeIDMismatchGroupMessage extends AbstractGroupMessage {
     reason = in.readString();
     NodeIDSerializer nodeIDSerializer = new NodeIDSerializer();
     nodeIDSerializer.deserializeFrom(in);
-    groupID = (GroupID) nodeIDSerializer.getNodeID();
   }
 
   @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
     out.writeInt(errorType);
     out.writeString(reason);
-    NodeIDSerializer nodeIDSerializer = new NodeIDSerializer(groupID);
-    nodeIDSerializer.serializeTo(out);
   }
 
   @Override
   public String toString() {
-    return "StripeIDMismatchGroupMessage [ " + errorType + " , " + reason + " , " + groupID + " ]";
+    return "StripeIDMismatchGroupMessage [ " + errorType + " , " + reason + " ]";
   }
 
   public String getReason() {
@@ -62,10 +70,6 @@ public class StripeIDMismatchGroupMessage extends AbstractGroupMessage {
 
   public int getErrorType() {
     return errorType;
-  }
-
-  public GroupID getGroupID() {
-    return groupID;
   }
 
 }

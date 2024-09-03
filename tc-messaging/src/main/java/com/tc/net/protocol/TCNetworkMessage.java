@@ -1,28 +1,34 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.net.protocol;
 
-import com.tc.async.api.EventContext;
-import com.tc.bytes.TCByteBuffer;
-import com.tc.lang.Recyclable;
+import com.tc.bytes.TCReference;
 
 /**
  * @author teck
  */
-public interface TCNetworkMessage extends EventContext, Recyclable {
+public interface TCNetworkMessage {
 
   public TCNetworkHeader getHeader();
 
-  public TCNetworkMessage getMessagePayload();
+  public TCReference getPayload();
 
-  public TCByteBuffer[] getPayload();
-
-  public TCByteBuffer[] getEntireMessageData();
-
-  public boolean isSealed();
-
-  public void seal();
+  public TCReference getEntireMessageData();
 
   public int getDataLength();
 
@@ -30,9 +36,7 @@ public interface TCNetworkMessage extends EventContext, Recyclable {
 
   public int getTotalLength();
 
-  public void wasSent();
+  public void complete();
 
-  public void setSentCallback(Runnable callback);
-  
-  public Runnable getSentCallback();
+  void addCompleteCallback(Runnable r);  
 }

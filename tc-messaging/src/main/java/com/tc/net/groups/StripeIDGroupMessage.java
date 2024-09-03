@@ -1,11 +1,24 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.net.groups;
 
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
-import com.tc.net.GroupID;
 import com.tc.net.StripeID;
 import com.tc.util.Assert;
 
@@ -18,7 +31,6 @@ public class StripeIDGroupMessage extends AbstractGroupMessage {
 
   public static final int STRIPEID_MESSAGE = 1;
 
-  private GroupID         groupID;
   private StripeID        stripeID;
   private boolean         isActive;
   private boolean         remap;
@@ -28,9 +40,8 @@ public class StripeIDGroupMessage extends AbstractGroupMessage {
     super(-1);
   }
 
-  public StripeIDGroupMessage(int type, GroupID groupID, StripeID stripeID, boolean isActive, boolean isRemap) {
+  public StripeIDGroupMessage(int type, StripeID stripeID, boolean isActive, boolean isRemap) {
     super(type);
-    this.groupID = groupID;
     this.stripeID = stripeID;
     this.isActive = isActive;
     this.remap = isRemap;
@@ -41,7 +52,6 @@ public class StripeIDGroupMessage extends AbstractGroupMessage {
     Assert.assertEquals(STRIPEID_MESSAGE, getType());
     NodeIDSerializer nodeIDSerializer = new NodeIDSerializer();
     nodeIDSerializer.deserializeFrom(in);
-    groupID = (GroupID) nodeIDSerializer.getNodeID();
     nodeIDSerializer = new NodeIDSerializer();
     nodeIDSerializer.deserializeFrom(in);
     stripeID = (StripeID) nodeIDSerializer.getNodeID();
@@ -52,7 +62,6 @@ public class StripeIDGroupMessage extends AbstractGroupMessage {
   @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
     Assert.assertEquals(STRIPEID_MESSAGE, getType());
-    new NodeIDSerializer(groupID).serializeTo(out);
     new NodeIDSerializer(stripeID).serializeTo(out);
     out.writeBoolean(isActive);
     out.writeBoolean(remap);
@@ -60,12 +69,8 @@ public class StripeIDGroupMessage extends AbstractGroupMessage {
 
   @Override
   public String toString() {
-    return "StripeIDGroupMessage [ " + this.stripeID + " " + this.groupID + " isActive: " + this.isActive + " isRemap:"
+    return "StripeIDGroupMessage [ " + this.stripeID + " isActive: " + this.isActive + " isRemap:"
            + this.remap + " ]";
-  }
-
-  public GroupID getGroupID() {
-    return this.groupID;
   }
 
   public StripeID getStripeID() {

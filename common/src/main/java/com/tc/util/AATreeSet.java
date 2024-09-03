@@ -1,7 +1,20 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
-
 package com.tc.util;
 
 import java.util.AbstractSet;
@@ -10,7 +23,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.SortedSet;
 
-public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements SortedSet<T> {
+public class AATreeSet<T extends Comparable<T>> extends AbstractSet<T> implements SortedSet<T> {
 
   private Node<T> root = terminal();
 
@@ -36,7 +49,7 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
   @Override
   public boolean remove(Object o) {
     try {
-      root = remove(root, (T) o);
+      root = remove(root, o);
       if (mutated) {
         size--;
       }
@@ -51,7 +64,7 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
 
   public T removeAndReturn(Object o) {
     try {
-      root = remove(root, (T) o);
+      root = remove(root, o);
       if (mutated) {
         size--;
       }
@@ -124,11 +137,12 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
   }
 
   public T find(Object probe) {
-    return find(root, (T) probe).getPayload();
+    return find(root, probe).getPayload();
   }
 
   private static final Node<?> TERMINAL = new TerminalNode();
 
+  @SuppressWarnings("unchecked")
   private Node<T> terminal() {
     return (Node<T>) TERMINAL;
   }
@@ -137,6 +151,11 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
     return root;
   }
 
+  @SuppressWarnings("unchecked")
+  private Node<T> find(Node<T> top, Object probe) {
+    return find(top, (T)probe);
+  }
+  
   private Node<T> find(Node<T> top, T probe) {
     if (top == terminal()) {
       return top;
@@ -171,14 +190,20 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
     }
   }
 
+  @SuppressWarnings("unchecked")
   private Node<T> createNode(T data) {
-    if (data instanceof Node<?>) {
+    if (data instanceof Node) {
       return (Node<T>) data;
     } else {
       return new TreeNode<T>(data);
     }
   }
 
+  @SuppressWarnings("unchecked")
+  private Node<T> remove(Node<T> top, Object data) {
+    return remove(top, (T)data);
+  }
+  
   private Node<T> remove(Node<T> top, T data) {
     if (top != terminal()) {
       int direction = top.compareTo(data);
@@ -273,6 +298,7 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
       this(1);
     }
 
+    @SuppressWarnings("unchecked")
     private AbstractTreeNode(int level) {
       this.left = (Node<E>) TERMINAL;
       this.right = (Node<E>) TERMINAL;
@@ -320,7 +346,7 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
     }
   }
 
-  private static final class TreeNode<E extends Comparable> extends AbstractTreeNode<E> {
+  private static final class TreeNode<E extends Comparable<E>> extends AbstractTreeNode<E> {
 
     private E payload;
 
@@ -430,7 +456,7 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
 
     @Override
     public boolean remove(Object o) {
-      if (inRange((T) o)) {
+      if (inRange(o)) {
         return remove(o);
       } else {
         return false;
@@ -507,6 +533,11 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
       }
     }
 
+    @SuppressWarnings("unchecked")
+    private boolean inRange(Object value) {
+      return inRange((T)value);
+    }
+    
     private boolean inRange(T value) {
       return (start == null || start.compareTo(value) <= 0) && (end == null || end.compareTo(value) > 0);
     }

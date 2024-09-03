@@ -1,6 +1,19 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.util.concurrent;
 
@@ -18,6 +31,7 @@ import java.util.Set;
 
 import junit.framework.TestCase;
 
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class CopyOnWriteSequentialMapTest extends TestCase {
 
   public void testBasic() throws Exception {
@@ -156,8 +170,7 @@ public class CopyOnWriteSequentialMapTest extends TestCase {
   }
 
   public void testTypedArrayFactory() throws Exception {
-    CopyOnWriteSequentialMap<Long, String> cam = new CopyOnWriteSequentialMap<Long, String>(
-new TypedArrayFactory() {
+    CopyOnWriteSequentialMap<Long, String> cam = new CopyOnWriteSequentialMap<Long, String>(new TypedArrayFactory() {
 
       @Override
       public String[] createTypedArray(int size) {

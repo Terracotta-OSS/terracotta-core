@@ -1,80 +1,89 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ *  Copyright Terracotta, Inc.
+ *  Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package com.tc.io;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferAllocator;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.bytes.TCReference;
 import com.tc.util.Assert;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UTFDataFormatException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.io.UncheckedIOException;
+import java.util.function.Supplier;
 
 /**
  * Use me to write data to a set of TCByteBuffer instances. <br>
  * <br>
  * NOTE: This class never throws java.io.IOException (unlike the generic OutputStream) class
  */
-public final class TCByteBufferOutputStream extends OutputStream implements TCByteBufferOutput {
+public class TCByteBufferOutputStream extends OutputStream implements TCByteBufferOutput {
 
-  private static final int       DEFAULT_MAX_BLOCK_SIZE     = 4096;
-  private static final int       DEFAULT_INITIAL_BLOCK_SIZE = 32;
+  private static final int       DEFAULT_MAX_BLOCK_SIZE     = 512 * 1024;
+  private static final int       DEFAULT_INITIAL_BLOCK_SIZE = 1024;
 
-  private final boolean          direct;
-  private final int              maxBlockSize;
   private final DataOutputStream dos;
 
   // The "buffers" list is accessed by index in the Mark class, thus it should not be a linked list
-  private List                   buffers                    = new ArrayList();
+  private final TCByteBufferAllocator     buffers;
 
-  private final List             localBuffers               = new ArrayList();
-
-  private TCByteBuffer           current;
+  private TCByteBuffer           current = TCByteBufferFactory.getInstance(0);
   private boolean                closed;
   private int                    written;
-  private int                    blockSize;
 
   // TODO: Provide a method to write buffers to another output stream
   // TODO: Provide a method to turn the buffers into an input stream with minimal cost (ie. no consolidation, no
   // duplicate(), etc)
 
   public TCByteBufferOutputStream() {
-    this(DEFAULT_INITIAL_BLOCK_SIZE, DEFAULT_MAX_BLOCK_SIZE, false);
+    this(DEFAULT_INITIAL_BLOCK_SIZE, DEFAULT_MAX_BLOCK_SIZE);
   }
 
-  public TCByteBufferOutputStream(int blockSize, boolean direct) {
-    this(blockSize, blockSize, false);
+  public TCByteBufferOutputStream(int blockSize) {
+    this(blockSize, blockSize);
   }
-
-  public TCByteBufferOutputStream(int initialBlockSize, int maxBlockSize, boolean direct) {
-    if (maxBlockSize < 1) { throw new IllegalArgumentException("Max block size must be greater than or equal to 1"); }
-    if (initialBlockSize < 1) { throw new IllegalArgumentException(
+  
+  public TCByteBufferOutputStream(int init, int max) {
+    this(new TCByteBufferAllocator(new Supplier<TCByteBuffer>() {
+      private int blockSize = init;
+      @Override
+      public TCByteBuffer get() {
+        try {
+          return TCByteBufferFactory.getInstance(blockSize);
+        } finally {
+          blockSize <<= 1;
+          if (blockSize > max) {
+            blockSize = max;
+          }
+        }
+      }
+    }));
+    if (init < 1) { throw new IllegalArgumentException("Max block size must be greater than or equal to 1"); }
+    if (max < 1) { throw new IllegalArgumentException(
                                                                    "Initial block size must be greater than or equal to 1"); }
-
-    if (maxBlockSize < initialBlockSize) { throw new IllegalArgumentException(
-                                                                              "Initial block size less than max block size"); }
-
-    this.maxBlockSize = maxBlockSize;
-    this.blockSize = initialBlockSize;
-    this.direct = direct;
-    this.closed = false;
-    this.dos = new DataOutputStream(this);
-    addBuffer();
   }
-
-  /**
-   * Create a "mark" in this stream. A mark can be used to fixup data in an earlier portion of the stream even after you
-   * have written past it. One place this is useful is when you need to backtrack and fill in a length field after
-   * writing some arbitrary data to the stream. A mark can also be used to read earlier portions of the stream
-   */
-  public Mark mark() {
-    checkClosed();
-    return new Mark(buffers.size(), current.position(), getBytesWritten());
+    
+  public TCByteBufferOutputStream(TCByteBufferAllocator bufferSrc) {
+    this.buffers = bufferSrc;
+    this.dos = new DataOutputStream(this);
   }
 
   @Override
@@ -83,9 +92,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
 
     written++;
 
-    if (!current.hasRemaining()) {
-      addBuffer();
-    }
+    checkBuffer();
 
     current.put((byte) b);
   }
@@ -95,11 +102,17 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     write(b, 0, b.length);
   }
 
+  @Override
   public void write(TCByteBuffer data) {
     if (data == null) { throw new NullPointerException(); }
     write(new TCByteBuffer[] { data });
   }
 
+  private void checkBuffer() {
+    while (current == null || !current.hasRemaining()) {
+      current = addBuffer();
+    }
+  }
   /**
    * Add arbitrary buffers into the stream. All of the data (from position 0 to limit()) in each buffer passed will be
    * used in the stream. If that is not what you want, setup your buffers differently before calling this write()
@@ -109,28 +122,20 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     checkClosed();
     if (data == null) { throw new NullPointerException(); }
     if (data.length == 0) { return; }
-
-    // deal with the current buffer
-    final boolean reuseCurrent = current.position() == 0;
-
-    if (!reuseCurrent) {
-      // shrink and make it look like "full"
-      buffers.add(current.limit(current.position()).position(0));
-    }
-
+    
     for (TCByteBuffer element : data) {
-      int len = element.limit();
-      if (len == 0) {
-        continue;
+      int len = element.remaining();
+      while (element.hasRemaining()) {
+        checkBuffer();
+        int saveLimit = element.limit();
+        if (element.remaining() > current.remaining()) {
+          element.limit(element.position() + current.remaining());
+        }
+        current.put(element);
+        Assert.assertFalse(element.hasRemaining());
+        element.limit(saveLimit);
       }
-
       written += len;
-      buffers.add(element.duplicate().position(0));
-    }
-
-    if (!reuseCurrent) {
-      current = (TCByteBuffer) buffers.remove(buffers.size() - 1);
-      current.position(current.limit());
     }
   }
 
@@ -139,7 +144,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
   }
 
   @Override
-  public void write(byte b[], final int offset, final int length) {
+  public void write(byte b[], int offset, int length) {
     checkClosed();
 
     if (b == null) { throw new NullPointerException(); }
@@ -154,9 +159,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     int index = offset;
     int numToWrite = length;
     while (numToWrite > 0) {
-      if (!current.hasRemaining()) {
-        addBuffer();
-      }
+      checkBuffer();
       final int numToPut = Math.min(current.remaining(), numToWrite);
       current.put(b, index, numToPut);
       numToWrite -= numToPut;
@@ -167,7 +170,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
   @Override
   public void close() {
     if (!closed) {
-      finalizeBuffers();
+      finalizeBuffer();
       closed = true;
     }
   }
@@ -176,90 +179,26 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
    * Obtain the contents of this stream as an array of TCByteBuffer
    */
   @Override
-  public TCByteBuffer[] toArray() {
+  public TCReference accessBuffers() {
     close();
-    TCByteBuffer[] rv = new TCByteBuffer[buffers.size()];
-    return (TCByteBuffer[]) buffers.toArray(rv);
+    return buffers.complete();
   }
 
   @Override
   public String toString() {
     return (buffers == null) ? "null" : buffers.toString();
   }
+  
+  private TCByteBuffer addBuffer() {
+    finalizeBuffer();
+    return this.buffers.add();
+  }
 
-  private void addBuffer() {
+  private void finalizeBuffer() {
     if (current != null) {
       current.flip();
-      buffers.add(current);
-
-      // use a buffer twice as big as the previous, at least until we hit the maximum block size allowed for this stream
-      if (blockSize < maxBlockSize) {
-        blockSize *= 2;
-
-        if (blockSize > maxBlockSize) {
-          blockSize = maxBlockSize;
-        }
-      }
+      current = null;
     }
-
-    current = newBuffer(blockSize);
-    blockSize = current.capacity();
-  }
-
-  private TCByteBuffer newBuffer(int size) {
-    TCByteBuffer rv = TCByteBufferFactory.getInstance(direct, size);
-    localBuffers.add(rv);
-    return rv;
-  }
-
-  private void finalizeBuffers() {
-    if (current.position() > 0) {
-      current.flip();
-      buffers.add(current);
-    }
-
-    current = null;
-
-    List finalBufs = new ArrayList();
-
-    final int num = buffers.size();
-    int index = 0;
-
-    // fixup "small" buffers consolidating them into buffers as close to maxBlockSize as possible
-    while (index < num) {
-      final int startIndex = index;
-      int size = ((TCByteBuffer) buffers.get(startIndex)).limit();
-
-      if (size < maxBlockSize) {
-        while (index < (num - 1)) {
-          int nextSize = ((TCByteBuffer) buffers.get(index + 1)).limit();
-          if ((size + nextSize) <= maxBlockSize) {
-            size += nextSize;
-            index++;
-          } else {
-            break;
-          }
-        }
-      }
-
-      if (index > startIndex) {
-        TCByteBuffer consolidated = newBuffer(size);
-
-        final int end = index;
-        for (int i = startIndex; i <= end; i++) {
-          consolidated.put((TCByteBuffer) buffers.get(i));
-        }
-        Assert.assertEquals(size, consolidated.position());
-        consolidated.flip();
-        finalBufs.add(consolidated);
-      } else {
-        finalBufs.add(buffers.get(index));
-      }
-
-      index++;
-    }
-
-    buffers = finalBufs;
   }
 
   @Override
@@ -338,8 +277,8 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
   public void writeString(String string) {
     writeString(string, false);
   }
-
-  private void writeString(String string, boolean forceRaw) {
+  
+  private void writeString(String string, boolean force) {
     // Is null? (true/false)
     if (string == null) {
       writeBoolean(true);
@@ -347,26 +286,25 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     } else {
       writeBoolean(false);
     }
+    
+    int mark = this.getBytesWritten();
 
-    if (!forceRaw) {
-      Mark mark = mark();
-      // is UTF encoded? 1(true) or 0(false)
-      write(1);
-
+    if (!force) {
       try {
+        dos.write(1);
         dos.writeUTF(string);
-        // No exception, just return
         return;
-      } catch (IOException e) {
-        if (!(e instanceof UTFDataFormatException)) { throw new AssertionError(e); }
-        // String too long, encode as raw chars
-        mark.write(0);
+      } catch (IOException ioe) {
+        if (!(ioe instanceof UTFDataFormatException)) throw new UncheckedIOException(ioe);
+        this.rewind(getBytesWritten() - mark);
       }
-    } else {
-      write(0);
     }
-
-    writeStringAsRawChars(string);
+    try {
+      dos.write(0);
+      writeStringAsRawChars(string);
+    } catch (IOException ioe2) {
+      throw new UncheckedIOException(ioe2);
+    }
   }
 
   private void writeStringAsRawChars(String string) {
@@ -383,144 +321,6 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     if (closed) { throw new IllegalStateException("stream is closed"); }
   }
 
-  // This class could be fancier:
-  // - Support the TCDataOutput interface
-  // - Allow writing through the mark to grow the buffer list
-  // - etc, etc, etc
-  public class Mark {
-    private final int bufferIndex;
-    private final int bufferPosition;
-    private final int absolutePosition;
-
-    private Mark(int bufferIndex, int bufferPosition, int absolutePosition) {
-      this.bufferIndex = bufferIndex;
-      this.bufferPosition = bufferPosition;
-      this.absolutePosition = absolutePosition;
-    }
-
-    public int getPosition() {
-      return this.absolutePosition;
-    }
-
-    /**
-     * Write the given byte array at the position designated by this mark
-     */
-    public void write(byte[] data) {
-      checkClosed();
-
-      if (data == null) { throw new NullPointerException(); }
-
-      if (data.length == 0) { return; }
-
-      if (getBytesWritten() - absolutePosition < data.length) { throw new IllegalArgumentException(
-                                                                                                   "Cannot write past the existing tail of stream via the mark"); }
-
-      TCByteBuffer buf = getBuffer(bufferIndex);
-
-      int bufIndex = bufferIndex;
-      int bufPos = bufferPosition;
-      int dataIndex = 0;
-      int numToWrite = data.length;
-
-      while (numToWrite > 0) {
-        int howMany = Math.min(numToWrite, buf.limit() - bufPos);
-
-        if (howMany > 0) {
-          buf.put(bufPos, data, dataIndex, howMany);
-          dataIndex += howMany;
-          numToWrite -= howMany;
-          if (numToWrite == 0) { return; }
-        }
-
-        buf = getBuffer(++bufIndex);
-        bufPos = 0;
-      }
-    }
-
-    private TCByteBuffer getBuffer(int index) {
-      int buffersSize = buffers.size();
-      if (index < buffersSize) {
-        return (TCByteBuffer) buffers.get(index);
-      } else if (index == buffersSize) {
-        return current;
-      } else {
-        throw Assert.failure("index=" + index + ", buffers.size()=" + buffers.size());
-      }
-    }
-
-    /**
-     * Write a single byte at the given mark. Calling write(int) multiple times will simply overwrite the same byte over
-     * and over
-     */
-    public void write(int b) {
-      write(new byte[] { (byte) b });
-    }
-
-    /**
-     * Copy (by invoking write() on the destination stream) the given length of bytes starting at this mark
-     * 
-     * @throws IOException
-     */
-    public void copyTo(TCByteBufferOutput dest, int length) {
-      copyTo(dest, 0, length);
-    }
-
-    /**
-     * Copy (by invoking write() on the destination stream) the given length of bytes starting from an offset to this
-     * mark
-     * 
-     * @throws IOException
-     */
-    public void copyTo(TCByteBufferOutput dest, int offset, int length) {
-      if (length < 0) { throw new IllegalArgumentException("length: " + length); }
-
-      if (this.absolutePosition + offset + length > getBytesWritten()) {
-        //
-        throw new IllegalArgumentException("not enough data for copy of " + length + " bytes starting at position "
-                                           + (this.absolutePosition + offset) + " of stream of size "
-                                           + getBytesWritten());
-      }
-
-      int index = this.bufferIndex;
-      int pos = this.bufferPosition;
-
-      while (offset > 0) {
-        byte[] array = getBuffer(index).array();
-        int num = Math.min(array.length - pos, offset);
-        offset -= num;
-        if (offset == 0) {
-          if (index > this.bufferIndex) {
-            pos = num;
-          } else {
-            pos += num;
-          }
-          break;
-        }
-
-        pos = 0;
-        index++;
-      }
-
-      while (length > 0) {
-        byte[] array = getBuffer(index++).array();
-        int num = Math.min(array.length - pos, length);
-        dest.write(array, pos, num);
-        length -= num;
-        pos = 0;
-      }
-    }
-  }
-
-  @Override
-  public void recycle() {
-    if (localBuffers.size() > 0) {
-      for (Iterator i = localBuffers.iterator(); i.hasNext();) {
-        TCByteBuffer buffer = (TCByteBuffer) i.next();
-        buffer.recycle();
-      }
-    }
-  }
-
   @Override
   public void writeBytes(String s) {
     throw new UnsupportedOperationException("use writeString() instead");
@@ -534,6 +334,10 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
   @Override
   public void writeUTF(String str) {
     writeString(str);
+  }
+  
+  private void rewind(int bytes) {
+    this.buffers.rewind(bytes);
   }
 
 }
