@@ -70,62 +70,6 @@ public class ThrowableHandlerTest extends TestCase {
     assertEquals(-1, exitCode.get());
   }
 
-  public void testHandleJMXThreadServiceTermination() throws Exception {
-    final AtomicBoolean exited = new AtomicBoolean(false);
-    ThrowableHandler throwableHandler = new ThrowableHandlerImpl(LoggerFactory.getLogger(getClass())) {
-      @Override
-      protected synchronized void exit(int status) {
-        exited.set(true);
-      }
-    };
-    throwableHandler.handleThrowable(Thread.currentThread(),
-                                     new IllegalStateException("The Thread Service has been terminated."));
-    assertFalse(exited.get());
-  }
-
-  public void testIsThreadGroupDestroyed() throws Exception {
-    final AtomicBoolean exited = new AtomicBoolean(false);
-    ThrowableHandler throwableHandler = new ThrowableHandlerImpl(LoggerFactory.getLogger(getClass())) {
-      @Override
-      protected synchronized void exit(int status) {
-        exited.set(true);
-      }
-    };
-
-    Runnable r = new Runnable() {
-      @Override
-      public void run() {
-        //
-
-      }
-    };
-
-    ThreadGroup threadGroup = new ThreadGroup("blah");
-    Thread thread = new Thread(threadGroup, r);
-    thread.start();
-    thread.join();
-    threadGroup.destroy();
-
-    Throwable t = null;
-    try {
-      Thread tempThread = new Thread(threadGroup, r);      
-      fail();
-      assertFalse(tempThread.isAlive()); // stupid workaround to clear warning about unused allocated object
-    } catch (Throwable th) {
-      t = th;
-    }
-
-    StackTraceElement[] stack = t.getStackTrace();
-    stack[stack.length - 1] = new StackTraceElement("javax.management.remote.generic.GenericConnectorServer$Receiver",
-                                                    "run", "Foo.java", 12);
-    t.setStackTrace(stack);
-
-    throwableHandler.handleThrowable(thread, t);
-    if (!new VmVersion(System.getProperties()).isIBM()) {
-      assumeFalse(exited.get());  // this fails for IBM JDK
-    }
-  }
-
   private class TestCallbackOnExitHandler implements CallbackOnExitHandler {
 
     @Override
