@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.state.ConsistencyManager;
-import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
@@ -103,12 +102,12 @@ public class L2HACoordinator implements L2Coordinator, ConnectionIDFactoryListen
   
   @Override
   public void start() {
-    if (this.server.getConfigSetupManager().getConfiguration().isPartialConfiguration()) {
+    if (this.server.getConfigSetupManager().isPartialConfiguration()) {
       this.stateManager.moveToDiagnosticMode();
       consoleLogger.info("Started the server in diagnostic mode");
-    } else if (this.server.getConfigSetupManager().getConfiguration().isRelaySource()) {
+    } else if (this.server.getConfigSetupManager().isRelaySource()) {
       this.stateManager.moveToRelayMode();
-    } else if (this.server.getConfigSetupManager().getConfiguration().isRelayDestination()) {
+    } else if (this.server.getConfigSetupManager().isRelayDestination()) {
       this.stateManager.moveToRelayMode();
     }
     this.stateManager.initializeAndStartElection();
