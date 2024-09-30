@@ -281,7 +281,7 @@ public class Bootstrap implements BootstrapService {
 
       @Override
       public int getServerCount() {
-        return config.getConfiguration().getServerConfigurations().size();
+        return config.getGroupConfiguration().getNodes().size();
       }
 
       @Override

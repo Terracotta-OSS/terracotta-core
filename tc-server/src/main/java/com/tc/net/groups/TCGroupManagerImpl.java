@@ -169,9 +169,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.thisNodeID = thisNodeID;
     this.bufferManagerFactory = bufferManagerFactory;
     this.version = configSetupManager.getProductInfo().version();
-    this.relayLocation = configSetupManager.getConfiguration().getRelayPeer();
+    this.relayLocation = configSetupManager.getRelayPeer();
     this.configuredNodes = ()-> {
-      if (configSetupManager.getConfiguration().isRelayDestination()) {
+      if (configSetupManager.isRelayDestination()) {
         return configSetupManager.getGroupConfiguration().directConnect(relayLocation).getNodes();
       } else {
         return configSetupManager.getGroupConfiguration().getNodes();
