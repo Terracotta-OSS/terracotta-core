@@ -77,10 +77,7 @@ public class ServerConfigurationManager implements PrettyPrintable {
   }
 
   public void initialize() throws ConfigurationException {
-    Lock lock = this.configurationProvider.lockAndInitialize(this.startUpArgs);
-
-    try {
-      Configuration configuration = configurationProvider.getConfiguration();
+    try (LockedConfiguration configuration = this.configurationProvider.lockAndInitialize(this.startUpArgs)) {
       if (configuration == null) {
         throw new ConfigurationException("unable to determine server configuration");
       }
@@ -92,8 +89,6 @@ public class ServerConfigurationManager implements PrettyPrintable {
       thisServer = new StableServerConfiguration(base);
 
       processTcProperties(configuration.getTcProperties());
-    } finally {
-      lock.unlock();
     }
   }
 
@@ -267,10 +262,10 @@ public class ServerConfigurationManager implements PrettyPrintable {
       }
     }
     
-    Lock lockAndInitialize(List<String> configurationParams) throws ConfigurationException {
+    LockedConfiguration lockAndInitialize(List<String> configurationParams) throws ConfigurationException {
       lock.lock();
       initialize(configurationParams);
-      return lock;
+      return new LockedConfiguration(delegateProvider.getConfiguration(), lock);
     }
     
     @Override
