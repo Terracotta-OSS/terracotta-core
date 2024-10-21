@@ -308,8 +308,7 @@ public class DistributedObjectServer {
     this.serverBuilder = createServerBuilder(configSetupManager.getGroupConfiguration(), logger, server);
     this.serviceRegistry = new TerracottaServiceProviderRegistryImpl();
     this.topologyManager = new TopologyManager(()->this.configSetupManager.getGroupConfiguration().getHostPorts(), ()-> {
-      Configuration config = this.configSetupManager.getConfiguration();
-      FailoverBehavior consistent = config.getFailoverPriority();
+      FailoverBehavior consistent = this.configSetupManager.getFailoverPriority();
       if (this.configSetupManager.isPartialConfiguration() || consistent == null || consistent.isAvailability()) {
         return -1;
       } else {
@@ -476,10 +475,9 @@ public class DistributedObjectServer {
     this.sampledCounterManager = new CounterManagerImpl();
 
     // Set up the ServiceRegistry.
-    Configuration configuration = this.configSetupManager.getConfiguration();
     PlatformConfiguration platformConfiguration =
-        new PlatformConfigurationImpl(configSetupManager.getServerConfiguration(), configuration);
-    serviceRegistry.initialize(platformConfiguration, configuration);
+        new PlatformConfigurationImpl(configSetupManager);
+    serviceRegistry.initialize(platformConfiguration, configSetupManager);
     serviceRegistry.registerImplementationProvided(new PlatformServiceProvider(server));
 
     final EntityMessengerProvider messengerProvider = new EntityMessengerProvider();
@@ -518,7 +516,7 @@ public class DistributedObjectServer {
       }
     }
 
-    if (configuration.isPartialConfiguration()) {
+    if (configSetupManager.isPartialConfiguration()) {
       // don't persist anything for partial configurations
       persistor = new NullPersistor();
     } else {
@@ -579,7 +577,7 @@ public class DistributedObjectServer {
     ClientStatePersistor clientStateStore = this.persistor.getClientStatePersistor();
     this.connectionIdFactory = new ConnectionIDFactoryImpl(infoConnections, clientStateStore, capablities);
     int voteCount =
-        ConsistencyManager.parseVoteCount(configuration.getFailoverPriority(), configuration.getServerConfigurations().size());
+        ConsistencyManager.parseVoteCount(configSetupManager.getFailoverPriority(), configSetupManager.getGroupConfiguration().getNodes().size());
     int knownPeers = this.configSetupManager.allCurrentlyKnownServers().length - 1;
 
     if (voteCount >= 0 && (voteCount + knownPeers + 1) % 2 == 0) {
@@ -627,7 +625,7 @@ public class DistributedObjectServer {
     final InitialStateWeightGenerator initialState = new InitialStateWeightGenerator(persistor.getClusterStatePersistor());
     weightGeneratorFactory.add(initialState);
     // 5)  Topology weight is the number nodes this stripe believes are in the cluster
-    final TopologyWeightGenerator topoWeight = new TopologyWeightGenerator(this.configSetupManager.getConfiguration());
+    final TopologyWeightGenerator topoWeight = new TopologyWeightGenerator(this.configSetupManager);
     weightGeneratorFactory.add(topoWeight);
     // 6)  SequenceID weight is the number of replication activities handled by this passive server
     final SequenceIDWeightGenerator sequenceWeight = new SequenceIDWeightGenerator();
@@ -720,6 +718,7 @@ public class DistributedObjectServer {
 //  routing for passive to receive replication
     ReplicatedTransactionHandler replicatedTransactionHandler = new ReplicatedTransactionHandler(state, replicationResponseStage, this.persistor, entityManager, groupCommManager);
     sequenceWeight.setReplicatedTransactionHandler(replicatedTransactionHandler);
+
 // This requires both the stage for handling the replication/sync messages.
     Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class,
         replicatedTransactionHandler.getEventHandler(), 1);
@@ -831,12 +830,11 @@ public class DistributedObjectServer {
   }
 
   public synchronized void openNetworkPorts() {
-    Configuration configuration = this.configSetupManager.getConfiguration();
 // don't join the group if the configuration is not complete
     if (this.l2Coordinator == null) {
       throw new IllegalStateException("server is not bootstrapped");
     }
-    if (!configuration.isPartialConfiguration()) {
+    if (!configSetupManager.isPartialConfiguration()) {
       startGroupManagers();
       this.l2Coordinator.start();
     } else {
@@ -918,7 +916,7 @@ public class DistributedObjectServer {
       return new DiagnosticModeConsistencyManager();
     }
 
-    boolean consistentStartup = knownPeers > 0 && (configSetupManager.getConfiguration().isConsistentStartup() || voteCount >= 0);
+    boolean consistentStartup = knownPeers > 0 && (configSetupManager.isConsistentStartup() || voteCount >= 0);
     return new SafeStartupManagerImpl(
         consistentStartup,
         knownPeers,
@@ -1144,6 +1142,7 @@ public class DistributedObjectServer {
         throw new IllegalStateException("server is not bootstrapped");
       }
       final NodeID myNodeId = this.groupCommManager.join(this.configSetupManager.getGroupConfiguration());
+
       logger.info("This L2 Node ID = " + myNodeId);
     } catch (final GroupException e) {
       logger.error("Caught Exception :", e);
