@@ -316,8 +316,7 @@ public class DistributedObjectServer {
     this.serverBuilder = createServerBuilder(configSetupManager.getGroupConfiguration(), logger, server);
     this.serviceRegistry = new TerracottaServiceProviderRegistryImpl();
     this.topologyManager = new TopologyManager(()->this.configSetupManager.getGroupConfiguration().getHostPorts(), ()-> {
-      Configuration config = this.configSetupManager.getConfiguration();
-      FailoverBehavior consistent = config.getFailoverPriority();
+      FailoverBehavior consistent = this.configSetupManager.getFailoverPriority();
       if (this.configSetupManager.isPartialConfiguration() || consistent == null || consistent.isAvailability()) {
         return -1;
       } else {
@@ -484,10 +483,9 @@ public class DistributedObjectServer {
     this.sampledCounterManager = new CounterManagerImpl();
 
     // Set up the ServiceRegistry.
-    Configuration configuration = this.configSetupManager.getConfiguration();
     PlatformConfiguration platformConfiguration =
-        new PlatformConfigurationImpl(configSetupManager.getServerConfiguration(), configuration);
-    serviceRegistry.initialize(platformConfiguration, configuration);
+        new PlatformConfigurationImpl(configSetupManager);
+    serviceRegistry.initialize(platformConfiguration, configSetupManager);
     serviceRegistry.registerImplementationProvided(new PlatformServiceProvider(server));
 
     final EntityMessengerProvider messengerProvider = new EntityMessengerProvider();
@@ -526,7 +524,7 @@ public class DistributedObjectServer {
       }
     }
 
-    if (configuration.isPartialConfiguration() || configuration.isRelaySource()) {
+    if (configSetupManager.isPartialConfiguration() || configSetupManager.isRelaySource()) {
       // don't persist anything for partial configurations
       persistor = new NullPersistor();
     } else {
@@ -587,7 +585,7 @@ public class DistributedObjectServer {
     ClientStatePersistor clientStateStore = this.persistor.getClientStatePersistor();
     this.connectionIdFactory = new ConnectionIDFactoryImpl(infoConnections, clientStateStore, capablities);
     int voteCount =
-        ConsistencyManager.parseVoteCount(configuration.getFailoverPriority(), configuration.getServerConfigurations().size());
+        ConsistencyManager.parseVoteCount(configSetupManager.getFailoverPriority(), configSetupManager.getGroupConfiguration().getNodes().size());
     int knownPeers = this.configSetupManager.allCurrentlyKnownServers().length - 1;
 
     if (voteCount >= 0 && (voteCount + knownPeers + 1) % 2 == 0) {
@@ -615,9 +613,9 @@ public class DistributedObjectServer {
     final DSOChannelManager channelManager = new DSOChannelManagerImpl(this.l1Listener.getChannelManager(), pInfo.version());
     channelManager.addEventListener(this.connectionIdFactory);
     
-    ServerPersistentState serverPersistentState = configuration.isRelaySource() ? new RelayPersistentState() : new ClusterPersistentState(this.persistor.getClusterStatePersistor());
+    ServerPersistentState serverPersistentState = configSetupManager.isRelaySource() ? new RelayPersistentState() : new ClusterPersistentState(this.persistor.getClusterStatePersistor());
     
-    if (serverPersistentState.getInitialMode() == ServerMode.ACTIVE && configuration.isRelayDestination()) {
+    if (serverPersistentState.getInitialMode() == ServerMode.ACTIVE && configSetupManager.isRelayDestination()) {
       throw new TCShutdownServerException("Unable to start as a relay destination.  The server was shutdown as active");
     }
 
@@ -641,7 +639,7 @@ public class DistributedObjectServer {
     final InitialStateWeightGenerator initialState = new InitialStateWeightGenerator(serverPersistentState);
     weightGeneratorFactory.add(initialState);
     // 5)  Topology weight is the number nodes this stripe believes are in the cluster
-    final TopologyWeightGenerator topoWeight = new TopologyWeightGenerator(this.configSetupManager.getConfiguration());
+    final TopologyWeightGenerator topoWeight = new TopologyWeightGenerator(this.configSetupManager);
     weightGeneratorFactory.add(topoWeight);
     // 6)  SequenceID weight is the number of replication activities handled by this passive server
     final SequenceIDWeightGenerator sequenceWeight = new SequenceIDWeightGenerator();
@@ -721,7 +719,7 @@ public class DistributedObjectServer {
     HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, tcProperties);
     haChecker.validateHealthCheckSettingsForHighAvailability();
 
-    StateManager state = new StateManagerImpl(consoleLogger, (n)->!configuration.isRelayDestination(), this.groupCommManager, 
+    StateManager state = new StateManagerImpl(consoleLogger, (n)->!configSetupManager.isRelayDestination(), this.groupCommManager, 
         createStageController(processTransactionHandler), eventCollector, stageManager,
         configSetupManager.getGroupConfiguration().getNodes().size(),
         configSetupManager.getGroupConfiguration().getElectionTimeInSecs(),
@@ -733,13 +731,13 @@ public class DistributedObjectServer {
         new GenericHandler<>(), 1);
 //  routing for passive to receive replication
     EventHandler<ReplicationMessage> replicationEvents = null;
-    if (configSetupManager.getConfiguration().isRelaySource()) {
+    if (configSetupManager.isRelaySource()) {
       replicationEvents = createAndRouteRelayTransactionHandler(replicationResponseStage);
     } else {
       ReplicatedTransactionHandler replicatedTransactionHandler = new ReplicatedTransactionHandler(state, replicationResponseStage, this.persistor, entityManager, groupCommManager);
       sequenceWeight.setReplicatedTransactionHandler(replicatedTransactionHandler);
       replicationEvents = replicatedTransactionHandler.getEventHandler();
-      routeRelayMessages(state, configSetupManager.getConfiguration());
+      routeRelayMessages(state, configSetupManager);
     }
     
 // This requires both the stage for handling the replication/sync messages.
@@ -854,12 +852,11 @@ public class DistributedObjectServer {
   }
 
   public synchronized void openNetworkPorts() throws ConfigurationException {
-    Configuration configuration = this.configSetupManager.getConfiguration();
 // don't join the group if the configuration is not complete
     if (this.l2Coordinator == null) {
       throw new IllegalStateException("server is not bootstrapped");
     }
-    if (!configuration.isPartialConfiguration()) {
+    if (!configSetupManager.isPartialConfiguration()) {
       startGroupManagers();
     }
     this.l2Coordinator.start();
@@ -938,7 +935,7 @@ public class DistributedObjectServer {
       return new DiagnosticModeConsistencyManager();
     }
 
-    boolean consistentStartup = knownPeers > 0 && (configSetupManager.getConfiguration().isConsistentStartup() || voteCount >= 0);
+    boolean consistentStartup = knownPeers > 0 && (configSetupManager.isConsistentStartup() || voteCount >= 0);
     return new SafeStartupManagerImpl(
         consistentStartup,
         knownPeers,
@@ -1179,10 +1176,9 @@ public class DistributedObjectServer {
         throw new IllegalStateException("server is not bootstrapped");
       }
       NodeID myNodeId;
-      Configuration config = this.configSetupManager.getConfiguration();
-      if (config.isRelayDestination()) {
-        consoleLogger.info("connectiong to {} for duplication", config.getRelayPeer());
-        myNodeId = this.groupCommManager.join(this.configSetupManager.getGroupConfiguration().directConnect(config.getRelayPeer()));
+      if (configSetupManager.isRelayDestination()) {
+        consoleLogger.info("connectiong to {} for duplication", configSetupManager.getRelayPeer());
+        myNodeId = this.groupCommManager.join(this.configSetupManager.getGroupConfiguration().directConnect(configSetupManager.getRelayPeer()));
       } else {
         myNodeId = this.groupCommManager.join(this.configSetupManager.getGroupConfiguration());
       }
@@ -1421,7 +1417,7 @@ public class DistributedObjectServer {
     return handler.getEventHandler();
   }
   
-  private void routeRelayMessages(StateManager stateMgr, Configuration config) {
+  private void routeRelayMessages(StateManager stateMgr, ServerConfigurationManager config) {
     DuplicationTransactionHandler handler = new DuplicationTransactionHandler(stateMgr, n->config.isRelayDestination(), groupCommManager);
     Stage<RelayMessage> relays = this.seda.getStageManager().createStage(ServerConfigurationContext.PASSIVE_DUPLICATE_STAGE, RelayMessage.class, handler.getEventHandler(), 1);
     this.groupCommManager.routeMessages(RelayMessage.class, relays.getSink());
