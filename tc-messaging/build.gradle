@@ -1,0 +1,43 @@
+
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
+description = 'terracotta-core tc-messaging classes'
+
+base {
+    archivesName = 'tc-messaging'
+}
+
+jar {
+    archivesBaseName = 'tc-messaging'
+}
+
+dependencies {
+  implementation project(':common-spi')
+  implementation "org.slf4j:slf4j-api:$slf4jVersion"
+  implementation "org.terracotta:entity-client-api:$terracottaApisVersion"
+
+  testImplementation "junit:junit:$junitVersion"
+  testImplementation "org.mockito:mockito-core:$mockitoVersion"
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'org.terracotta.internal'
+            version = '$project.version'
+            artifactId = 'tc-messaging'
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = ''
+            url = ''
+        }
+    }
+}
+
+

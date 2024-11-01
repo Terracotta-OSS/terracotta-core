@@ -1,0 +1,38 @@
+
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
+description = 'terracotta-core common SPI classes'
+
+base {
+    archivesName = 'common-spi'
+}
+
+jar {
+    archivesBaseName = 'common-spi'
+}
+
+dependencies {
+
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'org.terracotta.internal'
+            version = '$project.version'
+            artifactId = 'common-spi'
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = ''
+            url = ''
+        }
+    }
+}
+
+

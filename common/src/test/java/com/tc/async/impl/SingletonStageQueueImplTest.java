@@ -79,7 +79,7 @@ public class SingletonStageQueueImplTest {
     final List<BlockingQueue<Object>> cxts = new ArrayList<BlockingQueue<Object>>();
 
     QueueFactory context = mock(QueueFactory.class);
-    when(context.createInstance(ArgumentMatchers.anyObject(), ArgumentMatchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
+    when(context.createInstance(ArgumentMatchers.any(), ArgumentMatchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
 
       @Override
       public BlockingQueue<Object> answer(InvocationOnMock invocation) throws Throwable {

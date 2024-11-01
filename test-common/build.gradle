@@ -1,0 +1,44 @@
+
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
+description = 'terracotta-core test-common classes'
+
+base {
+    archivesName = 'test-common'
+}
+
+jar {
+    archivesBaseName = 'test-common'
+}
+
+dependencies {
+  implementation project(':tc-messaging')
+
+  implementation 'junit:junit:4.13.1'
+  implementation 'org.ow2.asm:asm:7.2'
+  implementation 'org.ow2.asm:asm-commons:7.2'
+  implementation 'org.ow2.asm:asm-util:7.2'
+  implementation "commons-io:commons-io:$commonsIOVersion"
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'org.terracotta.internal'
+            version = '$project.version'
+            artifactId = 'test-common'
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = ''
+            url = ''
+        }
+    }
+}
+
+

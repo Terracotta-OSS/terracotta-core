@@ -64,9 +64,9 @@ public class CopyOnWriteSequentialMapTest extends TestCase {
 
     // test putall
     Map m = new LinkedHashMap();
-    m.put(Long.valueOf(9), new Float(9.1));
-    m.put(Long.valueOf(19), new Float(91.1));
-    m.put(Long.valueOf(191), new Float(191.1));
+    m.put(Long.valueOf(9), 9.1f);
+    m.put(Long.valueOf(19), 91.1f);
+    m.put(Long.valueOf(191), 191.1f);
     al.addAll(m.values());
     cam.putAll(m);
     assertArrayEquals(al.toArray(), cam.values().toArray());

@@ -1,0 +1,49 @@
+
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
+description = 'terracotta-core common classes'
+
+base {
+    archivesName = 'common'
+}
+
+jar {
+    archivesBaseName = 'common'
+}
+
+dependencies {
+  implementation project(':common-spi')
+  implementation project(':tc-messaging')
+  implementation project(':test-common')
+  implementation "org.slf4j:slf4j-api:$slf4jVersion"
+  implementation "org.terracotta:packaging-support:$terracottaApisVersion"
+  implementation "org.terracotta:tc-tripwire-plugin:$tripwireVersion"
+
+  testImplementation "junit:junit:$junitVersion"
+  testImplementation "org.mockito:mockito-core:$mockitoVersion"
+  testImplementation "org.hamcrest:hamcrest-all:$hamcrestVersion"
+  testImplementation 'org.terracotta:terracotta-utilities-port-chooser:0.0.19'
+  testImplementation "commons-io:commons-io:$commonsIOVersion"
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'org.terracotta.internal'
+            version = '$project.version'
+            artifactId = 'common'
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = ''
+            url = ''
+        }
+    }
+}
+
+

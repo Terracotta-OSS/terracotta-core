@@ -1,0 +1,30 @@
+
+rootProject.name = 'terracotta-core'
+
+//include('build-data')
+//include('build-parent')
+//include('client-runtime')
+include('common-spi')
+include('tc-messaging')
+include('test-common')
+include('common')
+//include('configuration-provider')
+//include('connection-impl')
+//include('default=configuration')
+//include('examples')
+//include('galvan-support')
+//include('management')
+//include('server-spi')
+//include('tc-client')
+//include('tc-server')
+//include('terracotta')
+//include('terracotta-kit')
+
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        mavenCentral()
+        mavenLocal()
+    }
+}
