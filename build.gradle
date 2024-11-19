@@ -10,10 +10,6 @@ base {
     archivesName = 'terracotta'
 }
 
-jar {
-    archivesBaseName = ''
-}
-
 dependencies {
 
 }
@@ -39,6 +35,20 @@ tasks.named('test', Test) {
     testLogging {
         events "passed"
     }
+}
+
+tasks.named('jar', Jar) {
+
+}
+
+allprojects {
+    if (project.hasProperty('projVersion')) {
+      project.version = project.projVersion
+    } else {
+      project.version = "$project.defaultVersion"
+    }
+
+    println "Version:: $project.version"
 }
 
 task printClasspath {

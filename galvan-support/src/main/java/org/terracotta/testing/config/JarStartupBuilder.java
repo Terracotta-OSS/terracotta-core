@@ -26,9 +26,8 @@ import java.nio.file.Paths;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.util.Properties;
-import static org.terracotta.testing.demos.TestHelpers.isWindows;
 
-public class DefaultStartupCommandBuilder implements StartupCommandBuilder {
+public class JarStartupBuilder implements StartupCommandBuilder {
   private Path tcConfig;
   private Path serverWorkingDir;
   private String logConfigExt;
@@ -36,14 +35,14 @@ public class DefaultStartupCommandBuilder implements StartupCommandBuilder {
   private boolean consistentStartup;
   private String[] builtCommand;
   
-  public DefaultStartupCommandBuilder() {
+  public JarStartupBuilder() {
     this(Paths.get("tc-config.xml"));
   }
 
-  public DefaultStartupCommandBuilder(Path config) {
-    this.tcConfig = config;
+  public JarStartupBuilder(Path tcConfig) {
+    this.tcConfig = tcConfig;
   }
-  
+
   public StartupCommandBuilder serverWorkingDir(Path serverWorkingDir) {
     this.serverWorkingDir = serverWorkingDir;
     return this;
@@ -60,6 +59,10 @@ public class DefaultStartupCommandBuilder implements StartupCommandBuilder {
 
   public StartupCommandBuilder consistentStartup(boolean consistentStartup) {
     this.consistentStartup = consistentStartup;
+    return this;
+  }
+
+  public StartupCommandBuilder kitDir(Path kitDir) {
     return this;
   }
 
@@ -85,22 +88,12 @@ public class DefaultStartupCommandBuilder implements StartupCommandBuilder {
     }
   }
 
-  /**
-   * Returns a normalized absolute path to the shell/bat script, and quotes the windows path to avoid issues with special path chars.
-   * @param scriptPath path to the script from the base kit
-   * @return string representation of processed path
-   */
-  protected String getAbsolutePath(Path scriptPath) {
-    Path basePath =  getServerWorkingDir().resolve(getKitDir()).resolve(scriptPath).toAbsolutePath().normalize();
-    return isWindows() ? "\"" + basePath + ".bat\"" : basePath + ".sh";
-  }
-
   @Override
   public String[] build() {
     if (builtCommand == null) {
       try {
         installServer();
-        String startScript = getAbsolutePath(Paths.get("server","bin", "start-tc-server"));
+        String startScript = Paths.get("server","bin", "start-tc-server").toString();
         builtCommand = new String[]{startScript, "-f", tcConfig.toString(), "-n", serverName, "JAVA_OPTS=-Dlogback.configurationFile=logback-test.xml"};
       } catch (IOException e) {
         throw new RuntimeException(e);
@@ -108,7 +101,11 @@ public class DefaultStartupCommandBuilder implements StartupCommandBuilder {
     }
     return builtCommand;
   }
-  
+
+  public Path getTcConfig() {
+    return tcConfig;
+  }
+
   public Path getServerWorkingDir() {
     return serverWorkingDir;
   }

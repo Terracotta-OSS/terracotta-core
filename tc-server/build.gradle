@@ -1,0 +1,78 @@
+
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+description = 'terracotta-core server implementation'
+
+base {
+    archivesName = 'tc-server'
+}
+
+jar {
+
+}
+
+dependencies {
+  implementation project(':common-spi')
+  implementation project(':configuration-provider')
+  implementation project(':server-spi')
+//  implementation project(':terracotta')
+  implementation project(':common')
+  implementation project(':management')
+  implementation project(':build-data')
+
+  implementation "org.slf4j:slf4j-api:$slf4jVersion"
+  implementation "org.terracotta:standard-cluster-services:$terracottaApisVersion"
+  implementation "ch.qos.logback:logback-classic:$logbackVersion"
+  implementation "org.terracotta:tc-tripwire-plugin:$tripwireVersion"
+  implementation "org.terracotta:tc-tripwire-appenders:$tripwireVersion"
+  implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
+  implementation "org.terracotta:monitoring-support:$terracottaApisVersion"
+
+
+  testImplementation "junit:junit:$junitVersion"
+  testImplementation project(":test-common")
+  testImplementation "org.terracotta:terracotta-utilities-port-chooser:0.0.19"
+  testImplementation "org.mockito:mockito-core:$mockitoVersion"
+  testImplementation "org.hamcrest:hamcrest-all:$hamcrestVersion"
+//  testImplementation "org.powermock:powermock-module-junit4:2.0.0"
+//  testImplementation "org.powermock:powermock-api-mockito2:2.0.0"
+  testImplementation "com.github.stefanbirkner:system-rules:1.18.0"
+  testImplementation "org.terracotta:tcconfig-schema:10.7.5"
+
+}
+
+test {
+    var testClasses = file(layout.buildDirectory.dir("classes/java/test"))
+    systemProperty "testClassesDir", "$testClasses"
+    systemProperty "tc.install-root.ignore-checks", "true"
+}
+
+task copyToLib(type: Copy) {
+    into "${buildDir}/output/libs"
+    from configurations.runtimeClasspath
+}
+
+build.dependsOn(copyToLib)
+/*
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'org.terracotta.internal'
+            version = "$project.version"
+            artifactId = 'tc-server'
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = ''
+            url = ''
+        }
+    }
+}
+
+
+*/

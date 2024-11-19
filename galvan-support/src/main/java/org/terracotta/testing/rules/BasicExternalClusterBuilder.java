@@ -48,6 +48,7 @@ public class BasicExternalClusterBuilder {
   private String logConfigExt = "logback-ext.xml";
   private int serverHeapSize = DEFAULT_SERVER_HEAP_MB;
   private boolean inline = true;
+  private Path server = Paths.get("tc.jar");
   private Supplier<StartupCommandBuilder> startupBuilder;
 
   private BasicExternalClusterBuilder(final int stripeSize) {
@@ -70,6 +71,11 @@ public class BasicExternalClusterBuilder {
       throw new NullPointerException("Cluster directory must be non-null");
     }
     this.clusterDirectory = clusterDirectory;
+    return this;
+  }
+  
+  public BasicExternalClusterBuilder server(Path server) {
+    this.server = server;
     return this;
   }
 
@@ -158,11 +164,11 @@ public class BasicExternalClusterBuilder {
 
   public Cluster build() {
     if (inline) {
-      return new BasicInlineCluster(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment,
+      return new BasicInlineCluster(clusterDirectory, stripeSize, server, serverJars, namespaceFragment, serviceFragment,
         clientReconnectWindowTime, failoverPriorityVoterCount, consistentStart, tcProperties, systemProperties,
         logConfigExt, serverHeapSize, Optional.ofNullable(startupBuilder).orElse(ArgOnlyStartupCommandBuilder::new));
     } else {
-      return new BasicExternalCluster(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment,
+      return new BasicExternalCluster(clusterDirectory, stripeSize, server, serverJars, namespaceFragment, serviceFragment,
         clientReconnectWindowTime, failoverPriorityVoterCount, consistentStart, tcProperties, systemProperties,
         logConfigExt, serverHeapSize, Optional.ofNullable(startupBuilder).orElse(DefaultStartupCommandBuilder::new));
     }

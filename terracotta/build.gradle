@@ -1,0 +1,70 @@
+
+plugins {
+    id 'java-library'
+    id 'distribution'
+    id 'maven-publish'
+}
+
+description = 'terracotta-core terracotta server package'
+
+base {
+    archivesName = 'terracotta'
+}
+
+dependencies {
+  testImplementation "junit:junit:$junitVersion"
+  testImplementation "org.hamcrest:hamcrest-all:$hamcrestVersion"
+}
+
+jar {
+    archiveBaseName = "tc"
+    archiveVersion = ""
+    manifest {
+        attributes "Main-Class" : "com.tc.server.TCServerMain", 
+                    "Class-Path" : project(":tc-server").configurations.runtimeClasspath.collect { it.getName() }.join(' ')
+    }
+}
+
+task copyServer(type: Copy) {
+    into "${buildDir}/libs"
+    from project(":tc-server").configurations.runtimeClasspath
+}
+
+build.dependsOn(copyServer)
+
+distributions {
+  main {
+    contents {
+      includeEmptyDirs = false
+
+      into("server") {
+        into("lib") {
+          from "${buildDir}/libs/tc.jar"
+          from(project(":tc-server").configurations.runtimeClasspath)
+        }
+      }
+    }
+  }
+}
+
+distTar.dependsOn(jar)
+distZip.dependsOn(jar)
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'org.terracotta.internal'
+            version = '$project.version'
+            artifactId = 'terracotta'
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = ''
+            url = ''
+        }
+    }
+}
+
+

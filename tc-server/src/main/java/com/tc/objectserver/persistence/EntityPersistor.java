@@ -73,7 +73,7 @@ public class EntityPersistor {
       this.counters = (null != counters) ? counters : new HashMap<>();
       // Make sure that the consumerID is initialized to 1 (0 reserved for platform).
       if (!this.counters.containsKey(COUNTERS_CONSUMER_ID)) {
-        this.counters.put(COUNTERS_CONSUMER_ID, new Long(1));
+        this.counters.put(COUNTERS_CONSUMER_ID, Long.valueOf(1L));
       }
     } catch (IOException e) {
       // We don't expect this during startup so just throw it as runtime.
@@ -86,7 +86,7 @@ public class EntityPersistor {
     this.entityLifeJournal.clear();
     this.counters.clear();
     if (!this.counters.containsKey(COUNTERS_CONSUMER_ID)) {
-      this.counters.put(COUNTERS_CONSUMER_ID, new Long(1));
+      this.counters.put(COUNTERS_CONSUMER_ID, Long.valueOf(1L));
     }
     // We can destroy the backing for these objects.
     try {
@@ -275,7 +275,7 @@ public class EntityPersistor {
 
   public synchronized long getNextConsumerID() {
     long consumerID = this.counters.get(COUNTERS_CONSUMER_ID);
-    this.counters.put(COUNTERS_CONSUMER_ID, new Long(consumerID + 1));
+    this.counters.put(COUNTERS_CONSUMER_ID, Long.valueOf(consumerID + 1));
     storeToDisk(COUNTERS_FILE_NAME, this.counters);
     return consumerID;
   }
@@ -283,7 +283,7 @@ public class EntityPersistor {
   public synchronized void setNextConsumerID(long consumerID) {
     long checkID = this.counters.get(COUNTERS_CONSUMER_ID);
     if (consumerID >= checkID) {
-      this.counters.put(COUNTERS_CONSUMER_ID, new Long(consumerID + 1));
+      this.counters.put(COUNTERS_CONSUMER_ID, Long.valueOf(consumerID + 1));
       storeToDisk(COUNTERS_FILE_NAME, this.counters);
     }
   }

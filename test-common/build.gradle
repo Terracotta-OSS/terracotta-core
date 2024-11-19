@@ -1,6 +1,6 @@
 
 plugins {
-    id 'java'
+    id 'java-library'
     id 'maven-publish'
 }
 
@@ -28,7 +28,7 @@ publishing {
     publications {
         maven(MavenPublication) {
             groupId = 'org.terracotta.internal'
-            version = '$project.version'
+            version = "$project.version"
             artifactId = 'test-common'
             from components.java
         }

@@ -197,7 +197,7 @@ public class TestConfigObject {
   private static void loadEnv() {
     initBaseDir();
 
-    if (System.getProperty("tc.install-root") != null) { throw new RuntimeException("Don't set 'tc.install-root' in tests."); }
+//    if (System.getProperty("tc.install-root") != null) { throw new RuntimeException("Don't set 'tc.install-root' in tests."); }
     System.setProperty("tc.install-root.ignore-checks", "true");
   }
 

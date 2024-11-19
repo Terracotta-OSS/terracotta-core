@@ -70,6 +70,7 @@ class BasicInlineCluster extends Cluster {
 
   private final Path clusterDirectory;
   private final int stripeSize;
+  private final Path server;
   private final Set<Path> serverJars;
   private final String namespaceFragment;
   private final String serviceFragment;
@@ -95,7 +96,7 @@ class BasicInlineCluster extends Cluster {
   private Thread shepherdingThread;
   private boolean isSafe;
 
-  BasicInlineCluster(Path clusterDirectory, int stripeSize, Set<Path> serverJars, String namespaceFragment,
+  BasicInlineCluster(Path clusterDirectory, int stripeSize, Path server, Set<Path> serverJars, String namespaceFragment,
                        String serviceFragment, int clientReconnectWindow, int voterCount, boolean consistentStart, Properties tcProperties,
                        Properties systemProperties, String logConfigExt, int serverHeapSize, Supplier<StartupCommandBuilder> startupBuilder) {
     boolean didCreateDirectories = clusterDirectory.toFile().mkdirs();
@@ -111,6 +112,7 @@ class BasicInlineCluster extends Cluster {
     this.stripeSize = stripeSize;
     this.namespaceFragment = namespaceFragment;
     this.serviceFragment = serviceFragment;
+    this.server = server;
     this.serverJars = serverJars;
     this.clientReconnectWindow = clientReconnectWindow;
     this.voterCount = voterCount;
@@ -187,7 +189,6 @@ class BasicInlineCluster extends Cluster {
 
     String kitInstallationPath = System.getProperty("kitInstallationPath");
     harnessLogger.output("Using kitInstallationPath: \"" + kitInstallationPath + "\"");
-    System.setProperty("tc.install-root", kitInstallationPath + File.separator + "server");
     System.setProperty("restart.inline", Boolean.TRUE.toString());
     System.setProperty("com.tc.server.entity.processor.threads", "4");
     System.setProperty("com.tc.l2.tccom.workerthreads", "4");
@@ -234,20 +235,16 @@ class BasicInlineCluster extends Cluster {
     for (int i = 0; i < stripeSize; ++i) {
       String serverName = serverNames.get(i);
       Path serverWorkingDir = stripeInstallationDir.resolve(serverName);
-      Path tcConfigRelative = relativize(serverWorkingDir, tcConfig);
-      Path kitLocationRelative = relativize(serverWorkingDir, kitLocation);
 
       StartupCommandBuilder builder = startupBuilder.get()
-          .tcConfig(tcConfigRelative)
           .serverName(serverName)
           .stripeName(stripeName)
           .serverWorkingDir(serverWorkingDir)
-          .kitDir(kitLocationRelative)
           .logConfigExtension(logConfigExt)
           .consistentStartup(consistentStart);      
 
       String[] cmd = builder.build();
-      stripeInstaller.installNewServer(serverName, serverWorkingDir, (stdout)->startIsolatedServer(serverWorkingDir, stdout, cmd));
+      stripeInstaller.installNewServer(serverName, serverWorkingDir, (stdout)->startIsolatedServer(serverWorkingDir, server, stdout, cmd));
     }
 
     cluster = ReadyStripe.configureAndStartStripe(interlock, stripeVerboseManager, stripeConfig, stripeInstaller);
@@ -304,12 +301,12 @@ class BasicInlineCluster extends Cluster {
     waitForSafe();
   }
 
-  static Object startIsolatedServer(Path serverWorking, OutputStream out, String[] cmd) {
+  static Object startIsolatedServer(Path serverWorking, Path server, OutputStream out, String[] cmd) {
     if (cmd.length > 1 && cmd[0].contains("start-tc-server")) {
       cmd = Arrays.copyOfRange(cmd, 1, cmd.length);
     }
     ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
-    Path tc = Paths.get(System.getProperty("tc.install-root"), "lib", "tc.jar");
+    Path tc = server.resolve("lib").resolve("tc.jar");
     try {
       Thread.currentThread().setContextClassLoader(null);
       URL url = tc.toUri().toURL();

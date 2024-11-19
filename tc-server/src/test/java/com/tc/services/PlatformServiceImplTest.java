@@ -78,7 +78,7 @@ public class PlatformServiceImplTest {
       
     }
 
-    Mockito.doThrow(new PlatformStopException("not passive")).when(tcServerMock).stopIfPassive(any());
+    Mockito.doThrow(new PlatformStopException("not passive")).when(tcServerMock).stopIfPassive(Mockito.any(StopAction[].class));
     platformService.stopPlatformIfPassive(RestartMode.STOP_ONLY);
   }
 
@@ -112,7 +112,7 @@ public class PlatformServiceImplTest {
       
     }
 
-    Mockito.doThrow(new PlatformStopException("not active")).when(tcServerMock).stopIfActive(any());
+    Mockito.doThrow(new PlatformStopException("not active")).when(tcServerMock).stopIfActive(any(StopAction[].class));
     platformService.stopPlatformIfActive(RestartMode.STOP_ONLY);
   }
 

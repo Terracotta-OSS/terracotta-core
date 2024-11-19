@@ -22,25 +22,27 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.util.Properties;
-import static org.terracotta.testing.demos.TestHelpers.isWindows;
 
 public class ArgOnlyStartupCommandBuilder implements StartupCommandBuilder {
   private Path tcConfig;
-  private Path kitDir;
   private Path serverWorkingDir;
   private String logConfigExt;
   private String serverName;
   private boolean consistentStartup;
   private String[] builtCommand;
 
-  public StartupCommandBuilder tcConfig(Path tcConfig) {
-    this.tcConfig = tcConfig;
-    return this;
+  public ArgOnlyStartupCommandBuilder() {
+    this(Paths.get("tc-config.xml"));
   }
-
+  
+  public ArgOnlyStartupCommandBuilder(Path config) {
+    this.tcConfig = config;
+  }
+  
   public StartupCommandBuilder serverWorkingDir(Path serverWorkingDir) {
     this.serverWorkingDir = serverWorkingDir;
     return this;
@@ -57,11 +59,6 @@ public class ArgOnlyStartupCommandBuilder implements StartupCommandBuilder {
 
   public StartupCommandBuilder consistentStartup(boolean consistentStartup) {
     this.consistentStartup = consistentStartup;
-    return this;
-  }
-
-  public StartupCommandBuilder kitDir(Path kitDir) {
-    this.kitDir = kitDir;
     return this;
   }
 
@@ -89,16 +86,6 @@ public class ArgOnlyStartupCommandBuilder implements StartupCommandBuilder {
     }
   }
 
-  /**
-   * Returns a normalized absolute path to the shell/bat script, and quotes the windows path to avoid issues with special path chars.
-   * @param scriptPath path to the script from the base kit
-   * @return string representation of processed path
-   */
-  protected String getAbsolutePath(Path scriptPath) {
-    Path basePath =  getServerWorkingDir().resolve(getKitDir()).resolve(scriptPath).toAbsolutePath().normalize();
-    return isWindows() ? "\"" + basePath + ".bat\"" : basePath + ".sh";
-  }
-
   @Override
   public String[] build() {
     if (builtCommand == null) {
@@ -110,14 +97,6 @@ public class ArgOnlyStartupCommandBuilder implements StartupCommandBuilder {
       }
     }
     return builtCommand;
-  }
-
-  public Path getTcConfig() {
-    return tcConfig;
-  }
-
-  public Path getKitDir() {
-    return kitDir;
   }
 
   public Path getServerWorkingDir() {

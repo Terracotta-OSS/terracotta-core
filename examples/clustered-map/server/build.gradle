@@ -1,0 +1,41 @@
+
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+description = 'terracotta-core clustered map server example'
+
+base {
+    archivesName = 'clustered-map-server'
+}
+
+jar {
+    archivesBaseName = 'clustered-map-server'
+}
+
+dependencies {
+    implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
+    implementation "org.terracotta:standard-cluster-services:$terracottaApisVersion"
+    
+    implementation project(':examples:clustered-map:common')
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'org.terracotta.internal'
+            version = '$project.version'
+            artifactId = 'clustered-map-common'
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = ''
+            url = ''
+        }
+    }
+}
+
+

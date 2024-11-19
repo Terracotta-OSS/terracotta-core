@@ -4,23 +4,19 @@ plugins {
     id 'maven-publish'
 }
 
-description = 'terracotta-core tc-messaging classes'
+description = 'terracotta-core configuration provider API'
 
 base {
-    archivesName = 'tc-messaging'
+    archivesName = 'configuration-provider'
 }
 
 jar {
-    archivesBaseName = 'tc-messaging'
+    archivesBaseName = 'configuration-provider'
 }
 
 dependencies {
-  implementation project(':common-spi')
   implementation "org.slf4j:slf4j-api:$slf4jVersion"
-  implementation "org.terracotta:entity-client-api:$terracottaApisVersion"
-
-  testImplementation "junit:junit:$junitVersion"
-  testImplementation "org.mockito:mockito-core:$mockitoVersion"
+  implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
 }
 
 publishing {
@@ -28,7 +24,7 @@ publishing {
         maven(MavenPublication) {
             groupId = 'org.terracotta.internal'
             version = "$project.version"
-            artifactId = 'tc-messaging'
+            artifactId = 'configuration-provider'
             from components.java
         }
     }

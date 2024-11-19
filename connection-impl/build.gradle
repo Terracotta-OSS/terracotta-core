@@ -1,0 +1,50 @@
+
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+description = 'terracotta-core connection API implementation'
+
+base {
+    archivesName = 'connection-impl'
+}
+
+jar {
+    archivesBaseName = 'common-impl'
+}
+
+dependencies {
+    implementation "org.slf4j:slf4j-api:$slf4jVersion"
+    implementation project(':tc-client')
+    implementation project(':common-spi')
+    implementation project(':common')
+    implementation "org.terracotta:entity-client-api:$terracottaApisVersion"
+    implementation "org.terracotta:connection-api:$terracottaApisVersion"
+
+    testImplementation "org.mockito:mockito-core:$mockitoVersion"
+    testImplementation "junit:junit:$junitVersion"
+    testImplementation project(":test-common")
+    testImplementation "org.hamcrest:hamcrest-all:$hamcrestVersion"
+    testImplementation "ch.qos.logback:logback-classic:$logbackVersion"
+    testImplementation 'org.terracotta:terracotta-utilities-port-chooser:0.0.19'
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'org.terracotta.internal'
+            version = '$project.version'
+            artifactId = 'connection-impl'
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = ''
+            url = ''
+        }
+    }
+}
+
+

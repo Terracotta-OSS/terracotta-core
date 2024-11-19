@@ -20,10 +20,7 @@ package org.terracotta.testing.config;
 import java.nio.file.Path;
 
 public interface StartupCommandBuilder {
-  StartupCommandBuilder tcConfig(Path tcConfig);
-
-  StartupCommandBuilder kitDir(Path serverInstallationDir);
-
+  
   StartupCommandBuilder logConfigExtension(String logging);
 
   StartupCommandBuilder serverWorkingDir(Path serverWorkingDir);

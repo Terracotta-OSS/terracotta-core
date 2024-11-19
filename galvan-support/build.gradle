@@ -1,0 +1,52 @@
+
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+description = 'terracotta-core galvan-support'
+
+base {
+    archivesName = 'galvan-support'
+}
+
+jar {
+    archivesBaseName = 'galvan-support'
+}
+
+dependencies {
+    implementation "junit:junit:$junitVersion"
+    implementation "org.terracotta:connection-api:$terracottaApisVersion"
+    implementation "org.terracotta:test-interfaces:$galvanVersion"
+    implementation "org.terracotta:terracotta-utilities-port-chooser:0.0.19"
+    implementation project(':common')
+    implementation project(':common-spi')
+    implementation project(':tc-client')
+    implementation "org.terracotta:galvan:$galvanVersion"
+    implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
+    implementation project(':tc-server')
+    implementation "org.terracotta:standard-cluster-services:$terracottaApisVersion"
+    implementation project(':server-spi')
+    implementation project(':terracotta')
+    testImplementation "ch.qos.logback:logback-classic:$logbackVersion"
+    implementation project(':examples:clustered-map:client')
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'org.terracotta.internal'
+            version = '$project.version'
+            artifactId = 'connection-impl'
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = ''
+            url = ''
+        }
+    }
+}
+
+

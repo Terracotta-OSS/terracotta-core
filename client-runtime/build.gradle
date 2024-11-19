@@ -1,0 +1,40 @@
+
+plugins {
+  id 'java-library'
+  id 'maven-publish'
+}
+
+description = 'terracotta-core client-runtime'
+
+base {
+    archivesName = 'client-runtime'
+}
+
+jar {
+    archivesBaseName = 'client-runtime'
+}
+
+dependencies {
+    implementation "org.terracotta:connection-api:$terracottaApisVersion"
+    implementation project(':tc-client')
+    implementation project(':connection-impl')
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'org.terracotta.internal'
+            version = '$project.version'
+            artifactId = 'client-runtime'
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = ''
+            url = ''
+        }
+    }
+}
+
+

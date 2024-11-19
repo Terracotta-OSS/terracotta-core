@@ -36,13 +36,17 @@ import org.terracotta.testing.master.TestStateManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.lang.reflect.Method;
 import java.net.URI;
+import java.net.URL;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -65,6 +69,7 @@ class BasicExternalCluster extends Cluster {
 
   private final Path clusterDirectory;
   private final int stripeSize;
+  private final Path server;
   private final Set<Path> serverJars;
   private final String namespaceFragment;
   private final String serviceFragment;
@@ -89,7 +94,7 @@ class BasicExternalCluster extends Cluster {
   private Thread shepherdingThread;
   private boolean isSafe;
 
-  BasicExternalCluster(Path clusterDirectory, int stripeSize, Set<Path> serverJars, String namespaceFragment,
+  BasicExternalCluster(Path clusterDirectory, int stripeSize, Path server, Set<Path> serverJars, String namespaceFragment,
                        String serviceFragment, int clientReconnectWindow, int voterCount, boolean consistentStart, Properties tcProperties,
                        Properties systemProperties, String logConfigExt, int serverHeapSize, Supplier<StartupCommandBuilder> startupBuilder) {
     boolean didCreateDirectories = clusterDirectory.toFile().mkdirs();
@@ -105,6 +110,7 @@ class BasicExternalCluster extends Cluster {
     this.stripeSize = stripeSize;
     this.namespaceFragment = namespaceFragment;
     this.serviceFragment = serviceFragment;
+    this.server = server;
     this.serverJars = serverJars;
     this.clientReconnectWindow = clientReconnectWindow;
     this.voterCount = voterCount;
@@ -230,11 +236,9 @@ class BasicExternalCluster extends Cluster {
       int debugPort = stripeConfig.getServerDebugPorts().get(i);
 
       StartupCommandBuilder builder = startupBuilder.get()
-          .tcConfig(tcConfigRelative)
           .serverName(serverName)
           .stripeName(stripeName)
           .serverWorkingDir(serverWorkingDir)
-          .kitDir(kitLocationRelative)
           .logConfigExtension(logConfigExt)
           .consistentStartup(consistentStart);      
 
@@ -444,5 +448,24 @@ class BasicExternalCluster extends Cluster {
   @Override
   public void expectCrashes(boolean yes) {
     interlock.ignoreServerCrashes(yes);
+  }
+  
+  static Object startScriptedServer(Path serverWorking, OutputStream out, String[] cmd) {
+    ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
+    Path tc = Paths.get(System.getProperty("tc.install-root"), "lib", "tc.jar");
+    try {
+      Thread.currentThread().setContextClassLoader(null);
+      URL url = tc.toUri().toURL();
+      URL resource = serverWorking.toUri().toURL();
+      ClassLoader loader = new IsolatedClassLoader(new URL[] {resource, url}, BasicInlineCluster.class.getClassLoader());
+      Method m = Class.forName("com.tc.server.TCServerMain", true, loader).getMethod("createServer", List.class, OutputStream.class);
+      return m.invoke(null, Arrays.asList(cmd), out);
+    } catch (RuntimeException mal) {
+      throw mal;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    } finally {
+      Thread.currentThread().setContextClassLoader(oldLoader);
+    }
   }
 }

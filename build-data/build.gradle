@@ -1,0 +1,50 @@
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Optional
+
+import static java.time.Instant.now
+
+plugins {
+  id 'java-library'
+  id 'maven-publish'
+}
+
+description = 'terracotta-core build data info'
+
+base {
+    archivesName = 'build-data'
+}
+
+jar {
+    archivesBaseName = 'build-data'
+}
+
+dependencies {
+
+}
+
+def buildProperties = [
+        version: project.version,
+        timestamp : now(),
+        revision : "Unknown",
+        branch : "Unknown"
+]
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'org.terracotta.internal'
+            version = '$project.version'
+            artifactId = 'build-data'
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = ''
+            url = ''
+        }
+    }
+}
+
+

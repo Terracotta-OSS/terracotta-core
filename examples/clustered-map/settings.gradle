@@ -1,0 +1,15 @@
+rootProject.name = 'examples'
+
+
+include('client')
+include('common')
+include('server')
+
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        mavenCentral()
+        mavenLocal()
+    }
+}

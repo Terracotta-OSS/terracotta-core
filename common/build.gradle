@@ -1,6 +1,6 @@
 
 plugins {
-    id 'java'
+    id 'java-library'
     id 'maven-publish'
 }
 
@@ -15,9 +15,11 @@ jar {
 }
 
 dependencies {
+  api project(':tc-messaging')
+
   implementation project(':common-spi')
-  implementation project(':tc-messaging')
-  implementation project(':test-common')
+  testImplementation project(':test-common')
+  implementation project(':build-data')
   implementation "org.slf4j:slf4j-api:$slf4jVersion"
   implementation "org.terracotta:packaging-support:$terracottaApisVersion"
   implementation "org.terracotta:tc-tripwire-plugin:$tripwireVersion"
@@ -33,7 +35,7 @@ publishing {
     publications {
         maven(MavenPublication) {
             groupId = 'org.terracotta.internal'
-            version = '$project.version'
+            version = "$project.version"
             artifactId = 'common'
             from components.java
         }

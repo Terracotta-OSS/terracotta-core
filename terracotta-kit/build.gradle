@@ -1,0 +1,80 @@
+
+plugins {
+    id 'java-library'
+    id 'distribution'
+}
+
+description = 'terracotta-core kit'
+
+base {
+    archivesName = 'terracotta-kit'
+}
+
+jar {
+    archivesBaseName = 'terracotta-kit'
+}
+
+distributions {
+  main {
+    contents {
+      includeEmptyDirs = false
+      filesMatching("**/README.txt") {
+        expand(project.properties)
+      }
+      filesMatching(listOf("**/*.bat", "**/*.sh")) {
+        permissions {
+          unix("0775")
+        }
+      }
+
+      filesMatching("**/*.jar") {
+        // We can safely exclude JAR duplicates as our dependency strategy is fail on conflict
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+      }
+
+      into("") {
+        // tc kit
+        from (coreKitTar) {
+          include("*/server/bin/**")
+          include("*/init/**")
+          include("*/legal/**")
+
+          // drop <dist-name>
+          eachFile(org.terracotta.build.Utils.dropTopLevelDirectories(1))
+        }
+      }
+      into("server") {
+        into("lib") {
+          from(serverRuntimeAssembly)
+          from(serverBootstrapAssembly) {
+            rename("terracotta-$terracottaCoreVersion.jar", "tc.jar")
+          }
+        }
+        into("plugins/api") {
+          from(serverApis) {
+            exclude(filesIn(serverRuntimeAssembly))
+          }
+        }
+        into("plugins/lib") {
+          from(serverPlugins.files()) {
+            exclude(filesIn(serverApis, serverRuntimeAssembly))
+          }
+        }
+      }
+
+      into("tools") {
+        from(tool)
+
+        into("management") {
+          from(management)
+        }
+      }
+
+      val clientBundle = mavenBundle(client).with(mavenBundle(extension).into("extensions"))
+      into("client") {
+        with(clientBundle)
+        from(mavenInstaller("client-libraries", clientBundle))
+      }
+    }
+  }
+}
