@@ -1,0 +1,105 @@
+= Introduction
+
+Galvan is an integration test framework that lets developers test their code with a real Terracotta server.
+Galvan provides several APIs that will lets you control a Terracotta cluster from within your client test code.
+This document covers the configurations required and the basic usage of the APIs.
+
+= Configurations
+
+== Maven configuration
+
+Add the following dependency to your project.
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.terracotta</groupId>
+  <artifactId>galvan-support</artifactId>
+  <version>1.0.3-beta</version>
+  <scope>test</scope>
+</dependency>
+----
+
+That's all you'd need to use the Galvan APIs to control the cluster.
+Galvan provides a https://github.com/junit-team/junit4/wiki/rules[JUnit Rule] implementation called `BasicExternalCluster` that you can use to easily manipulate a cluster.
+The following code sample demonstrates the usage of this rule:
+
+[source,java]
+----
+public class GalvanTest {
+
+  @Rule
+  public static Cluster CLUSTER = new BasicExternalCluster(new File("target/cluster"), 2);  //<1>
+
+  @Test
+  public void testGalvanInteraction() throws Exception {
+    IClusterControl clusterControl = CLUSTER.getClusterControl();  //<2>
+    clusterControl.waitForActive(); //<3>
+    clusterControl.waitForRunningPassivesInStandby();
+    //Do your client behavior testing
+    clusterControl.terminateOnePassive();
+    clusterControl.terminateActive();
+  }
+----
+
+<1> Define the `BasicExternalCluster` rule by providing a working directory for the cluster and the number of servers you want in the stripe.
+    This rule will start the cluster before each test method is executed and shutdown the cluster after the test execution completes, irrespective of the test result.
+    If you don't want the cluster to be started up and shutdown for every test, but only once for the entire test class, define it as a `ClassRule`.
+<2> Get hold of the `IClusterControl` instance from the cluster that really lets you control the servers in the cluster.
+<3> Invoke this method if you want to wait till the active server node is available before proceeding with your test.
+
+`BasicExternalCluster` requires one mandatory configuration which is the path to a Terracotta server kit which it uses to startup the servers.
+Galvan looks up for a system property named `kitInstallationPath` for the kit location.
+This property can be provided by configuring the maven-surefire-plugin that runs the unit tests in your code base.
+Just add the following plugin configuration to your build:
+
+[source,xml]
+----
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <kitInstallationPath>${kitInstallationPath}</kitInstallationPath>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+----
+
+Just replace `${kitInstallationPath}` with the path to your kit location.
+
+=== Auto downloading kit
+
+Since `BasicExternalCluster` requires a kit location to run tests, it is advisable to have your build configured to auto download the kit as part of the build process.
+That can be done by configuring the maven-dependency-plugin for your build.
+The following configuration will download the kit and unzip it at a specified location during the _process-test-resources_ phase so that the kit is available during the _test phase_.
+
+[source,xml]
+----
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-dependency-plugin</artifactId>
+  <executions>
+    <execution>
+      <id>unpack</id>
+      <phase>process-test-resources</phase>
+      <goals>
+        <goal>unpack</goal>
+      </goals>
+      <configuration>
+        <artifactItems>
+          <artifactItem>
+            <groupId>org.terracotta.internal</groupId>
+            <artifactId>terracotta-kit</artifactId>
+            <version>${kitVersion}</version>
+            <type>zip</type>
+            <outputDirectory>${kitUnzipLocation}</outputDirectory>
+          </artifactItem>
+        </artifactItems>
+      </configuration>
+    </execution>
+  </executions>
+</plugin>
+----
+
+Replace `${kitVersion}` and `${kitUnzipLocation}` to the values of your choice.
+The `kitInstallationPath` system property configuration value of the maven-surefire-plugin can be altered relative to the `${kitUnzipLocation}` specified here.
