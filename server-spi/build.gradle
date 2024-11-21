@@ -23,7 +23,7 @@ publishing {
         maven(MavenPublication) {
             groupId = 'org.terracotta.internal'
             version = "$project.version"
-            artifactId = 'server-spi'
+            artifactId = "$project.name"
             from components.java
         }
     }

@@ -77,27 +77,4 @@ public class ReadyStripe {
     ServerProcessControl processControl = new ServerProcessControl(interlock, processControlLogger);
     return new ReadyStripe(processControl, stripeConfig.getUri(), stripeConfig.getClusterInfo());
   }
-
-  public static ReadyStripe configureAndStartStripe(StateInterlock interlock, VerboseManager stripeVerboseManager,
-                                                    StripeConfiguration stripeConfig, InlineStripeInstaller stripeInstaller) throws GalvanFailureException {
-    // Create the process control object.
-    ContextualLogger processControlLogger = stripeVerboseManager.createComponentManager("[ProcessControl]").createHarnessLogger();
-    // Register the stripe into it and start up the server in the stripe.
-    stripeInstaller.startServers();
-
-    // Before we return, we want to wait for all the servers in the stripe to come up.
-    interlock.waitForAllServerRunning();
-
-    // Also, so we don't start the test in a racy state, wait for all the now-running servers to enter a meaningful state.
-    try {
-      interlock.waitForAllServerReady();
-    } catch (GalvanFailureException failed) {
-//  failed to start normally but some later interaction with the framework should catch this
-      System.err.println("Galvan cluster failed to start:" + failed.getMessage());
-    }
-
-    // We can now create the information required by the ReadyStripe and return control to the caller to run the test or install clients.
-    ServerProcessControl processControl = new ServerProcessControl(interlock, processControlLogger);
-    return new ReadyStripe(processControl, stripeConfig.getUri(), stripeConfig.getClusterInfo());
-  }
 }

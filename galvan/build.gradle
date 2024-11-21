@@ -1,0 +1,79 @@
+
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'distribution'
+}
+
+description = 'terracotta-core galvan'
+
+base {
+    archivesName = 'galvan'
+}
+
+jar {
+
+}
+
+configurations {
+    terracottaKit
+}
+
+def serverDistribution = project(":terracotta").getLayout().getBuildDirectory().file("distributions")
+
+dependencies {
+    api project(":test-interfaces")
+    implementation "org.terracotta:ipc-eventbus:1.1.4"
+    implementation "org.terracotta:terracotta-utilities-port-chooser:0.0.19"
+    implementation "junit:junit:$junitVersion"
+    testImplementation "ch.qos.logback:logback-classic:$logbackVersion"
+    implementation "org.mockito:mockito-inline:4.11.0"
+    implementation project(':examples:clustered-map:client')
+    terracottaKit project(":tc-server")
+    terracottaKit project(":terracotta")
+}
+
+distributions {
+  main {
+    distributionBaseName = 'galvan-test-server'
+    contents {
+      includeEmptyDirs = false
+
+      into("server") {
+        from(configurations.terracottaKit)
+      }
+    }
+  }
+}
+
+task copyServer(type: Copy) {
+    from (layout.buildDirectory.dir("distributions")) {
+        include "*.zip"
+    }
+    into layout.buildDirectory.dir("resources/main")
+    rename { distName ->
+        distName.replace("-$project.version", "")
+    }
+}
+
+copyServer.dependsOn(distZip)
+compileJava.dependsOn(copyServer)
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'org.terracotta.internal'
+            version = "$project.version"
+            artifactId = "$project.name"
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = ''
+            url = ''
+        }
+    }
+}
+
+

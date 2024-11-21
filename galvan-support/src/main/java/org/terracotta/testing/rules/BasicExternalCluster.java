@@ -17,7 +17,6 @@
  */
 package org.terracotta.testing.rules;
 
-import com.tc.util.Assert;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.terracotta.connection.Connection;
@@ -56,6 +55,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 import static java.util.stream.Collectors.toList;
 import java.util.stream.IntStream;
+import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.master.FileHelpers;
 import org.terracotta.testing.master.StateInterlock;
@@ -225,7 +225,7 @@ class BasicExternalCluster extends Cluster {
 
     StripeConfiguration stripeConfig = new StripeConfiguration(serverDebugPorts, serverPorts, serverGroupPorts, serverNames,
         stripeName, serverHeapSize, logConfigExt, systemProperties);
-    StripeInstaller stripeInstaller = new StripeInstaller(interlock, stateManager, stripeVerboseManager, stripeConfig);
+    StripeInstaller stripeInstaller = new StripeInstaller(interlock, stateManager, false, stripeVerboseManager);
     // Configure and install each server in the stripe.
     for (int i = 0; i < stripeSize; ++i) {
       String serverName = serverNames.get(i);
@@ -242,7 +242,7 @@ class BasicExternalCluster extends Cluster {
           .logConfigExtension(logConfigExt)
           .consistentStartup(consistentStart);      
 
-      stripeInstaller.installNewServer(serverName, serverWorkingDir, debugPort, builder::build);
+      stripeInstaller.installNewServer(serverName, kitLocationRelative, serverWorkingDir, debugPort, null, builder.build());
     }
 
     cluster = ReadyStripe.configureAndStartStripe(interlock, stripeVerboseManager, stripeConfig, stripeInstaller);
@@ -355,7 +355,7 @@ class BasicExternalCluster extends Cluster {
         this.shepherdingThread.join();
       } catch (InterruptedException unexpected) {
         // Interrupts are unexpected at this point - fail.
-        Assert.fail(unexpected.getLocalizedMessage());
+        Assert.unexpected(unexpected);
       }
     }
     this.shepherdingThread = null;

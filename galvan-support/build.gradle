@@ -17,12 +17,12 @@ jar {
 dependencies {
     implementation "junit:junit:$junitVersion"
     implementation "org.terracotta:connection-api:$terracottaApisVersion"
-    implementation "org.terracotta:test-interfaces:$galvanVersion"
+    implementation project(":galvan")
+    implementation project(":test-interfaces")
     implementation "org.terracotta:terracotta-utilities-port-chooser:0.0.19"
     implementation project(':common')
     implementation project(':common-spi')
     implementation project(':tc-client')
-    implementation "org.terracotta:galvan:$galvanVersion"
     implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
     implementation project(':tc-server')
     implementation "org.terracotta:standard-cluster-services:$terracottaApisVersion"
@@ -36,8 +36,8 @@ publishing {
     publications {
         maven(MavenPublication) {
             groupId = 'org.terracotta.internal'
-            version = '$project.version'
-            artifactId = 'connection-impl'
+            version = "$project.version"
+            artifactId = "$project.name"
             from components.java
         }
     }

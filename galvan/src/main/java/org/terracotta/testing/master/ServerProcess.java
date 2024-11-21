@@ -30,7 +30,6 @@ import java.nio.file.Path;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.CREATE;
@@ -38,27 +37,31 @@ import static java.util.stream.Collectors.joining;
 import static org.terracotta.testing.demos.TestHelpers.isWindows;
 
 
-public class ServerProcess extends AbstractServerProcess {
+public class ServerProcess extends ServerInstance {
   private final int heapInM;
   private final int debugPort;
   private final Properties serverProperties;
+  private final Path serverInstall;
   private final Path serverWorkingDir;
-  private final Supplier<String[]> startupCommandSupplier;
-
+  private final String[] startupCommand;
+  private final OutputStream parentOutput;
+  
   // OutputStreams to close when the server is down.
   private OutputStream outputStream;
   private OutputStream errorStream;
 
   public ServerProcess(StateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager serverVerboseManager,
-                       String serverName, Path serverWorkingDir, int heapInM, int debugPort, Properties serverProperties,
-                       Supplier<String[]> startupCommandSupplier) {
+                       String serverName, Path serverInstall, Path serverWorkingDir, int heapInM, int debugPort, Properties serverProperties, OutputStream out,
+                       String[] startupCommand) {
     super(stateInterlock, stateManager, serverVerboseManager, serverName);
     // We need to specify a positive integer as the heap size.
     this.heapInM = heapInM;
     this.debugPort = debugPort;
     this.serverProperties = serverProperties;
+    this.serverInstall = serverInstall;
     this.serverWorkingDir = serverWorkingDir;
-    this.startupCommandSupplier = startupCommandSupplier;
+    this.startupCommand = startupCommand;
+    this.parentOutput = out;
     // We start up in the shutdown state so notify the interlock.
   }
   /**
@@ -77,19 +80,19 @@ public class ServerProcess extends AbstractServerProcess {
     UUID token = enter();
     try {
       if (!isServerRunning()) {
-        String[] command = startupCommandSupplier.get();
+        String[] command = startupCommand;
         // Now, open the log files.
         // We want to create an output log file for both STDOUT and STDERR.
         // rawOut closed by stdout
-        OutputStream rawOut = Files.newOutputStream(serverWorkingDir.resolve("stdout.log"), CREATE, APPEND);
-        OutputStream rawErr = Files.newOutputStream(serverWorkingDir.resolve("stderr.log"), CREATE, APPEND);
+        OutputStream rawOut = parentOutput == null ? Files.newOutputStream(serverWorkingDir.resolve("stdout.log"), CREATE, APPEND) : parentOutput;
+        OutputStream rawErr = parentOutput == null ? Files.newOutputStream(serverWorkingDir.resolve("stderr.log"), CREATE, APPEND) : parentOutput;
         // We also want to stream output going to these files to the server's logger.
         // stdout closed by outputStream
         VerboseOutputStream stdout = new VerboseOutputStream(rawOut, this.serverLogger, false);
         VerboseOutputStream stderr = new VerboseOutputStream(rawErr, this.serverLogger, true);
 
         // Additionally, any information going through the stdout needs to be watched by the eventing stream for events.
-        OutputStream outputStream = buildEventingStream(stdout);
+        OutputStream out = buildEventingStream(stdout);
 
         // Check to see if we need to explicitly set the JAVA_HOME environment variable or it if already exists.
         String javaHome = getJavaHome();
@@ -102,7 +105,7 @@ public class ServerProcess extends AbstractServerProcess {
             .workingDir(this.serverWorkingDir.toFile())
             .env("JAVA_HOME", javaHome)
             .env("JAVA_OPTS", javaArguments)
-            .pipeStdout(outputStream)
+            .pipeStdout(out)
             .pipeStderr(stderr)
             .build();
 

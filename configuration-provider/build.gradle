@@ -24,7 +24,7 @@ publishing {
         maven(MavenPublication) {
             groupId = 'org.terracotta.internal'
             version = "$project.version"
-            artifactId = 'configuration-provider'
+            artifactId = "$project.name"
             from components.java
         }
     }

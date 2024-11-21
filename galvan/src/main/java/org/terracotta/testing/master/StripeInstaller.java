@@ -17,15 +17,15 @@
 package org.terracotta.testing.master;
 
 import org.terracotta.testing.common.Assert;
-import org.terracotta.testing.config.StripeConfiguration;
 import org.terracotta.testing.logging.VerboseManager;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
+import java.util.Properties;
 
 
 /**
@@ -35,32 +35,38 @@ public class StripeInstaller {
   private final StateInterlock interlock;
   private final ITestStateManager stateManager;
   private final VerboseManager stripeVerboseManager;
-  private final StripeConfiguration stripeConfig;
-  private final List<ServerProcess> serverProcesses = new ArrayList<>();
+  private final List<ServerInstance> serverProcesses = new ArrayList<>();
+  private final boolean inline;
+  private int heapInM = 32;
+  private Properties serverProperties = new Properties();
   private boolean isBuilt;
 
-  public StripeInstaller(StateInterlock interlock, ITestStateManager stateManager, VerboseManager stripeVerboseManager, StripeConfiguration stripeConfig) {
+  public StripeInstaller(StateInterlock interlock, ITestStateManager stateManager, boolean inline, VerboseManager stripeVerboseManager) {
     this.interlock = interlock;
     this.stateManager = stateManager;
     this.stripeVerboseManager = stripeVerboseManager;
-    this.stripeConfig = stripeConfig;
+    this.inline = inline;
   }
 
-  public void installNewServer(String serverName, Path workingDir, int debugPort, Supplier<String[]> startupCommandSupplier) throws IOException {
+  public void installNewServer(String serverName, Path server, Path workingDir, int debugPort, OutputStream out, String[] cmd) throws IOException {
     // Our implementation installs all servers before starting any (just an internal consistency check).
     Assert.assertFalse(this.isBuilt);
     // server install is now at the stripe level to use less disk
     Files.createDirectories(workingDir);
     // Create the object representing this single installation and add it to the list for this stripe.
     VerboseManager serverVerboseManager = this.stripeVerboseManager.createComponentManager("[" + serverName + "]");
-    ServerProcess serverProcess = new ServerProcess(this.interlock, this.stateManager, serverVerboseManager, serverName,
-        workingDir, stripeConfig.getServerHeapInM(), debugPort, stripeConfig.getServerProperties(), startupCommandSupplier);
+    ServerInstance serverProcess = inline ?
+      new ServerProcess(this.interlock, this.stateManager, serverVerboseManager, serverName,
+        server, workingDir, heapInM, debugPort, serverProperties, out, cmd)
+            :
+      new InlineServer(this.interlock, this.stateManager, serverVerboseManager, serverName,
+        server, workingDir, serverProperties, out, cmd);    
     serverProcesses.add(serverProcess);
   }
 
   public void startServers() {
     Assert.assertFalse(this.isBuilt);
-    for (ServerProcess newProcess : serverProcesses) {
+    for (ServerInstance newProcess : serverProcesses) {
       try {
         // Note that starting the process will put it into the interlock and the server will notify it of state changes.
         newProcess.start();

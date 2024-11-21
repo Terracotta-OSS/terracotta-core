@@ -47,8 +47,6 @@ allprojects {
     } else {
       project.version = "$project.defaultVersion"
     }
-
-    println "Version:: $project.version"
 }
 
 task printClasspath {
@@ -61,8 +59,8 @@ publishing {
     publications {
         maven(MavenPublication) {
             groupId = 'org.terracotta'
-            version = '5.11-SNAPSHOT'
-            artifactId = 'blank'
+            version = 'project.version'
+            artifactId = "$project.name"
             from components.java
         }
     }

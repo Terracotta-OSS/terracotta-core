@@ -35,7 +35,7 @@ import org.terracotta.testing.logging.VerboseManager;
 import static org.terracotta.testing.master.ServerMode.ACTIVE;
 
 
-public abstract class AbstractServerProcess implements IGalvanServer {
+public abstract class ServerInstance implements IGalvanServer {
   protected final StateInterlock stateInterlock;
   protected final ITestStateManager stateManager;
 //  protected final ContextualLogger harnessLogger;
@@ -52,7 +52,7 @@ public abstract class AbstractServerProcess implements IGalvanServer {
 
   private ServerMode currentState = ServerMode.TERMINATED;
 
-  public AbstractServerProcess(StateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager logging, String serverName) {
+  public ServerInstance(StateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager logging, String serverName) {
     this.stateInterlock = stateInterlock;
     this.stateManager = stateManager;
     this.serverLogger = logging.createServerLogger();

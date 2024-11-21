@@ -24,31 +24,39 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.CREATE;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
 import java.util.UUID;
-import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
 
-public class InlineServerProcess extends AbstractServerProcess {
-  private static final Logger LOGGER = LoggerFactory.getLogger(InlineServerProcess.class);
+public class InlineServer extends ServerInstance {
+  private static final Logger LOGGER = LoggerFactory.getLogger(InlineServer.class);
+  private final Path serverInstall;
   private final Path serverWorkingDir;
-  private final Function<OutputStream, Object> serverStart;
+  private final Properties serverProperties;
+  private final OutputStream parentOutput;
+  private final String[] cmd;
   
   private ServerThread server;
 
-  public InlineServerProcess(StateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager serverVerboseManager,
-                       String serverName, Path serverWorkingDir,
-                       Function<OutputStream, Object> serverStart) {
+  public InlineServer(StateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager serverVerboseManager,
+                       String serverName, Path serverInstall, Path serverWorkingDir, Properties serverProperties, OutputStream out, String[] cmd) {
     super(stateInterlock, stateManager, serverVerboseManager, serverName);
     // We need to specify a positive integer as the heap size.
+    this.serverInstall = serverInstall;
     this.serverWorkingDir = serverWorkingDir;
-    this.serverStart = serverStart;
+    this.serverProperties = serverProperties;
+    this.parentOutput = out;
+    this.cmd = cmd;
   }
 
   /**
@@ -220,7 +228,7 @@ public class InlineServerProcess extends AbstractServerProcess {
 
     public synchronized boolean initializeServer(OutputStream out) throws Exception {
       if (running) {
-        server = serverStart.apply(out);
+        server = startIsolatedServer(serverWorkingDir, serverInstall, out, cmd);
       }
       return running;
     }
@@ -234,6 +242,28 @@ public class InlineServerProcess extends AbstractServerProcess {
       } else {
         return true;
       }
+    }
+  }
+  
+  public static Object startIsolatedServer(Path serverWorking, Path server, OutputStream out, String[] cmd) {
+    if (cmd.length > 1 && cmd[0].contains("start-tc-server")) {
+      cmd = Arrays.copyOfRange(cmd, 1, cmd.length);
+    }
+    ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
+    Path tc = server.resolve("lib").resolve("tc.jar");
+    try {
+      Thread.currentThread().setContextClassLoader(null);
+      URL url = tc.toUri().toURL();
+      URL resource = serverWorking.toUri().toURL();
+      ClassLoader loader = new IsolatedClassLoader(new URL[] {resource, url}, InlineServer.class.getClassLoader());
+      Method m = Class.forName("com.tc.server.TCServerMain", true, loader).getMethod("createServer", List.class, OutputStream.class);
+      return m.invoke(null, Arrays.asList(cmd), out);
+    } catch (RuntimeException mal) {
+      throw mal;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    } finally {
+      Thread.currentThread().setContextClassLoader(oldLoader);
     }
   }
 }

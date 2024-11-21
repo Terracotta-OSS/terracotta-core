@@ -18,7 +18,7 @@ dependencies {
   implementation project(':common-spi')
   implementation project(':configuration-provider')
   implementation project(':server-spi')
-//  implementation project(':terracotta')
+  implementation project(':terracotta')
   implementation project(':common')
   implementation project(':management')
   implementation project(':build-data')
@@ -50,19 +50,12 @@ test {
     systemProperty "tc.install-root.ignore-checks", "true"
 }
 
-task copyToLib(type: Copy) {
-    into "${buildDir}/output/libs"
-    from configurations.runtimeClasspath
-}
-
-build.dependsOn(copyToLib)
-/*
 publishing {
     publications {
         maven(MavenPublication) {
             groupId = 'org.terracotta.internal'
             version = "$project.version"
-            artifactId = 'tc-server'
+            artifactId = "$project.name"
             from components.java
         }
     }
@@ -73,6 +66,3 @@ publishing {
         }
     }
 }
-
-
-*/

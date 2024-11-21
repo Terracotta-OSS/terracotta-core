@@ -11,9 +11,16 @@ base {
     archivesName = 'terracotta'
 }
 
+configurations {
+  kit
+  server
+}
+
 dependencies {
   testImplementation "junit:junit:$junitVersion"
   testImplementation "org.hamcrest:hamcrest-all:$hamcrestVersion"
+  kit files(distZip)
+  server project(":tc-server")
 }
 
 jar {
@@ -21,7 +28,7 @@ jar {
     archiveVersion = ""
     manifest {
         attributes "Main-Class" : "com.tc.server.TCServerMain", 
-                    "Class-Path" : project(":tc-server").configurations.runtimeClasspath.collect { it.getName() }.join(' ')
+                    "Class-Path" : configurations.server.collect { it.getName() }.join(' ')
     }
 }
 
@@ -50,12 +57,15 @@ distributions {
 distTar.dependsOn(jar)
 distZip.dependsOn(jar)
 
+artifacts {
+}
+
 publishing {
     publications {
         maven(MavenPublication) {
             groupId = 'org.terracotta.internal'
-            version = '$project.version'
-            artifactId = 'terracotta'
+            version = "$project.version"
+            artifactId = "$project.name"
             from components.java
         }
     }

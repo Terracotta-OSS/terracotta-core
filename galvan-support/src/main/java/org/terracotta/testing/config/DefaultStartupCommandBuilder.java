@@ -91,7 +91,7 @@ public class DefaultStartupCommandBuilder implements StartupCommandBuilder {
    * @return string representation of processed path
    */
   protected String getAbsolutePath(Path scriptPath) {
-    Path basePath =  getServerWorkingDir().resolve(getKitDir()).resolve(scriptPath).toAbsolutePath().normalize();
+    Path basePath =  getServerWorkingDir().resolve(scriptPath).toAbsolutePath().normalize();
     return isWindows() ? "\"" + basePath + ".bat\"" : basePath + ".sh";
   }
 
