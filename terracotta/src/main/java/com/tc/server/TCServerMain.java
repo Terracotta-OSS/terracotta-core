@@ -59,9 +59,9 @@ public class TCServerMain {
 
   public static Future<Boolean> createServer(List<String> args, OutputStream console) {
     try {
-      if (Files.isDirectory(Directories.getServerLibFolder())) {
-        Path serverJar = Directories.getServerJar();
-        
+      Path serverJar = Directories.getServerJar();
+
+      if (serverJar != null) {
         ClassLoader serverClassLoader = new URLClassLoader(new URL[] {serverJar.toUri().toURL()}, TCServerMain.class.getClassLoader());
 
         return ServerFactory.createServer(args, console, serverClassLoader);

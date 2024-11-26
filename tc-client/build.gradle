@@ -11,7 +11,7 @@ base {
 }
 
 jar {
-    archivesBaseName = 'tc-client'
+
 }
 
 dependencies {

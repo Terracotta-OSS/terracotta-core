@@ -16,12 +16,13 @@
  */
 package org.terracotta.testing.master;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.List;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.stream.Stream;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -52,11 +53,21 @@ public class ServerDeploymentBuilderTest {
   }
 
   /**
-   * Test of values method, of class ServerMode.
    */
   @Test
-  public void testSort() {
-    new ServerDeploymentBuilder().deploy();
+  public void testInstallPath() throws Exception {
+    Path p = Paths.get(System.getProperty("kitInstallPath")).resolve("galvan-test-server");
+    p = new ServerDeploymentBuilder().installPath(p).deploy();
+    Stream<Path> s = Files.walk(p);
+    Assert.assertTrue(s.anyMatch(w->w.getFileName().toString().equals("tc.jar")));
   }
-
+  /**
+   */
+  @Test
+  public void testTempPath() throws Exception {
+    Path p = new ServerDeploymentBuilder().deploy();
+    System.out.println("the server path " + p);
+    Stream<Path> s = Files.walk(p);
+    Assert.assertTrue(s.peek(System.out::println).anyMatch(w->w.getFileName().toString().equals("tc.jar")));
+  }
 }

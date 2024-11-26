@@ -10,15 +10,11 @@ base {
     archivesName = 'tc-server'
 }
 
-jar {
-
-}
-
 dependencies {
   implementation project(':common-spi')
   implementation project(':configuration-provider')
   implementation project(':server-spi')
-  implementation project(':terracotta')
+  implementation project(':server-bootstrap')
   implementation project(':common')
   implementation project(':management')
   implementation project(':build-data')
@@ -42,6 +38,12 @@ dependencies {
   testImplementation "com.github.stefanbirkner:system-rules:1.18.0"
   testImplementation "org.terracotta:tcconfig-schema:10.7.5"
 
+}
+
+jar {
+    manifest {
+        attributes "Class-Path" : configurations.runtimeClasspath.collect { it.getName() }.join(' ')
+    }
 }
 
 test {

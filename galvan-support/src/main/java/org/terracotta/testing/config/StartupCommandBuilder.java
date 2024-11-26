@@ -20,16 +20,17 @@ package org.terracotta.testing.config;
 import java.nio.file.Path;
 
 public interface StartupCommandBuilder {
+  StartupCommandBuilder stripeConfiguration(StripeConfiguration config);
   
   StartupCommandBuilder logConfigExtension(String logging);
+  
+  StartupCommandBuilder stripeWorkingDir(Path stripeWorkingDir);
 
   StartupCommandBuilder serverWorkingDir(Path serverWorkingDir);
 
   StartupCommandBuilder serverName(String serverName);
 
   StartupCommandBuilder stripeName(String stripeName);
-
-  StartupCommandBuilder consistentStartup(boolean consistentStartup);
 
   String[] build();
 }

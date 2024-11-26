@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.CREATE;
+import java.util.Arrays;
 import static java.util.stream.Collectors.joining;
 import static org.terracotta.testing.demos.TestHelpers.isWindows;
 
@@ -80,7 +81,6 @@ public class ServerProcess extends ServerInstance {
     UUID token = enter();
     try {
       if (!isServerRunning()) {
-        String[] command = startupCommand;
         // Now, open the log files.
         // We want to create an output log file for both STDOUT and STDERR.
         // rawOut closed by stdout
@@ -101,7 +101,7 @@ public class ServerProcess extends ServerInstance {
         String javaArguments = getJavaArguments(this.debugPort);
         // Start the inferior process.
         AnyProcess process = AnyProcess.newBuilder()
-            .command(command)
+            .command(createCommand(serverInstall, startupCommand))
             .workingDir(this.serverWorkingDir.toFile())
             .env("JAVA_HOME", javaHome)
             .env("JAVA_OPTS", javaArguments)
@@ -121,6 +121,12 @@ public class ServerProcess extends ServerInstance {
     } finally {
       exit(token);
     }
+  }
+  
+  private String createCommand(Path serverPath, String[] args) {
+    Path sjar = serverPath.resolve("tc.jar").toAbsolutePath();
+    return "java -Dtc.install-root=" + serverPath.toString() + 
+            " -jar " + sjar.toString() + " " + String.join(" ", args);
   }
 
   private synchronized void setStreams(OutputStream out, OutputStream err) {

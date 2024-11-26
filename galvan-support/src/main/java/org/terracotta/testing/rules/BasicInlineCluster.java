@@ -25,7 +25,6 @@ import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.passthrough.IClusterControl;
 import org.terracotta.testing.config.StartupCommandBuilder;
 import org.terracotta.testing.config.StripeConfiguration;
-import org.terracotta.testing.config.TcConfigBuilder;
 import org.terracotta.testing.logging.VerboseLogger;
 import org.terracotta.testing.logging.VerboseManager;
 import org.terracotta.testing.master.GalvanFailureException;
@@ -33,18 +32,13 @@ import org.terracotta.testing.master.ReadyStripe;
 import org.terracotta.testing.master.TestStateManager;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.URI;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
@@ -52,8 +46,6 @@ import static java.util.stream.Collectors.toList;
 import java.util.stream.IntStream;
 import org.terracotta.testing.common.Assert;
 
-import org.terracotta.testing.logging.ContextualLogger;
-import org.terracotta.testing.master.FileHelpers;
 import org.terracotta.testing.master.StateInterlock;
 import org.terracotta.testing.master.StripeInstaller;
 import org.terracotta.testing.support.PortTool;
@@ -67,13 +59,6 @@ class BasicInlineCluster extends Cluster {
   private final Path clusterDirectory;
   private final int stripeSize;
   private final Path server;
-  private final Set<Path> serverJars;
-  private final String namespaceFragment;
-  private final String serviceFragment;
-  private final int clientReconnectWindow;
-  private final int voterCount;
-  private final boolean consistentStart;
-  private final Properties tcProperties = new Properties();
   private final Properties systemProperties = new Properties();
   private final String logConfigExt;
   private final int serverHeapSize;
@@ -92,8 +77,7 @@ class BasicInlineCluster extends Cluster {
   private Thread shepherdingThread;
   private boolean isSafe;
 
-  BasicInlineCluster(Path clusterDirectory, int stripeSize, Path server, Set<Path> serverJars, String namespaceFragment,
-                       String serviceFragment, int clientReconnectWindow, int voterCount, boolean consistentStart, Properties tcProperties,
+  BasicInlineCluster(Path clusterDirectory, int stripeSize, Path server,
                        Properties systemProperties, String logConfigExt, int serverHeapSize, Supplier<StartupCommandBuilder> startupBuilder) {
     boolean didCreateDirectories = clusterDirectory.toFile().mkdirs();
     if (Files.exists(clusterDirectory)) {
@@ -106,14 +90,7 @@ class BasicInlineCluster extends Cluster {
 
     this.clusterDirectory = clusterDirectory;
     this.stripeSize = stripeSize;
-    this.namespaceFragment = namespaceFragment;
-    this.serviceFragment = serviceFragment;
     this.server = server;
-    this.serverJars = serverJars;
-    this.clientReconnectWindow = clientReconnectWindow;
-    this.voterCount = voterCount;
-    this.consistentStart = consistentStart;
-    this.tcProperties.putAll(tcProperties);
     this.systemProperties.putAll(systemProperties);
     this.logConfigExt = logConfigExt;
     this.serverHeapSize = serverHeapSize;
@@ -183,7 +160,6 @@ class BasicInlineCluster extends Cluster {
     VerboseManager verboseManager = new VerboseManager("", harnessLogger, fileHelpersLogger, clientLogger, serverLogger);
     VerboseManager displayVerboseManager = verboseManager.createComponentManager("[" + displayName + "]");
 
-    Path kitDir;
     File testParentDir = File.createTempFile(displayName, "", clusterDirectory.toFile());
     testParentDir.delete();
     testParentDir.mkdir();
@@ -215,9 +191,6 @@ class BasicInlineCluster extends Cluster {
 
     VerboseManager stripeVerboseManager = displayVerboseManager.createComponentManager("[" + stripeName + "]");
 
-    Path tcConfig = createTcConfig(serverNames, serverPorts, serverGroupPorts, stripeInstallationDir);
-    Path kitLocation = installKit(stripeVerboseManager, kitDir, serverJars, stripeInstallationDir);
-
     StripeConfiguration stripeConfig = new StripeConfiguration(serverDebugPorts, serverPorts, serverGroupPorts, serverNames,
         stripeName, serverHeapSize, logConfigExt, systemProperties);
     StripeInstaller stripeInstaller = new StripeInstaller(interlock, stateManager, true, stripeVerboseManager);
@@ -229,13 +202,14 @@ class BasicInlineCluster extends Cluster {
       StartupCommandBuilder builder = startupBuilder.get()
           .serverName(serverName)
           .stripeName(stripeName)
+          .stripeConfiguration(stripeConfig)
+          .stripeWorkingDir(stripeInstallationDir)
           .serverWorkingDir(serverWorkingDir)
-          .logConfigExtension(logConfigExt)
-          .consistentStartup(consistentStart);      
+          .logConfigExtension(logConfigExt);
 
       String[] cmd = builder.build();
 
-      stripeInstaller.installNewServer(serverName, kitLocation, serverWorkingDir, -1, null, cmd);
+      stripeInstaller.installNewServer(serverName, server, serverWorkingDir, -1, null, cmd);
     }
 
     cluster = ReadyStripe.configureAndStartStripe(interlock, stripeVerboseManager, stripeConfig, stripeInstaller);
@@ -290,35 +264,6 @@ class BasicInlineCluster extends Cluster {
     this.shepherdingThread.setName("Shepherding Thread");
     this.shepherdingThread.start();
     waitForSafe();
-  }
-
-  private Path relativize(Path root, Path other) {
-    return root.toAbsolutePath().relativize(other.toAbsolutePath());
-  }
-
-  private Path createTcConfig(List<String> serverNames, List<Integer> serverPorts, List<Integer> serverGroupPorts,
-                              Path stripeInstallationDir) {
-    TcConfigBuilder configBuilder = new TcConfigBuilder(stripeInstallationDir, serverNames, serverPorts, serverGroupPorts, tcProperties,
-        namespaceFragment, serviceFragment, clientReconnectWindow, voterCount);
-    String tcConfig = configBuilder.build();
-    try {
-      Path tcConfigPath = Files.createFile(stripeInstallationDir.resolve("tc-config.xml"));
-      Files.write(tcConfigPath, tcConfig.getBytes(UTF_8));
-      return tcConfigPath;
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  private Path installKit(VerboseManager logger, Path srcKit, Set<Path> extraJars, Path stripeInstall) throws IOException {
-    if (extraJars.isEmpty()) {
-      return srcKit;
-    } else {
-      ContextualLogger clogger = logger.createFileHelpersLogger();
-      Path stripeKit = FileHelpers.createTempCopyOfDirectory(clogger, stripeInstall, "installedKit", srcKit);
-      FileHelpers.copyJarsToServer(clogger, stripeKit, extraJars);
-      return stripeKit;
-    }
   }
 
   public void manualStop() {

@@ -18,6 +18,7 @@
 package org.terracotta.functional;
 
 import java.net.InetSocketAddress;
+import java.nio.file.Paths;
 import java.util.Properties;
 import static org.junit.Assert.fail;
 
@@ -37,6 +38,7 @@ public class DiagnosticFunctionIT {
 
   @Rule
   public final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(1).withClientReconnectWindowTime(30)
+          .withServerPlugin(null, Paths.get(System.getProperty("configuration.plugin")))
       .build();
 
   @Test

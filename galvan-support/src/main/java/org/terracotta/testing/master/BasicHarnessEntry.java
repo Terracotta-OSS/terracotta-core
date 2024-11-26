@@ -87,16 +87,17 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     for (int i = 0; i < stripeSize; ++i) {
       String serverName = stripeConfig.getServerNames().get(i);
       Path serverWorkingDir = stripeInstallationDir.resolve(serverName);
-      Path tcConfigRelative = relativize(serverWorkingDir, tcConfig);
       Path kitLocationRelative = relativize(serverWorkingDir, harnessOptions.kitOriginPath);
       // Determine if we want a debug port.
       int debugPort = stripeConfig.getServerDebugPorts().get(i);
       StartupCommandBuilder builder = new DefaultStartupCommandBuilder()
+          .stripeConfiguration(stripeConfig)
           .serverName(serverName)
           .stripeName(stripeName)
+          .stripeConfiguration(stripeConfig)
+          .stripeWorkingDir(stripeInstallationDir)
           .serverWorkingDir(serverWorkingDir)
-          .logConfigExtension("logback-ext.xml")
-          .consistentStartup(false);
+          .logConfigExtension("logback-ext.xml");
 
       stripeInstaller.installNewServer(serverName, kitLocationRelative, serverWorkingDir, debugPort, null, builder.build());
     }

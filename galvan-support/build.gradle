@@ -11,7 +11,11 @@ base {
 }
 
 jar {
-    archivesBaseName = 'galvan-support'
+
+}
+
+configurations {
+    pluginImpl
 }
 
 dependencies {
@@ -24,13 +28,26 @@ dependencies {
     implementation project(':common-spi')
     implementation project(':tc-client')
     implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
-    implementation project(':tc-server')
+//    implementation project(':tc-server')
     implementation "org.terracotta:standard-cluster-services:$terracottaApisVersion"
     implementation project(':server-spi')
-    implementation project(':terracotta')
+//    implementation project(':terracotta')
     testImplementation "ch.qos.logback:logback-classic:$logbackVersion"
     implementation project(':examples:clustered-map:client')
+
+    pluginImpl project(":default-configuration")
 }
+
+test {
+    systemProperty "configuration.plugin", layout.buildDirectory.dir("plugin/impl").get().toString()
+}
+
+task copyPlugins(type: Copy) {
+    from (configurations.pluginImpl)
+    into layout.buildDirectory.dir("plugin/impl")
+}
+
+compileTestJava.dependsOn(copyPlugins)
 
 publishing {
     publications {

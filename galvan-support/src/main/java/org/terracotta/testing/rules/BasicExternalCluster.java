@@ -25,7 +25,6 @@ import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.passthrough.IClusterControl;
 import org.terracotta.testing.config.StartupCommandBuilder;
 import org.terracotta.testing.config.StripeConfiguration;
-import org.terracotta.testing.config.TcConfigBuilder;
 import org.terracotta.testing.logging.VerboseLogger;
 import org.terracotta.testing.logging.VerboseManager;
 import org.terracotta.testing.master.GalvanFailureException;
@@ -34,30 +33,19 @@ import org.terracotta.testing.master.StripeInstaller;
 import org.terracotta.testing.master.TestStateManager;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
-import java.lang.reflect.Method;
 import java.net.URI;
-import java.net.URL;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 import static java.util.stream.Collectors.toList;
 import java.util.stream.IntStream;
 import org.terracotta.testing.common.Assert;
-import org.terracotta.testing.logging.ContextualLogger;
-import org.terracotta.testing.master.FileHelpers;
 import org.terracotta.testing.master.StateInterlock;
 import org.terracotta.testing.support.PortTool;
 import org.terracotta.utilities.test.net.PortManager;
@@ -70,13 +58,6 @@ class BasicExternalCluster extends Cluster {
   private final Path clusterDirectory;
   private final int stripeSize;
   private final Path server;
-  private final Set<Path> serverJars;
-  private final String namespaceFragment;
-  private final String serviceFragment;
-  private final int clientReconnectWindow;
-  private final int voterCount;
-  private final boolean consistentStart;
-  private final Properties tcProperties = new Properties();
   private final Properties systemProperties = new Properties();
   private final String logConfigExt;
   private final int serverHeapSize;
@@ -94,9 +75,8 @@ class BasicExternalCluster extends Cluster {
   private Thread shepherdingThread;
   private boolean isSafe;
 
-  BasicExternalCluster(Path clusterDirectory, int stripeSize, Path server, Set<Path> serverJars, String namespaceFragment,
-                       String serviceFragment, int clientReconnectWindow, int voterCount, boolean consistentStart, Properties tcProperties,
-                       Properties systemProperties, String logConfigExt, int serverHeapSize, Supplier<StartupCommandBuilder> startupBuilder) {
+  BasicExternalCluster(Path clusterDirectory, int stripeSize, Path server,
+      Properties systemProperties, String logConfigExt, int serverHeapSize, Supplier<StartupCommandBuilder> startupBuilder) {
     boolean didCreateDirectories = clusterDirectory.toFile().mkdirs();
     if (Files.exists(clusterDirectory)) {
       if (Files.isRegularFile(clusterDirectory)) {
@@ -108,14 +88,7 @@ class BasicExternalCluster extends Cluster {
 
     this.clusterDirectory = clusterDirectory;
     this.stripeSize = stripeSize;
-    this.namespaceFragment = namespaceFragment;
-    this.serviceFragment = serviceFragment;
     this.server = server;
-    this.serverJars = serverJars;
-    this.clientReconnectWindow = clientReconnectWindow;
-    this.voterCount = voterCount;
-    this.consistentStart = consistentStart;
-    this.tcProperties.putAll(tcProperties);
     this.systemProperties.putAll(systemProperties);
     this.logConfigExt = logConfigExt;
     this.serverHeapSize = serverHeapSize;
@@ -185,9 +158,6 @@ class BasicExternalCluster extends Cluster {
     VerboseManager verboseManager = new VerboseManager("", harnessLogger, fileHelpersLogger, clientLogger, serverLogger);
     VerboseManager displayVerboseManager = verboseManager.createComponentManager("[" + displayName + "]");
 
-    String kitInstallationPath = System.getProperty("kitInstallationPath");
-    harnessLogger.output("Using kitInstallationPath: \"" + kitInstallationPath + "\"");
-    Path kitDir = Paths.get(kitInstallationPath);
     File testParentDir = File.createTempFile(displayName, "", clusterDirectory.toFile());
     testParentDir.delete();
     testParentDir.mkdir();
@@ -220,9 +190,6 @@ class BasicExternalCluster extends Cluster {
 
     VerboseManager stripeVerboseManager = displayVerboseManager.createComponentManager("[" + stripeName + "]");
 
-    Path tcConfig = createTcConfig(serverNames, serverPorts, serverGroupPorts, stripeInstallationDir);
-    Path kitLocation = installKit(stripeVerboseManager, kitDir, serverJars, stripeInstallationDir);
-
     StripeConfiguration stripeConfig = new StripeConfiguration(serverDebugPorts, serverPorts, serverGroupPorts, serverNames,
         stripeName, serverHeapSize, logConfigExt, systemProperties);
     StripeInstaller stripeInstaller = new StripeInstaller(interlock, stateManager, false, stripeVerboseManager);
@@ -230,19 +197,19 @@ class BasicExternalCluster extends Cluster {
     for (int i = 0; i < stripeSize; ++i) {
       String serverName = serverNames.get(i);
       Path serverWorkingDir = stripeInstallationDir.resolve(serverName);
-      Path tcConfigRelative = relativize(serverWorkingDir, tcConfig);
-      Path kitLocationRelative = relativize(serverWorkingDir, kitLocation);
       // Determine if we want a debug port.
       int debugPort = stripeConfig.getServerDebugPorts().get(i);
 
       StartupCommandBuilder builder = startupBuilder.get()
+          .stripeConfiguration(stripeConfig)
           .serverName(serverName)
           .stripeName(stripeName)
+          .stripeConfiguration(stripeConfig)
+          .stripeWorkingDir(stripeInstallationDir)
           .serverWorkingDir(serverWorkingDir)
-          .logConfigExtension(logConfigExt)
-          .consistentStartup(consistentStart);      
+          .logConfigExtension(logConfigExt);
 
-      stripeInstaller.installNewServer(serverName, kitLocationRelative, serverWorkingDir, debugPort, null, builder.build());
+      stripeInstaller.installNewServer(serverName, server, serverWorkingDir, debugPort, null, builder.build());
     }
 
     cluster = ReadyStripe.configureAndStartStripe(interlock, stripeVerboseManager, stripeConfig, stripeInstaller);
@@ -297,35 +264,6 @@ class BasicExternalCluster extends Cluster {
     this.shepherdingThread.setName("Shepherding Thread");
     this.shepherdingThread.start();
     waitForSafe();
-  }
-
-  private Path relativize(Path root, Path other) {
-    return root.toAbsolutePath().relativize(other.toAbsolutePath());
-  }
-
-  private Path createTcConfig(List<String> serverNames, List<Integer> serverPorts, List<Integer> serverGroupPorts,
-                              Path stripeInstallationDir) {
-    TcConfigBuilder configBuilder = new TcConfigBuilder(stripeInstallationDir, serverNames, serverPorts, serverGroupPorts, tcProperties,
-        namespaceFragment, serviceFragment, clientReconnectWindow, voterCount);
-    String tcConfig = configBuilder.build();
-    try {
-      Path tcConfigPath = Files.createFile(stripeInstallationDir.resolve("tc-config.xml"));
-      Files.write(tcConfigPath, tcConfig.getBytes(UTF_8));
-      return tcConfigPath;
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  private Path installKit(VerboseManager logger, Path srcKit, Set<Path> extraJars, Path stripeInstall) throws IOException {
-    if (extraJars.isEmpty()) {
-      return srcKit;
-    } else {
-      ContextualLogger clogger = logger.createFileHelpersLogger();
-      Path stripeKit = FileHelpers.createTempCopyOfDirectory(clogger, stripeInstall, "installedKit", srcKit);
-      FileHelpers.copyJarsToServer(clogger, stripeKit, extraJars);
-      return stripeKit;
-    }
   }
 
   public void manualStop() {
@@ -448,24 +386,5 @@ class BasicExternalCluster extends Cluster {
   @Override
   public void expectCrashes(boolean yes) {
     interlock.ignoreServerCrashes(yes);
-  }
-  
-  static Object startScriptedServer(Path serverWorking, OutputStream out, String[] cmd) {
-    ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
-    Path tc = Paths.get(System.getProperty("tc.install-root"), "lib", "tc.jar");
-    try {
-      Thread.currentThread().setContextClassLoader(null);
-      URL url = tc.toUri().toURL();
-      URL resource = serverWorking.toUri().toURL();
-      ClassLoader loader = new IsolatedClassLoader(new URL[] {resource, url}, BasicInlineCluster.class.getClassLoader());
-      Method m = Class.forName("com.tc.server.TCServerMain", true, loader).getMethod("createServer", List.class, OutputStream.class);
-      return m.invoke(null, Arrays.asList(cmd), out);
-    } catch (RuntimeException mal) {
-      throw mal;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    } finally {
-      Thread.currentThread().setContextClassLoader(oldLoader);
-    }
   }
 }

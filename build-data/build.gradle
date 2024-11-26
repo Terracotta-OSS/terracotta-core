@@ -6,7 +6,6 @@ import static java.time.Instant.now
 
 plugins {
   id 'java-library'
-  id 'maven-publish'
 }
 
 description = 'terracotta-core build data info'
@@ -16,7 +15,7 @@ base {
 }
 
 jar {
-    archivesBaseName = 'build-data'
+
 }
 
 dependencies {
@@ -30,21 +29,12 @@ def buildProperties = [
         branch : "Unknown"
 ]
 
-publishing {
-    publications {
-        maven(MavenPublication) {
-            groupId = 'org.terracotta.internal'
-            version = "$project.version"
-            artifactId = "$project.name"
-            from components.java
-        }
-    }
-    repositories {
-        maven {
-            name = ''
-            url = ''
-        }
-    }
+task writeBuildInfo() {
+    File f = layout.buildDirectory.file("resources/main/build-data.txt").get().getAsFile()
+    f.write("terracotta.build.version=${buildProperties.version}\n")
+    f.append("terracotta.build.revision=${buildProperties.revision}\n")
+    f.append("terracotta.build.timestamp=${buildProperties.timestamp}\n")
+    f.append("terracotta.build.branch=${buildProperties.branch}\n")
 }
 
-
+jar.dependsOn(writeBuildInfo)

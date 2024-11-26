@@ -56,6 +56,10 @@ task copyServer(type: Copy) {
     }
 }
 
+test {
+    systemProperty "kitInstallPath", layout.buildDirectory.get().toString()
+}
+
 copyServer.dependsOn(distZip)
 compileJava.dependsOn(copyServer)
 

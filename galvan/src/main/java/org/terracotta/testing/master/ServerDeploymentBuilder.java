@@ -34,6 +34,7 @@ import java.util.zip.ZipInputStream;
 public class ServerDeploymentBuilder {
   private Path installPath;
   private List<Plugin> plugins = new ArrayList<>();
+  private boolean refresh = false;
   
   public ServerDeploymentBuilder() {
     
@@ -49,18 +50,42 @@ public class ServerDeploymentBuilder {
     return this;
   }
   
+  private static boolean delete(Path f) {
+    try {
+      if (Files.isDirectory(f)) {
+        Files.list(f).forEach(ServerDeploymentBuilder::delete);
+      }
+      Files.delete(f);
+      return true;
+    } catch (IOException io) {
+      return false;
+    }
+  }
+  
+  private void insureInstallPath() {
+    if (installPath == null) {
+      try {
+        installPath = Files.createTempDirectory("tcserver");
+      } catch (IOException ioe) {
+        throw new RuntimeException(ioe);
+      }
+    }
+  }
+  
   public Path deploy() {
+    insureInstallPath();
     try (InputStream is = ServerDeploymentBuilder.class.getResourceAsStream("/galvan-test-server.zip")) {
-      System.out.println("pwd " + Paths.get(".").toAbsolutePath());
-      System.out.println("pwd " + System.getProperty("user.dir"));
       ZipInputStream zip = new ZipInputStream(is);
       ZipEntry e = zip.getNextEntry();
+      if (refresh && Files.exists(installPath)) {
+        delete(installPath);
+      }
+      Files.createDirectories(installPath);
       while (e != null) {
         //System.out.println(e.getName() + " " + e.getSize() + " " + e.isDirectory());
         if (!e.isDirectory()) {
           Path p = Paths.get(e.getName()).getFileName();
-          System.out.println(p);
-          try (OutputStream out = Files.newOutputStream(p, StandardOpenOption.CREATE, StandardOpenOption.CREATE)) {
+          try (OutputStream out = Files.newOutputStream(installPath.resolve(p), StandardOpenOption.CREATE)) {
             long len = e.getSize();
             long count = 0;
             while (len > count) {
@@ -71,10 +96,25 @@ public class ServerDeploymentBuilder {
         }
         e = zip.getNextEntry();
       }
-    } catch (IOException io) {
       
+      Path api = Files.createDirectories(installPath.resolve("plugins").resolve("api"));
+      Path lib = Files.createDirectories(installPath.resolve("plugins").resolve("lib"));
+      for (Plugin p : plugins) {
+        if (p.api != null) Files.list(p.api).forEach(s->copy(s, api));
+        if (p.impl != null) Files.list(p.impl).forEach(s->copy(s, lib));
+      }
+    } catch (IOException io) {
+      throw new RuntimeException(io);
     }
-    return null;
+    return installPath;
+  }
+  
+  public static void copy(Path s, Path d) {
+    try {
+      Files.copy(s, d.resolve(s.getFileName()));
+    } catch (IOException io) {
+      throw new RuntimeException(io);
+    }
   }
   
   public static void main(String[] args) {
@@ -89,6 +129,5 @@ public class ServerDeploymentBuilder {
       this.api = api;
       this.impl = impl;
     }
-    
   }
 }
