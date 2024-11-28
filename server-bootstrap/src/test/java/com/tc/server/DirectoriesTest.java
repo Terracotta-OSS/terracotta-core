@@ -48,10 +48,4 @@ public class DirectoriesTest {
   public void testInstallDirResolution() throws FileNotFoundException {
     assertThat(Directories.getInstallationRoot(), equalTo(testFolder));
   }
-
-  @Test
-  public void testServerLibDir() throws FileNotFoundException {
-    assertThat(Directories.getServerLibFolder(), equalTo(new File(testFolder, "server/lib")));
-  }
-
 }

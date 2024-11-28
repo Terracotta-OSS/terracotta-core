@@ -36,10 +36,10 @@ import static org.terracotta.testing.master.ServerMode.ACTIVE;
 
 
 public abstract class ServerInstance implements IGalvanServer {
-  protected final StateInterlock stateInterlock;
-  protected final ITestStateManager stateManager;
+  protected StateInterlock stateInterlock;
+  protected ITestStateManager stateManager;
 //  protected final ContextualLogger harnessLogger;
-  protected final ContextualLogger serverLogger;
+  protected ContextualLogger serverLogger;
   protected final String serverName;
   // make sure only one caller is messing around on the process
   private final Semaphore oneUser = new Semaphore(1);
@@ -52,11 +52,14 @@ public abstract class ServerInstance implements IGalvanServer {
 
   private ServerMode currentState = ServerMode.TERMINATED;
 
-  public ServerInstance(StateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager logging, String serverName) {
+  public ServerInstance(String serverName) {
+    this.serverName = serverName;
+  }
+  
+  public void installIntoStripe(StateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager logging) {
     this.stateInterlock = stateInterlock;
     this.stateManager = stateManager;
     this.serverLogger = logging.createServerLogger();
-    this.serverName = serverName;
     this.stateInterlock.registerNewServer(this);
   }
 

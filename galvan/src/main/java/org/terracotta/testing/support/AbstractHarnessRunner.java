@@ -31,6 +31,7 @@ import org.terracotta.testing.logging.VerboseManager;
 import org.terracotta.testing.master.DebugOptions;
 import org.terracotta.testing.master.EnvironmentOptions;
 import org.terracotta.testing.master.GalvanFailureException;
+import org.terracotta.testing.master.ServerDeploymentBuilder;
 
 
 public abstract class AbstractHarnessRunner<C extends ITestClusterConfiguration> extends Runner {
@@ -54,8 +55,15 @@ public abstract class AbstractHarnessRunner<C extends ITestClusterConfiguration>
     notifier.fireTestStarted(testDescription);
     
     // Get the system properties we require.
-    String allTestParentDirectory = System.getProperty("kitTestDirectory");
+    String allTestParentDirectory = System.getProperty("galvan.dir");
     Assert.assertNotNull(allTestParentDirectory);
+    
+    ServerDeploymentBuilder deploy = new ServerDeploymentBuilder();
+    String kitPath = System.getProperty("galvan.server");
+    if (kitPath != null) {
+      deploy.installPath(Paths.get(kitPath));
+    }
+    
     String thisTestName = this.testCase.getName();
     // For some reason, this test name is sometimes null (part of Surefire so doesn't provide much data and can't really be
     //  debugged).
@@ -65,7 +73,7 @@ public abstract class AbstractHarnessRunner<C extends ITestClusterConfiguration>
     Assert.assertNotNull(thisTestName);
     EnvironmentOptions environmentOptions = new EnvironmentOptions();
     environmentOptions.clientClassPath = System.getProperty("java.class.path");
-    environmentOptions.serverInstallDirectory = Paths.get(System.getProperty("kitInstallationPath"));
+    environmentOptions.serverInstallDirectory = deploy.deploy();
     environmentOptions.testParentDirectory = Paths.get(allTestParentDirectory).resolve(thisTestName);
     Assert.assertTrue(environmentOptions.isValid());
     

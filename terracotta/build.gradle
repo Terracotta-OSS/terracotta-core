@@ -17,7 +17,7 @@ configurations {
 dependencies {
   testImplementation "junit:junit:$junitVersion"
   testImplementation "org.hamcrest:hamcrest-all:$hamcrestVersion"
-  implementation project(':server-bootstrap')
+  api project(':server-bootstrap')
 }
 
 jar {

@@ -79,15 +79,21 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     VerboseManager stripeVerboseManager = verboseManager.createComponentManager("[" + stripeName + "]");
 
     StripeConfiguration stripeConfig = new StripeConfiguration(serverDebugPorts, serverPorts, serverGroupPorts, serverNames,
-        stripeName, DEFAULT_SERVER_HEAP_MB, "logback-ext.xml", harnessOptions.serverProperties);
+        stripeName, "logback-ext.xml", harnessOptions.serverProperties);
+    
+    int serverHeapSize = DEFAULT_SERVER_HEAP_MB;
+    
     TestStateManager stateManager = new TestStateManager();
     StateInterlock interlock = new StateInterlock(verboseManager.createComponentManager("[Interlock]").createHarnessLogger(), stateManager);
-    StripeInstaller stripeInstaller = new StripeInstaller(interlock, stateManager, false, stripeVerboseManager);
+    StripeInstaller stripeInstaller = new StripeInstaller(interlock, stateManager, stripeVerboseManager);
     // Configure and install each server in the stripe.
     for (int i = 0; i < stripeSize; ++i) {
       String serverName = stripeConfig.getServerNames().get(i);
       Path serverWorkingDir = stripeInstallationDir.resolve(serverName);
-      Path kitLocationRelative = relativize(serverWorkingDir, harnessOptions.kitOriginPath);
+      Path kitLocation = harnessOptions.kitOriginPath;
+      Path kitLocationRelative = relativize(serverWorkingDir, kitLocation);
+      System.out.println("working: " + serverWorkingDir + "\nkitLocation: " + kitLocation +
+              "\nkitLocationRelative:" + kitLocationRelative);
       // Determine if we want a debug port.
       int debugPort = stripeConfig.getServerDebugPorts().get(i);
       StartupCommandBuilder builder = new DefaultStartupCommandBuilder()
@@ -99,7 +105,12 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
           .serverWorkingDir(serverWorkingDir)
           .logConfigExtension("logback-ext.xml");
 
-      stripeInstaller.installNewServer(serverName, kitLocationRelative, serverWorkingDir, debugPort, null, builder.build());
+      ServerInstance serverProcess = serverHeapSize > 0 ?
+        new ServerProcess(serverName, kitLocation, serverWorkingDir, serverHeapSize, debugPort, harnessOptions.serverProperties, null, builder.build())
+              : 
+        new InlineServer(serverName, kitLocation, serverWorkingDir, harnessOptions.serverProperties, null, builder.build());               
+
+      stripeInstaller.installNewServer(serverProcess);
     }
     ReadyStripe oneStripe = ReadyStripe.configureAndStartStripe(interlock, verboseManager, stripeConfig, stripeInstaller);
     // We just want to unwrap this, directly.

@@ -23,6 +23,8 @@ def serverDistribution = project(":terracotta").getLayout().getBuildDirectory().
 
 dependencies {
     api project(":test-interfaces")
+    implementation project(":terracotta")
+    implementation project(":server-bootstrap")
     implementation "org.terracotta:ipc-eventbus:1.1.4"
     implementation "org.terracotta:terracotta-utilities-port-chooser:0.0.19"
     implementation "junit:junit:$junitVersion"
@@ -57,7 +59,7 @@ task copyServer(type: Copy) {
 }
 
 test {
-    systemProperty "kitInstallPath", layout.buildDirectory.get().toString()
+    systemProperty "kitInstallPath", layout.buildDirectory.dir("galvan-default").get().toString()
 }
 
 copyServer.dependsOn(distZip)

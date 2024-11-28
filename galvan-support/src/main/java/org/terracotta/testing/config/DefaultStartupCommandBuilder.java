@@ -26,7 +26,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.stream.Stream;
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_CLIENT_RECONNECT_WINDOW;
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_VOTER_COUNT;
 import static org.terracotta.testing.demos.TestHelpers.isWindows;
@@ -46,7 +51,6 @@ public class DefaultStartupCommandBuilder implements StartupCommandBuilder, Clon
   private int failoverPriorityVoterCount = DEFAULT_VOTER_COUNT;
   
   private final Properties tcProperties = new Properties();
-  private Properties systemProperties = new Properties();
 
   public DefaultStartupCommandBuilder() {
   }
@@ -169,7 +173,13 @@ public class DefaultStartupCommandBuilder implements StartupCommandBuilder, Clon
     if (builtCommand == null) {
       try {
         Path config = installServer();
-        builtCommand = new String[]{"-f", config.toString(), "-n", serverName, "JAVA_OPTS=-Dlogback.configurationFile=logback-test.xml"};
+        List<String> args = new ArrayList<>();
+
+        args.add("-f");
+        args.add(config.toString());
+        args.add("-n");
+        args.add(serverName);
+        builtCommand = args.toArray(String[]::new);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }

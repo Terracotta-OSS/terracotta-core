@@ -15,7 +15,7 @@ jar {
 }
 
 dependencies {
-    implementation "org.terracotta:connection-api:$terracottaApisVersion"
+//    implementation "org.terracotta:connection-api:$terracottaApisVersion"
     implementation "org.terracotta:entity-common-api:$terracottaApisVersion"
     compileOnly "com.google.code.findbugs:annotations:3.0.1"
 }

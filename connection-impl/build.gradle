@@ -20,7 +20,7 @@ dependencies {
     implementation project(':common-spi')
     implementation project(':common')
     implementation "org.terracotta:entity-client-api:$terracottaApisVersion"
-    implementation "org.terracotta:connection-api:$terracottaApisVersion"
+    api "org.terracotta:connection-api:$terracottaApisVersion"
 
     testImplementation "org.mockito:mockito-core:$mockitoVersion"
     testImplementation "junit:junit:$junitVersion"

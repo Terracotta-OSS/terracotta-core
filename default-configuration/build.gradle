@@ -19,17 +19,24 @@ configurations {
 }
 
 dependencies {
-    compileOnly project(":common-spi")
     implementation "org.terracotta.internal:tc-config-parser:10.7.5"
     implementation "org.terracotta:tcconfig-schema:10.7.5"
     implementation "commons-cli:commons-cli:1.3.1"
+
+    compileOnly project(":common-spi")
     compileOnly project(":configuration-provider")
     compileOnly project(":server-bootstrap")
-    testImplementation project(":tc-server")
-    testImplementation project(":common")
     compileOnly "org.terracotta:standard-cluster-services:1.9.1"
     compileOnly "org.slf4j:slf4j-api:$slf4jVersion"
 
+    testImplementation project(":common-spi")
+    testImplementation "org.slf4j:slf4j-api:$slf4jVersion"
+    testImplementation "org.terracotta:standard-cluster-services:1.9.1"
+    testImplementation "jakarta.xml.bind:jakarta.xml.bind-api:2.3.3"
+    testImplementation project(":configuration-provider")
+    testImplementation project(":server-bootstrap")
+    testImplementation project(":tc-server")
+    testImplementation project(":common")
     testImplementation "junit:junit:$junitVersion"
     testImplementation "org.mockito:mockito-core:$mockitoVersion"
     testImplementation "com.github.stefanbirkner:system-rules:1.18.0"

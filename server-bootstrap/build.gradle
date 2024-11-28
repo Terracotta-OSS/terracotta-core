@@ -1,0 +1,22 @@
+
+plugins {
+    id 'java-library'
+}
+
+description = 'terracotta-core terracotta server bootstrap'
+
+base {
+    archivesName = 'server-bootstrap'
+}
+
+dependencies {
+  testImplementation "junit:junit:$junitVersion"
+  testImplementation "org.hamcrest:hamcrest-all:$hamcrestVersion"
+}
+
+jar {
+
+}
+
+
+

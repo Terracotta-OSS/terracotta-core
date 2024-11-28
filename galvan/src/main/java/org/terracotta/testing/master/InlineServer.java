@@ -17,7 +17,6 @@
 package org.terracotta.testing.master;
 
 import org.terracotta.testing.common.Assert;
-import org.terracotta.testing.logging.VerboseManager;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -35,6 +34,7 @@ import java.util.Properties;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.testing.logging.VerboseOutputStream;
 
 
 
@@ -48,9 +48,8 @@ public class InlineServer extends ServerInstance {
   
   private ServerThread server;
 
-  public InlineServer(StateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager serverVerboseManager,
-                       String serverName, Path serverInstall, Path serverWorkingDir, Properties serverProperties, OutputStream out, String[] cmd) {
-    super(stateInterlock, stateManager, serverVerboseManager, serverName);
+  public InlineServer(String serverName, Path serverInstall, Path serverWorkingDir, Properties serverProperties, OutputStream out, String[] cmd) {
+    super(serverName);
     // We need to specify a positive integer as the heap size.
     this.serverInstall = serverInstall;
     this.serverWorkingDir = serverWorkingDir;
@@ -205,7 +204,8 @@ public class InlineServer extends ServerInstance {
     public void run() {
       boolean returnValue = true;
       while (returnValue) {
-        try (OutputStream stdout = Files.newOutputStream(serverWorkingDir.resolve("stdout.txt"), CREATE, APPEND)) {
+        try (OutputStream rawOut = Files.newOutputStream(serverWorkingDir.resolve("stdout.txt"), CREATE, APPEND)) {
+          VerboseOutputStream stdout = new VerboseOutputStream(rawOut, serverLogger, false);
           try (OutputStream events = buildEventingStream(stdout)) {
             if (initializeServer(events)) {
               serverLogger.output("starting server");
@@ -218,6 +218,7 @@ public class InlineServer extends ServerInstance {
           } catch (Exception e) {
             serverLogger.output("server process exit. error:" + e.getMessage());
             didTerminateWithException(e);
+            returnValue = false;
           }
         } catch (IOException io) {
           LOGGER.warn("error", io);
@@ -246,11 +247,8 @@ public class InlineServer extends ServerInstance {
   }
   
   public static Object startIsolatedServer(Path serverWorking, Path server, OutputStream out, String[] cmd) {
-    if (cmd.length > 1 && cmd[0].contains("start-tc-server")) {
-      cmd = Arrays.copyOfRange(cmd, 1, cmd.length);
-    }
     ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
-    Path tc = server.resolve("lib").resolve("tc.jar");
+    Path tc = server.resolve("tc.jar");
     try {
       Thread.currentThread().setContextClassLoader(null);
       URL url = tc.toUri().toURL();

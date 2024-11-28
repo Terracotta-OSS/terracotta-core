@@ -20,31 +20,34 @@ configurations {
 
 dependencies {
     implementation "junit:junit:$junitVersion"
-    implementation "org.terracotta:connection-api:$terracottaApisVersion"
     implementation project(":galvan")
     implementation project(":test-interfaces")
     implementation "org.terracotta:terracotta-utilities-port-chooser:0.0.19"
     implementation project(':common')
     implementation project(':common-spi')
-    implementation project(':tc-client')
     implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
-//    implementation project(':tc-server')
     implementation "org.terracotta:standard-cluster-services:$terracottaApisVersion"
     implementation project(':server-spi')
-//    implementation project(':terracotta')
+
+    testCompileOnly project(':tc-client')
     testImplementation "ch.qos.logback:logback-classic:$logbackVersion"
     implementation project(':examples:clustered-map:client')
+    implementation project(':connection-impl')
 
     pluginImpl project(":default-configuration")
+    pluginImpl project(":examples:extended-server")
 }
 
 test {
-    systemProperty "configuration.plugin", layout.buildDirectory.dir("plugin/impl").get().toString()
+    systemProperty "galvan.plugin", layout.buildDirectory.dir("plugin").get().toString()
+    systemProperty "galvan.dir", layout.buildDirectory.dir("galvan").get().toString()
+    systemProperty "kitInstallationPath", layout.buildDirectory.dir("tmp/tcserver").get().toString()
+    systemProperty "galvan.server", layout.buildDirectory.dir("tmp/tcserver").get().toString()
 }
 
 task copyPlugins(type: Copy) {
     from (configurations.pluginImpl)
-    into layout.buildDirectory.dir("plugin/impl")
+    into layout.buildDirectory.dir("plugin/lib")
 }
 
 compileTestJava.dependsOn(copyPlugins)

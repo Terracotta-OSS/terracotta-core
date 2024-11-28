@@ -10,14 +10,14 @@ base {
     archivesName = 'client-runtime'
 }
 
-jar {
-
+dependencies {
+    implementation project(':connection-impl')
 }
 
-dependencies {
-    implementation "org.terracotta:connection-api:$terracottaApisVersion"
-    implementation project(':tc-client')
-    implementation project(':connection-impl')
+jar {
+    manifest {
+        attributes "Class-Path" : configurations.runtimeClasspath.collect { it.getName() }.join(' ')
+    }
 }
 
 publishing {

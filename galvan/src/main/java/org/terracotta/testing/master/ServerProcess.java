@@ -18,7 +18,6 @@ package org.terracotta.testing.master;
 
 import org.terracotta.ipceventbus.proc.AnyProcess;
 import org.terracotta.testing.common.Assert;
-import org.terracotta.testing.logging.VerboseManager;
 import org.terracotta.testing.logging.VerboseOutputStream;
 
 import java.io.BufferedReader;
@@ -27,14 +26,16 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import static java.nio.file.StandardOpenOption.APPEND;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.CREATE;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Arrays;
-import static java.util.stream.Collectors.joining;
+import java.util.function.Supplier;
 import static org.terracotta.testing.demos.TestHelpers.isWindows;
 
 
@@ -51,10 +52,10 @@ public class ServerProcess extends ServerInstance {
   private OutputStream outputStream;
   private OutputStream errorStream;
 
-  public ServerProcess(StateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager serverVerboseManager,
-                       String serverName, Path serverInstall, Path serverWorkingDir, int heapInM, int debugPort, Properties serverProperties, OutputStream out,
+  public ServerProcess(String serverName, Path serverInstall, Path serverWorkingDir, int heapInM, 
+          int debugPort, Properties serverProperties, OutputStream out,
                        String[] startupCommand) {
-    super(stateInterlock, stateManager, serverVerboseManager, serverName);
+    super(serverName);
     // We need to specify a positive integer as the heap size.
     this.heapInM = heapInM;
     this.debugPort = debugPort;
@@ -98,24 +99,21 @@ public class ServerProcess extends ServerInstance {
         String javaHome = getJavaHome();
 
         // Put together any additional options we wanted to pass to the VM under the start script.
-        String javaArguments = getJavaArguments(this.debugPort);
         // Start the inferior process.
-        AnyProcess process = AnyProcess.newBuilder()
-            .command(createCommand(serverInstall, startupCommand))
-            .workingDir(this.serverWorkingDir.toFile())
-            .env("JAVA_HOME", javaHome)
-            .env("JAVA_OPTS", javaArguments)
-            .pipeStdout(out)
-            .pipeStderr(stderr)
-            .build();
 
         setCurrentState(ServerMode.STARTUP);
 
         reset();
-
-        setStreams(outputStream, stderr);
+        
+        setStreams(out, stderr);
         // The "build()" starts the process so wrap it in an exit waiter.  We can then drop it since we will can't explicitly terminate it until it reports our PID (at which point we will declare it "running").
-        ExitWaiter exitWaiter = new ExitWaiter(process);
+        ExitWaiter exitWaiter = new ExitWaiter(()->AnyProcess.newBuilder()
+            .command(createCommand(javaHome, serverInstall, startupCommand))
+            .workingDir(this.serverWorkingDir.toFile())
+            .env("JAVA_HOME", javaHome)
+            .pipeStdout(out)
+            .pipeStderr(stderr)
+            .build());
         exitWaiter.start();
       }
     } finally {
@@ -123,10 +121,17 @@ public class ServerProcess extends ServerInstance {
     }
   }
   
-  private String createCommand(Path serverPath, String[] args) {
-    Path sjar = serverPath.resolve("tc.jar").toAbsolutePath();
-    return "java -Dtc.install-root=" + serverPath.toString() + 
-            " -jar " + sjar.toString() + " " + String.join(" ", args);
+  private String[] createCommand(String javaHome, Path serverPath, String[] args) {
+    Path sjar = serverPath.resolve("tc.jar");
+    serverProperties.put("logback.configurationFile", "logback-test.xml");
+    serverProperties.setProperty("tc.install-root", serverPath.toString());
+    List<String> cmd = new ArrayList<>();
+    cmd.add(javaHome + "/bin/java");
+    cmd.addAll(Arrays.asList(getJavaArguments(debugPort)));
+    cmd.add("-jar");
+    cmd.add(sjar.toString());
+    cmd.addAll(Arrays.asList(args));
+    return cmd.toArray(String[]::new);
   }
 
   private synchronized void setStreams(OutputStream out, OutputStream err) {
@@ -139,26 +144,24 @@ public class ServerProcess extends ServerInstance {
   }
 
 
-  private String getJavaArguments(int debugPort) {
+  private String[] getJavaArguments(int debugPort) {
     // We want to bootstrap the variable with whatever is in our current environment.
     String javaOpts = System.getenv("JAVA_OPTS");
     if (null == javaOpts) {
       javaOpts = "";
     }
-    javaOpts += " -Xms" + this.heapInM + "m -Xmx" + this.heapInM + "m";
+    List<String> ops = new ArrayList<>();
+    ops.add("-Xms" + this.heapInM + "m");
+    ops.add("-Xmx" + this.heapInM + "m");
     if (debugPort > 0) {
-      // Set up the client to block while waiting for connection.
-      javaOpts += " -Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=" + debugPort;
-      // Log that debug is enabled.
+      ops.add("-Xdebug");
+      ops.add("-Xrunjdwp:transport=dt_socket,server=y,address=" + debugPort);
       serverLogger.output("NOTE:  Starting server \"" + this.serverName + "\" with debug port: " + debugPort);
     }
-    String propertiesAsOptions = serverProperties.entrySet().stream()
-        .map(e -> "-D" + e.getKey() + "=" + e.getValue())
-        .collect(joining(" "));
-    if (!propertiesAsOptions.isEmpty()) {
-      javaOpts += " " + propertiesAsOptions;
-    }
-    return javaOpts;
+    serverProperties.entrySet().stream()
+        .map(e -> "-D" + e.getKey() + "=" + e.getValue()).forEach(ops::add);
+        
+    return ops.toArray(String[]::new);
   }
 
   private String getJavaHome() {
@@ -323,23 +326,27 @@ public class ServerProcess extends ServerInstance {
   }
 
   private class ExitWaiter extends Thread {
-    private AnyProcess process;
+    private Supplier<AnyProcess> process;
 
-    public ExitWaiter(AnyProcess process) {
+    public ExitWaiter(Supplier<AnyProcess> process) {
       this.process = process;
     }
 
     @Override
     public void run() {
-      int returnValue = -1;
-      try {
-        returnValue = this.process.waitFor();
-        serverLogger.output("server process died with rc=" + returnValue);
-      } catch (java.util.concurrent.CancellationException e) {
-        returnValue = this.process.exitValue();
-      } catch (InterruptedException e) {
-        // We don't expect interruption in this part of the test - we need to wait for the termination.
-        Assert.unexpected(e);
+      int returnValue = 11;
+      while (returnValue == 11) {
+        AnyProcess instance = this.process.get();
+        try {
+          returnValue = instance.waitFor();
+          serverLogger.output("server process died with rc=" + returnValue);
+        } catch (java.util.concurrent.CancellationException e) {
+          returnValue = instance.exitValue();
+        } catch (InterruptedException e) {
+          // We don't expect interruption in this part of the test - we need to wait for the termination.
+          Assert.unexpected(e);
+          returnValue = 1;
+        }
       }
       ServerProcess.this.didTerminateWithStatus(returnValue);
     }

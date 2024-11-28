@@ -18,23 +18,19 @@
 package org.terracotta.testing.rules;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import org.terracotta.testing.config.StartupCommandBuilder;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.function.Supplier;
-import static java.util.stream.Collectors.toList;
-import java.util.stream.IntStream;
 
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_SERVER_HEAP_MB;
 import org.terracotta.testing.config.DefaultStartupCommandBuilder;
 import org.terracotta.testing.master.ServerDeploymentBuilder;
-import org.terracotta.testing.support.PortTool;
-import org.terracotta.utilities.test.net.PortManager;
 
 public class BasicExternalClusterBuilder {
   private final int stripeSize;
@@ -44,10 +40,11 @@ public class BasicExternalClusterBuilder {
 
   private String logConfigExt = "logback-ext.xml";
   private int serverHeapSize = DEFAULT_SERVER_HEAP_MB;
-  private boolean inline = true;
+  private int customHeapSize = DEFAULT_SERVER_HEAP_MB;
   private final DefaultStartupCommandBuilder cmdBuilder;
-  private final ServerDeploymentBuilder serverBuilder = new ServerDeploymentBuilder();
+  private ServerDeploymentBuilder serverBuilder = new ServerDeploymentBuilder();
   private Supplier<StartupCommandBuilder> startupBuilder;
+  private OutputStream parentStream;
     
   private BasicExternalClusterBuilder(final int stripeSize) {
     this.stripeSize = stripeSize;
@@ -121,11 +118,22 @@ public class BasicExternalClusterBuilder {
 
   public BasicExternalClusterBuilder withServerHeap(int heapSize) {
     this.serverHeapSize = heapSize;
+    this.customHeapSize = heapSize;
+    return this;
+  }
+  
+  public BasicExternalClusterBuilder withOutputStream(OutputStream output) {
+    this.parentStream = output;
     return this;
   }
 
   public BasicExternalClusterBuilder logConfigExtensionResourceName(String logConfigExt) {
     this.logConfigExt = logConfigExt;
+    return this;
+  }
+  
+  public BasicExternalClusterBuilder deploymentBuilder(ServerDeploymentBuilder deploy) {
+    this.serverBuilder = deploy;
     return this;
   }
 
@@ -135,7 +143,11 @@ public class BasicExternalClusterBuilder {
   }
 
   public BasicExternalClusterBuilder inline(boolean yes) {
-    this.inline = yes;
+    if (yes) {
+      this.serverHeapSize = -1;
+    } else {
+      this.serverHeapSize = customHeapSize;
+    }
     return this;
   }
 
@@ -151,19 +163,20 @@ public class BasicExternalClusterBuilder {
 
   public Cluster build() {
     if (clusterDirectory == null) {
+      String dir = System.getProperty("galvan.dir");
       try {
-        clusterDirectory = Files.createTempDirectory("serverWorking");
+        if (dir != null) {
+          clusterDirectory = Files.createDirectories(Paths.get(dir));
+        } else {
+          clusterDirectory = Files.createTempDirectory("serverWorking");
+        }
       } catch (IOException ioe) {
         throw new RuntimeException(ioe);
       }
     }
 
-    if (inline) {
-      return new BasicInlineCluster(clusterDirectory, stripeSize, this.serverBuilder.deploy(), systemProperties,
-        logConfigExt, serverHeapSize, Optional.ofNullable(startupBuilder).orElse(cmdBuilder::copy));
-    } else {
-      return new BasicExternalCluster(clusterDirectory, stripeSize, this.serverBuilder.deploy(), systemProperties,
-        logConfigExt, serverHeapSize, Optional.ofNullable(startupBuilder).orElse(cmdBuilder::copy));
-    }
+    return new BasicExternalCluster(clusterDirectory, stripeSize, this.serverBuilder.deploy(), serverHeapSize, systemProperties, 
+        logConfigExt, parentStream, Optional.ofNullable(startupBuilder).orElse(cmdBuilder::copy));
+
   }
 }

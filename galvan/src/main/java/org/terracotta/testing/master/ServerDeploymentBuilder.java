@@ -33,8 +33,7 @@ import java.util.zip.ZipInputStream;
  */
 public class ServerDeploymentBuilder {
   private Path installPath;
-  private List<Plugin> plugins = new ArrayList<>();
-  private boolean refresh = false;
+  private final List<Plugin> plugins = new ArrayList<>();
   
   public ServerDeploymentBuilder() {
     
@@ -63,45 +62,67 @@ public class ServerDeploymentBuilder {
   }
   
   private void insureInstallPath() {
-    if (installPath == null) {
-      try {
-        installPath = Files.createTempDirectory("tcserver");
-      } catch (IOException ioe) {
-        throw new RuntimeException(ioe);
+    try {
+      if (installPath == null) {
+          if (System.getProperty("galvan.server") != null) {
+            installPath = Files.createDirectories(Paths.get(System.getProperty("galvan.server")));
+          } else {
+            installPath = Files.createTempDirectory("tcserver");
+          }
+
+      } else {
+        installPath = Files.createDirectories(installPath);
       }
+    } catch (IOException ioe) {
+      throw new RuntimeException(ioe);
     }
   }
   
   public Path deploy() {
+    return deploy(false);
+  }
+  
+  public Path deploy(boolean refresh) {
     insureInstallPath();
+    byte[] buffer = new byte[4096];
     try (InputStream is = ServerDeploymentBuilder.class.getResourceAsStream("/galvan-test-server.zip")) {
       ZipInputStream zip = new ZipInputStream(is);
       ZipEntry e = zip.getNextEntry();
-      if (refresh && Files.exists(installPath)) {
-        delete(installPath);
+      
+      if (Files.find(installPath, 10, (path,attr)->path.getFileName().toString().startsWith("tc-server")).findAny().isPresent()) {
+        if (refresh) {
+          delete(installPath);
+        } else {
+          return installPath;
+        }
       }
       Files.createDirectories(installPath);
       while (e != null) {
-        //System.out.println(e.getName() + " " + e.getSize() + " " + e.isDirectory());
         if (!e.isDirectory()) {
           Path p = Paths.get(e.getName()).getFileName();
           try (OutputStream out = Files.newOutputStream(installPath.resolve(p), StandardOpenOption.CREATE)) {
             long len = e.getSize();
             long count = 0;
             while (len > count) {
-              out.write(zip.read());
-              count++;
+              long chunk = Math.min(buffer.length, len - count);
+              int run = zip.read(buffer,0, Math.toIntExact(chunk));
+              out.write(buffer,0,run);
+              count+=run;
             }
           }
         }
         e = zip.getNextEntry();
       }
-      
+      installDefaultPlugins();
       Path api = Files.createDirectories(installPath.resolve("plugins").resolve("api"));
       Path lib = Files.createDirectories(installPath.resolve("plugins").resolve("lib"));
       for (Plugin p : plugins) {
-        if (p.api != null) Files.list(p.api).forEach(s->copy(s, api));
-        if (p.impl != null) Files.list(p.impl).forEach(s->copy(s, lib));
+        if (p.api != null && Files.isDirectory(p.api)) {
+          Files.list(p.api).forEach(s->copy(s, api));
+        }
+        if (p.impl != null && Files.isDirectory(p.impl)) {
+          Files.list(p.impl).forEach(s->copy(s, lib));
+        }
       }
     } catch (IOException io) {
       throw new RuntimeException(io);
@@ -109,9 +130,23 @@ public class ServerDeploymentBuilder {
     return installPath;
   }
   
+  private void installDefaultPlugins() {
+    String defaultPlugin = System.getProperty("galvan.plugin");
+    if (defaultPlugin != null) {
+      Path p = Paths.get(defaultPlugin);
+      if (plugins != null) {
+        this.addPlugin(p.resolve("api"), p.resolve("lib"));
+      }
+    }
+  }
+  
   public static void copy(Path s, Path d) {
     try {
-      Files.copy(s, d.resolve(s.getFileName()));
+      if (Files.isDirectory(s)) {
+        Files.list(s).forEach(u->copy(u, d.resolve(s.getFileName())));
+      } else {
+        Files.copy(s, d.resolve(s.getFileName()));
+      }
     } catch (IOException io) {
       throw new RuntimeException(io);
     }

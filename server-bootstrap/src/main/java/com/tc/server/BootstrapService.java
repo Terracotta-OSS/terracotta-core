@@ -15,22 +15,15 @@
  *  limitations under the License.
  *
  */
-package org.terracotta.testing.config;
+package com.tc.server;
 
-import java.nio.file.Path;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.concurrent.Future;
 
-public interface StartupCommandBuilder {
-  StartupCommandBuilder stripeConfiguration(StripeConfiguration config);
-  
-  StartupCommandBuilder logConfigExtension(String logging);
-  
-  StartupCommandBuilder stripeWorkingDir(Path stripeWorkingDir);
-
-  StartupCommandBuilder serverWorkingDir(Path serverWorkingDir);
-
-  StartupCommandBuilder serverName(String serverName);
-
-  StartupCommandBuilder stripeName(String stripeName);
-  
-  String[] build();
+/**
+ *
+ */
+public interface BootstrapService {
+  Future<Boolean> createServer(List<String> args, OutputStream console, ClassLoader loader) throws Exception;
 }

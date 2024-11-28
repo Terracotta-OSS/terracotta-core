@@ -28,7 +28,6 @@ import java.util.Properties;
  * It exists to give context to the parameters in CommonIdioms.
  */
 public class StripeConfiguration {
-  private final int serverHeapInM;
   private final String stripeName;
   private final String logConfigExtension;
   private final String uri;
@@ -42,22 +41,17 @@ public class StripeConfiguration {
 
   public StripeConfiguration(List<Integer> serverDebugPorts, List<Integer> serverPorts,
                              List<Integer> serverGroupPorts, List<String> serverNames, String stripeName,
-                             int serverHeapInM, String logConfigExt, Properties serverProperties) {
+                             String logConfigExt, Properties serverProperties) {
     this.serverDebugPorts = serverDebugPorts;
     this.serverPorts = serverPorts;
     this.serverGroupPorts = serverGroupPorts;
     this.serverNames = serverNames;
     this.stripeName = stripeName;
-    this.serverHeapInM = serverHeapInM;
     this.logConfigExtension = logConfigExt;
     this.clusterInfo = buildClusterInfo(serverNames, serverPorts, serverGroupPorts);
     this.uri = buildUri(this.serverPorts);
     this.serverProperties.putAll(serverProperties);
     this.serverAddresses = buildServerAddresses(this.serverPorts);
-  }
-  
-  public int getServerHeapInM() {
-    return serverHeapInM;
   }
 
   public List<Integer> getServerPorts() {
