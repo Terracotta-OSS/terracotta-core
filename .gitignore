@@ -20,3 +20,7 @@ nbactions.xml
 /dso-l1/nbproject/
 /common-spi/nbproject/
 /default-configuration/nbproject/
+cont.sh
+get.sh
+logback.xml
+set.sh
