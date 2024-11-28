@@ -34,6 +34,7 @@ jar {
     manifest {
         attributes "Class-Path" : configurations.runtimeClasspath.collect { it.getName() }.join(' ')
     }
+    from configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
 }
 
 publishing {
