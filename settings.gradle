@@ -24,6 +24,9 @@ include('test-interfaces')
 include('galvan')
 include('galvan-support')
 include('tc-client')
+include('passthrough-server')
+include('entity-test-lib')
+
 
 
 dependencyResolutionManagement {
