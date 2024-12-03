@@ -31,7 +31,7 @@ jar {
 }
 
 dependencies {
-  implementation project(':common-spi')
+  api project(':common-spi')
 }
 
 publishing {

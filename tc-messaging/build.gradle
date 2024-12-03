@@ -31,10 +31,13 @@ jar {
 }
 
 dependencies {
-  implementation project(':common-spi')
-  implementation "org.slf4j:slf4j-api:$slf4jVersion"
-  implementation "org.terracotta:entity-client-api:$terracottaApisVersion"
+  api project(':common-spi')
 
+  compileOnly "org.slf4j:slf4j-api:$slf4jVersion"
+  compileOnly "org.terracotta:entity-client-api:$terracottaApisVersion"
+
+  testImplementation "org.slf4j:slf4j-api:$slf4jVersion"
+  testImplementation "org.terracotta:entity-client-api:$terracottaApisVersion"
   testImplementation "junit:junit:$junitVersion"
   testImplementation "org.mockito:mockito-core:$mockitoVersion"
 }

@@ -31,13 +31,14 @@ jar {
 }
 
 dependencies {
-    implementation "org.slf4j:slf4j-api:$slf4jVersion"
+    compileOnly "org.slf4j:slf4j-api:$slf4jVersion"
     implementation project(':tc-client')
-    implementation project(':common-spi')
     implementation project(':common')
-    implementation "org.terracotta:entity-client-api:$terracottaApisVersion"
-    api "org.terracotta:connection-api:$terracottaApisVersion"
+    compileOnly "org.terracotta:entity-client-api:$terracottaApisVersion"
+    compileOnly "org.terracotta:connection-api:$terracottaApisVersion"
 
+    testImplementation "org.terracotta:entity-client-api:$terracottaApisVersion"
+    testImplementation "org.terracotta:connection-api:$terracottaApisVersion"
     testImplementation "org.mockito:mockito-core:$mockitoVersion"
     testImplementation "junit:junit:$junitVersion"
     testImplementation project(":test-common")

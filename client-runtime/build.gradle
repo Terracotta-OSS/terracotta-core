@@ -27,15 +27,16 @@ base {
 }
 
 dependencies {
-    implementation project(':connection-impl')
+    api "org.terracotta:connection-api:$terracottaApisVersion"
+    compileOnlyApi  "org.slf4j:slf4j-api:$slf4jVersion"
+    runtimeOnly project(':connection-impl')
 }
 
 jar {
-    manifest {
-        attributes "Class-Path" : configurations.runtimeClasspath.collect { it.getName() }.join(' ')
-    }
     from configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
 }
+
+jar.dependsOn(project(':connection-impl').build)
 
 publishing {
     publications {

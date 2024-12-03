@@ -33,13 +33,15 @@ jar {
 dependencies {
   api project(':tc-messaging')
 
-  implementation project(':common-spi')
-  testImplementation project(':test-common')
   implementation project(':build-data')
-  implementation "org.slf4j:slf4j-api:$slf4jVersion"
-  implementation "org.terracotta:packaging-support:$terracottaApisVersion"
   implementation "org.terracotta:tc-tripwire-plugin:$tripwireVersion"
 
+  compileOnly "org.slf4j:slf4j-api:$slf4jVersion"
+  compileOnly "org.terracotta:packaging-support:$terracottaApisVersion"
+
+  testImplementation project(':test-common')
+  testImplementation "org.slf4j:slf4j-api:$slf4jVersion"
+  testImplementation "org.terracotta:packaging-support:$terracottaApisVersion"
   testImplementation "junit:junit:$junitVersion"
   testImplementation "org.mockito:mockito-core:$mockitoVersion"
   testImplementation "org.hamcrest:hamcrest-all:$hamcrestVersion"

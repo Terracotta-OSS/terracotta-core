@@ -40,7 +40,6 @@ dependencies {
     implementation project(":test-interfaces")
     implementation "org.terracotta:terracotta-utilities-port-chooser:0.0.19"
     implementation project(':common')
-    implementation project(':common-spi')
     implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
     implementation "org.terracotta:standard-cluster-services:$terracottaApisVersion"
     implementation project(':server-spi')
@@ -48,7 +47,7 @@ dependencies {
     testCompileOnly project(':tc-client')
     testImplementation "ch.qos.logback:logback-classic:$logbackVersion"
     implementation project(':examples:clustered-map:client')
-    implementation project(':connection-impl')
+    implementation project(':client-runtime')
 
     pluginImpl project(":default-configuration")
     pluginImpl project(":examples:extended-server")
