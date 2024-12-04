@@ -34,7 +34,7 @@ dependencies {
   api project(':tc-messaging')
 
   implementation project(':build-data')
-  implementation "org.terracotta:tc-tripwire-plugin:$tripwireVersion"
+  implementation project(':tripwire:plugin')
 
   compileOnly "org.slf4j:slf4j-api:$slf4jVersion"
   compileOnly "org.terracotta:packaging-support:$terracottaApisVersion"

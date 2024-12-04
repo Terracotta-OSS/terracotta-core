@@ -29,13 +29,16 @@ public class BaseBuildInfo implements BuildInfo {
   private final Properties props = new Properties();
 
   public BaseBuildInfo(InputStream is) throws IOException {
-    props.load(is);
-    is.close();
+    if (is != null) {
+      try (is) {
+        props.load(is);
+      }
+    }
   }
 
   @Override
   public String getVersion() {
-    return props.getProperty("terracotta.build.version");
+    return props.getProperty("terracotta.build.version","");
   }
 
   @Override
@@ -50,17 +53,17 @@ public class BaseBuildInfo implements BuildInfo {
 
   @Override
   public String getTimestamp() {
-    return props.getProperty("terracotta.build.timestamp");
+    return props.getProperty("terracotta.build.timestamp","");
   }
 
   @Override
   public String getBranch() {
-    return props.getProperty("terracotta.build.branch");
+    return props.getProperty("terracotta.build.branch","");
   }
 
   @Override
   public String getRevision() {
-    return props.getProperty("terracotta.build.revision");
+    return props.getProperty("terracotta.build.revision","");
   }
 
   @Override

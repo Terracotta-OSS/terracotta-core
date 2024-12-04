@@ -3,7 +3,6 @@ rootProject.name = 'terracotta-core'
 
 include('build-data')
 //include('build-parent')
-include('client-runtime')
 include('common-spi')
 include('tc-messaging')
 include('test-common')
@@ -26,8 +25,10 @@ include('galvan-support')
 include('tc-client')
 include('passthrough-server')
 include('entity-test-lib')
+include('tripwire:appenders')
+include('tripwire:plugin')
 
-
+include('client-runtime')
 
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)

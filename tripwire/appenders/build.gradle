@@ -19,10 +19,10 @@ plugins {
     id 'java-library'
 }
 
-description = 'terracotta-core passthrough entity test library'
+description = 'terracotta-core tripwire appenders'
 
 base {
-    archivesName = 'entity-test-lib'
+    archivesName = 'tc-tripwire-appenders'
 }
 
 jar {
@@ -30,14 +30,11 @@ jar {
 }
 
 dependencies {
-    implementation "junit:junit:$junitVersion"
+  implementation "org.slf4j:slf4j-api:$slf4jVersion"
+  implementation "ch.qos.logback:logback-classic:$logbackVersion"
+  testImplementation "junit:junit:$junitVersion"
 
-    compileOnly "com.google.code.findbugs:annotations:3.0.1"
 
-    implementation "org.terracotta:connection-api:$terracottaApisVersion"
-    implementation "org.terracotta:entity-client-api:$terracottaApisVersion"
-    implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
-    implementation "org.terracotta:standard-cluster-services:$terracottaApisVersion"
 }
 
 

@@ -24,3 +24,4 @@ cont.sh
 get.sh
 logback.xml
 set.sh
+build-data/src/main/resources/build-data.txt

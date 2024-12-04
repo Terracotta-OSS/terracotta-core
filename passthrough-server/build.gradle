@@ -30,7 +30,9 @@ jar {
 }
 
 dependencies {
-    testImplementation "junit:junit:$junitVersion"
+    implementation "junit:junit:$junitVersion"
+
+    compileOnly "com.google.code.findbugs:annotations:3.0.1"
 
     implementation project(':test-interfaces')
     implementation "org.terracotta:entity-client-api:$terracottaApisVersion"
@@ -38,9 +40,9 @@ dependencies {
     implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
     implementation "org.terracotta:standard-cluster-services:$terracottaApisVersion"
     implementation "org.terracotta:monitoring-support:$terracottaApisVersion"
-    runtimeOnly "org.terracotta:tc-tripwire-plugin:$tripwireVersion"
+    runtimeOnly project(':tripwire:plugin')
     testImplementation "junit:junit:$junitVersion"
-    testImplementation "org.mockito:mockito-all:$mockitoVersion"
+    testImplementation "org.mockito:mockito-core:$mockitoVersion"
     testImplementation "org.hamcrest:hamcrest-all:$hamcrestVersion"
 }
 

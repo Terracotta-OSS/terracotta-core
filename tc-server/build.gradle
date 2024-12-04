@@ -37,11 +37,10 @@ dependencies {
   implementation "org.slf4j:slf4j-api:$slf4jVersion"
   implementation "org.terracotta:standard-cluster-services:$terracottaApisVersion"
   implementation "ch.qos.logback:logback-classic:$logbackVersion"
-  implementation "org.terracotta:tc-tripwire-plugin:$tripwireVersion"
-  implementation "org.terracotta:tc-tripwire-appenders:$tripwireVersion"
+  implementation project(':tripwire:plugin')
+  implementation project(':tripwire:appenders')
   implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
   implementation "org.terracotta:monitoring-support:$terracottaApisVersion"
-
 
   testImplementation "junit:junit:$junitVersion"
   testImplementation project(":test-common")

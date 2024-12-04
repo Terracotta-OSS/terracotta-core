@@ -30,10 +30,6 @@ base {
     archivesName = 'build-data'
 }
 
-jar {
-
-}
-
 dependencies {
 
 }
@@ -46,11 +42,13 @@ def buildProperties = [
 ]
 
 task writeBuildInfo() {
-    File f = layout.buildDirectory.file("resources/main/build-data.txt").get().getAsFile()
+    File f = file("src/main/resources/build-data.txt")
     f.write("terracotta.build.version=${buildProperties.version}\n")
     f.append("terracotta.build.revision=${buildProperties.revision}\n")
     f.append("terracotta.build.timestamp=${buildProperties.timestamp}\n")
     f.append("terracotta.build.branch=${buildProperties.branch}\n")
 }
 
-jar.dependsOn(writeBuildInfo)
+jar {
+ dependsOn writeBuildInfo
+}

@@ -17,7 +17,6 @@
  */
 plugins {
     id 'java'
-    id 'maven-publish'
 }
 
 description = 'terracotta-core'
@@ -68,23 +67,6 @@ allprojects {
 task printClasspath {
     doLast {
         configurations.testRuntimeClasspath.each{ println it }
-    }
-}
-
-publishing {
-    publications {
-        maven(MavenPublication) {
-            groupId = 'org.terracotta'
-            version = 'project.version'
-            artifactId = "$project.name"
-            from components.java
-        }
-    }
-    repositories {
-        maven {
-            name = ''
-            url = ''
-        }
     }
 }
 
