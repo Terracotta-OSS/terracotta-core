@@ -29,6 +29,8 @@ include('tripwire:appenders')
 include('tripwire:plugin')
 
 include('client-runtime')
+include('client-api')
+include('server-api')
 
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
