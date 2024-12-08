@@ -1,9 +1,3 @@
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Optional
-
-import static java.time.Instant.now
-
 /*
  * Copyright Terracotta, Inc.
  * Copyright Super iPaaS Integration LLC, an IBM Company 2024
@@ -20,6 +14,9 @@ import static java.time.Instant.now
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import static java.time.Instant.now
+
 plugins {
   id 'java-library'
 }
@@ -42,13 +39,21 @@ def buildProperties = [
 ]
 
 task writeBuildInfo() {
-    File f = file("src/main/resources/build-data.txt")
+    File f = layout.buildDirectory.file("dynamic/build-data.txt").get().getAsFile()
+    f.getParentFile().mkdirs()
     f.write("terracotta.build.version=${buildProperties.version}\n")
     f.append("terracotta.build.revision=${buildProperties.revision}\n")
     f.append("terracotta.build.timestamp=${buildProperties.timestamp}\n")
     f.append("terracotta.build.branch=${buildProperties.branch}\n")
+    outputs.file(f.getParentFile())
 }
 
-jar {
- dependsOn writeBuildInfo
+sourceSets {
+    main {
+        java {
+            resources {
+                srcDir writeBuildInfo
+            }
+        }
+    }
 }
