@@ -509,7 +509,7 @@ public class DistributedObjectServer {
 
     final LocalMonitoringProducer monitoringShimService = new LocalMonitoringProducer(this.configSetupManager.getServiceLocator().getServiceLoader(), this.serviceRegistry, thisServer, this.threadGroup);
     this.serviceRegistry.registerImplementationProvided(monitoringShimService);
-
+    monitoringShimService.start();
     // ***** NOTE:  At this point, since we are about to create a subregistry for the platform, the serviceRegistry must be complete!
 
     // The platform gets the reserved consumerID 0.
