@@ -185,6 +185,9 @@ public class ServerProcess extends ServerInstance {
   private void didTerminateWithStatus(int exitStatus) {
     // See if we have a PID yet or if this was a failure, much earlier (hence, if we told the interlock that we are even running).
     GalvanFailureException failureException = null;
+
+    setCurrentState(ServerMode.TERMINATED);
+
     long originalPid = this.waitForPid();
 //  no matter what, the server is gone so report it to interlock
     if (!this.isCrashExpected() && originalPid == 0) {
@@ -198,8 +201,6 @@ public class ServerProcess extends ServerInstance {
 
     closeStreams();
     
-    setCurrentState(ServerMode.TERMINATED);
-
     if (null != failureException) {
       this.stateManager.testDidFail(failureException);
     }
@@ -345,6 +346,9 @@ public class ServerProcess extends ServerInstance {
         } catch (InterruptedException e) {
           // We don't expect interruption in this part of the test - we need to wait for the termination.
           Assert.unexpected(e);
+          returnValue = 1;
+        } catch (Throwable t) {
+          Assert.unexpected(t);
           returnValue = 1;
         }
       }

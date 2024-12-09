@@ -113,11 +113,17 @@ public class StateInterlock implements IGalvanStateInterlock {
     this.logger.output("< waitForAllServerReady " + this.servers);
   }
   
-  private void safeWait() {
+  public void waitForAllServerTerminated() throws GalvanFailureException {
+    this.logger.output("> waitForAllServerTerminated " + this.servers);
+    this.servers.forEach(server->server.waitForTermination());
+    this.logger.output("< waitForAllServerTerminated " + this.servers);
+  }
+  
+  private void safeWait() throws GalvanFailureException {
     try {
       wait();
     } catch (InterruptedException e) {
-      Assert.unexpected(e);
+      throw new GalvanFailureException("interrupted", e);
     }
   }
 

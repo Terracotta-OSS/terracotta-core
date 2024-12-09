@@ -84,7 +84,12 @@ public interface IGalvanStateInterlock {
    * @throws GalvanFailureException The test failure description, if it already failed.
    */
   public void waitForAllServerReady() throws GalvanFailureException;
-
+  /**
+   * Waits until all servers are terminated.
+   * 
+   * @throws GalvanFailureException The test failure description, if it already failed.
+   */
+  public void waitForAllServerTerminated() throws GalvanFailureException;
   // ----- CHECK STATE-----
   /**
    * Gets the active server, if there is one.

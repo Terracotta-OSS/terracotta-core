@@ -70,6 +70,7 @@ public class SingleThreadedTimer implements ISimpleTimer {
   @Override
   public synchronized void start() {
     this.threadIsRunning = true;
+    this.timerThread.setDaemon(true);
     this.timerThread.start();
   }
 

@@ -39,13 +39,16 @@ def buildProperties = [
 ]
 
 task writeBuildInfo() {
-    File f = layout.buildDirectory.file("dynamic/build-data.txt").get().getAsFile()
-    f.getParentFile().mkdirs()
-    f.write("terracotta.build.version=${buildProperties.version}\n")
-    f.append("terracotta.build.revision=${buildProperties.revision}\n")
-    f.append("terracotta.build.timestamp=${buildProperties.timestamp}\n")
-    f.append("terracotta.build.branch=${buildProperties.branch}\n")
-    outputs.file(f.getParentFile())
+    def dyn = layout.buildDirectory.dir("dynamic")
+    outputs.dir(dyn)
+    doLast {
+        dyn.get().getAsFile().mkdir()
+        File f= dyn.get().file("build-data.txt").getAsFile()
+        f.write("terracotta.build.version=${buildProperties.version}\n")
+        f.append("terracotta.build.revision=${buildProperties.revision}\n")
+        f.append("terracotta.build.timestamp=${buildProperties.timestamp}\n")
+        f.append("terracotta.build.branch=${buildProperties.branch}\n")
+    }
 }
 
 sourceSets {

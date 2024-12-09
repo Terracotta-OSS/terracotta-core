@@ -56,7 +56,6 @@ dependencies {
 test {
     systemProperty "galvan.plugin", layout.buildDirectory.dir("plugin").get().toString()
     systemProperty "galvan.dir", layout.buildDirectory.dir("galvan").get().toString()
-    systemProperty "kitInstallationPath", layout.buildDirectory.dir("tmp/tcserver").get().toString()
     systemProperty "galvan.server", layout.buildDirectory.dir("tmp/tcserver").get().toString()
 }
 
@@ -65,7 +64,12 @@ task copyPlugins(type: Copy) {
     into layout.buildDirectory.dir("plugin/lib")
 }
 
-compileTestJava.dependsOn(copyPlugins)
+task serverClean(type: Delete) {
+    delete layout.buildDirectory.dir("tmp/tcserver")
+}
+
+test.dependsOn(copyPlugins)
+copyPlugins.dependsOn(serverClean)
 
 publishing {
     publications {

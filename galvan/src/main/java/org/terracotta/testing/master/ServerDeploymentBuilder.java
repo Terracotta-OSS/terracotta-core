@@ -16,6 +16,7 @@
  */
 package org.terracotta.testing.master;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -38,6 +39,10 @@ public class ServerDeploymentBuilder {
   public ServerDeploymentBuilder() {
     
   }
+
+  public ServerDeploymentBuilder(Path install) {
+    this.installPath = install;
+  }
   
   public ServerDeploymentBuilder installPath(Path install) {
     this.installPath = install;
@@ -47,6 +52,14 @@ public class ServerDeploymentBuilder {
   public ServerDeploymentBuilder addPlugin(Path api, Path impl) {
     plugins.add(new Plugin(api, impl));
     return this;
+  }
+  
+  public static ServerDeploymentBuilder begin(Path dest) {
+    return new ServerDeploymentBuilder(dest);
+  }
+   
+  public static ServerDeploymentBuilder begin(File dest) {
+    return new ServerDeploymentBuilder(dest.toPath());
   }
   
   private static boolean delete(Path f) {
@@ -140,7 +153,7 @@ public class ServerDeploymentBuilder {
     }
   }
   
-  public static void copy(Path s, Path d) {
+  private static void copy(Path s, Path d) {
     try {
       if (Files.isDirectory(s)) {
         Files.list(s).forEach(u->copy(u, d.resolve(s.getFileName())));

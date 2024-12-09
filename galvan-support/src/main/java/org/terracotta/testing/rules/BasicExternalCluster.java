@@ -288,6 +288,13 @@ class BasicExternalCluster extends Cluster {
   }
 
   private void internalStop() {
+    try {
+      interlock.ignoreServerCrashes(true);
+      interlock.forceShutdown();
+      interlock.waitForAllServerTerminated();
+    } catch (GalvanFailureException gf) {
+      stateManager.testDidFail(gf);
+    }
     stateManager.setTestDidPassIfNotFailed();
     // NOTE:  The waitForFinish is called by the shepherding thread so we just join on it having done that.
     try {
