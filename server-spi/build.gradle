@@ -17,7 +17,6 @@
  */
 plugins {
     id 'java-library'
-    id 'maven-publish'
 }
 
 description = 'terracotta-core server SPI'
@@ -33,22 +32,4 @@ jar {
 dependencies {
   api project(':common-spi')
 }
-
-publishing {
-    publications {
-        maven(MavenPublication) {
-            groupId = 'org.terracotta.internal'
-            version = "$project.version"
-            artifactId = "$project.name"
-            from components.java
-        }
-    }
-    repositories {
-        maven {
-            name = ''
-            url = ''
-        }
-    }
-}
-
 

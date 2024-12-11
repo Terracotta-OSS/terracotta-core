@@ -26,17 +26,20 @@ base {
     archivesName = 'client-runtime'
 }
 
+configurations {
+    fatJar
+}
+
 dependencies {
     api "org.terracotta:connection-api:$terracottaApisVersion"
-    compileOnlyApi  "org.slf4j:slf4j-api:$slf4jVersion"
-    runtimeOnly project(':connection-impl')
+    implementation  "org.slf4j:slf4j-api:$slf4jVersion"
+    fatJar project(':connection-impl')
 }
 
 jar {
-    dependsOn configurations.runtimeClasspath
-    from configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    dependsOn configurations.fatJar
+    from configurations.fatJar.collect { it.isDirectory() ? it : zipTree(it) }
 }
-
 
 
 publishing {
@@ -50,8 +53,8 @@ publishing {
     }
     repositories {
         maven {
-            name = ''
-            url = ''
+            name = 'releases'
+            url = 'https://repo.terracotta.org/maven2'
         }
     }
 }

@@ -17,7 +17,6 @@
  */
 plugins {
     id 'java-library'
-    id 'maven-publish'
 }
 
 description = 'terracotta-core server implementation'
@@ -33,12 +32,12 @@ dependencies {
   implementation project(':common')
   implementation project(':management')
   implementation project(':build-data')
-
-  implementation "org.slf4j:slf4j-api:$slf4jVersion"
-  implementation "org.terracotta:standard-cluster-services:$terracottaApisVersion"
-  implementation "ch.qos.logback:logback-classic:$logbackVersion"
   implementation project(':tripwire:plugin')
   implementation project(':tripwire:appenders')
+
+  implementation "org.slf4j:slf4j-api:$slf4jVersion"
+  implementation "ch.qos.logback:logback-classic:$logbackVersion"
+  implementation "org.terracotta:standard-cluster-services:$terracottaApisVersion"
   implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
   implementation "org.terracotta:monitoring-support:$terracottaApisVersion"
 
@@ -64,21 +63,4 @@ test {
     var testClasses = file(layout.buildDirectory.dir("classes/java/test"))
     systemProperty "testClassesDir", "$testClasses"
     systemProperty "tc.install-root.ignore-checks", "true"
-}
-
-publishing {
-    publications {
-        maven(MavenPublication) {
-            groupId = 'org.terracotta.internal'
-            version = "$project.version"
-            artifactId = "$project.name"
-            from components.java
-        }
-    }
-    repositories {
-        maven {
-            name = ''
-            url = ''
-        }
-    }
 }

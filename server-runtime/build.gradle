@@ -1,3 +1,4 @@
+
 /*
  * Copyright Terracotta, Inc.
  * Copyright Super iPaaS Integration LLC, an IBM Company 2024
@@ -15,25 +16,37 @@
  * limitations under the License.
  */
 plugins {
-    id 'java-library'
-    id 'maven-publish'
+  id 'java-library'
+  id 'maven-publish'
+  id 'distribution'
 }
 
-description = 'terracotta-core client-api'
+description = 'terracotta-core server-runtime'
 
 base {
-    archivesName = 'core-client-api'
+    archivesName = 'server-runtime'
 }
 
-jar {
-
+configurations {
+    server
 }
 
 dependencies {
-  compileOnlyApi "org.terracotta:entity-client-api:$terracottaApisVersion"
-  compileOnlyApi "org.terracotta:entity-common-api:$terracottaApisVersion"
-  compileOnlyApi "org.terracotta:connection-api:$terracottaApisVersion"
-  compileOnlyApi project(':common-spi')
+    server project(':tc-server')
+    server project(':terracotta')
+}
+
+distributions {
+  main {
+    distributionBaseName = 'server-bundle'
+    contents {
+      includeEmptyDirs = false
+
+      into("..") {
+        from(configurations.server)
+      }
+    }
+  }
 }
 
 publishing {
@@ -42,13 +55,15 @@ publishing {
             groupId = 'org.terracotta.internal'
             version = "$project.version"
             artifactId = "$project.name"
-            from components.java
+            artifact(distZip)
         }
     }
     repositories {
         maven {
-            name = 'releases'
-            url = 'https://repo.terracotta.org/maven2'
+            name = ''
+            url = ''
         }
     }
 }
+
+

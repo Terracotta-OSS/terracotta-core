@@ -17,7 +17,6 @@
  */
 plugins {
     id 'java-library'
-    id 'maven-publish'
 }
 
 description = 'terracotta-core terracotta server package'
@@ -43,22 +42,3 @@ jar {
                     "Class-Path" : configurations.runtimeClasspath.collect { it.getName() }.join(' ')
     }
 }
-
-publishing {
-    publications {
-        maven(MavenPublication) {
-            groupId = 'org.terracotta.internal'
-            version = "$project.version"
-            artifactId = "$project.name"
-            from components.java
-        }
-    }
-    repositories {
-        maven {
-            name = ''
-            url = ''
-        }
-    }
-}
-
-

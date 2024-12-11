@@ -17,7 +17,6 @@
  */
 plugins {
     id 'java-library'
-    id 'maven-publish'
 }
 
 description = 'terracotta-core client implementation'
@@ -45,23 +44,3 @@ dependencies {
     testImplementation 'org.terracotta:terracotta-utilities-port-chooser:0.0.19'
     testImplementation "org.mockito:mockito-core:$mockitoVersion"
 }   
-
-
-publishing {
-    publications {
-        maven(MavenPublication) {
-            groupId = 'org.terracotta.internal'
-            version = "$project.version"
-            artifactId = "$project.name"
-            from components.java
-        }
-    }
-    repositories {
-        maven {
-            name = ''
-            url = ''
-        }
-    }
-}
-
-

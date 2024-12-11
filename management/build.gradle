@@ -17,7 +17,6 @@
  */
 plugins {
     id 'java-library'
-    id 'maven-publish'
 }
 
 description = 'terracotta-core terracotta management'
@@ -38,22 +37,3 @@ dependencies {
   testImplementation "org.mockito:mockito-core:$mockitoVersion"
   testImplementation "org.hamcrest:hamcrest-all:$hamcrestVersion"
 }
-
-publishing {
-    publications {
-        maven(MavenPublication) {
-            groupId = 'org.terracotta.internal'
-            version = "$project.version"
-            artifactId = "$project.name"
-            from components.java
-        }
-    }
-    repositories {
-        maven {
-            name = ''
-            url = ''
-        }
-    }
-}
-
-

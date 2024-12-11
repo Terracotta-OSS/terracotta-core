@@ -17,7 +17,6 @@
  */
 plugins {
     id 'java-library'
-    id 'maven-publish'
 }
 
 description = 'terracotta-core clustered map client example'
@@ -32,28 +31,8 @@ jar {
 
 dependencies {
     implementation project(':examples:clustered-map:common')
-    implementation "org.terracotta:entity-common-api:$terracottaApisVersion"
     implementation "org.terracotta:entity-client-api:$terracottaApisVersion"
     testImplementation "junit:junit:$junitVersion"
     testImplementation "org.hamcrest:hamcrest-all:$hamcrestVersion"
     compileOnly "com.google.code.findbugs:annotations:3.0.1"
 }
-
-publishing {
-    publications {
-        maven(MavenPublication) {
-            groupId = 'org.terracotta.internal'
-            version = "$project.version"
-            artifactId = "$project.name"
-            from components.java
-        }
-    }
-    repositories {
-        maven {
-            name = ''
-            url = ''
-        }
-    }
-}
-
-

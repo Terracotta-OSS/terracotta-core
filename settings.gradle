@@ -29,6 +29,7 @@ include('tripwire:appenders')
 include('tripwire:plugin')
 
 include('client-runtime')
+include('server-runtime')
 include('client-api')
 include('server-api')
 
@@ -37,5 +38,8 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
         mavenLocal()
+        maven {
+            url = 'https://repo.terracotta.org/maven2'
+        }
     }
 }

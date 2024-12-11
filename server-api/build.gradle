@@ -16,6 +16,7 @@
  */
 plugins {
     id 'java-library'
+    id 'maven-publish'
 }
 
 description = 'terracotta-core server-api'
@@ -29,15 +30,32 @@ jar {
 }
 
 dependencies {
-  api "org.terracotta:entity-server-api:$terracottaApisVersion"
-  api "org.terracotta:entity-common-api:$terracottaApisVersion"
-  api "org.terracotta:monitoring-support:$terracottaApisVersion"
-  api "org.terracotta:packaging-support:$terracottaApisVersion"
-  api "org.terracotta:sandard-cluster-services:$terracottaApisVersion"
-  api project(':common-spi')
-  api project(':server-spi')
+  compileOnlyApi "org.terracotta:entity-server-api:$terracottaApisVersion"
+  compileOnlyApi "org.terracotta:entity-common-api:$terracottaApisVersion"
+  compileOnlyApi "org.terracotta:monitoring-support:$terracottaApisVersion"
+  compileOnlyApi "org.terracotta:packaging-support:$terracottaApisVersion"
+  compileOnlyApi "org.terracotta:sandard-cluster-services:$terracottaApisVersion"
+  compileOnlyApi project(':common-spi')
+  compileOnlyApi project(':server-spi')
+  compileOnlyApi project(':configuration-provider')
 }
 
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'org.terracotta.internal'
+            version = "$project.version"
+            artifactId = "$project.name"
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = 'releases'
+            url = 'https://repo.terracotta.org/maven2'
+        }
+    }
+}
 
 
 

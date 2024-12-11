@@ -17,7 +17,6 @@
  */
 plugins {
     id 'java-library'
-    id 'maven-publish'
 }
 
 description = 'terracotta-core connection API implementation'
@@ -46,22 +45,3 @@ dependencies {
     testImplementation "ch.qos.logback:logback-classic:$logbackVersion"
     testImplementation 'org.terracotta:terracotta-utilities-port-chooser:0.0.19'
 }
-
-publishing {
-    publications {
-        maven(MavenPublication) {
-            groupId = 'org.terracotta.internal'
-            version = "$project.version"
-            artifactId = "$project.name"
-            from components.java
-        }
-    }
-    repositories {
-        maven {
-            name = ''
-            url = ''
-        }
-    }
-}
-
-

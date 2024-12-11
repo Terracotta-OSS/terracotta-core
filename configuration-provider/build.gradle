@@ -17,7 +17,6 @@
  */
 plugins {
     id 'java-library'
-    id 'maven-publish'
 }
 
 description = 'terracotta-core configuration provider API'
@@ -31,25 +30,8 @@ jar {
 }
 
 dependencies {
-  implementation "org.slf4j:slf4j-api:$slf4jVersion"
-  implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
+  compileOnly "org.slf4j:slf4j-api:$slf4jVersion"
+  compileOnly "org.terracotta:entity-server-api:$terracottaApisVersion"
+  testImplementation "org.slf4j:slf4j-api:$slf4jVersion"
+  testImplementation "org.terracotta:entity-server-api:$terracottaApisVersion"
 }
-
-publishing {
-    publications {
-        maven(MavenPublication) {
-            groupId = 'org.terracotta.internal'
-            version = "$project.version"
-            artifactId = "$project.name"
-            from components.java
-        }
-    }
-    repositories {
-        maven {
-            name = ''
-            url = ''
-        }
-    }
-}
-
-
