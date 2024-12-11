@@ -31,9 +31,11 @@ configurations {
 }
 
 dependencies {
-    api "org.terracotta:connection-api:$terracottaApisVersion"
+    compileOnlyApi "org.terracotta:connection-api:$terracottaApisVersion"
     implementation  "org.slf4j:slf4j-api:$slf4jVersion"
     fatJar project(':connection-impl')
+    fatJar "org.terracotta:entity-client-api:$terracottaApisVersion"
+    fatJar "org.terracotta:connection-api:$terracottaApisVersion"
 }
 
 jar {

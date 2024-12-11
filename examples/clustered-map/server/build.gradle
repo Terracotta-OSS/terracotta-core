@@ -30,8 +30,6 @@ jar {
 }
 
 dependencies {
-    implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
-    implementation "org.terracotta:standard-cluster-services:$terracottaApisVersion"
-    
+    compileOnly project(':server-api')
     implementation project(':examples:clustered-map:common')
 }

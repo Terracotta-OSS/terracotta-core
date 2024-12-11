@@ -30,6 +30,6 @@ jar {
 }
 
 dependencies {
-    implementation "org.terracotta:entity-common-api:$terracottaApisVersion"
+    compileOnly project(':client-api')
     compileOnly "com.google.code.findbugs:annotations:3.0.1"
 }
