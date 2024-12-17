@@ -15,6 +15,3 @@
  * limitations under the License.
  */
 //See Jenkins wiki pages for info
-mavenBuildOSS([maven_goal : 'clean deploy', 
-        maven_goal_pr : 'clean verify'
-])
