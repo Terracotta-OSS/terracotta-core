@@ -216,6 +216,16 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   @Override
+  public String getMonkier() {
+    return productInfo.moniker();
+  }
+
+  @Override
+  public String getKitID() {
+    return productInfo.kitID();
+  }
+
+  @Override
   public String getVersion() {
     return productInfo.toShortString();
   }
