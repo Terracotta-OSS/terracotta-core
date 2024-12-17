@@ -36,6 +36,7 @@ dependencies {
     fatJar project(':connection-impl')
     fatJar "org.terracotta:entity-client-api:$terracottaApisVersion"
     fatJar "org.terracotta:connection-api:$terracottaApisVersion"
+    fatJar "org.terracotta:packaging-support:$terracottaApisVersion"
 }
 
 jar {

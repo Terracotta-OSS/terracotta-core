@@ -31,9 +31,10 @@ jar {
 
 dependencies {
   compileOnlyApi "org.terracotta:entity-client-api:$terracottaApisVersion"
-  compileOnlyApi "org.terracotta:entity-common-api:$terracottaApisVersion"
   compileOnlyApi "org.terracotta:connection-api:$terracottaApisVersion"
+  compileOnlyApi "org.terracotta:packaging-support:$terracottaApisVersion"
   compileOnlyApi project(':common-spi')
+  compileOnlyApi project(':common-api')
 }
 
 publishing {

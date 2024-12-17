@@ -39,10 +39,8 @@ dependencies {
     implementation project(":galvan")
     implementation project(":test-interfaces")
     implementation "org.terracotta:terracotta-utilities-port-chooser:0.0.19"
-    implementation project(':common')
-    implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
-    implementation "org.terracotta:standard-cluster-services:$terracottaApisVersion"
-    implementation project(':server-spi')
+    compileOnly project(':common')
+    compileOnly project(':server-api')
 
     testCompileOnly project(':tc-client')
     testImplementation "ch.qos.logback:logback-classic:$logbackVersion"

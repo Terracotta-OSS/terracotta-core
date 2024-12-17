@@ -27,11 +27,8 @@ import java.nio.file.Path;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.stream.Stream;
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_CLIENT_RECONNECT_WINDOW;
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_VOTER_COUNT;
 import static org.terracotta.testing.demos.TestHelpers.isWindows;

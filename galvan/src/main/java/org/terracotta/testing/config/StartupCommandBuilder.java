@@ -18,6 +18,7 @@
 package org.terracotta.testing.config;
 
 import java.nio.file.Path;
+import org.terracotta.testing.config.StripeConfiguration;
 
 public interface StartupCommandBuilder {
   StartupCommandBuilder stripeConfiguration(StripeConfiguration config);
