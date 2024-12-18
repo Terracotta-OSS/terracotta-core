@@ -35,6 +35,8 @@ import static java.nio.file.StandardOpenOption.CREATE;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import static org.terracotta.testing.demos.TestHelpers.isWindows;
 
@@ -51,6 +53,15 @@ public class ServerProcess extends ServerInstance {
   // OutputStreams to close when the server is down.
   private OutputStream outputStream;
   private OutputStream errorStream;
+  
+  private static final Set<AnyProcess> running = ConcurrentHashMap.newKeySet();
+  
+  static {
+    Runtime.getRuntime().addShutdownHook(new Thread(()->{
+        running.forEach(AnyProcess::destroy);
+      })
+    );
+  }
 
   public ServerProcess(String serverName, Path serverInstall, Path serverWorkingDir, int heapInM, 
           int debugPort, Properties serverProperties, OutputStream out,
@@ -111,6 +122,7 @@ public class ServerProcess extends ServerInstance {
             .command(createCommand(javaHome, serverInstall, startupCommand))
             .workingDir(this.serverWorkingDir.toFile())
             .env("JAVA_HOME", javaHome)
+            .pipeStdin()
             .pipeStdout(out)
             .pipeStderr(stderr)
             .build());
@@ -327,7 +339,7 @@ public class ServerProcess extends ServerInstance {
   }
 
   private class ExitWaiter extends Thread {
-    private Supplier<AnyProcess> process;
+    private final Supplier<AnyProcess> process;
 
     public ExitWaiter(Supplier<AnyProcess> process) {
       this.process = process;
@@ -339,6 +351,7 @@ public class ServerProcess extends ServerInstance {
       while (returnValue == 11) {
         AnyProcess instance = this.process.get();
         try {
+          running.add(instance);          
           returnValue = instance.waitFor();
           serverLogger.output("server process died with rc=" + returnValue);
         } catch (java.util.concurrent.CancellationException e) {
@@ -350,6 +363,8 @@ public class ServerProcess extends ServerInstance {
         } catch (Throwable t) {
           Assert.unexpected(t);
           returnValue = 1;
+        } finally {
+          running.remove(instance);
         }
       }
       ServerProcess.this.didTerminateWithStatus(returnValue);

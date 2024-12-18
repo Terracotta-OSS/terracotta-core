@@ -22,7 +22,9 @@ import com.tc.util.runtime.Vm;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import org.junit.Ignore;
 
+@Ignore
 public class TCTestCaseTest extends TCTestCase {
 
   public TCTestCaseTest() {

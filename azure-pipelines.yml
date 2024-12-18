@@ -27,3 +27,15 @@ jobs:
   parameters:
     jdkVersion: '17'
     jobName: 'LinuxJava17'
+    timeoutInMinutes: 30
+    options: '--max-workers=4 --no-daemon'
+    gradleOptions: ''
+    
+- template: build-templates/gradle-common.yml@templates
+  parameters:
+    vmImage: 'windows-latest'
+    jdkVersion: '17'
+    jobName: 'WindowsJava17'
+    timeoutInMinutes: 30
+    options: '--max-workers=4 --no-daemon'
+    gradleOptions: ''
