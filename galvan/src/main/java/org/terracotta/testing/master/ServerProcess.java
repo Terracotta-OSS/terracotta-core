@@ -24,6 +24,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import static java.nio.file.StandardOpenOption.APPEND;
@@ -49,16 +50,19 @@ public class ServerProcess extends ServerInstance {
   private final Path serverWorkingDir;
   private final String[] startupCommand;
   private final OutputStream parentOutput;
+
   
   // OutputStreams to close when the server is down.
   private OutputStream outputStream;
   private OutputStream errorStream;
+    
+  private static final Set<Process> running = ConcurrentHashMap.newKeySet();
   
-  private static final Set<AnyProcess> running = ConcurrentHashMap.newKeySet();
+  private Process localProcess;
   
   static {
     Runtime.getRuntime().addShutdownHook(new Thread(()->{
-        running.forEach(AnyProcess::destroy);
+        running.forEach(Process::destroy);
       })
     );
   }
@@ -77,6 +81,14 @@ public class ServerProcess extends ServerInstance {
     this.parentOutput = out;
     // We start up in the shutdown state so notify the interlock.
   }
+  
+  private synchronized void setLocalProcess(Process local) {
+    this.localProcess = local;
+  }
+  
+  private synchronized Process getLocalProcess() {
+    return this.localProcess;
+  }
   /**
    * Starts the server, in the background, using its constructed name to find its config in the stripe's config file.
    * <p>
@@ -89,6 +101,7 @@ public class ServerProcess extends ServerInstance {
    *
    * @throws IOException The logs couldn't be created since the server's working directory is missing.
    */
+  @Override
   public void start() throws IOException {
     UUID token = enter();
     try {
@@ -122,10 +135,10 @@ public class ServerProcess extends ServerInstance {
             .command(createCommand(javaHome, serverInstall, startupCommand))
             .workingDir(this.serverWorkingDir.toFile())
             .env("JAVA_HOME", javaHome)
-            .pipeStdin()
             .pipeStdout(out)
             .pipeStderr(stderr)
             .build());
+
         exitWaiter.start();
       }
     } finally {
@@ -135,8 +148,9 @@ public class ServerProcess extends ServerInstance {
   
   private String[] createCommand(String javaHome, Path serverPath, String[] args) {
     Path sjar = serverPath.resolve("tc.jar");
-    serverProperties.put("logback.configurationFile", "logback-test.xml");
+    serverProperties.setProperty("logback.configurationFile", "logback-test.xml");
     serverProperties.setProperty("tc.install-root", serverPath.toString());
+
     List<String> cmd = new ArrayList<>();
     cmd.add(javaHome + "/bin/java");
     cmd.addAll(Arrays.asList(getJavaArguments(debugPort)));
@@ -246,44 +260,51 @@ public class ServerProcess extends ServerInstance {
    *
    * @throws InterruptedException
    */
+  @Override
   public void stop() throws InterruptedException {
     UUID token = enter();
     try {
       // Can't stop something not running.
       if (isServerRunning()) {
-        // Can't stop something unless we determined the PID.
-        long localPid = 0;
-        while (localPid == 0) {
-          localPid = waitForPid();
-          if (localPid == 0 && !isServerRunning()) {
-            //  PID could be zero if the server stops running while waiting for the PID
-            return;
-          }
-        }
-        // Log the intent.
-        this.serverLogger.output("Crashing server process: " + this + " (PID " + localPid + ")");
-        // Mark this as expected.
         this.setCrashExpected(true);
-
-        Process process = null;
-
-        // Destroy the process.
-        if (isWindows()) {
-          //kill process using taskkill command as process.destroy() doesn't terminate child processes on windows.
-          process = killProcessWindows(localPid);
+        
+        Process local = getLocalProcess();
+        
+        if (running.remove(local)) {
+          local.destroy();
+          int exit = local.waitFor();
+          serverLogger.output("server process killed with exit code:" + exit);
         } else {
-          process = killProcessUnix(localPid);
+          // Can't stop something unless we determined the PID.
+          long localPid = 0;
+          while (localPid == 0) {
+            localPid = waitForPid();
+            if (localPid == 0 && !isServerRunning()) {
+              //  PID could be zero if the server stops running while waiting for the PID
+              return;
+            }
+          }
+          // Log the intent.
+          this.serverLogger.output("Crashing server process: " + this + " (PID " + localPid + ")");
+        
+          Process process;
+          // Destroy the process.
+          if (isWindows()) {
+            //kill process using taskkill command as process.destroy() doesn't terminate child processes on windows.
+            process = killProcessWindows(localPid);
+          } else {
+            process = killProcessUnix(localPid);
+          }
+          while (process.isAlive()) {
+            serverLogger.output("Waiting for server to exit PID:" + localPid);
+            //  give up the synchronized lock while waiting for the kill process to
+            //  do it's job.  This can deadlock since the event bus will need this lock
+            //  to log events
+            process.waitFor(5, TimeUnit.SECONDS);
+          }
+          int result = process.exitValue();
+          serverLogger.output("Attempt to kill server process resulted in:" + result);
         }
-        while (process.isAlive()) {
-          serverLogger.output("Waiting for server to exit PID:" + localPid);
-          //  give up the synchronized lock while waiting for the kill process to
-          //  do it's job.  This can deadlock since the event bus will need this lock
-          //  to log events
-          process.waitFor(5, TimeUnit.SECONDS);
-        }
-        int result = process.exitValue();
-        serverLogger.output("Attempt to kill server process resulted in:" + result);
-        serverLogger.output("server process killed");
       }
     } finally {
       exit(token);
@@ -339,20 +360,45 @@ public class ServerProcess extends ServerInstance {
   }
 
   private class ExitWaiter extends Thread {
-    private final Supplier<AnyProcess> process;
-
-    public ExitWaiter(Supplier<AnyProcess> process) {
+    private final Supplier<Process> process;
+    
+    public ExitWaiter(Supplier<Process> process) {
       this.process = process;
     }
 
+    private void ping(Writer controller) {
+      try {
+        controller.write('z');
+        controller.flush();
+      } catch (IOException io) {
+        
+      }
+    }
+    
     @Override
     public void run() {
       int returnValue = 11;
       while (returnValue == 11) {
-        AnyProcess instance = this.process.get();
+        boolean sentinel = false;
+        if (sentinel) {
+          serverProperties.setProperty("tc.sentinel", "true");
+        }        
+        Process instance = this.process.get();
+
+        setLocalProcess(instance);
+        
         try {
-          running.add(instance);          
-          returnValue = instance.waitFor();
+          running.add(instance);
+          if (!sentinel) {
+            returnValue = instance.waitFor();
+          } else {
+            boolean exited = false;
+            while (!exited) {
+              ping(instance.outputWriter());
+              exited = instance.waitFor(30, TimeUnit.SECONDS);
+            }
+            returnValue = instance.exitValue();
+          }
           serverLogger.output("server process died with rc=" + returnValue);
         } catch (java.util.concurrent.CancellationException e) {
           returnValue = instance.exitValue();

@@ -55,6 +55,7 @@ test {
     systemProperty "galvan.plugin", layout.buildDirectory.dir("plugin").get().toString()
     systemProperty "galvan.dir", layout.buildDirectory.dir("galvan").get().toString()
     systemProperty "galvan.server", layout.buildDirectory.dir("tmp/tcserver").get().toString()
+//    systemProperty "serverDebugPortStart", "9000"
 }
 
 task copyPlugins(type: Copy) {
@@ -64,6 +65,10 @@ task copyPlugins(type: Copy) {
 
 task serverClean(type: Delete) {
     delete layout.buildDirectory.dir("tmp/tcserver")
+}
+
+task galvanTestClean(type: Delete) {
+    delete layout.buildDirectory.dir("galvan")
 }
 
 test.dependsOn(copyPlugins)

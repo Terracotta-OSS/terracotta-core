@@ -28,15 +28,56 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class TCServerMain {
   
   public static void main(String[] args) {
+    if (Boolean.getBoolean("tc.sentinel")) {
+      sentinel();
+    }
     while (startServer(args)) {
         // signaling to shell that restart is requested with special exit code 11
         System.exit(11);
     };
     System.exit(0);
+  }
+  
+  private static int readNextCode(long set, TimeUnit units) throws TimeoutException, IOException, InterruptedException {
+    long start = System.currentTimeMillis();
+    while (System.currentTimeMillis() - start < units.toMillis(set)) {
+      if (System.in.available() == 0) {
+        units.sleep(set / 4L);
+      } else {
+        return System.in.read();
+      }
+    }
+    throw new TimeoutException();
+  }
+  
+  private static void sentinel() {
+    Thread t;
+    t = new Thread(()->{
+      while (true) {
+        try {
+          int code = readNextCode(120, TimeUnit.SECONDS);
+          switch (code) {
+            case 's', 'z' -> {
+              break;
+            }
+            default -> {
+            }
+          }
+        } catch (IOException | InterruptedException io) {
+  
+        } catch (TimeoutException e) {
+          System.exit(2);
+        }
+      }
+    },"Sentinel");
+    t.setDaemon(true);
+    t.start();
   }
 
   private static boolean startServer(String[] args) {
