@@ -57,6 +57,7 @@ public class ServerProcess extends ServerInstance {
   private OutputStream errorStream;
     
   private static final Set<Process> running = ConcurrentHashMap.newKeySet();
+  private static final boolean communicateLiveliness = true;
   
   private Process localProcess;
   
@@ -149,15 +150,26 @@ public class ServerProcess extends ServerInstance {
   private String[] createCommand(String javaHome, Path serverPath, String[] args) {
     Path sjar = serverPath.resolve("tc.jar");
     serverProperties.setProperty("logback.configurationFile", "logback-test.xml");
-    serverProperties.setProperty("tc.install-root", serverPath.toString());
-
-    List<String> cmd = new ArrayList<>();
-    cmd.add(javaHome + "/bin/java");
-    cmd.addAll(Arrays.asList(getJavaArguments(debugPort)));
-    cmd.add("-jar");
-    cmd.add(sjar.toString());
-    cmd.addAll(Arrays.asList(args));
-    return cmd.toArray(String[]::new);
+    serverProperties.setProperty("tc.install-root", serverPath.toString());    
+    
+    if (!communicateLiveliness) {
+      List<String> cmd = new ArrayList<>();
+      cmd.add(javaHome + "/bin/java");
+      cmd.addAll(Arrays.asList(getJavaArguments(debugPort)));
+      cmd.add("-jar");
+      cmd.add(sjar.toString());
+      cmd.addAll(Arrays.asList(args));
+      return cmd.toArray(String[]::new);
+    } else {
+      List<String> cmd = new ArrayList<>();
+      cmd.add(javaHome + "/bin/java");
+      cmd.addAll(Arrays.asList(getJavaArguments(debugPort)));
+      cmd.add("-classpath");
+      cmd.add(sjar.toString());
+      cmd.add("com.tc.server.TestingServerMain");
+      cmd.addAll(Arrays.asList(args));
+      return cmd.toArray(String[]::new);
+    }
   }
 
   private synchronized void setStreams(OutputStream out, OutputStream err) {
@@ -379,23 +391,17 @@ public class ServerProcess extends ServerInstance {
     public void run() {
       int returnValue = 11;
       while (returnValue == 11) {
-        boolean sentinel = false;
-        if (sentinel) {
-          serverProperties.setProperty("tc.sentinel", "true");
-        }        
         Process instance = this.process.get();
-
         setLocalProcess(instance);
-        
+        running.add(instance);
         try {
-          running.add(instance);
-          if (!sentinel) {
+          if (!communicateLiveliness) {
             returnValue = instance.waitFor();
           } else {
             boolean exited = false;
             while (!exited) {
               ping(instance.outputWriter());
-              exited = instance.waitFor(30, TimeUnit.SECONDS);
+              exited = instance.waitFor(10, TimeUnit.SECONDS);
             }
             returnValue = instance.exitValue();
           }
