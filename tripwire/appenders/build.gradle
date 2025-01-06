@@ -23,7 +23,7 @@ plugins {
 description = 'terracotta-core tripwire appenders'
 
 base {
-    archivesName = 'tripwire-appenders'
+    archivesName = 'tc-tripwire-appenders'
 }
 
 jar {
@@ -41,9 +41,9 @@ dependencies {
 publishing {
     publications {
         maven(MavenPublication) {
-            groupId = 'org.terracotta.internal'
+            groupId = 'org.terracotta'
             version = "$project.version"
-            artifactId = 'tripwire-appenders'
+            artifactId = 'tc-tripwire-appenders'
             from components.java
         }
     }

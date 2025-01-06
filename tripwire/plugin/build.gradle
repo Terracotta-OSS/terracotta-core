@@ -22,7 +22,7 @@ plugins {
 description = 'terracotta-core tripwire plugin'
 
 base {
-    archivesName = 'tripwire-plugin'
+    archivesName = 'tc-tripwire-plugin'
 }
 
 jar {
@@ -36,9 +36,9 @@ dependencies {
 publishing {
     publications {
         maven(MavenPublication) {
-            groupId = 'org.terracotta.internal'
+            groupId = 'org.terracotta'
             version = "$project.version"
-            artifactId = 'tripwire-plugin'
+            artifactId = 'tc-tripwire-plugin'
             from components.java
         }
     }
