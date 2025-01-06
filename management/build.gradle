@@ -22,7 +22,7 @@ plugins {
 description = 'terracotta-core terracotta management'
 
 base {
-    archivesName = 'management'
+
 }
 
 jar {

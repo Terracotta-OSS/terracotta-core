@@ -22,7 +22,7 @@ plugins {
 description = 'terracotta-core common SPI classes'
 
 base {
-    archivesName = 'common-spi'
+
 }
 
 jar {

@@ -22,7 +22,7 @@ plugins {
 description = 'terracotta-core passthrough entity test library'
 
 base {
-    archivesName = 'entity-test-lib'
+
 }
 
 jar {

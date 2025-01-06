@@ -24,7 +24,7 @@ plugins {
 description = 'terracotta-core server-runtime'
 
 base {
-    archivesName = 'server-runtime'
+
 }
 
 configurations {

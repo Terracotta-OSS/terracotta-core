@@ -22,7 +22,7 @@ plugins {
 description = 'terracotta-core server-api'
 
 base {
-    archivesName = 'core-server-api'
+
 }
 
 jar {

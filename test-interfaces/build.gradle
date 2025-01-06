@@ -22,7 +22,7 @@ plugins {
 description = 'terracotta-core test-interfaces'
 
 base {
-    archivesName = 'test-interfaces'
+
 }
 
 jar {

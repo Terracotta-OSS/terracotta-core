@@ -22,7 +22,7 @@ plugins {
 description = 'terracotta-core common classes'
 
 base {
-    archivesName = 'common'
+
 }
 
 jar {

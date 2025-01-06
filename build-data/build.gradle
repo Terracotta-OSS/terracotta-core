@@ -24,7 +24,7 @@ plugins {
 description = 'terracotta-core build data info'
 
 base {
-    archivesName = 'build-data'
+
 }
 
 dependencies {

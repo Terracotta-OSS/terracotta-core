@@ -22,7 +22,7 @@ plugins {
 description = 'terracotta-core connection API implementation'
 
 base {
-    archivesName = 'connection-impl'
+
 }
 
 jar {

@@ -22,7 +22,7 @@ plugins {
 description = 'terracotta-core terracotta server bootstrap'
 
 base {
-    archivesName = 'server-bootstrap'
+
 }
 
 dependencies {

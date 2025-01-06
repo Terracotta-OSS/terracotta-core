@@ -22,7 +22,7 @@ plugins {
 description = 'terracotta-core client implementation'
 
 base {
-    archivesName = 'tc-client'
+
 }
 
 jar {

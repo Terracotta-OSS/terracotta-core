@@ -22,7 +22,7 @@ plugins {
 description = 'terracotta-core legacy configuration'
 
 base {
-    archivesName = 'legacy-configuration'
+
 }
 
 jar {

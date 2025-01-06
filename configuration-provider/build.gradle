@@ -22,7 +22,7 @@ plugins {
 description = 'terracotta-core configuration provider API'
 
 base {
-    archivesName = 'configuration-provider'
+
 }
 
 jar {

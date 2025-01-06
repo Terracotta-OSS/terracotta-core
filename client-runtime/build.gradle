@@ -23,7 +23,7 @@ plugins {
 description = 'terracotta-core client-runtime'
 
 base {
-    archivesName = 'client-runtime'
+
 }
 
 configurations {

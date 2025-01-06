@@ -22,7 +22,7 @@ plugins {
 description = 'terracotta-core clustered map common example'
 
 base {
-    archivesName = 'clustered-map-common'
+
 }
 
 jar {

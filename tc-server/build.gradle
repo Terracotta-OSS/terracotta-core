@@ -22,7 +22,7 @@ plugins {
 description = 'terracotta-core server implementation'
 
 base {
-    archivesName = 'tc-server'
+
 }
 
 dependencies {

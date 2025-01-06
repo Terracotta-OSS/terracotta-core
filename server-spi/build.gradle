@@ -22,7 +22,7 @@ plugins {
 description = 'terracotta-core server SPI'
 
 base {
-    archivesName = 'server-spi'
+
 }
 
 jar {

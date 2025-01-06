@@ -21,7 +21,7 @@ plugins {
 description = 'terracotta-core tripwire plugin'
 
 base {
-    archivesName = 'tc-tripwire-plugin'
+
 }
 
 jar {

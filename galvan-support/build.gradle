@@ -23,7 +23,7 @@ plugins {
 description = 'terracotta-core galvan-support'
 
 base {
-    archivesName = 'galvan-support'
+
 }
 
 jar {
