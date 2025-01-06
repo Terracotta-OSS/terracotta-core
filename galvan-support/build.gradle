@@ -77,7 +77,7 @@ copyPlugins.dependsOn(serverClean)
 publishing {
     publications {
         maven(MavenPublication) {
-            groupId = 'org.terracotta.internal'
+            groupId = 'org.terracotta'
             version = "$project.version"
             artifactId = "$project.name"
             from components.java
@@ -85,8 +85,8 @@ publishing {
     }
     repositories {
         maven {
-            name = ''
-            url = ''
+            name = 'releases'
+            url = 'https://repo.terracotta.org/maven2'
         }
     }
 }

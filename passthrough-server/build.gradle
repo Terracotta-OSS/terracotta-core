@@ -17,6 +17,7 @@
  */
 plugins {
     id 'java-library'
+    id 'maven-publish'
 }
 
 description = 'terracotta-core passthrough entity test library'
@@ -46,6 +47,19 @@ dependencies {
     testImplementation "org.hamcrest:hamcrest-all:$hamcrestVersion"
 }
 
-
-
-
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'org.terracotta'
+            version = "$project.version"
+            artifactId = "$project.name"
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = 'releases'
+            url = 'https://repo.terracotta.org/maven2'
+        }
+    }
+}

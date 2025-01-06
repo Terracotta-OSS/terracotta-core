@@ -60,8 +60,8 @@ publishing {
     }
     repositories {
         maven {
-            name = ''
-            url = ''
+            name = 'releases'
+            url = 'https://repo.terracotta.org/maven2'
         }
     }
 }

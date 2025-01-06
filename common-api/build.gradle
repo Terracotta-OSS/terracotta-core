@@ -19,6 +19,7 @@ plugins {
     id 'maven-publish'
 }
 
+version = "$project.apiVersion"
 description = 'terracotta-core common-api'
 
 base {
@@ -32,12 +33,13 @@ jar {
 dependencies {
   compileOnlyApi "org.terracotta:entity-common-api:$terracottaApisVersion"
   compileOnlyApi project(':common-spi')
+  compileOnlyApi "org.terracotta:packaging-support:$terracottaApisVersion"
 }
 
 publishing {
     publications {
         maven(MavenPublication) {
-            groupId = 'org.terracotta.internal'
+            groupId = 'org.terracotta'
             version = "$project.version"
             artifactId = "$project.name"
             from components.java
