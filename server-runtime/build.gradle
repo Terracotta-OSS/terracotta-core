@@ -32,8 +32,20 @@ configurations {
 }
 
 dependencies {
-    server project(':tc-server')
-    server project(':terracotta')
+  server project(':tc-server')
+  server project(':terracotta')
+
+  implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
+  implementation "org.terracotta:monitoring-support:$terracottaApisVersion"
+  implementation "org.terracotta:packaging-support:$terracottaApisVersion"
+  implementation "org.terracotta:standard-cluster-services:$terracottaApisVersion"
+  implementation project(":tripwire:plugin")
+  implementation project(':server-spi')
+  implementation project(':configuration-provider')
+  
+  implementation "org.terracotta:entity-common-api:$terracottaApisVersion"
+  implementation project(':common-spi')
+  implementation "org.terracotta:packaging-support:$terracottaApisVersion"
 }
 
 distributions {

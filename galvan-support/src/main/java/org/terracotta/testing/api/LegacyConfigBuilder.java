@@ -15,23 +15,14 @@
  *  limitations under the License.
  *
  */
-package org.terracotta.testing.config;
+package org.terracotta.testing.api;
 
-import java.nio.file.Path;
+/**
+ *
+ */
+public interface LegacyConfigBuilder extends ConfigBuilder {
 
-public interface StartupCommandBuilder {
-  
-  StartupCommandBuilder stripeConfiguration(StripeConfiguration config);
-  
-  StartupCommandBuilder logConfigExtension(String logging);
-  
-  StartupCommandBuilder stripeWorkingDir(Path stripeWorkingDir);
+  void withNamespaceFragment(final String namespaceFragment);
 
-  StartupCommandBuilder serverWorkingDir(Path serverWorkingDir);
-
-  StartupCommandBuilder serverName(String serverName);
-
-  StartupCommandBuilder stripeName(String stripeName);
-  
-  String[] build();
+  void withServiceFragment(final String serviceFragment);  
 }

@@ -79,7 +79,8 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     VerboseManager stripeVerboseManager = verboseManager.createComponentManager("[" + stripeName + "]");
 
     StripeConfiguration stripeConfig = new StripeConfiguration(serverDebugPorts, serverPorts, serverGroupPorts, serverNames,
-        stripeName, "logback-ext.xml", harnessOptions.serverProperties);
+        stripeName, "logback-ext.xml", harnessOptions.serverProperties, harnessOptions.tcProperties, 
+            harnessOptions.clientReconnectWindow, harnessOptions.voterCount, harnessOptions.consistent);
     
     int serverHeapSize = DEFAULT_SERVER_HEAP_MB;
     

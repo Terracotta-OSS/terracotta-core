@@ -153,6 +153,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     String serviceFragment = master.getServiceConfigXMLSnippet();
     int clientReconnectWindowTime = master.getClientReconnectWindowTime();
     int failoverPriorityVoterCount = master.getFailoverPriorityVoterCount();
+    boolean consistent = master.getConsistentStartup();
     Properties tcProperties = master.getTcProperties();
     Properties serverProperties = master.getServerProperties();
     List<C> runConfigurations = master.getRunConfigurations();
@@ -176,6 +177,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
       harnessOptions.serviceFragment = serviceFragment;
       harnessOptions.clientReconnectWindow = clientReconnectWindowTime;
       harnessOptions.voterCount = failoverPriorityVoterCount;
+      harnessOptions.consistent = consistent;
       harnessOptions.tcProperties = tcProperties;
       harnessOptions.serverProperties = serverProperties;
 
@@ -225,6 +227,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     public Set<Path> extraJarPaths;
     public int clientReconnectWindow;
     public int voterCount;
+    public boolean consistent;
     public String namespaceFragment;
     public String serviceFragment;
     public Properties tcProperties;

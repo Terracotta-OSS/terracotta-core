@@ -27,29 +27,36 @@ import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.function.Supplier;
+import org.terracotta.testing.api.ConfigBuilder;
 
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_SERVER_HEAP_MB;
+import org.terracotta.testing.config.DefaultLegacyConfigBuilder;
 import org.terracotta.testing.config.DefaultStartupCommandBuilder;
 import org.terracotta.testing.master.ServerDeploymentBuilder;
+import org.terracotta.testing.api.LegacyConfigBuilder;
 
 public class BasicExternalClusterBuilder {
   private final int stripeSize;
 
   private Path clusterDirectory;
   private final Properties systemProperties = new Properties();
+  private final Properties tcProperties = new Properties();
+  private int reconnectWindow;
+  private int voters;
+  private boolean consistent;
 
   private String logConfigExt = "logback-ext.xml";
   private int serverHeapSize = DEFAULT_SERVER_HEAP_MB;
   private int customHeapSize = DEFAULT_SERVER_HEAP_MB;
-  private final DefaultStartupCommandBuilder cmdBuilder;
+  private ConfigBuilder configBuilder;
   private ServerDeploymentBuilder serverBuilder = new ServerDeploymentBuilder();
   private Supplier<StartupCommandBuilder> startupBuilder;
   private OutputStream parentStream;
+  
+  
     
   private BasicExternalClusterBuilder(final int stripeSize) {
     this.stripeSize = stripeSize;
-    
-    cmdBuilder = new DefaultStartupCommandBuilder();
   }
 
   public static BasicExternalClusterBuilder newCluster() {
@@ -75,34 +82,46 @@ public class BasicExternalClusterBuilder {
     this.serverBuilder.installPath(server);
     return this;
   }
+  
+  public BasicExternalClusterBuilder configBuilder(ConfigBuilder config) {
+    this.configBuilder = config;
+    return this;
+  }
+  
+  private LegacyConfigBuilder legacy() {
+    if (this.configBuilder == null) {
+      this.configBuilder = new DefaultLegacyConfigBuilder();
+    }
+    return (LegacyConfigBuilder)this.configBuilder;
+  }
 
   public BasicExternalClusterBuilder withNamespaceFragment(final String namespaceFragment) {
-    this.cmdBuilder.withNamespaceFragment(namespaceFragment);
+    this.legacy().withNamespaceFragment(namespaceFragment);
     return this;
   }
 
   public BasicExternalClusterBuilder withServiceFragment(final String serviceFragment) {
-    this.cmdBuilder.withServiceFragment(serviceFragment);
+    this.legacy().withServiceFragment(serviceFragment);
     return this;
   }
 
   public BasicExternalClusterBuilder withClientReconnectWindowTime(final int clientReconnectWindowTime) {
-    this.cmdBuilder.withClientReconnectWindowTime(clientReconnectWindowTime);
+    this.reconnectWindow = clientReconnectWindowTime;
     return this;
   }
   
   public BasicExternalClusterBuilder withFailoverPriorityVoterCount(final int failoverPriorityVoterCount) {
-    this.cmdBuilder.withFailoverPriorityVoterCount(failoverPriorityVoterCount);
+    this.voters = failoverPriorityVoterCount;
     return this;
   }
   
   public BasicExternalClusterBuilder withTcProperties(Properties tcProperties) {
-    this.cmdBuilder.withTcProperties(tcProperties);
+    this.tcProperties.putAll(tcProperties);
     return this;
   }
 
   public BasicExternalClusterBuilder withTcProperty(String key, String value) {
-    this.cmdBuilder.withTcProperty(key, value);
+    this.tcProperties.setProperty(key, value);
     return this;
   }
 
@@ -152,7 +171,7 @@ public class BasicExternalClusterBuilder {
   }
 
   public BasicExternalClusterBuilder withConsistentStartup(boolean consistent) {
-    this.cmdBuilder.withConsistentStartup(consistent);
+    this.consistent = consistent;
     return this;
   }
   
@@ -175,8 +194,9 @@ public class BasicExternalClusterBuilder {
       }
     }
 
-    return new BasicExternalCluster(clusterDirectory, stripeSize, this.serverBuilder.deploy(), serverHeapSize, systemProperties, 
-        logConfigExt, parentStream, Optional.ofNullable(startupBuilder).orElse(cmdBuilder::copy));
+    return new BasicExternalCluster(clusterDirectory, stripeSize, this.serverBuilder.deploy(), serverHeapSize, systemProperties, tcProperties,
+            this.reconnectWindow, this.voters, this.consistent, 
+        logConfigExt, parentStream, configBuilder, Optional.ofNullable(startupBuilder).orElse(DefaultStartupCommandBuilder::new));
 
   }
 }

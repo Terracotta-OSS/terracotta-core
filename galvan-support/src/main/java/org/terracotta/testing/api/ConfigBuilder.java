@@ -15,23 +15,17 @@
  *  limitations under the License.
  *
  */
-package org.terracotta.testing.config;
+package org.terracotta.testing.api;
 
+import java.io.IOException;
 import java.nio.file.Path;
+import org.terracotta.testing.config.StripeConfiguration;
 
-public interface StartupCommandBuilder {
-  
-  StartupCommandBuilder stripeConfiguration(StripeConfiguration config);
-  
-  StartupCommandBuilder logConfigExtension(String logging);
-  
-  StartupCommandBuilder stripeWorkingDir(Path stripeWorkingDir);
+/**
+ *
+ */
+public interface ConfigBuilder {
+  void withStripeConfiguration(StripeConfiguration config);
 
-  StartupCommandBuilder serverWorkingDir(Path serverWorkingDir);
-
-  StartupCommandBuilder serverName(String serverName);
-
-  StartupCommandBuilder stripeName(String stripeName);
-  
-  String[] build();
+  Path createConfig(Path stripeInstallationDir) throws IOException;
 }

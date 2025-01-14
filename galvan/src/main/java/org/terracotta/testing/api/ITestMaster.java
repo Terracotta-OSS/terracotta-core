@@ -50,6 +50,10 @@ public interface ITestMaster<C extends ITestClusterConfiguration> {
   default int getFailoverPriorityVoterCount() {
     return DEFAULT_VOTER_COUNT;
   }
+  
+  default boolean getConsistentStartup() {
+    return false;
+  }
 
   /**
    * @return A list of paths to JARs which must be copied to the server kit being used in the test.

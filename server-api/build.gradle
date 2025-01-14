@@ -35,6 +35,7 @@ dependencies {
   compileOnlyApi "org.terracotta:monitoring-support:$terracottaApisVersion"
   compileOnlyApi "org.terracotta:packaging-support:$terracottaApisVersion"
   compileOnlyApi "org.terracotta:standard-cluster-services:$terracottaApisVersion"
+  compileOnlyApi project(":tripwire:plugin")
   compileOnlyApi project(':server-spi')
   compileOnlyApi project(':common-api')
   compileOnlyApi project(':configuration-provider')

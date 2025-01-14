@@ -35,13 +35,19 @@ public class StripeConfiguration {
   private final List<String> serverNames;
   private final List<Integer> serverDebugPorts;
   private final Properties serverProperties = new Properties();
+  private final Properties tcProperties = new Properties();
   private final List<Integer> serverPorts;
   private final List<Integer> serverGroupPorts;
   private final List<InetSocketAddress> serverAddresses;
+  private final int reconnect;
+  private final int voters;
+  private final boolean consistent;
 
   public StripeConfiguration(List<Integer> serverDebugPorts, List<Integer> serverPorts,
                              List<Integer> serverGroupPorts, List<String> serverNames, String stripeName,
-                             String logConfigExt, Properties serverProperties) {
+                             String logConfigExt, Properties serverProperties, Properties tcProperties,
+                             int reconnect, int voters, boolean consistent
+  ) {
     this.serverDebugPorts = serverDebugPorts;
     this.serverPorts = serverPorts;
     this.serverGroupPorts = serverGroupPorts;
@@ -51,6 +57,10 @@ public class StripeConfiguration {
     this.clusterInfo = buildClusterInfo(serverNames, serverPorts, serverGroupPorts);
     this.uri = buildUri(this.serverPorts);
     this.serverProperties.putAll(serverProperties);
+    this.tcProperties.putAll(tcProperties);
+    this.reconnect = reconnect;
+    this.voters = voters;
+    this.consistent = consistent;
     this.serverAddresses = buildServerAddresses(this.serverPorts);
   }
 
@@ -89,10 +99,27 @@ public class StripeConfiguration {
   public Properties getServerProperties() {
     return serverProperties;
   }
+  
+  public Properties getTcProperties() {
+    return tcProperties;
+  }
 
+  public int getReconnectWindow() {
+    return reconnect;
+  }
+
+  public int getVoters() {
+    return voters;
+  }
+
+  public boolean isConsistent() {
+    return consistent;
+  }
+  
   public List<String> getServerNames() {
     return Collections.unmodifiableList(serverNames);
   }
+  
 
   private String buildUri(List<Integer> serverPorts) {
     StringBuilder connectUri = new StringBuilder("terracotta://");

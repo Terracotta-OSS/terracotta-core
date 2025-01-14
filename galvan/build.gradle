@@ -41,7 +41,7 @@ dependencies {
     implementation project(":terracotta")
     implementation project(":server-bootstrap")
     implementation "org.terracotta:ipc-eventbus:1.1.4"
-    implementation "org.terracotta:terracotta-utilities-port-chooser:0.0.19"
+    api "org.terracotta:terracotta-utilities-port-chooser:0.0.19"
     implementation "junit:junit:$junitVersion"
     testImplementation "ch.qos.logback:logback-classic:$logbackVersion"
     implementation "org.mockito:mockito-inline:4.11.0"
