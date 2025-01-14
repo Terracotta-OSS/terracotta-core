@@ -103,7 +103,7 @@ class BasicExternalCluster extends Cluster {
     this.stripeSize = stripeSize;
     this.server = server;
     this.systemProperties.putAll(systemProperties);
-    this.systemProperties.putAll(tcProps);
+    this.tcProps.putAll(tcProps);
     this.reconnectWindow = reconnect;
     this.voters = voters;
     this.consistent = consistent;

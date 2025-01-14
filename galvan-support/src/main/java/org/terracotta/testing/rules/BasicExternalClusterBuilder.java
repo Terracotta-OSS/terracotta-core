@@ -34,6 +34,7 @@ import org.terracotta.testing.config.DefaultLegacyConfigBuilder;
 import org.terracotta.testing.config.DefaultStartupCommandBuilder;
 import org.terracotta.testing.master.ServerDeploymentBuilder;
 import org.terracotta.testing.api.LegacyConfigBuilder;
+import org.terracotta.testing.config.ConfigConstants;
 
 public class BasicExternalClusterBuilder {
   private final int stripeSize;
@@ -41,9 +42,9 @@ public class BasicExternalClusterBuilder {
   private Path clusterDirectory;
   private final Properties systemProperties = new Properties();
   private final Properties tcProperties = new Properties();
-  private int reconnectWindow;
-  private int voters;
-  private boolean consistent;
+  private int reconnectWindow = ConfigConstants.DEFAULT_CLIENT_RECONNECT_WINDOW;
+  private int voters = ConfigConstants.DEFAULT_VOTER_COUNT;
+  private boolean consistent = false;
 
   private String logConfigExt = "logback-ext.xml";
   private int serverHeapSize = DEFAULT_SERVER_HEAP_MB;
