@@ -36,7 +36,7 @@ dependencies {
 
 publishing {
     publications {
-        maven(MavenPublication) {
+        runtime(MavenPublication) {
             groupId = 'org.terracotta'
             version = "$project.version"
             artifactId = "$project.name"

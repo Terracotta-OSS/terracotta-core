@@ -63,7 +63,7 @@ distributions {
 
 publishing {
     publications {
-        maven(MavenPublication) {
+        runtime(MavenPublication) {
             groupId = 'org.terracotta.internal'
             version = "$project.version"
             artifactId = "$project.name"
