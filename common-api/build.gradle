@@ -36,21 +36,19 @@ dependencies {
   compileOnlyApi "org.terracotta:packaging-support:$terracottaApisVersion"
 }
 
-if (project.hasProperty("publishApi")) {
-    publishing {
-        publications {
-            api(MavenPublication) {
-                groupId = 'org.terracotta'
-                version = "$project.version"
-                artifactId = "$project.name"
-                from components.java
-            }
+publishing {
+    publications {
+        api(MavenPublication) {
+            groupId = 'org.terracotta'
+            version = "$project.version"
+            artifactId = "$project.name"
+            from components.java
         }
-        repositories {
-            maven {
-                name = 'releases'
-                url = 'https://repo.terracotta.org/maven2'
-            }
+    }
+    repositories {
+        maven {
+            name = 'releases'
+            url = 'https://repo.terracotta.org/maven2'
         }
     }
 }
