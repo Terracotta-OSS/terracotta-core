@@ -17,7 +17,6 @@
  */
 plugins {
     id 'java-library'
-    id 'maven-publish'
 }
 
 description = 'terracotta-core tripwire appenders'
@@ -36,23 +35,6 @@ dependencies {
   testImplementation "junit:junit:$junitVersion"
 
 
-}
-
-publishing {
-    publications {
-        runtime(MavenPublication) {
-            groupId = 'org.terracotta'
-            version = "$project.version"
-            artifactId = 'tc-tripwire-appenders'
-            from components.java
-        }
-    }
-    repositories {
-        maven {
-            name = 'releases'
-            url = 'https://repo.terracotta.org/maven2'
-        }
-    }
 }
 
 
