@@ -27,24 +27,20 @@ base {
 
 }
 
-configurations {
-    server
-}
-
 dependencies {
-  server project(':tc-server')
-  server project(':terracotta')
+  compileOnlyApi "org.terracotta:entity-common-api:$terracottaApisVersion"
+  compileOnlyApi "org.terracotta:entity-server-api:$terracottaApisVersion"
+  compileOnlyApi "org.terracotta:monitoring-support:$terracottaApisVersion"
+  compileOnlyApi "org.terracotta:packaging-support:$terracottaApisVersion"
+  compileOnlyApi "org.terracotta:standard-cluster-services:$terracottaApisVersion"
 
-  api "org.terracotta:entity-common-api:$terracottaApisVersion"
-  api "org.terracotta:entity-server-api:$terracottaApisVersion"
-  api "org.terracotta:monitoring-support:$terracottaApisVersion"
-  api "org.terracotta:packaging-support:$terracottaApisVersion"
-  api "org.terracotta:standard-cluster-services:$terracottaApisVersion"
-
-  api project(":tripwire:plugin")
-  api project(':server-spi')
-  api project(':configuration-provider')
-  api project(':common-spi')
+  compileOnlyApi project(":tripwire:plugin")
+  compileOnlyApi project(':server-spi')
+  compileOnlyApi project(':configuration-provider')
+  compileOnlyApi project(':common-spi')
+  
+  implementation project(':tc-server')
+  implementation project(':terracotta')
 }
 
 distributions {
@@ -54,7 +50,7 @@ distributions {
       includeEmptyDirs = false
 
       into("..") {
-        from(configurations.server)
+        from(configurations.runtimeClasspath)
       }
     }
   }

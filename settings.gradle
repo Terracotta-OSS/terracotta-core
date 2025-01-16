@@ -24,7 +24,6 @@ include('galvan')
 include('galvan-support')
 include('tc-client')
 include('passthrough-server')
-include('entity-test-lib')
 include('tripwire:appenders')
 include('tripwire:plugin')
 

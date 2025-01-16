@@ -195,6 +195,9 @@ public class BasicExternalClusterBuilder {
       }
     }
 
+    if (configBuilder == null) {
+      configBuilder = new DefaultLegacyConfigBuilder();
+    }
     return new BasicExternalCluster(clusterDirectory, stripeSize, this.serverBuilder.deploy(), serverHeapSize, systemProperties, tcProperties,
             this.reconnectWindow, this.voters, this.consistent, 
         logConfigExt, parentStream, configBuilder, Optional.ofNullable(startupBuilder).orElse(DefaultStartupCommandBuilder::new));
