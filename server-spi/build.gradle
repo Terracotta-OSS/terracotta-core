@@ -30,6 +30,6 @@ jar {
 }
 
 dependencies {
-  compileOnlyApi project(':common-spi')
+  api project(':common-spi')
 }
 

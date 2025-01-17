@@ -31,17 +31,19 @@ jar {
 }
 
 dependencies {
-    implementation "junit:junit:$junitVersion"
-
     compileOnly "com.google.code.findbugs:annotations:3.0.1"
 
-    implementation project(':test-interfaces')
-    implementation "org.terracotta:entity-client-api:$terracottaApisVersion"
-    implementation "org.terracotta:entity-common-api:$terracottaApisVersion"
-    implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
-    implementation "org.terracotta:standard-cluster-services:$terracottaApisVersion"
-    implementation "org.terracotta:monitoring-support:$terracottaApisVersion"
-    runtimeOnly project(':tripwire:plugin')
+    api project(':test-interfaces')
+    api "org.terracotta:connection-api:$terracottaApisVersion"
+    
+    api "org.terracotta:entity-client-api:$terracottaApisVersion"
+    api "org.terracotta:entity-common-api:$terracottaApisVersion"
+    api "org.terracotta:entity-server-api:$terracottaApisVersion"
+    api "org.terracotta:standard-cluster-services:$terracottaApisVersion"
+    api "org.terracotta:monitoring-support:$terracottaApisVersion"
+    api project(':tripwire:plugin')
+    api project(':server-spi')
+    
     testImplementation "junit:junit:$junitVersion"
     testImplementation "org.mockito:mockito-core:$mockitoVersion"
     testImplementation "org.hamcrest:hamcrest-all:$hamcrestVersion"

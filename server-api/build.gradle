@@ -39,6 +39,7 @@ dependencies {
   compileOnlyApi project(':server-spi')
   compileOnlyApi project(':common-api')
   compileOnlyApi project(':configuration-provider')
+  compileOnlyApi project(':server-bootstrap')
 }
 
 publishing {

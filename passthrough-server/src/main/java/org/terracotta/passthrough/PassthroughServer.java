@@ -31,8 +31,8 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
-import org.junit.Assert;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.ServiceProvider;
@@ -85,8 +85,14 @@ public class PassthroughServer implements PassthroughDumper {
 
   public void registerAsynchronousServerCrasher(IAsynchronousServerCrasher crasher) {
     // This should only be set once.
-    Assert.assertNull(this.crasher);
+    assertFalse(()->(this.crasher != null));
     this.crasher = crasher;
+  }
+  
+  public void assertFalse(Supplier<Boolean> p) {
+    if (p.get()) {
+      throw new RuntimeException("not false");
+    }
   }
 
   public void setServerName(String serverName) {
@@ -102,12 +108,12 @@ public class PassthroughServer implements PassthroughDumper {
   }
    
   public void registerServerEntityService(EntityServerService<?, ?> service) {
-    Assert.assertFalse(this.hasStarted);
+    assertFalse(()->this.hasStarted);
     this.savedServerEntityServices.add(service);
   }
 
   public void registerClientEntityService(EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?> service) {
-    Assert.assertFalse(this.hasStarted);
+    assertFalse(()->this.hasStarted);
     this.entityClientServices.add(service);
   }
 

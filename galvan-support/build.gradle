@@ -35,8 +35,9 @@ configurations {
 }
 
 dependencies {
+    api project(":galvan")
+
     implementation "junit:junit:$junitVersion"
-    implementation project(":galvan")
     implementation project(":test-interfaces")
     implementation "org.terracotta:terracotta-utilities-port-chooser:0.0.19"
     compileOnly project(':common')

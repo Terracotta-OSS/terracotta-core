@@ -23,6 +23,5 @@ description = 'terracotta-core examples exended server'
 
 
 dependencies {
-    compileOnly project(':tc-server')
     compileOnly project(':common-spi')
 }
