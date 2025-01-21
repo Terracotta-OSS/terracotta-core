@@ -91,7 +91,7 @@ public class Directories {
   public static Path getServerJar() throws FileNotFoundException {
     String jar = System.getProperty(TC_SERVER_JAR_PROPERTY_NAME);
     if (jar == null) {
-      jar = "tc-server";
+      jar = "tc-server.*\\.jar";
     }
     Path jarFile = searchForServerJar(getInstallationRoot(), jar);
     
@@ -101,7 +101,7 @@ public class Directories {
   private static Path searchForServerJar(Path directory, String name) {
     try {
       Optional<Path> possible = Files.find(directory, 5, (path, o)->{
-        return path.getFileName().toString().contains(name);}
+        return path.getFileName().toString().matches(name); }
       ).findAny();
       return possible.orElse(null);
     } catch (IOException | NoSuchElementException io) {
