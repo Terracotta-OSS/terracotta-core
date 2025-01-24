@@ -74,7 +74,7 @@ import org.terracotta.tripwire.TripwireFactory;
 public class ActiveToPassiveReplication implements PassiveReplicationBroker, GroupEventsListener {
   
   private static final Logger LOGGER = LoggerFactory.getLogger(ActiveToPassiveReplication.class);
-  private boolean activated = false;
+  private volatile boolean activated = false;
   private final Map<ServerID, SessionID> passiveNodes = new ConcurrentHashMap<>();
   private final Set<NodeID> standByNodes = new HashSet<>();
   private final ConcurrentHashMap<SyncReplicationActivity.ActivityID, ActivePassiveAckWaiter> waiters = new ConcurrentHashMap<>();
@@ -116,8 +116,8 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   
   public void enterActiveState(Set<ServerID> passives) {
     Assert.assertFalse(activated);
-    primePassives(passives);
     activated = true;
+    primePassives(passives);
   }
   /**
  * starts the stream of messages to each passive the server knows about.  This should only happen 
@@ -136,35 +136,28 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
  */
   private SessionID prime(ServerID node) {
     Assert.assertFalse(node.isNull());
-    SessionID current = passiveNodes.get(node);
     //  no session means we are allowed to proceed
-    if (current == null) {
+    if (!passiveNodes.containsKey(node)) {
       if (!consistencyMgr.requestTransition(ServerMode.ACTIVE, node, ConsistencyManager.Transition.ADD_PASSIVE)) {
         serverCheck.zapNode(node, L2HAZapNodeRequestProcessor.SPLIT_BRAIN, "unable to verify active");
         return SessionID.NULL_ID;
       } else {
         LOGGER.info("Starting message sequence on " + node);
         SessionID newSession = new SessionID(sessionMaker.incrementAndGet());
-        if (passiveNodes.putIfAbsent(node, newSession) == null) {
+        SessionID current = passiveNodes.putIfAbsent(node, newSession);
+        if (current == null) {
           if (this.replicationSender.addPassive(node, newSession, executionLane(newSession), SyncReplicationActivity.createStartMessage())) {
             return newSession;
           } else {
+            LOGGER.info("Failed to send message to passive {} ending session {}", node, newSession);
             passiveNodes.remove(node, newSession);
           }
+        } else {
+          LOGGER.info("Session {} already exists for {}", current, node);
         }
       }
     }
     return SessionID.NULL_ID;
-  }
-
-  private boolean serverIsValid(ServerID server) {
-    boolean connected = serverCheck.isNodeConnected(server);
-    synchronized (standByNodes) {
-      if (connected) {
-        connected = standByNodes.contains(server);
-      }
-    }
-    return connected;
   }
 
   private static int executionLane(SessionID session) {

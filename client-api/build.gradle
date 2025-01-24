@@ -31,6 +31,7 @@ jar {
 }
 
 dependencies {
+  compileOnlyApi "org.slf4j:slf4j-api:$slf4jVersion"
   compileOnlyApi "org.terracotta:entity-client-api:$terracottaApisVersion"
   compileOnlyApi "org.terracotta:connection-api:$terracottaApisVersion"
   compileOnlyApi "org.terracotta:packaging-support:$terracottaApisVersion"

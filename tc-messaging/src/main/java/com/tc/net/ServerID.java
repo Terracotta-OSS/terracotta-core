@@ -78,7 +78,7 @@ public class ServerID implements NodeID, Serializable {
 
   @Override
   public String toString() {
-    return "NodeID[" + getName() + "]";
+    return "NodeID[" + getName() + "(" + new String(this.getUID()) + ")]";
   }
 
   @Override

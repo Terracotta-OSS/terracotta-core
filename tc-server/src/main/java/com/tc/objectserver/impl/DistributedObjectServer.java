@@ -732,14 +732,16 @@ public class DistributedObjectServer {
     Stage<Runnable> replicationResponseStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE, Runnable.class,
         new GenericHandler<>(), 1);
 //  routing for passive to receive replication
-    EventHandler<ReplicationMessage> replicationEvents = null;
+    EventHandler<ReplicationMessage> replicationEvents;
     if (configSetupManager.getConfiguration().isRelaySource()) {
       replicationEvents = createAndRouteRelayTransactionHandler(replicationResponseStage);
     } else {
+      if (configSetupManager.getConfiguration().isRelayDestination()) {
+        routeRelayMessages(state, configSetupManager.getConfiguration());
+      }
       ReplicatedTransactionHandler replicatedTransactionHandler = new ReplicatedTransactionHandler(state, replicationResponseStage, this.persistor, entityManager, groupCommManager);
       sequenceWeight.setReplicatedTransactionHandler(replicatedTransactionHandler);
       replicationEvents = replicatedTransactionHandler.getEventHandler();
-      routeRelayMessages(state, configSetupManager.getConfiguration());
     }
     
 // This requires both the stage for handling the replication/sync messages.
@@ -1221,7 +1223,7 @@ public class DistributedObjectServer {
       host = l2DSOConfig.getHost();
     }
     final ServerID aNodeID = new ServerID(TCSocketAddress.getStringForm(InetSocketAddress.createUnresolved(host, l2DSOConfig.getTsaPort().getPort())), UUID.getUUID().toString().getBytes());
-    logger.info("Creating server nodeID: " + aNodeID);
+    logger.info("Creating server nodeID: {}", aNodeID);
     return aNodeID;
   }
 

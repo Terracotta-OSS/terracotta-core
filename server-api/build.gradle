@@ -31,6 +31,8 @@ jar {
 }
 
 dependencies {
+  compileOnlyApi "org.slf4j:slf4j-api:$slf4jVersion"
+  compileOnlyApi "ch.qos.logback:logback-classic:$logbackVersion"
   compileOnlyApi "org.terracotta:entity-server-api:$terracottaApisVersion"
   compileOnlyApi "org.terracotta:monitoring-support:$terracottaApisVersion"
   compileOnlyApi "org.terracotta:packaging-support:$terracottaApisVersion"
