@@ -26,15 +26,37 @@ base {
 
 }
 
-jar {
-
+configurations {
+    apiJar
+    embeddedJar {
+      attributes {
+        attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.EMBEDDED))
+      }
+    }
 }
 
 dependencies {
-  compileOnlyApi "org.terracotta:entity-common-api:$terracottaApisVersion"
-  compileOnlyApi project(':common-spi')
-  compileOnlyApi "org.terracotta:packaging-support:$terracottaApisVersion"
+  apiJar "org.terracotta:entity-common-api:$terracottaApisVersion"
+  apiJar project(':common-spi')
+  apiJar "org.terracotta:packaging-support:$terracottaApisVersion"
 }
+
+task unzipApiJars(type: Copy) {
+    dependsOn configurations.apiJar
+    def target = layout.buildDirectory.dir("classes/java/main")
+    configurations.apiJar.each {
+        println it
+        from zipTree(it)
+    }
+    exclude "META-INF/**"
+    into target
+}
+
+artifacts {
+    embeddedJar jar
+}
+
+compileJava.dependsOn(unzipApiJars)
 
 publishing {
     publications {

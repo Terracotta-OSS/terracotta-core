@@ -32,7 +32,6 @@ jar {
 dependencies {
     compileOnly "org.slf4j:slf4j-api:$slf4jVersion"
     implementation project(':tc-client')
-    implementation project(':common')
     compileOnly "org.terracotta:entity-client-api:$terracottaApisVersion"
     compileOnly "org.terracotta:connection-api:$terracottaApisVersion"
 

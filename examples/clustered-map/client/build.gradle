@@ -30,7 +30,12 @@ jar {
 }
 
 dependencies {
-    compileOnly project(':client-api')
+    // make sure that the jar is selected, not the class directory
+    compileOnly (project(':client-api')) {
+      attributes {
+        attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements, LibraryElements.JAR))
+      }
+    }
 
     implementation project(':examples:clustered-map:common')
     testImplementation "junit:junit:$junitVersion"

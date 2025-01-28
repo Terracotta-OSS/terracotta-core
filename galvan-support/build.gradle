@@ -45,7 +45,7 @@ dependencies {
 
     testCompileOnly project(':tc-client')
     testImplementation "ch.qos.logback:logback-classic:$logbackVersion"
-    implementation project(':examples:clustered-map:client')
+    testImplementation project(':examples:clustered-map:client')
     implementation project(':client-runtime')
 
     pluginImpl project(":default-configuration")

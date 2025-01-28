@@ -26,22 +26,50 @@ base {
 
 }
 
-jar {
-
+configurations {
+    apiJar
+    embeddedJar {
+      attributes {
+        attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.EMBEDDED))
+      }
+    }
 }
+  
 
 dependencies {
   compileOnlyApi "org.slf4j:slf4j-api:$slf4jVersion"
   compileOnlyApi "ch.qos.logback:logback-classic:$logbackVersion"
-  compileOnlyApi "org.terracotta:entity-server-api:$terracottaApisVersion"
-  compileOnlyApi "org.terracotta:monitoring-support:$terracottaApisVersion"
-  compileOnlyApi "org.terracotta:packaging-support:$terracottaApisVersion"
-  compileOnlyApi "org.terracotta:standard-cluster-services:$terracottaApisVersion"
-  compileOnlyApi project(":tripwire:plugin")
-  compileOnlyApi project(':server-spi')
-  compileOnlyApi project(':common-api')
-  compileOnlyApi project(':configuration-provider')
-  compileOnlyApi project(':server-bootstrap')
+  
+  api project(':common-api')
+
+  apiJar ("org.terracotta:entity-server-api:$terracottaApisVersion") {
+      exclude group: "org.terracotta", module: "entity-common-api"
+  }
+  apiJar "org.terracotta:monitoring-support:$terracottaApisVersion"
+  apiJar "org.terracotta:standard-cluster-services:$terracottaApisVersion"
+  
+  apiJar project(":tripwire:plugin")
+  apiJar project(':server-spi')
+  apiJar project(':configuration-provider')
+  apiJar project(':server-bootstrap')
+}
+
+task unzipApiJars(type: Copy) {
+    dependsOn configurations.apiJar
+    def target = layout.buildDirectory.dir("classes/java/main")
+    configurations.apiJar.each {
+        println it
+        from zipTree(it)
+    }
+    exclude "META-INF/**"
+    into target
+    duplicatesStrategy DuplicatesStrategy.WARN
+}
+
+compileJava.dependsOn(unzipApiJars)
+
+artifacts {
+    embeddedJar jar
 }
 
 publishing {

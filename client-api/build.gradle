@@ -26,17 +26,42 @@ base {
 
 }
 
-jar {
-
+configurations {
+  apiJar
+  embeddedJar {
+      attributes {
+        attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.EMBEDDED))
+      }
+  }
 }
 
 dependencies {
   compileOnlyApi "org.slf4j:slf4j-api:$slf4jVersion"
-  compileOnlyApi "org.terracotta:entity-client-api:$terracottaApisVersion"
-  compileOnlyApi "org.terracotta:connection-api:$terracottaApisVersion"
-  compileOnlyApi "org.terracotta:packaging-support:$terracottaApisVersion"
-  compileOnlyApi project(':common-spi')
-  compileOnlyApi project(':common-api')
+  
+  api project(':common-api')  
+
+  apiJar ("org.terracotta:entity-client-api:$terracottaApisVersion") {
+        exclude group: "org.terracotta", module: "entity-common-api"
+  }
+  apiJar "org.terracotta:connection-api:$terracottaApisVersion"
+}
+// doing it this way because gradle will try and use class files at compile time 
+// for project dependencies
+task unzipApiJars(type: Copy) {
+    dependsOn configurations.apiJar
+    def target = layout.buildDirectory.dir("classes/java/main")
+    configurations.apiJar.each {
+        println it
+        from zipTree(it)
+    }
+    exclude "META-INF/**"
+    into target
+}
+
+compileJava.dependsOn(unzipApiJars)
+
+artifacts {
+    embeddedJar jar
 }
 
 publishing {
@@ -53,5 +78,11 @@ publishing {
             name = 'releases'
             url = 'https://repo.terracotta.org/maven2'
         }
+    }
+}
+
+task printContents {
+    doLast {
+        println configurations.apiJar.asPath
     }
 }

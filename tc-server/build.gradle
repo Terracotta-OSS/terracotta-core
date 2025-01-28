@@ -26,28 +26,29 @@ base {
 }
 
 dependencies {
-  implementation project(':configuration-provider')
-  implementation project(':server-spi')
-  implementation project(':server-bootstrap')
+  implementation project(':server-api')
+  // in api
+  //  implementation project(':configuration-provider')
+  //  implementation project(':server-spi')
+  //  implementation project(':server-bootstrap')
+  //  implementation project(':tripwire:plugin')
+  //  implementation "org.terracotta:standard-cluster-services:$terracottaApisVersion"
+  //  implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
+  //  implementation "org.terracotta:monitoring-support:$terracottaApisVersion"
+  
   implementation project(':common')
   implementation project(':management')
   implementation project(':build-data')
-  implementation project(':tripwire:plugin')
   implementation project(':tripwire:appenders')
 
   implementation "org.slf4j:slf4j-api:$slf4jVersion"
   implementation "ch.qos.logback:logback-classic:$logbackVersion"
-  implementation "org.terracotta:standard-cluster-services:$terracottaApisVersion"
-  implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
-  implementation "org.terracotta:monitoring-support:$terracottaApisVersion"
 
   testImplementation "junit:junit:$junitVersion"
   testImplementation project(":test-common")
   testImplementation "org.terracotta:terracotta-utilities-port-chooser:0.0.19"
   testImplementation "org.mockito:mockito-core:$mockitoVersion"
   testImplementation "org.hamcrest:hamcrest-all:$hamcrestVersion"
-//  testImplementation "org.powermock:powermock-module-junit4:2.0.0"
-//  testImplementation "org.powermock:powermock-api-mockito2:2.0.0"
   testImplementation "com.github.stefanbirkner:system-rules:1.18.0"
   testImplementation "org.terracotta:tcconfig-schema:10.7.5"
 

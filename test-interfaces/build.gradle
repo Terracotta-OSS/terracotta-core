@@ -17,9 +17,9 @@
  */
 plugins {
     id 'java-library'
+    id 'maven-publish'
 }
 
-version = '$apiVersion'
 description = 'terracotta-core test-interfaces'
 
 base {
@@ -32,4 +32,21 @@ jar {
 
 dependencies {
     testImplementation "junit:junit:$junitVersion"
+}
+
+publishing {
+    publications {
+        runtime(MavenPublication) {
+            groupId = 'org.terracotta.internal'
+            version = "$project.version"
+            artifactId = "$project.name"
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = 'releases'
+            url = 'https://repo.terracotta.org/maven2'
+        }
+    }
 }
