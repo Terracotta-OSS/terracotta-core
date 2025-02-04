@@ -19,8 +19,7 @@ plugins {
     id 'java-library'
 }
 
-description = 'terracotta-core examples exended server'
-
+description = 'terracotta-core examples extended server'
 
 dependencies {
     compileOnly project(':common-spi')

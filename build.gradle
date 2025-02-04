@@ -1,4 +1,3 @@
-
 /*
  * Copyright Terracotta, Inc.
  * Copyright Super iPaaS Integration LLC, an IBM Company 2024
@@ -15,58 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import org.terracotta.build.plugins.PackagePlugin
+
 plugins {
-    id 'java'
+    id 'org.terracotta.build.package' apply false
 }
 
 description = 'terracotta-core'
 
-base {
-
-}
-
-dependencies {
-
-}
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-    withSourcesJar()
-    withJavadocJar()
-}
-
-tasks.named('test', Test) {
-    useJUnitPlatform()
-
-    maxHeapSize = '1G'
-    javaLauncher = javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
-
-    testLogging {
-        events "passed"
-    }
-}
-
-tasks.named('jar', Jar) {
-
-}
-
 allprojects {
+    PackagePlugin.augmentAttributeSchema(project)
+
     if (project.hasProperty('projVersion')) {
       project.version = project.projVersion
     } else {
       project.version = "$project.defaultVersion"
     }
 }
-
-task printClasspath {
-    doLast {
-        configurations.testRuntimeClasspath.each{ println it }
-    }
-}
-

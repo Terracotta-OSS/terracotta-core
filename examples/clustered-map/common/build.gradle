@@ -21,14 +21,6 @@ plugins {
 
 description = 'terracotta-core clustered map common example'
 
-base {
-
-}
-
-jar {
-
-}
-
 dependencies {
     compileOnly project(':client-api')
     compileOnly "com.google.code.findbugs:annotations:3.0.1"

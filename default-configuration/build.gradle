@@ -21,18 +21,6 @@ plugins {
 
 description = 'terracotta-core legacy configuration'
 
-base {
-
-}
-
-jar {
-
-}
-
-configurations {
-
-}
-
 dependencies {
     implementation "org.terracotta.internal:tc-config-parser:10.7.5"
     implementation "org.terracotta:tcconfig-schema:10.7.5"
@@ -58,8 +46,8 @@ dependencies {
     testImplementation "org.hamcrest:hamcrest-all:$hamcrestVersion"
 }
 
-jar {
+tasks.named('jar', Jar) {
     manifest {
-        attributes "Class-Path" : configurations.runtimeClasspath.collect { it.getName() }.join(' ')
+        attributes "Class-Path" : configurations.named('runtimeClasspath').map { it.collect { f -> f.name }.join(' ') }
     }
 }

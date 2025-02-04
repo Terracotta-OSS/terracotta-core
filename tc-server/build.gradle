@@ -1,3 +1,4 @@
+import org.gradle.api.plugins.jvm.JvmTestSuite
 
 /*
  * Copyright Terracotta, Inc.
@@ -21,21 +22,9 @@ plugins {
 
 description = 'terracotta-core server implementation'
 
-base {
-
-}
-
 dependencies {
   implementation project(':server-api')
-  // in api
-  //  implementation project(':configuration-provider')
-  //  implementation project(':server-spi')
-  //  implementation project(':server-bootstrap')
-  //  implementation project(':tripwire:plugin')
-  //  implementation "org.terracotta:standard-cluster-services:$terracottaApisVersion"
-  //  implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
-  //  implementation "org.terracotta:monitoring-support:$terracottaApisVersion"
-  
+
   implementation project(':common')
   implementation project(':management')
   implementation project(':build-data')
@@ -54,14 +43,13 @@ dependencies {
 
 }
 
-jar {
+tasks.named('jar', Jar) {
     manifest {
-        attributes "Class-Path" : configurations.runtimeClasspath.collect { it.getName() }.join(' ')
+        attributes "Class-Path" : configurations.named('runtimeClasspath').map { it.collect { f -> f.name }.join(' ') }
     }
 }
 
-test {
-    var testClasses = file(layout.buildDirectory.dir("classes/java/test"))
-    systemProperty "testClassesDir", "$testClasses"
+tasks.named('test', Test) {
+    systemProperty "testClassesDir", sourceSets.test.java.classesDirectory.get().asFile.absolutePath
     systemProperty "tc.install-root.ignore-checks", "true"
 }

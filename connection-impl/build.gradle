@@ -21,14 +21,6 @@ plugins {
 
 description = 'terracotta-core connection API implementation'
 
-base {
-
-}
-
-jar {
-
-}
-
 dependencies {
     compileOnly "org.slf4j:slf4j-api:$slf4jVersion"
     implementation project(':tc-client')

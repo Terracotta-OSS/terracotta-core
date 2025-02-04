@@ -24,10 +24,6 @@ base {
     archivesName = 'tc-tripwire-plugin'
 }
 
-jar {
-
-}
-
 dependencies {
   testImplementation "junit:junit:$junitVersion"
 }

@@ -22,14 +22,6 @@ plugins {
 
 description = 'terracotta-core passthrough entity test library'
 
-base {
-
-}
-
-jar {
-
-}
-
 dependencies {
     compileOnly "com.google.code.findbugs:annotations:3.0.1"
 

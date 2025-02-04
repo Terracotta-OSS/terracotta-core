@@ -21,18 +21,7 @@ plugins {
 
 description = 'terracotta-core terracotta server bootstrap'
 
-base {
-
-}
-
 dependencies {
   testImplementation "junit:junit:$junitVersion"
   testImplementation "org.hamcrest:hamcrest-all:$hamcrestVersion"
 }
-
-jar {
-
-}
-
-
-

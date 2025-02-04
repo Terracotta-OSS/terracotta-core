@@ -20,15 +20,3 @@ plugins {
 }
 
 description = 'terracotta-core common SPI classes'
-
-base {
-
-}
-
-jar {
-
-}
-
-dependencies {
-
-}

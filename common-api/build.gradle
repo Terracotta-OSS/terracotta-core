@@ -15,48 +15,18 @@
  * limitations under the License.
  */
 plugins {
-    id 'java-library'
+    id 'org.terracotta.build.package'
     id 'maven-publish'
 }
 
 version = "$project.apiVersion"
 description = 'terracotta-core common-api'
 
-base {
-
-}
-
-configurations {
-    apiJar
-    embeddedJar {
-      attributes {
-        attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.EMBEDDED))
-      }
-    }
-}
-
 dependencies {
-  apiJar "org.terracotta:entity-common-api:$terracottaApisVersion"
-  apiJar project(':common-spi')
-  apiJar "org.terracotta:packaging-support:$terracottaApisVersion"
+  contentsApi "org.terracotta:entity-common-api:$terracottaApisVersion"
+  contentsApi project(':common-spi')
+  contentsApi "org.terracotta:packaging-support:$terracottaApisVersion"
 }
-
-task unzipApiJars(type: Copy) {
-    dependsOn configurations.apiJar
-    def target = layout.buildDirectory.dir("classes/java/main")
-    configurations.apiJar.each {
-        println it
-        from zipTree(it)
-    }
-    exclude "META-INF/**"
-    into target
-}
-
-artifacts {
-    embeddedJar jar
-}
-
-compileJava.dependsOn(unzipApiJars)
 
 publishing {
     publications {
@@ -64,7 +34,7 @@ publishing {
             groupId = 'org.terracotta'
             version = "$project.version"
             artifactId = "$project.name"
-            from components.java
+            from components.package
         }
     }
     repositories {

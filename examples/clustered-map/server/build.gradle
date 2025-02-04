@@ -21,14 +21,6 @@ plugins {
 
 description = 'terracotta-core clustered map server example'
 
-base {
-
-}
-
-jar {
-
-}
-
 dependencies {
     compileOnly project(':server-api')
     implementation project(':examples:clustered-map:common')

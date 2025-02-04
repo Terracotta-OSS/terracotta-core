@@ -21,14 +21,6 @@ plugins {
 
 description = 'terracotta-core terracotta management'
 
-base {
-
-}
-
-jar {
-
-}
-
 dependencies {
   implementation project(":common")
 

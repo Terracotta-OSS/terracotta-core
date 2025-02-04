@@ -15,61 +15,27 @@
  * limitations under the License.
  */
 plugins {
-    id 'java-library'
+    id 'org.terracotta.build.package'
     id 'maven-publish'
 }
 
 version = "$project.apiVersion"
 description = 'terracotta-core server-api'
 
-base {
-
-}
-
-configurations {
-    apiJar
-    embeddedJar {
-      attributes {
-        attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.EMBEDDED))
-      }
-    }
-}
-  
-
 dependencies {
-  compileOnlyApi "org.slf4j:slf4j-api:$slf4jVersion"
-  compileOnlyApi "ch.qos.logback:logback-classic:$logbackVersion"
-  
-  api project(':common-api')
+    compileOnlyApi "org.slf4j:slf4j-api:$slf4jVersion"
+    compileOnlyApi "ch.qos.logback:logback-classic:$logbackVersion"
 
-  apiJar ("org.terracotta:entity-server-api:$terracottaApisVersion") {
-      exclude group: "org.terracotta", module: "entity-common-api"
-  }
-  apiJar "org.terracotta:monitoring-support:$terracottaApisVersion"
-  apiJar "org.terracotta:standard-cluster-services:$terracottaApisVersion"
-  
-  apiJar project(":tripwire:plugin")
-  apiJar project(':server-spi')
-  apiJar project(':configuration-provider')
-  apiJar project(':server-bootstrap')
-}
+    api project(':common-api')
 
-task unzipApiJars(type: Copy) {
-    dependsOn configurations.apiJar
-    def target = layout.buildDirectory.dir("classes/java/main")
-    configurations.apiJar.each {
-        println it
-        from zipTree(it)
-    }
-    exclude "META-INF/**"
-    into target
-    duplicatesStrategy DuplicatesStrategy.WARN
-}
+    contentsApi "org.terracotta:entity-server-api:$terracottaApisVersion"
+    contentsApi "org.terracotta:monitoring-support:$terracottaApisVersion"
+    contentsApi "org.terracotta:standard-cluster-services:$terracottaApisVersion"
 
-compileJava.dependsOn(unzipApiJars)
-
-artifacts {
-    embeddedJar jar
+    contentsApi project(":tripwire:plugin")
+    contentsApi project(':server-spi')
+    contentsApi project(':configuration-provider')
+    contentsApi project(':server-bootstrap')
 }
 
 publishing {
@@ -78,7 +44,7 @@ publishing {
             groupId = 'org.terracotta'
             version = "$project.version"
             artifactId = "$project.name"
-            from components.java
+            from components.package
         }
     }
     repositories {

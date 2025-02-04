@@ -21,14 +21,6 @@ plugins {
 
 description = 'terracotta-core server SPI'
 
-base {
-
-}
-
-jar {
-
-}
-
 dependencies {
   api project(':common-spi')
 }

@@ -21,14 +21,6 @@ plugins {
 
 description = 'terracotta-core common classes'
 
-base {
-
-}
-
-jar {
-
-}
-
 dependencies {
   api project(':tc-messaging')
 

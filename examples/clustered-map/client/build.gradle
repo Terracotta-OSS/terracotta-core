@@ -21,21 +21,8 @@ plugins {
 
 description = 'terracotta-core clustered map client example'
 
-base {
-
-}
-
-jar {
-
-}
-
 dependencies {
-    // make sure that the jar is selected, not the class directory
-    compileOnly (project(':client-api')) {
-      attributes {
-        attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements, LibraryElements.JAR))
-      }
-    }
+    compileOnly project(':client-api')
 
     implementation project(':examples:clustered-map:common')
     testImplementation "junit:junit:$junitVersion"

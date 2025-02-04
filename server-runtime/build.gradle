@@ -18,14 +18,9 @@
 plugins {
   id 'java-library'
   id 'maven-publish'
-  id 'distribution'
 }
 
 description = 'terracotta-core server-runtime'
-
-base {
-
-}
 
 dependencies {
   compileOnlyApi project(':server-api')
@@ -34,17 +29,14 @@ dependencies {
   implementation project(':terracotta')
 }
 
-distributions {
-  main {
-    distributionBaseName = 'server-bundle'
-    contents {
-      includeEmptyDirs = false
+def serverBundle = tasks.register('serverBundle', Zip) {
+    from(configurations.runtimeClasspath)
+    archiveBaseName = 'server-bundle'
+    archiveExtension = 'zip'
+}
 
-      into("..") {
-        from(configurations.runtimeClasspath)
-      }
-    }
-  }
+artifacts {
+    'default' serverBundle
 }
 
 publishing {
@@ -53,7 +45,7 @@ publishing {
             groupId = 'org.terracotta.internal'
             version = "$project.version"
             artifactId = "$project.name"
-            artifact(distZip)
+            artifact(serverBundle)
         }
     }
     repositories {

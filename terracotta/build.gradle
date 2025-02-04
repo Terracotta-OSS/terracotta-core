@@ -34,10 +34,10 @@ dependencies {
   api project(':server-bootstrap')
 }
 
-jar {
+tasks.named('jar', Jar) {
     archiveVersion = ""
     manifest {
-        attributes "Main-Class" : "com.tc.server.TCServerMain", 
-                    "Class-Path" : configurations.runtimeClasspath.collect { it.getName() }.join(' ')
+        attributes "Main-Class" : "com.tc.server.TCServerMain",
+                "Class-Path" : configurations.named('runtimeClasspath').map { it.collect { f -> f.name }.join(' ') }
     }
 }

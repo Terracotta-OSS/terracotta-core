@@ -22,14 +22,6 @@ plugins {
 
 description = 'terracotta-core test-interfaces'
 
-base {
-
-}
-
-jar {
-
-}
-
 dependencies {
     testImplementation "junit:junit:$junitVersion"
 }

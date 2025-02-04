@@ -23,14 +23,6 @@ plugins {
 
 description = 'terracotta-core build data info'
 
-base {
-
-}
-
-dependencies {
-
-}
-
 def buildProperties = [
         version: project.version,
         timestamp : now(),
@@ -38,16 +30,17 @@ def buildProperties = [
         branch : "Unknown"
 ]
 
-task writeBuildInfo() {
+tasks.register('writeBuildInfo') {
     def dyn = layout.buildDirectory.dir("dynamic")
     outputs.dir(dyn)
     doLast {
         dyn.get().getAsFile().mkdir()
-        File f= dyn.get().file("build-data.txt").getAsFile()
-        f.write("terracotta.build.version=${buildProperties.version}\n")
-        f.append("terracotta.build.revision=${buildProperties.revision}\n")
-        f.append("terracotta.build.timestamp=${buildProperties.timestamp}\n")
-        f.append("terracotta.build.branch=${buildProperties.branch}\n")
+        dyn.get().file("build-data.txt").asFile.withPrintWriter("UTF-8") {
+            it.println("terracotta.build.version=${buildProperties.version}")
+            it.println("terracotta.build.revision=${buildProperties.revision}")
+            it.println("terracotta.build.timestamp=${buildProperties.timestamp}")
+            it.println("terracotta.build.branch=${buildProperties.branch}")
+        }
     }
 }
 

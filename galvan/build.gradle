@@ -17,24 +17,13 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'distribution'
 }
 
 description = 'terracotta-core galvan'
 
-base {
-
-}
-
-jar {
-
-}
-
 configurations {
     terracottaKit
 }
-
-def serverDistribution = project(":terracotta").getLayout().getBuildDirectory().file("distributions")
 
 dependencies {
     api project(":test-interfaces")
@@ -49,35 +38,21 @@ dependencies {
     terracottaKit project(":terracotta")
 }
 
-distributions {
-  main {
-    distributionBaseName = 'galvan-test-server'
-    contents {
-      includeEmptyDirs = false
-
-      into("server") {
+def galvanKit = tasks.register('galvanServerZip', Zip) {
+    destinationDirectory = layout.buildDirectory.dir('galvan-kit')
+    archiveFileName = "galvan-test-server.zip"
+    into("server") {
         from(configurations.terracottaKit)
-      }
-    }
-  }
-}
-
-task copyServer(type: Copy) {
-    from (layout.buildDirectory.dir("distributions")) {
-        include "*.zip"
-    }
-    into layout.buildDirectory.dir("resources/main")
-    rename { distName ->
-        distName.replace("-$project.version", "")
     }
 }
 
-test {
+sourceSets.main {
+    resources.srcDir(galvanKit.map { it.destinationDirectory })
+}
+
+tasks.named('test', Test) {
     systemProperty "kitInstallPath", layout.buildDirectory.dir("galvan-default").get().toString()
 }
-
-copyServer.dependsOn(distZip)
-compileJava.dependsOn(copyServer)
 
 publishing {
     publications {

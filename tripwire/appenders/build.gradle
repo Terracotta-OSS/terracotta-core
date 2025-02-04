@@ -25,16 +25,10 @@ base {
     archivesName = 'tc-tripwire-appenders'
 }
 
-jar {
-
-}
-
 dependencies {
   implementation "org.slf4j:slf4j-api:$slf4jVersion"
   implementation "ch.qos.logback:logback-classic:$logbackVersion"
   testImplementation "junit:junit:$junitVersion"
-
-
 }
 
 

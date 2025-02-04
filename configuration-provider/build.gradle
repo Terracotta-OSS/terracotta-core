@@ -21,14 +21,6 @@ plugins {
 
 description = 'terracotta-core configuration provider API'
 
-base {
-
-}
-
-jar {
-
-}
-
 dependencies {
   compileOnly "org.slf4j:slf4j-api:$slf4jVersion"
   compileOnly "org.terracotta:entity-server-api:$terracottaApisVersion"

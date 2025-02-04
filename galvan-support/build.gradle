@@ -22,14 +22,6 @@ plugins {
 
 description = 'terracotta-core galvan-support'
 
-base {
-
-}
-
-jar {
-
-}
-
 configurations {
     pluginImpl
 }
@@ -52,28 +44,18 @@ dependencies {
     pluginImpl project(":examples:extended-server")
 }
 
-test {
+def copyPlugins = tasks.register('copyPlugins', Sync) {
+    from (configurations.pluginImpl)
+    into layout.buildDirectory.dir("plugin/lib")
+}
+
+tasks.named('test', Test) {
+    dependsOn(copyPlugins)
     systemProperty "galvan.plugin", layout.buildDirectory.dir("plugin").get().toString()
     systemProperty "galvan.dir", layout.buildDirectory.dir("galvan").get().toString()
     systemProperty "galvan.server", layout.buildDirectory.dir("tmp/tcserver").get().toString()
 //    systemProperty "serverDebugPortStart", "9000"
 }
-
-task copyPlugins(type: Copy) {
-    from (configurations.pluginImpl)
-    into layout.buildDirectory.dir("plugin/lib")
-}
-
-task serverClean(type: Delete) {
-    delete layout.buildDirectory.dir("tmp/tcserver")
-}
-
-task galvanTestClean(type: Delete) {
-    delete layout.buildDirectory.dir("galvan")
-}
-
-test.dependsOn(copyPlugins)
-copyPlugins.dependsOn(serverClean)
 
 publishing {
     publications {
