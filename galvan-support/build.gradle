@@ -1,0 +1,77 @@
+
+/*
+ * Copyright Terracotta, Inc.
+ * Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+description = 'terracotta-core galvan-support'
+
+configurations {
+    pluginImpl
+}
+
+dependencies {
+    api project(":galvan")
+
+    implementation "junit:junit:$junitVersion"
+    implementation project(":test-interfaces")
+    implementation "org.terracotta:terracotta-utilities-port-chooser:0.0.19"
+    compileOnly project(':common')
+    compileOnly project(':server-api')
+
+    testCompileOnly project(':tc-client')
+    testImplementation "ch.qos.logback:logback-classic:$logbackVersion"
+    testImplementation project(':examples:clustered-map:client')
+    implementation project(':client-runtime')
+
+    pluginImpl project(":default-configuration")
+    pluginImpl project(":examples:extended-server")
+}
+
+def copyPlugins = tasks.register('copyPlugins', Sync) {
+    from (configurations.pluginImpl)
+    into layout.buildDirectory.dir("plugin/lib")
+}
+
+tasks.named('test', Test) {
+    dependsOn(copyPlugins)
+    systemProperty "galvan.plugin", layout.buildDirectory.dir("plugin").get().toString()
+    systemProperty "galvan.dir", layout.buildDirectory.dir("galvan").get().toString()
+    systemProperty "galvan.server", layout.buildDirectory.dir("tmp/tcserver").get().toString()
+//    systemProperty "serverDebugPortStart", "9000"
+}
+
+publishing {
+    publications {
+        runtime(MavenPublication) {
+            groupId = 'org.terracotta.internal'
+            version = "$project.version"
+            artifactId = "$project.name"
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = 'releases'
+            url = 'https://repo.terracotta.org/maven2'
+        }
+    }
+}
+
+

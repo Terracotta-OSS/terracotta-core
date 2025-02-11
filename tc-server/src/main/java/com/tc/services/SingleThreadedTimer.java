@@ -34,7 +34,8 @@ import org.terracotta.server.ServerEnv;
 public class SingleThreadedTimer implements ISimpleTimer {
   private final TimeSource timeSource;
   private final Thread timerThread;
-  private boolean threadIsRunning = false;
+  private boolean threadIsRunning = true;
+  private boolean threadIsStarted = false;
   private long nextId = 1L;
   private final PriorityQueue<ListElement> queue = new PriorityQueue<>(1, new Comparator<ListElement>(){
     @Override
@@ -69,8 +70,11 @@ public class SingleThreadedTimer implements ISimpleTimer {
 
   @Override
   public synchronized void start() {
-    this.threadIsRunning = true;
-    this.timerThread.start();
+    if (this.threadIsRunning && !this.threadIsStarted) {
+      this.threadIsStarted = true;
+      this.timerThread.setDaemon(true);
+      this.timerThread.start();
+    }
   }
 
   @Override

@@ -88,11 +88,6 @@ public class TestStateManager implements StateManager {
   }
 
   @Override
-  public void moveToStopState() {
-    isActive = false;
-  }
-
-  @Override
   public void moveToDiagnosticMode() {
 
   }

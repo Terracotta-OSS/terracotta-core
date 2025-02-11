@@ -1,1 +1,0 @@
-Please see https://confluence.terracotta.org/display/release/Third+Party+Licenses to review our Third Party License File

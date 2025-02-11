@@ -41,6 +41,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import org.terracotta.tripwire.StageMonitor;
@@ -86,6 +87,7 @@ public class StageImpl<EC> implements Stage<EC> {
   @SuppressWarnings("unchecked")
   public StageImpl(TCLoggerProvider loggerProvider, String name, Class<EC> type, EventHandler<EC> handler, int queueCount,
                    ThreadGroup group, QueueFactory queueFactory, StageListener listener, int queueSize, boolean canBeDirect, boolean stallLogging) {
+    Objects.requireNonNull(handler);
     this.logger = loggerProvider.getLogger(Stage.class.getName() + ": " + name);
     this.name = name;
     if (queueCount > 1 && !MultiThreadedEventContext.class.isAssignableFrom(type)) {
@@ -233,7 +235,14 @@ public class StageImpl<EC> implements Stage<EC> {
   private synchronized void stopThreads() {
     for (WorkerThread thread : threads) {
       try {
-        thread.join();
+        if (thread != null) {
+          while (thread.isAlive()) {
+            thread.join(10000);
+            if (thread.isAlive()) {
+              logger.warn("still waiting for {} to shutdown", thread.getName());
+            }
+          }
+        }
       } catch (InterruptedException ie) {
         throw new RuntimeException(ie);
       }

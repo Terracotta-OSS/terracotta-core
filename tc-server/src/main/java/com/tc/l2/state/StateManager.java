@@ -57,8 +57,6 @@ public interface StateManager extends PrettyPrintable {
   
   public void moveToPassiveStandbyState();
   
-  public void moveToStopState();
-
   public void moveToDiagnosticMode();
   
   public void moveToRelayMode();

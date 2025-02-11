@@ -1,0 +1,58 @@
+/*
+ * Copyright Terracotta, Inc.
+ * Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+plugins {
+    id 'org.terracotta.build.package'
+    id 'maven-publish'
+}
+
+version = "$project.apiVersion"
+description = 'terracotta-core server-api'
+
+dependencies {
+    compileOnlyApi "org.slf4j:slf4j-api:$slf4jVersion"
+    compileOnlyApi "ch.qos.logback:logback-classic:$logbackVersion"
+
+    api project(':common-api')
+
+    contentsApi "org.terracotta:entity-server-api:$terracottaApisVersion"
+    contentsApi "org.terracotta:monitoring-support:$terracottaApisVersion"
+    contentsApi "org.terracotta:standard-cluster-services:$terracottaApisVersion"
+
+    contentsApi project(":tripwire:plugin")
+    contentsApi project(':server-spi')
+    contentsApi project(':configuration-provider')
+    contentsApi project(':server-bootstrap')
+}
+
+publishing {
+    publications {
+        api(MavenPublication) {
+            groupId = 'org.terracotta'
+            version = "$project.version"
+            artifactId = "$project.name"
+            from components.package
+        }
+    }
+    repositories {
+        maven {
+            name = 'releases'
+            url = 'https://repo.terracotta.org/maven2'
+        }
+    }
+}
+
+

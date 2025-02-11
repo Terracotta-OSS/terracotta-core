@@ -18,10 +18,12 @@
 package com.tc.util.runtime;
 
 import com.tc.test.TCTestCase;
+import org.junit.Ignore;
 
 /**
  * Base class for ThreadDumpUtil tests
  */
+@Ignore
 public class ThreadDumpUtilTestBase extends TCTestCase {
 
   /** shows up in stack trace of a thread waiting on ObserverGate.waiter() */

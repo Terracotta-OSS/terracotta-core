@@ -339,14 +339,17 @@ public class StateManagerImpl implements StateManager {
       return;
     }
     
-    setActiveNodeID(active);
+    Enrollment verify = getVerificationEnrollment();
+    setActiveNodeID(active);    
     if (startState == ServerMode.RELAY) {
+      setActiveNodeID(active);
       switchToState(ServerMode.RELAY, EnumSet.of(ServerMode.INITIAL, ServerMode.START, ServerMode.RELAY));
     } else {
       logger.info("moving to passive " + state + " " + src + " " + active);
-      logger.info("verification = {}", getVerificationEnrollment());
+      logger.info("winning = {}", winningEnrollment);
+      logger.info("verification = {}", verify);
     
-      ServerMode newState = (!winningEnrollment.getNodeID().isNull() && getVerificationEnrollment().equals(winningEnrollment)) ? 
+      ServerMode newState = (!winningEnrollment.getNodeID().isNull() && verify.equals(winningEnrollment)) ? 
               ServerMode.PASSIVE : ServerMode.UNINITIALIZED;
       Set<ServerMode> modes = newState == ServerMode.UNINITIALIZED ? EnumSet.of(ServerMode.INITIAL, ServerMode.START,ServerMode.UNINITIALIZED) :
               EnumSet.of(ServerMode.PASSIVE);
@@ -392,8 +395,7 @@ public class StateManagerImpl implements StateManager {
     }
   }
 
-  @Override
-  public void moveToStopState() {
+  private void moveToStopState() {
       switchToState(ServerMode.STOP, EnumSet.allOf(ServerMode.class));
   }
   
@@ -455,9 +457,15 @@ public class StateManagerImpl implements StateManager {
     }
     try {
       if (state != newState) {
-        logger.debug("Switching to " + newState);
-        TripwireFactory.createServerStateEvent(newState.toString(), ACTIVE == newState).commit();
-        publishSink.addToSink(new StateChangedEvent(state.getState(), newState.getState()));
+          logger.debug("Switching to " + newState);
+          TripwireFactory.createServerStateEvent(newState.toString(), ACTIVE == newState).commit();
+          if (newState == ServerMode.STOP) { 
+    // special case for stop because this is shutdown not a transition, null previous stage prevents 
+    // stages from being shutdown
+            publishSink.addToSink(new StateChangedEvent(null, newState.getState()));
+          } else {
+            publishSink.addToSink(new StateChangedEvent(state.getState(), newState.getState()));
+          }
       }
       return state;
     } finally {

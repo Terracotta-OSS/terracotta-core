@@ -4,6 +4,9 @@ dependency-reduced-pom.xml
 .project
 .classpath
 .settings/
+.gradle/
+
+**/build/
 
 *.iml
 .idea/
@@ -16,3 +19,4 @@ nbactions.xml
 /dso-l1/nbproject/
 /common-spi/nbproject/
 /default-configuration/nbproject/
+

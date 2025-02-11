@@ -24,11 +24,13 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
  *
  */
+@Ignore("doesn't work after JDK 8")
 public class StrictURLClassLoaderTest {
 
   public StrictURLClassLoaderTest() {

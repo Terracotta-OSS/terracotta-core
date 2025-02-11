@@ -22,58 +22,73 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
-import static org.terracotta.testing.demos.TestHelpers.isWindows;
 
-public class DefaultStartupCommandBuilder implements StartupCommandBuilder {
-  private Path tcConfig;
-  private Path kitDir;
+public class DefaultStartupCommandBuilder implements StartupCommandBuilder, Cloneable {
+  private StripeConfiguration stripeConfig;
+  private Path stripeWorkingDir;
   private Path serverWorkingDir;
   private String logConfigExt;
   private String serverName;
-  private boolean consistentStartup;
+  private String stripeName;
   private String[] builtCommand;
-
-  public StartupCommandBuilder tcConfig(Path tcConfig) {
-    this.tcConfig = tcConfig;
-    return this;
+  
+  public DefaultStartupCommandBuilder() {
+  }
+  
+  public DefaultStartupCommandBuilder copy() {
+    try {
+      return (DefaultStartupCommandBuilder)this.clone();
+    } catch (CloneNotSupportedException c) {
+      throw new RuntimeException(c);
+    }
   }
 
+
+  @Override
+  public StartupCommandBuilder stripeConfiguration(StripeConfiguration config) {
+    this.stripeConfig = config;
+    return this;
+  }
+  
+  @Override
+  public StartupCommandBuilder stripeWorkingDir(Path stripeWorkingDir) {
+    this.stripeWorkingDir = stripeWorkingDir;
+    return this;
+  }  
+  @Override
   public StartupCommandBuilder serverWorkingDir(Path serverWorkingDir) {
     this.serverWorkingDir = serverWorkingDir;
     return this;
   }
 
+  @Override
   public StartupCommandBuilder serverName(String serverName) {
     this.serverName = serverName;
     return this;
   }
 
+  @Override
   public StartupCommandBuilder stripeName(String stripeName) {
+    this.stripeName = stripeName;
     return this;
   }
 
-  public StartupCommandBuilder consistentStartup(boolean consistentStartup) {
-    this.consistentStartup = consistentStartup;
-    return this;
-  }
-
-  public StartupCommandBuilder kitDir(Path kitDir) {
-    this.kitDir = kitDir;
-    return this;
-  }
-
+  @Override
   public StartupCommandBuilder logConfigExtension(String logConfigExt) {
     this.logConfigExt = logConfigExt;
     return this;
   }
 
-  protected void installServer() throws IOException {
+  protected Path installServer() throws IOException {
     // Create a copy of the server for this installation.
+    Files.createDirectories(stripeWorkingDir);
     Files.createDirectories(serverWorkingDir);
+    Path tcConfig = stripeWorkingDir.resolve("tc-config.xml");
 
     //Copy a custom logback configuration
     Files.copy(this.getClass().getResourceAsStream("/tc-logback.xml"), serverWorkingDir.resolve("logback-test.xml"), REPLACE_EXISTING);
@@ -86,40 +101,28 @@ public class DefaultStartupCommandBuilder implements StartupCommandBuilder {
         Files.copy(logExt, serverWorkingDir.resolve("logback-ext-test.xml"), REPLACE_EXISTING);
       }
     }
-  }
-
-  /**
-   * Returns a normalized absolute path to the shell/bat script, and quotes the windows path to avoid issues with special path chars.
-   * @param scriptPath path to the script from the base kit
-   * @return string representation of processed path
-   */
-  protected String getAbsolutePath(Path scriptPath) {
-    Path basePath =  getServerWorkingDir().resolve(getKitDir()).resolve(scriptPath).toAbsolutePath().normalize();
-    return isWindows() ? "\"" + basePath + ".bat\"" : basePath + ".sh";
+    return tcConfig;
   }
 
   @Override
   public String[] build() {
     if (builtCommand == null) {
       try {
-        installServer();
-        String startScript = getAbsolutePath(Paths.get("server","bin", "start-tc-server"));
-        builtCommand = new String[]{startScript, "-f", tcConfig.toString(), "-n", serverName, "JAVA_OPTS=-Dlogback.configurationFile=logback-test.xml"};
+        Path config = installServer();
+        List<String> args = new ArrayList<>();
+
+        args.add("-f");
+        args.add(config.toString());
+        args.add("-n");
+        args.add(serverName);
+        builtCommand = args.toArray(String[]::new);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
     }
     return builtCommand;
   }
-
-  public Path getTcConfig() {
-    return tcConfig;
-  }
-
-  public Path getKitDir() {
-    return kitDir;
-  }
-
+  
   public Path getServerWorkingDir() {
     return serverWorkingDir;
   }
@@ -131,8 +134,12 @@ public class DefaultStartupCommandBuilder implements StartupCommandBuilder {
   public String getServerName() {
     return serverName;
   }
-
+  
+  public String getStripeName() {
+    return stripeName;
+  }
+  
   public boolean isConsistentStartup() {
-    return consistentStartup;
+    return stripeConfig.isConsistent();
   }
 }

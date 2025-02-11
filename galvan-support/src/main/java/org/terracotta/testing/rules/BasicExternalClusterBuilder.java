@@ -17,39 +17,45 @@
  */
 package org.terracotta.testing.rules;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
 import org.terracotta.testing.config.StartupCommandBuilder;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.Set;
 import java.util.function.Supplier;
-import org.terracotta.testing.config.ArgOnlyStartupCommandBuilder;
+import org.terracotta.testing.api.ConfigBuilder;
 
-import static org.terracotta.testing.config.ConfigConstants.DEFAULT_CLIENT_RECONNECT_WINDOW;
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_SERVER_HEAP_MB;
-import static org.terracotta.testing.config.ConfigConstants.DEFAULT_VOTER_COUNT;
+import org.terracotta.testing.config.DefaultLegacyConfigBuilder;
 import org.terracotta.testing.config.DefaultStartupCommandBuilder;
+import org.terracotta.testing.master.ServerDeploymentBuilder;
+import org.terracotta.testing.api.LegacyConfigBuilder;
+import org.terracotta.testing.config.ConfigConstants;
 
 public class BasicExternalClusterBuilder {
   private final int stripeSize;
 
-  private Path clusterDirectory = Paths.get("target").resolve("galvan");
-  private Set<Path> serverJars = Collections.emptySet();
-  private String namespaceFragment = "";
-  private String serviceFragment = "";
-  private int clientReconnectWindowTime = DEFAULT_CLIENT_RECONNECT_WINDOW;
-  private int failoverPriorityVoterCount = DEFAULT_VOTER_COUNT;
-  private boolean consistentStart = false;
-  private Properties tcProperties = new Properties();
-  private Properties systemProperties = new Properties();
+  private Path clusterDirectory;
+  private final Properties systemProperties = new Properties();
+  private final Properties tcProperties = new Properties();
+  private int reconnectWindow = ConfigConstants.DEFAULT_CLIENT_RECONNECT_WINDOW;
+  private int voters = ConfigConstants.DEFAULT_VOTER_COUNT;
+  private boolean consistent = false;
+
   private String logConfigExt = "logback-ext.xml";
   private int serverHeapSize = DEFAULT_SERVER_HEAP_MB;
-  private boolean inline = true;
+  private int customHeapSize = DEFAULT_SERVER_HEAP_MB;
+  private ConfigBuilder configBuilder;
+  private ServerDeploymentBuilder serverBuilder = new ServerDeploymentBuilder();
   private Supplier<StartupCommandBuilder> startupBuilder;
-
+  private OutputStream parentStream;
+  
+  
+    
   private BasicExternalClusterBuilder(final int stripeSize) {
     this.stripeSize = stripeSize;
   }
@@ -72,52 +78,51 @@ public class BasicExternalClusterBuilder {
     this.clusterDirectory = clusterDirectory;
     return this;
   }
-
-  public BasicExternalClusterBuilder withServerJars(Set<Path> serverJars) {
-    if (serverJars == null) {
-      throw new NullPointerException("Server JARs list must be non-null");
-    }
-    this.serverJars = serverJars;
+  
+  public BasicExternalClusterBuilder server(Path server) {
+    this.serverBuilder.installPath(server);
     return this;
+  }
+  
+  public BasicExternalClusterBuilder configBuilder(ConfigBuilder config) {
+    this.configBuilder = config;
+    return this;
+  }
+  
+  private LegacyConfigBuilder legacy() {
+    if (this.configBuilder == null) {
+      this.configBuilder = new DefaultLegacyConfigBuilder();
+    }
+    return (LegacyConfigBuilder)this.configBuilder;
   }
 
   public BasicExternalClusterBuilder withNamespaceFragment(final String namespaceFragment) {
-    if (namespaceFragment == null) {
-      throw new NullPointerException("Namespace fragment must be non-null");
-    }
-    this.namespaceFragment = namespaceFragment;
+    this.legacy().withNamespaceFragment(namespaceFragment);
     return this;
   }
 
   public BasicExternalClusterBuilder withServiceFragment(final String serviceFragment) {
-    if (serviceFragment == null) {
-      throw new NullPointerException("Service fragment must be non-null");
-    }
-    this.serviceFragment = serviceFragment;
+    this.legacy().withServiceFragment(serviceFragment);
     return this;
   }
 
   public BasicExternalClusterBuilder withClientReconnectWindowTime(final int clientReconnectWindowTime) {
-    this.clientReconnectWindowTime = clientReconnectWindowTime;
+    this.reconnectWindow = clientReconnectWindowTime;
     return this;
   }
-
-  /**
-   * Zero or any positive value will tune the cluster for consistency and set the respective voter count as provided.
-   * A value of -1 will tune the cluster for availability. This is the default.
-   */
+  
   public BasicExternalClusterBuilder withFailoverPriorityVoterCount(final int failoverPriorityVoterCount) {
-    this.failoverPriorityVoterCount = failoverPriorityVoterCount;
+    this.voters = failoverPriorityVoterCount;
     return this;
   }
-
+  
   public BasicExternalClusterBuilder withTcProperties(Properties tcProperties) {
     this.tcProperties.putAll(tcProperties);
     return this;
   }
 
   public BasicExternalClusterBuilder withTcProperty(String key, String value) {
-    this.tcProperties.put(key, value);
+    this.tcProperties.setProperty(key, value);
     return this;
   }
 
@@ -133,11 +138,22 @@ public class BasicExternalClusterBuilder {
 
   public BasicExternalClusterBuilder withServerHeap(int heapSize) {
     this.serverHeapSize = heapSize;
+    this.customHeapSize = heapSize;
+    return this;
+  }
+  
+  public BasicExternalClusterBuilder withOutputStream(OutputStream output) {
+    this.parentStream = output;
     return this;
   }
 
   public BasicExternalClusterBuilder logConfigExtensionResourceName(String logConfigExt) {
     this.logConfigExt = logConfigExt;
+    return this;
+  }
+  
+  public BasicExternalClusterBuilder deploymentBuilder(ServerDeploymentBuilder deploy) {
+    this.serverBuilder = deploy;
     return this;
   }
 
@@ -147,24 +163,44 @@ public class BasicExternalClusterBuilder {
   }
 
   public BasicExternalClusterBuilder inline(boolean yes) {
-    this.inline = yes;
+    if (yes) {
+      this.serverHeapSize = -1;
+    } else {
+      this.serverHeapSize = customHeapSize;
+    }
     return this;
   }
 
   public BasicExternalClusterBuilder withConsistentStartup(boolean consistent) {
-    this.consistentStart = consistent;
+    this.consistent = consistent;
+    return this;
+  }
+  
+  public BasicExternalClusterBuilder withServerPlugin(Path api, Path impl) {
+    this.serverBuilder.addPlugin(api, impl);
     return this;
   }
 
   public Cluster build() {
-    if (inline) {
-      return new BasicInlineCluster(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment,
-        clientReconnectWindowTime, failoverPriorityVoterCount, consistentStart, tcProperties, systemProperties,
-        logConfigExt, serverHeapSize, Optional.ofNullable(startupBuilder).orElse(ArgOnlyStartupCommandBuilder::new));
-    } else {
-      return new BasicExternalCluster(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment,
-        clientReconnectWindowTime, failoverPriorityVoterCount, consistentStart, tcProperties, systemProperties,
-        logConfigExt, serverHeapSize, Optional.ofNullable(startupBuilder).orElse(DefaultStartupCommandBuilder::new));
+    if (clusterDirectory == null) {
+      String dir = System.getProperty("galvan.dir");
+      try {
+        if (dir != null) {
+          clusterDirectory = Files.createDirectories(Paths.get(dir));
+        } else {
+          clusterDirectory = Files.createTempDirectory("serverWorking");
+        }
+      } catch (IOException ioe) {
+        throw new RuntimeException(ioe);
+      }
     }
+
+    if (configBuilder == null) {
+      configBuilder = new DefaultLegacyConfigBuilder();
+    }
+    return new BasicExternalCluster(clusterDirectory, stripeSize, this.serverBuilder.deploy(), serverHeapSize, systemProperties, tcProperties,
+            this.reconnectWindow, this.voters, this.consistent, 
+        logConfigExt, parentStream, configBuilder, Optional.ofNullable(startupBuilder).orElse(DefaultStartupCommandBuilder::new));
+
   }
 }

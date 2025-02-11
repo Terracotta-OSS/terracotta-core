@@ -1,0 +1,3 @@
+[submodule "terracotta-gradle-plugins"]
+	path = terracotta-gradle-plugins
+	url = ../terracotta-gradle-plugins.git

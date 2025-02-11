@@ -61,14 +61,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import org.junit.Ignore;
 import org.junit.Test;
 import static org.mockito.ArgumentMatchers.any;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mock;
 import org.slf4j.Logger;
 import org.terracotta.server.Server;
 import org.terracotta.server.ServerEnv;
@@ -89,7 +87,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
   private MockStageManagerFactory  stages;
 
   private void setupGroups(int n) throws Exception {
-    ServerEnv.setDefaultServer(mock(Server.class));
+    ServerEnv.setDefaultServer(Mockito.mock(Server.class));
     groups = new TCGroupManagerImpl[n];
     listeners = new TestGroupMessageListener[n];
     groupEventListeners = new TestGroupEventListener[n];
@@ -609,15 +607,15 @@ public class TCGroupManagerImplTest extends TCTestCase {
   }
 
   private TCGroupHandshakeMessage mockHandshakeMessage(MessageChannel messageChannel, String version, long[] weights) {
-    TCGroupHandshakeMessage tcGroupHandshakeMessage = spy(new TCGroupHandshakeMessage(SessionID.NULL_ID, mock(MessageMonitor.class), new TCByteBufferOutputStream(), messageChannel, TCMessageType.GROUP_HANDSHAKE_MESSAGE));
+    TCGroupHandshakeMessage tcGroupHandshakeMessage = spy(new TCGroupHandshakeMessage(SessionID.NULL_ID, Mockito.mock(MessageMonitor.class), new TCByteBufferOutputStream(), messageChannel, TCMessageType.GROUP_HANDSHAKE_MESSAGE));
     tcGroupHandshakeMessage.initializeNodeID(new ServerID("test", new byte[20]), version, weights);
     return tcGroupHandshakeMessage;
   }
 
   private MessageChannel mockMessageChannel() {
-    TCGroupHandshakeMessage tcGroupHandshakeMessage = spy(new TCGroupHandshakeMessage(SessionID.NULL_ID, mock(MessageMonitor.class), new TCByteBufferOutputStream(), mock(MessageChannel.class), TCMessageType.GROUP_HANDSHAKE_MESSAGE));
+    TCGroupHandshakeMessage tcGroupHandshakeMessage = spy(new TCGroupHandshakeMessage(SessionID.NULL_ID, Mockito.mock(MessageMonitor.class), new TCByteBufferOutputStream(), Mockito.mock(MessageChannel.class), TCMessageType.GROUP_HANDSHAKE_MESSAGE));
 
-    MessageChannel channel = mock(MessageChannel.class);
+    MessageChannel channel = Mockito.mock(MessageChannel.class);
     when(channel.getAttachment(anyString())).thenReturn(null);
     when(channel.createMessage(TCMessageType.GROUP_HANDSHAKE_MESSAGE)).thenReturn(tcGroupHandshakeMessage);
     when(tcGroupHandshakeMessage.getChannel()).thenReturn(channel);
@@ -639,7 +637,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     final Integer upbound = Integer.valueOf(50);
 
     // setup throwable ThreadGroup to catch AssertError from threads.
-    TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(mock(Logger.class)), "TCGroupManagerImplTestGroup");
+    TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(Mockito.mock(Logger.class)), "TCGroupManagerImplTestGroup");
 
     Thread t1 = new SenderThread(threadGroup, "Node-0", mgr1, upbound);
     Thread t2 = new SenderThread(threadGroup, "Node-1", mgr2, upbound);
