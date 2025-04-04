@@ -18,6 +18,7 @@ import org.terracotta.build.plugins.PackagePlugin
 
 plugins {
     id 'org.terracotta.build.package' apply false
+    id 'com.jfrog.artifactory' version '5.2.5' apply false
 }
 
 description = 'terracotta-core'
@@ -25,9 +26,10 @@ description = 'terracotta-core'
 allprojects {
     PackagePlugin.augmentAttributeSchema(project)
 
-    if (project.hasProperty('projVersion')) {
+    if (project.hasProperty('overrideVersion')) {
       project.version = project.projVersion
     } else {
       project.version = "$project.defaultVersion"
     }
 }
+
