@@ -18,6 +18,7 @@ import org.terracotta.build.plugins.PackagePlugin
 
 plugins {
     id 'org.terracotta.build.package' apply false
+    id 'com.jfrog.artifactory' version '5.2.5' apply false
 }
 
 description = 'terracotta-core'
@@ -25,9 +26,30 @@ description = 'terracotta-core'
 allprojects {
     PackagePlugin.augmentAttributeSchema(project)
 
-    if (project.hasProperty('projVersion')) {
+    if (project.hasProperty('overrideVersion')) {
       project.version = project.projVersion
     } else {
       project.version = "$project.defaultVersion"
+    }
+}
+
+artifactory.skip = true
+
+artifactory {
+    contextUrl = "https://na.artifactory.swg-devops.com/artifactory" // Replace with your Artifactory URL
+    publish {
+        repository {
+            releaseRepoKey = "hyc-webmriab-team-tc01-os-releases-maven-local"
+            snapshotRepoKey = "hyc-webmriab-team-tc01-os-snapshots-maven-local" // The Artifactory repository key to publish to
+            username = project.findProperty("artifactory_user") ?: System.getenv("ARTIFACTORY_DEPLOY_USERNAME")
+            password = project.findProperty("artifactory_password") ?: System.getenv("ARTIFACTORY_DEPLOY_PASSWORD")
+        }
+        defaults {
+            publications("runtime", "api")
+        }
+        buildInfo {
+            buildName = "hyc-webmriab-team-tc01/terracotta/${rootProject.name}"
+            buildNumber = rootProject.findProperty("buildNumber") ?: '' + new Random(System.currentTimeMillis()).nextInt(20000)
+        }
     }
 }
