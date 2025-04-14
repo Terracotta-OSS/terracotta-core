@@ -94,13 +94,14 @@ public class ActiveToPassiveReplicationTest {
     ActivePassiveAckWaiter ack = replication.replicateActivity(activity, replication.passives());
     Future<?> removal = Executors.newSingleThreadExecutor().submit(()->{
       try {
-        TimeUnit.MILLISECONDS.sleep(3000);
+        TimeUnit.MILLISECONDS.sleep(1000);
 // remove the passive that is about to be waited on
         replication.nodeLeft(passive);
       } catch (InterruptedException i) {
         throw new RuntimeException("node left failed", i);
       }
     });
+    removal.get();
     ack.waitForCompleted();
     Assert.assertTrue(ack.isCompleted());
     // make sure adding more waiters don't include removed passive
