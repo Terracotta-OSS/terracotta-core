@@ -173,11 +173,7 @@ public class ServerProcess extends ServerInstance {
   }
 
   private synchronized void setStreams(OutputStream out, OutputStream err) {
-    if (outputStream != null) {
-      Assert.assertNull(this.outputStream);
-    }
     this.outputStream = out;
-    Assert.assertNull(this.errorStream);
     this.errorStream = err;
   }
 

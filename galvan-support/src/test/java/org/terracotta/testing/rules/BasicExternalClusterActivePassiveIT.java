@@ -56,8 +56,8 @@ public class BasicExternalClusterActivePassiveIT {
     try (Connection connection = CLUSTER.newConnection()) {
       CLUSTER.getClusterControl().waitForRunningPassivesInStandby();
       CLUSTER.getClusterControl().terminateActive();
-      CLUSTER.getClusterControl().startOneServer();
       CLUSTER.getClusterControl().waitForActive();
+      CLUSTER.getClusterControl().startOneServer();
       System.out.println("testFailoverWithLiveConnection " + connection);
     }
   }

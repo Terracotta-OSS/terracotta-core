@@ -27,7 +27,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Rule;
 import org.junit.Test;
 import static org.mockito.Mockito.mock;
 
@@ -37,9 +36,6 @@ import org.junit.contrib.java.lang.system.ExpectedSystemExit;
  *
  */
 public class AvailabilityManagerImplTest {
-
-  @Rule
-  public final ExpectedSystemExit exit = ExpectedSystemExit.none();
 
   public AvailabilityManagerImplTest() {
   }
