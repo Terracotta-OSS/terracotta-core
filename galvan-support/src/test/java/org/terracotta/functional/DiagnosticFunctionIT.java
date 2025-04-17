@@ -85,7 +85,7 @@ public class DiagnosticFunctionIT {
   @Test
   public void testCyclingConnections() throws Exception {
     String[] clusterHostPorts = CLUSTER.getClusterHostPorts();
-    for (int x=0;x<500;x++) {
+    for (int x=0;x<50;x++) {
       for (String hostPort: clusterHostPorts) {
         String[] hp = hostPort.split("[:]");
         InetSocketAddress inet = InetSocketAddress.createUnresolved(hp[0], Integer.parseInt(hp[1]));

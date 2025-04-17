@@ -64,6 +64,7 @@ import static com.tc.l2.state.StateManager.ACTIVE_COORDINATOR;
 import static com.tc.l2.state.StateManager.BOOTSTRAP_STATE;
 import static com.tc.l2.state.StateManager.PASSIVE_UNINITIALIZED;
 import com.tc.net.ServerID;
+import static com.tc.objectserver.core.api.ServerConfigurationContext.L2_STATE_CHANGE_STAGE;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.util.concurrent.ThreadUtil;
 import java.util.concurrent.ExecutorService;
@@ -100,7 +101,7 @@ public class StateManagerImplTest {
   private final Set<Node> nodeSet = new HashSet<>();
   private TopologyManager topologyManager;
 
-//  private final TCServer[] tcServers = new TCServer[NUM_OF_SERVERS];
+  private final StageManager[] stageManagers = new StageManager[NUM_OF_SERVERS];
   private final StageController[] stageControllers = new StageController[NUM_OF_SERVERS];
   private final ManagementTopologyEventCollector[] mgmt = new ManagementTopologyEventCollector[NUM_OF_SERVERS];
   private final StateManagerImpl[] stateManagers = new StateManagerImpl[NUM_OF_SERVERS];
@@ -110,8 +111,6 @@ public class StateManagerImplTest {
   public void setUp() throws Exception {
     ServerEnv.setDefaultServer(mock(Server.class));
     Logger tcLogger = mock(Logger.class);
-//    WeightGeneratorFactory weightGeneratorFactory = RandomWeightGenerator.createTestingFactory(2);
-    StageManager[] stageManagers = new StageManager[NUM_OF_SERVERS];
 
     Server server = mock(Server.class);
     when(server.getActivateTime()).thenReturn(System.currentTimeMillis());
@@ -206,18 +205,18 @@ public class StateManagerImplTest {
     }
     
     for (int i = 0; i < NUM_OF_SERVERS; i++) {
-      while (stateManagers[i].getCurrentMode() == ServerMode.INITIAL) {
-        ThreadUtil.reallySleep(1000);
+      boolean waitfor = true;
+      while (waitfor) {
+        ServerMode mode = stateManagers[i].getCurrentMode();
+        System.out.println("current mode:" + mode);
+        switch (mode) {
+            case STOP, INITIAL, DIAGNOSTIC, RECOVERING, START -> ThreadUtil.reallySleep(1000);
+            default -> waitfor = false;
+        }
       }
-      while (stateManagers[i].getCurrentMode() == ServerMode.START) {
-        ThreadUtil.reallySleep(1000);
-      }
-      while (stateManagers[i].getCurrentMode() == ServerMode.DIAGNOSTIC) {
-        ThreadUtil.reallySleep(1000);
-      }
-    }
-
-    for (int i = 0; i < NUM_OF_SERVERS; i++) {
+      
+      stageManagers[i].stopAll();
+      
       ArgumentCaptor<State> cap = ArgumentCaptor.forClass(State.class);
       if (activeIndex == i) {
         verify(stageControllers[i]).transition(eq(BOOTSTRAP_STATE), cap.capture());

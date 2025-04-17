@@ -53,6 +53,7 @@ import com.tc.object.session.SessionID;
 import com.tc.objectserver.handler.ReplicationReceivingAction;
 import com.tc.util.DaemonThreadFactory;
 import java.util.AbstractSet;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -79,6 +80,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private final Set<NodeID> standByNodes = new HashSet<>();
   private final ConcurrentHashMap<SyncReplicationActivity.ActivityID, ActivePassiveAckWaiter> waiters = new ConcurrentHashMap<>();
   private final ReplicationSender replicationSender;
+  private final ThreadGroup syncGroup = new ThreadGroup("passive sync thread group");
   private final ExecutorService passiveSyncPool = Executors.newCachedThreadPool(new DaemonThreadFactory("active-to-passive-"));
   private final EntityPersistor persistor;
   private final GroupManager serverCheck;
@@ -400,8 +402,19 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   // for test
   boolean finishPassiveSync(long timeout) throws InterruptedException {
     passiveSyncPool.shutdown();
-    return passiveSyncPool.awaitTermination(timeout, TimeUnit.MILLISECONDS);
+    boolean term = passiveSyncPool.awaitTermination(timeout, TimeUnit.MILLISECONDS);
+    if (!term) {
+      LOGGER.warn("active sync threads: {}" ,syncGroup.activeCount());
+      Thread[] list = new Thread[syncGroup.activeCount()];
+      int count = syncGroup.enumerate(list);
+      for (int x=0;x<count;x++) {
+          LOGGER.warn("Thread: " + list[x].getName());
+          for (StackTraceElement e : list[x].getStackTrace()) {
+              LOGGER.warn(e.toString());
+          }
+      }
+      
+    }
+    return term;
   }
-  
-  
 }

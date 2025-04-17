@@ -18,6 +18,7 @@
 plugins {
   id 'java-library'
   id 'maven-publish'
+    id 'com.jfrog.artifactory'
 }
 
 description = 'terracotta-core server-runtime'
@@ -55,5 +56,3 @@ publishing {
         }
     }
 }
-
-

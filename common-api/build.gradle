@@ -17,9 +17,9 @@
 plugins {
     id 'org.terracotta.build.package'
     id 'maven-publish'
+    id 'com.jfrog.artifactory'
 }
 
-version = "$project.apiVersion"
 description = 'terracotta-core common-api'
 
 dependencies {
@@ -44,6 +44,3 @@ publishing {
         }
     }
 }
-
-
-

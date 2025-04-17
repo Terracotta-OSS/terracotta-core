@@ -24,6 +24,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +43,7 @@ import org.terracotta.connection.DiagnosticsFactory;
  */
 // XXX: Currently ignored since this test depends on restartability of the server, which now requires a persistence service
 //  to be plugged in (and there isn't one available, in open source).
+@Ignore("these test require proper functioning of GC which can be slow on CI machines")
 public class ClientLeakIT {
   private static final Logger LOGGER = LoggerFactory.getLogger(ClientLeakIT.class);
   

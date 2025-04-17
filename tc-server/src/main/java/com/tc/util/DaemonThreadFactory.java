@@ -26,14 +26,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class DaemonThreadFactory implements ThreadFactory {
   private final AtomicInteger count = new AtomicInteger();
   private final String name;
+  private final ThreadGroup grp;
 
   public DaemonThreadFactory(String name) {
+      this(name, null);
+  }
+  
+  public DaemonThreadFactory(String name, ThreadGroup grp) {
     this.name = name;
+      this.grp = grp;
   }
   
   @Override
   public Thread newThread(Runnable r) {
-    Thread t = new Thread(r, name + count.incrementAndGet());
+    Thread t = new Thread(grp, r, name + count.incrementAndGet());
     t.setDaemon(true);
     return t;
   }

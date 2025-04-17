@@ -41,6 +41,7 @@ import com.tc.object.session.SessionID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
+import org.junit.Ignore;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -93,13 +94,14 @@ public class ActiveToPassiveReplicationTest {
     ActivePassiveAckWaiter ack = replication.replicateActivity(activity, replication.passives());
     Future<?> removal = Executors.newSingleThreadExecutor().submit(()->{
       try {
-        TimeUnit.MILLISECONDS.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(1000);
 // remove the passive that is about to be waited on
         replication.nodeLeft(passive);
       } catch (InterruptedException i) {
         throw new RuntimeException("node left failed", i);
       }
     });
+    removal.get();
     ack.waitForCompleted();
     Assert.assertTrue(ack.isCompleted());
     // make sure adding more waiters don't include removed passive
@@ -110,7 +112,9 @@ public class ActiveToPassiveReplicationTest {
     Assert.assertTrue(ack2.isCompleted());
     int turns = 1;
     while (!replication.finishPassiveSync(10000)) {
-      System.out.println("Still waiting for sync shutdown after " + turns++ + "0s");
+      if (turns++ > 12) {
+          Assert.fail();
+      }
     }
     removal.get();
     Assert.assertTrue(replication.getWaiters().isEmpty());
