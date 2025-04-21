@@ -37,7 +37,7 @@ allprojects {
     close off artifactory unless needed by the release process
 */
 
-if (project.hasProperty('overrideVersion')) {
+if (project.hasProperty('buildVersion')) {
     artifactoryPublish.skip = true
 
     artifactory {
