@@ -26,8 +26,8 @@ description = 'terracotta-core'
 allprojects {
     PackagePlugin.augmentAttributeSchema(project)
     
-    if (project.hasProperty('overrideVersion')) {
-      project.version = project.projVersion
+    if (project.hasProperty('buildVersion')) {
+      project.version = project.buildVersion
     } else {
       project.version = "$project.defaultVersion"
     }
@@ -37,7 +37,7 @@ allprojects {
     close off artifactory unless needed by the release process
 */
 
-if (project.hasProperty('overrideVersion')) {
+if (project.hasProperty('buildVersion')) {
     artifactoryPublish.skip = true
 
     artifactory {

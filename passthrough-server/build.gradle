@@ -44,10 +44,4 @@ publishing {
             from components.java
         }
     }
-    repositories {
-        maven {
-            name = 'releases'
-            url = 'https://repo.terracotta.org/maven2'
-        }
-    }
 }
