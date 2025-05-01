@@ -18,6 +18,7 @@ import org.terracotta.build.plugins.PackagePlugin
 
 plugins {
     id 'org.terracotta.build.package' apply false
+    id 'maven-publish'
     id 'com.jfrog.artifactory' version '5.2.5'
 }
 
@@ -25,9 +26,13 @@ description = 'terracotta-core'
 
 allprojects {
     PackagePlugin.augmentAttributeSchema(project)
-    
-    if (project.hasProperty('buildVersion')) {
-      project.version = project.buildVersion
+
+    if (project.getPlugins().hasPlugin('com.jfrog.artifactory')) {
+        project.getTasks().getByPath('publish').dependsOn(project.getTasks().getByPath('artifactoryPublish'))
+    }
+
+    if (project.hasProperty('overrideVersion')) {
+      project.version = project.overrideVersion
     } else {
       project.version = "$project.defaultVersion"
     }
@@ -37,7 +42,7 @@ allprojects {
     close off artifactory unless needed by the release process
 */
 
-if (project.hasProperty('buildVersion')) {
+if (project.hasProperty('overrideVersion')) {
     artifactoryPublish.skip = true
 
     artifactory {

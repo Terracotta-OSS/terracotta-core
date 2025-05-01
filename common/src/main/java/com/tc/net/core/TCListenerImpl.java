@@ -85,21 +85,12 @@ final class TCListenerImpl implements TCListener {
   }
 
   @Override
-  public final void stop() {
-    try {
-      stop(0);
-    } catch (Exception e) {
-      logger.error("unexpected exception", e);
-    }
-  }
-
-  @Override
   public final InetSocketAddress getBindSocketAddress() {
     return this.sockAddr;
   }
 
   @Override
-  public final void stop(long timeout) throws TCTimeoutException {
+  public final void stop() {
     if (stopped.isSet()) {
       logger.warn("listener already stopped");
       return;
@@ -113,7 +104,7 @@ final class TCListenerImpl implements TCListener {
       });
 
       try {
-        future.get(timeout);
+        future.get();
       } catch (InterruptedException e) {
         logger.warn("stop interrupted");
         Thread.currentThread().interrupt();

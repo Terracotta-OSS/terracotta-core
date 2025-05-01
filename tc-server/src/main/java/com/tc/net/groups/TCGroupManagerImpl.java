@@ -363,20 +363,16 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   @Override
   public void shutdown() {
-    try {
-      stop(1000);
-    } catch (TCTimeoutException e) {
-      throw new RuntimeException(e);
-    }
+    stop();
   }
 
-  public void stop(long timeout) throws TCTimeoutException {
+  public void stop() {
     isStopped.set(true);
-    discover.stop(timeout);
+    discover.stop();
     for (ServerID sid : members.keySet()) {
       closeMember(sid);
     }
-    groupListener.stop(timeout);
+    groupListener.stop();
     communicationsManager.shutdown();
     connectionManager.shutdown();
     handshakeTimer.cancel();

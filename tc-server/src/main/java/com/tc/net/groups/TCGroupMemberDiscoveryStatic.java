@@ -60,6 +60,8 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   private final Node                                     local;
   private int                                  joinedNodes             = 0;
   private final HashSet<String>                    nodeThreadConnectingSet = new HashSet<>();
+  
+  private Thread  discoveryThread;
 
   public TCGroupMemberDiscoveryStatic(TCGroupManagerImpl manager, Node local) {
     this.manager = manager;
@@ -176,7 +178,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     // run once before deamon thread does job
     openChannels();
 
-    Thread discover = new Thread(new Runnable() {
+    discoveryThread = new Thread(new Runnable() {
       @Override
       public void run() {
         while (!stopAttempt.get()) {
@@ -200,8 +202,8 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
         running.set(false);
       }
     }, ServerEnv.getServer().getIdentifier() + " - Static Member discovery");
-    discover.setDaemon(true);
-    discover.start();
+    discoveryThread.setDaemon(true);
+    discoveryThread.start();
   }
 
   /*
@@ -240,28 +242,34 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     }
   }
 
-  private void waitTillNoConnecting(long timeout) {
+  private void waitTillNoConnecting() {
     synchronized (local) {
       if (!nodeThreadConnectingSet.isEmpty()) {
         try {
-          local.wait(timeout);
+          local.wait();
           if (!nodeThreadConnectingSet.isEmpty()) {
             logger.debug("Timeout occurred while waiting for connecting completed");
           }
         } catch (InterruptedException e) {
-          L2Utils.handleInterrupted(logger, e);
+          throw new RuntimeException("interrupted trying to shutdown", e);
         }
       }
     }
   }
-
+  
   @Override
-  public void stop(long timeout) {
+  public void stop() {
     stopAttempt.set(true);
     wake();
-    // wait for all connections completed to avoid
-    // IllegalStateException in TCConnectionManagerJDK14.checkShutdown()
-    waitTillNoConnecting(timeout);
+    waitTillNoConnecting();
+    try {
+        Thread discover = discoveryThread;
+        if (discover != null) {
+            discover.join();
+        }
+    } catch (InterruptedException ie) {
+        logger.warn("interrupted stopping discovery", ie);
+    }
   }
 
   private synchronized void wake() {

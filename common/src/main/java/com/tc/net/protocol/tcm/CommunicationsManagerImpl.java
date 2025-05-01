@@ -217,11 +217,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
       connectionHealthChecker.stop();
       NetworkListener[] col = getAllListeners();
       for (NetworkListener l : col) {
-        try {
-          l.stop(0);
-        } catch (TCTimeoutException to) {
-          logger.info("failed to shutdown listener", to);
-        }
+        l.stop();
       }
       connectionManager.shutdown();
       monitor.shutdown();

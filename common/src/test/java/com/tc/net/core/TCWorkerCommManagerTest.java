@@ -125,7 +125,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     while (connMgr.getAllConnections().length >  0) {
       Thread.sleep(1000);
     }
-    listener.stop(5000);
+    listener.stop();
     commsMgr.shutdown();
     connMgr.shutdown();
   }
@@ -232,7 +232,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     while (connMgr.getAllConnections().length >  0) {
       Thread.sleep(1000);
     }
-    listener.stop(5000);
+    listener.stop();
     commsMgr.shutdown();
     connMgr.shutdown();
   }
@@ -292,7 +292,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     waitForWeight(commsMgr, 1, 0);
     waitForWeight(commsMgr, 2, 0);
 
-    listener.stop(5000);
+    listener.stop();
     commsMgr.shutdown();
     connMgr.shutdown();
   }

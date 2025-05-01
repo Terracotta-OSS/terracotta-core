@@ -156,11 +156,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
         }
       }
     } finally {
-      try {
-        listener.stop(5000);
-      } catch (TCTimeoutException e) {
-        // ignored
-      }
+      listener.stop();
       serverCommsMgr.shutdown();
       connectionMgr.shutdown();
     }
