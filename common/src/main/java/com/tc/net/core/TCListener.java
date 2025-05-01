@@ -30,8 +30,6 @@ import java.net.InetSocketAddress;
 public interface TCListener {
   public void stop();
 
-  public void stop(long timeout) throws TCTimeoutException;
-
   public InetSocketAddress getBindSocketAddress();
 
   public void addEventListener(TCListenerEventListener lsnr);

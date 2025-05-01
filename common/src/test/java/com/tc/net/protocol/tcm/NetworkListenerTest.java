@@ -84,7 +84,7 @@ public class NetworkListenerTest extends TestCase {
       // NOTE (issue-529):  When running on Windows, in a pre-Java7u25 JVM, this bind succeeds.
       if (isWindows() && isJava6()) {
         System.err.println("WARNING:  bind success due to lack of SO_EXCLUSIVEADDRUSE - ignoring test failure");
-        lsnr2.stop(5000);
+        lsnr2.stop();
       } else {
         fail();
       }
@@ -94,7 +94,7 @@ public class NetworkListenerTest extends TestCase {
 
     assertTrue(commsMgr.getAllListeners().length == 1);
 
-    lsnr.stop(5000);
+    lsnr.stop();
 
     assertTrue(commsMgr.getAllListeners().length == 0);
   }
@@ -122,8 +122,8 @@ public class NetworkListenerTest extends TestCase {
     for (int i = 0; i < cnt; i++) {
       // try stop() twice, shouldn't fail
 
-      listeners[i].stop(5000);
-      listeners[i].stop(5000);
+      listeners[i].stop();
+      listeners[i].stop();
     }
 
     assertTrue(commsMgr.getAllListeners().length == 0);

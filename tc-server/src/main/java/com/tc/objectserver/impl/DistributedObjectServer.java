@@ -875,9 +875,7 @@ public class DistributedObjectServer {
           try {
             if (!immediate) {
               try {
-                stopped.get(60, TimeUnit.SECONDS);
-              } catch (TimeoutException to) {
-                logger.warn("Timeout waiting for clean shutdown.");
+                stopped.get();
               } catch (ExecutionException ee) {
                 logger.warn("stop not complete", ee.getCause());
               }
@@ -1271,12 +1269,7 @@ public class DistributedObjectServer {
 
   private void startL1Listener(Set<ConnectionID> existingConnections) {
     while (!server.isStopped()) {
-      try {
-        this.l1Diagnostics.stop(1000L);
-      } catch (TCTimeoutException to) {
-        logger.warn("unable to stop diagnostics listener");
-        continue;
-      }
+      this.l1Diagnostics.stop();
 
       try {
         this.l1Listener.start(existingConnections);

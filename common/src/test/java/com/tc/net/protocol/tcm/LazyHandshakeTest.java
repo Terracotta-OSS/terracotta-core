@@ -113,11 +113,7 @@ public class LazyHandshakeTest extends TCTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    try {
-      listener.stop(5000);
-    } catch (TCTimeoutException e) {
-      // ignored
-    }
+    listener.stop();
     clientComms.shutdown();
     serverComms.shutdown();
     clientConn.shutdown();

@@ -100,31 +100,21 @@ class NetworkListenerImpl implements NetworkListener {
   }
 
   @Override
-  public void stop(long timeout) throws TCTimeoutException {
-    Future<Boolean> startDone = stop();
+  public void stop() {
+    Future<Boolean> startDone = startFuture();
     boolean stop;
     try {
-      if (timeout == 0L) {
-        stop = startDone.get();
-      } else {
-        long time = System.currentTimeMillis();
-        stop = startDone.get(timeout, TimeUnit.MILLISECONDS);
-        timeout -= System.currentTimeMillis() - time;
-        if (timeout <= 0L) {
-          throw new TCTimeoutException("unable to stop network listener in time alloted");
-        }
-      }
+      stop = startDone.get();
+
       if (stop) {
-        this.lsnr.stop(timeout);
+        this.lsnr.stop();
         this.commsMgr.unregisterListener(this);
       }
     } catch (ExecutionException | InterruptedException e) {
       LOGGER.warn("listener not stopped", e);
-    } catch (TimeoutException to) {
-      throw new TCTimeoutException(to);
     }
   }
-
+  
   private synchronized CompletableFuture<Boolean> start() {
     if (started == null) {
       started = new CompletableFuture<>();
@@ -134,7 +124,7 @@ class NetworkListenerImpl implements NetworkListener {
     }
   }
 
-  private synchronized CompletableFuture<Boolean> stop() {
+  private synchronized CompletableFuture<Boolean> startFuture() {
     if (started == null) {
       started = CompletableFuture.completedFuture(false);
     }

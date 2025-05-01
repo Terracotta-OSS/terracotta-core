@@ -221,7 +221,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
       System.out.println("XXX STOPPING Grp Mgrs discovery");
       for (int i = 0; i < nodes; ++i) {
-        groupManagers[i].getDiscover().stop(Integer.MAX_VALUE);
+        groupManagers[i].getDiscover().stop();
       }
 
       System.out.println("XXX Waiting for all restore connection close");
@@ -297,7 +297,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
         for (TCGroupMember member : groupMgr[i].getMembers()) {
           member.close();
         }
-        groupMgr[i].stop(1000);
+        groupMgr[i].stop();
       } catch (Throwable ex) {
         System.out.println("*** Failed to stop Server[" + i + "] " + groupMgr[i] + " " + ex);
       }

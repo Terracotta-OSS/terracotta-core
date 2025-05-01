@@ -133,7 +133,7 @@ try {
   private void initListener(final MessageSendAndReceiveWatcher myClientSenderWatcher,
                             final MessageSendAndReceiveWatcher myServerSenderWatcher, boolean dumbServerSink, int port) throws IOException, TCTimeoutException {
       if (lsnr != null) {
-        lsnr.stop(WAIT);
+        lsnr.stop();
       }
 
       serverComms.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
@@ -191,7 +191,7 @@ try {
     final Throwable lastError = error.get();
     if (lastError != null) { throw new Exception(lastError); }
 
-    if (lsnr != null) lsnr.stop(WAIT);
+    if (lsnr != null) lsnr.stop();
     if (this.clientChannel != null) this.clientChannel.close();
     if (clientComms != null) clientComms.shutdown();
     if (serverComms != null) serverComms.shutdown();
@@ -319,8 +319,8 @@ try {
       throw t;
     }
     Assert.eval(clientChannel.isConnected());
-    lsnr1.stop(1000);
-    lsnr2.stop(1000);
+    lsnr1.stop();
+    lsnr2.stop();
     serverComms1.shutdown();
     serverComms2.shutdown();
     clComms.shutdown();
@@ -400,7 +400,7 @@ try {
 
     int port = lsnr.getBindPort();
 
-    lsnr.stop(WAIT);
+    lsnr.stop();
     serverComms.getConnectionManager().closeAllConnections();
     clientComms.getConnectionManager().closeAllConnections();
 
@@ -463,7 +463,7 @@ try {
     assertEquals(1, clientChannel.getConnectCount());
     assertEquals(1, clientChannel.getConnectAttemptCount());
 
-    lsnr.stop(WAIT);
+    lsnr.stop();
     assertEquals(0, serverComms.getAllListeners().length);
 
     clientComms.getConnectionManager().closeAllConnections();

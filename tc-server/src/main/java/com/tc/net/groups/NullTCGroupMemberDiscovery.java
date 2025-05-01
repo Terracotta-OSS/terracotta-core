@@ -45,10 +45,10 @@ public class NullTCGroupMemberDiscovery implements TCGroupMemberDiscovery {
   }
 
   @Override
-  public void stop(long timeout) {
+  public void stop() {
     return;
   }
-
+  
   @Override
   public void discoveryHandler(DiscoveryStateMachine context) {
     Assert.fail();
