@@ -42,6 +42,10 @@ allprojects {
     close off artifactory unless needed by the release process
 */
 
+if ((project.hasProperty('publishApi') && project.getProperty('publishApi') == true)) {
+    println "publishing API"
+}
+
 if (project.hasProperty('overrideVersion')) {
     artifactoryPublish.skip = true
 
@@ -55,7 +59,11 @@ if (project.hasProperty('overrideVersion')) {
                 password = project.findProperty("artifactory_password") ?: System.getenv("ARTIFACTORY_DEPLOY_PASSWORD")
             }
             defaults {
-                publications('api', 'runtime')
+                if (project.hasProperty('publishApi') && project.getProperty('publishApi') == true) {
+                    publications('api', 'runtime')
+                } else {
+                    publications('runtime')
+                }
             }
             buildInfo {
                 buildName = "hyc-webmriab-team-tc01/terracotta/${rootProject.name}"

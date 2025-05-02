@@ -21,6 +21,7 @@ plugins {
 }
 
 description = 'terracotta-core common-api'
+version = "$apiVersion"
 
 dependencies {
   contentsApi "org.terracotta:entity-common-api:$terracottaApisVersion"
@@ -32,7 +33,7 @@ publishing {
     publications {
         api(MavenPublication) {
             groupId = 'org.terracotta'
-            version = "$project.version"
+            version = "$apiVersion"
             artifactId = "$project.name"
             from components.package
         }

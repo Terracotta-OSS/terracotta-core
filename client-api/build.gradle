@@ -21,6 +21,7 @@ plugins {
 }
 
 description = 'terracotta-core client-api'
+version = "$apiVersion"
 
 dependencies {
     compileOnlyApi "org.slf4j:slf4j-api:$slf4jVersion"
@@ -34,7 +35,7 @@ publishing {
     publications {
         api(MavenPublication) {
             groupId = 'org.terracotta'
-            version = "$project.version"
+            version = "$apiVersion"
             artifactId = "$project.name"
             from components.package
         }
