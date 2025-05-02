@@ -27,8 +27,8 @@ dependencies {
     compileOnly "com.google.code.findbugs:annotations:3.0.1"
 
     api project(':test-interfaces')
-    implementation project(':client-api')
-    implementation project(':server-api')
+    api project(':client-api')
+    api project(':server-api')
     
     testImplementation "junit:junit:$junitVersion"
     testImplementation "org.mockito:mockito-core:$mockitoVersion"
