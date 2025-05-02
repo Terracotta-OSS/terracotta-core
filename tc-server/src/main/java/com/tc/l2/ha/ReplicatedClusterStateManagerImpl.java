@@ -29,15 +29,12 @@ import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessageListener;
-import com.tc.net.groups.GroupResponse;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.utils.L2Utils;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import org.terracotta.configuration.ConfigurationProvider;
 
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -52,8 +49,6 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   private final Supplier<ServerMode>    currentMode;
 
   private boolean               isActive = false;
-
-  private final Collection<NodeID>    others = new HashSet<>();
 
   public ReplicatedClusterStateManagerImpl(GroupManager<AbstractGroupMessage> groupManager, Supplier<ServerMode> currentMode,
                                            ClusterState clusterState, ConfigurationProvider configurationProvider) {
@@ -72,10 +67,9 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
         state.generateStripeIDIfNeeded();
         state.syncActiveState();
 
-        others.clear();
         // Sync state to external passive servers
         state.setConfigSyncData(configurationProvider.getSyncData());
-        others.addAll(publishToAll(ClusterStateMessage.createClusterStateMessage(state)));
+        publishToAll(ClusterStateMessage.createClusterStateMessage(state));
         isActive = true;
         break;
       case STOP:
@@ -121,35 +115,18 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   public synchronized void connectionIDCreated(ConnectionID connectionID) {
     Assert.assertTrue(isActive);
     state.addNewConnection(connectionID);
-    Collection<NodeID> sentTo = publishToAll(ClusterStateMessage.createNewConnectionCreatedMessage(connectionID));
-    LOGGER.debug("applied to " + sentTo);
+    publishToAll(ClusterStateMessage.createNewConnectionCreatedMessage(connectionID));
   }
 
   @Override
   public synchronized void connectionIDDestroyed(ConnectionID connectionID) {
     Assert.assertTrue(isActive);
     state.removeConnection(connectionID);
-    Collection<NodeID> sentTo = publishToAll(ClusterStateMessage.createConnectionDestroyedMessage(connectionID));
-    LOGGER.debug("applied to " + sentTo);
+    publishToAll(ClusterStateMessage.createConnectionDestroyedMessage(connectionID));
   }
 
-  private Collection<NodeID> publishToAll(AbstractGroupMessage message) {
-    try {
-      GroupResponse<AbstractGroupMessage> gr = groupManager.sendAllAndWaitForResponse(message);
-      HashSet<NodeID> success = new HashSet<>();
-      for (AbstractGroupMessage resp : gr.getResponses()) {
-        ClusterStateMessage msg = (ClusterStateMessage) resp;
-        if (validateResponse(msg.messageFrom(), msg)) {
-          success.add(msg.messageFrom());
-        } else {
-          LOGGER.info("message not validated {} by {} result {}", message, msg.messageFrom(), msg.getType());
-        }
-      }
-      return success;
-    } catch (GroupException e) {
-      // TODO:: Is this extreme ?
-      throw new AssertionError(e);
-    }
+  private void publishToAll(AbstractGroupMessage message) {
+        groupManager.sendAll(message);
   }
 
   @Override
