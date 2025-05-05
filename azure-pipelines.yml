@@ -37,5 +37,5 @@ jobs:
     jdkVersion: '17'
     jobName: 'WindowsJava17'
     timeoutInMinutes: 60
-    options: '--no-daemon --no-parallel --no-watch-fs'
+    options: '--no-daemon --no-parallel --no-watch-fs --info'
     gradleOptions: ''
