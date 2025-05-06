@@ -28,6 +28,7 @@ configurations {
 
 dependencies {
     api project(":test-interfaces")
+    api project(":server-api")
     implementation "org.terracotta:ipc-eventbus:1.1.4"
     api "org.terracotta:terracotta-utilities-port-chooser:0.0.19"
     api "junit:junit:$junitVersion"

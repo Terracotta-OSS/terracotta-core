@@ -85,9 +85,8 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   public synchronized void publishClusterState(NodeID nodeID) throws GroupException {
     waitUntilActive();
     state.setConfigSyncData(configurationProvider.getSyncData());
-    ClusterStateMessage msg = (ClusterStateMessage)groupManager
-        .sendToAndWaitForResponse(nodeID, ClusterStateMessage.createClusterStateMessage(state));
-    validateResponse(nodeID, msg);
+    groupManager
+        .sendTo(nodeID, ClusterStateMessage.createClusterStateMessage(state));
   }
 
   private void waitUntilActive() {
@@ -138,7 +137,6 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     if (isActive) {
       LOGGER.warn("Recd ClusterStateMessage from " + fromNode
                   + " while I am the cluster co-ordinator. This is bad. Sending NG response. ");
-      sendNGSplitBrainResponse(fromNode, msg);
     } else {
       // XXX:: Is it a good idea to check if the message we are receiving is from the active server that we think is
       // active ? There is a race between publishing active and pushing cluster state and hence we don't do the check.
@@ -152,26 +150,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
           configurationProvider.sync(state.getConfigSyncData());
         }
         state.syncSequenceState();
-        sendOKResponse(fromNode, msg);
-      } else {
-        sendNGSplitBrainResponse(fromNode, msg);
       }
-    }
-  }
-
-  private void sendOKResponse(NodeID fromNode, ClusterStateMessage msg) {
-    try {
-      groupManager.sendTo(fromNode, ClusterStateMessage.createOKResponse(msg));
-    } catch (GroupException e) {
-      LOGGER.error("Error handling message : " + msg, e);
-    }
-  }
-
-  private void sendNGSplitBrainResponse(NodeID fromNode, ClusterStateMessage msg) {
-    try {
-      groupManager.sendTo(fromNode, ClusterStateMessage.createNGSplitBrainResponse(msg));
-    } catch (GroupException e) {
-      LOGGER.error("Error handling message : " + msg, e);
     }
   }
 
