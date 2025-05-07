@@ -29,6 +29,7 @@ dependencies {
     api project(':test-interfaces')
     api project(':client-api')
     api project(':server-api')
+    implementation "org.slf4j:slf4j-api:$slf4jVersion"
     
     testImplementation "junit:junit:$junitVersion"
     testImplementation "org.mockito:mockito-core:$mockitoVersion"
