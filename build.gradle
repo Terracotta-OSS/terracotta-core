@@ -24,9 +24,11 @@ plugins {
 
 description = 'terracotta-core'
 
+var publishApi = false
+
 allprojects {
     PackagePlugin.augmentAttributeSchema(project)
-
+    
     if (project.getPlugins().hasPlugin('com.jfrog.artifactory')) {
         project.getTasks().getByPath('publish').dependsOn(project.getTasks().getByPath('artifactoryPublish'))
     }
@@ -42,8 +44,9 @@ allprojects {
     close off artifactory unless needed by the release process
 */
 
-if ((project.hasProperty('publishApi') && project.getProperty('publishApi') == true)) {
-    println "publishing API"
+if (project.hasProperty('publishApi')) {
+    println "publishing API with value " + project.getProperty('publishApi')
+    publishApi = true
 }
 
 if (project.hasProperty('overrideVersion')) {
@@ -59,7 +62,7 @@ if (project.hasProperty('overrideVersion')) {
                 password = project.findProperty("artifactory_password") ?: System.getenv("ARTIFACTORY_DEPLOY_PASSWORD")
             }
             defaults {
-                if (project.hasProperty('publishApi') && project.getProperty('publishApi') == true) {
+                if (publishApi) {
                     publications('api', 'runtime')
                 } else {
                     publications('runtime')
