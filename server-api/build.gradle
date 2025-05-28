@@ -25,7 +25,9 @@ version = "$apiVersion"
 
 dependencies {
     compileOnlyApi "org.slf4j:slf4j-api:$slf4jVersion"
-    compileOnlyApi "ch.qos.logback:logback-classic:$logbackVersion"
+    compileOnlyApi ("ch.qos.logback:logback-classic:$logbackVersion") {
+        exclude group:'org.slf4j'
+    }
 
     api project(':common-api')
 
