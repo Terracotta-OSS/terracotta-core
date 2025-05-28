@@ -117,7 +117,7 @@ public class TCSocketEndpointReader implements AutoCloseable {
        // still expecting bytes, might be something wrong here.
        // go around again after a short pause, maybe should consider
        // failing at some point
-            if (rotations > 10) {
+            if (rotations > 1_000_000) {
               // give up, something is wrong
               throw new IOException("incomplete bytes in channel");
             } else {

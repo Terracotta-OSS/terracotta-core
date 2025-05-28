@@ -411,11 +411,12 @@ public class ServerProcess extends ServerInstance {
         } catch (Throwable t) {
           Assert.unexpected(t);
           returnValue = 1;
+          ServerProcess.this.didTerminateWithStatus(returnValue);
         } finally {
+          ServerProcess.this.didTerminateWithStatus(returnValue);
           running.remove(instance);
         }
       }
-      ServerProcess.this.didTerminateWithStatus(returnValue);
     }
   }
 }
