@@ -21,6 +21,10 @@ plugins {
 
 description = 'terracotta-core client implementation'
 
+java {
+    withSourcesJar()
+}
+
 dependencies {
     compileOnly "org.slf4j:slf4j-api:$slf4jVersion"
     compileOnly "org.terracotta:entity-client-api:$terracottaApisVersion"

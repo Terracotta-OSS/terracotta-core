@@ -31,6 +31,10 @@ dependencies {
     contents project(':connection-impl')
 }
 
+packaging {
+    withSourcesJar()
+}
+
 publishing {
     publications {
         runtime(MavenPublication) {

@@ -53,9 +53,9 @@ public class BasicExternalClusterBuilder {
   private ServerDeploymentBuilder serverBuilder = new ServerDeploymentBuilder();
   private Supplier<StartupCommandBuilder> startupBuilder;
   private OutputStream parentStream;
-  
-  
-    
+
+
+
   private BasicExternalClusterBuilder(final int stripeSize) {
     this.stripeSize = stripeSize;
   }
@@ -78,17 +78,17 @@ public class BasicExternalClusterBuilder {
     this.clusterDirectory = clusterDirectory;
     return this;
   }
-  
+
   public BasicExternalClusterBuilder server(Path server) {
     this.serverBuilder.installPath(server);
     return this;
   }
-  
+
   public BasicExternalClusterBuilder configBuilder(ConfigBuilder config) {
     this.configBuilder = config;
     return this;
   }
-  
+
   private LegacyConfigBuilder legacy() {
     if (this.configBuilder == null) {
       this.configBuilder = new DefaultLegacyConfigBuilder();
@@ -110,12 +110,12 @@ public class BasicExternalClusterBuilder {
     this.reconnectWindow = clientReconnectWindowTime;
     return this;
   }
-  
+
   public BasicExternalClusterBuilder withFailoverPriorityVoterCount(final int failoverPriorityVoterCount) {
     this.voters = failoverPriorityVoterCount;
     return this;
   }
-  
+
   public BasicExternalClusterBuilder withTcProperties(Properties tcProperties) {
     this.tcProperties.putAll(tcProperties);
     return this;
@@ -141,7 +141,7 @@ public class BasicExternalClusterBuilder {
     this.customHeapSize = heapSize;
     return this;
   }
-  
+
   public BasicExternalClusterBuilder withOutputStream(OutputStream output) {
     this.parentStream = output;
     return this;
@@ -151,7 +151,7 @@ public class BasicExternalClusterBuilder {
     this.logConfigExt = logConfigExt;
     return this;
   }
-  
+
   public BasicExternalClusterBuilder deploymentBuilder(ServerDeploymentBuilder deploy) {
     this.serverBuilder = deploy;
     return this;
@@ -165,8 +165,10 @@ public class BasicExternalClusterBuilder {
   public BasicExternalClusterBuilder inline(boolean yes) {
     if (yes) {
       this.serverHeapSize = -1;
+      tcProperties.put("tc.messages.packup.enabled", false);
     } else {
       this.serverHeapSize = customHeapSize;
+      tcProperties.put("tc.messages.packup.enabled", true);
     }
     return this;
   }
@@ -175,7 +177,7 @@ public class BasicExternalClusterBuilder {
     this.consistent = consistent;
     return this;
   }
-  
+
   public BasicExternalClusterBuilder withServerPlugin(Path api, Path impl) {
     this.serverBuilder.addPlugin(api, impl);
     return this;
@@ -195,12 +197,13 @@ public class BasicExternalClusterBuilder {
       }
     }
 
-    if (configBuilder == null) {
-      configBuilder = new DefaultLegacyConfigBuilder();
-    }
+    String debugPortString = System.getProperty("serverDebugPortStart");
+    int serverDebugStartPort = debugPortString != null ? Integer.parseInt(debugPortString) : 0;
+
     return new BasicExternalCluster(clusterDirectory, stripeSize, this.serverBuilder.deploy(), serverHeapSize, systemProperties, tcProperties,
-            this.reconnectWindow, this.voters, this.consistent, 
-        logConfigExt, parentStream, configBuilder, Optional.ofNullable(startupBuilder).orElse(DefaultStartupCommandBuilder::new));
+            this.reconnectWindow, this.voters, this.consistent, serverDebugStartPort,
+        logConfigExt, parentStream,
+            Optional.ofNullable(startupBuilder).orElse(()-> new DefaultStartupCommandBuilder(Optional.ofNullable(configBuilder).orElse(new DefaultLegacyConfigBuilder()))));
 
   }
 }

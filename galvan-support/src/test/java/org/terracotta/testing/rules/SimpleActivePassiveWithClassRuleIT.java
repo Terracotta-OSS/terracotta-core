@@ -25,7 +25,7 @@ import org.terracotta.passthrough.IClusterControl;
 
 /**
  * This test is similar to BasicExternalClusterClassRuleIT, in that it uses the class rule to perform a basic test.
- * 
+ *
  * In this case, the basic test is watching how Galvan handles interaction with a basic active-passive cluster.
  */
 // XXX: Currently ignored since this test depends on restartability of the server, which now requires a persistence service
@@ -41,17 +41,17 @@ public class SimpleActivePassiveWithClassRuleIT {
    */
   @Test
   public void testRestartActive() throws Exception {
-    IClusterControl control = CLUSTER.getClusterControl();
-    
+    ClusterControl control = CLUSTER.getClusterControl();
+
     // Wait for everything to start - should be redundant, but just to make the test clear.
     control.waitForActive();
     control.waitForRunningPassivesInStandby();
-    
+
     // Terminate the active.
     control.terminateActive();
     // Wait for the passive to take over.
     control.waitForActive();
-    
+
     // Restart the terminated active.
     control.startOneServer();
     // Make sure that the passive comes up.
@@ -63,12 +63,12 @@ public class SimpleActivePassiveWithClassRuleIT {
    */
   @Test
   public void testRestartPassive() throws Exception {
-    IClusterControl control = CLUSTER.getClusterControl();
-    
+    ClusterControl control = CLUSTER.getClusterControl();
+
     // Wait for everything to start - should be redundant, but just to make the test clear.
     control.waitForActive();
     control.waitForRunningPassivesInStandby();
-    
+
     // Terminate the passive.
     control.terminateOnePassive();
     Thread.sleep(5000);

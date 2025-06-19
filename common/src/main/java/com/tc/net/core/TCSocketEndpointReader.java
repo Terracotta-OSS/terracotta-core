@@ -39,9 +39,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *  Sits on top of a socket endpoint in order to read messages from the channel 
- *  and manage memory via references for the rest of the pipeline.  
- * 
+ *  Sits on top of a socket endpoint in order to read messages from the channel
+ *  and manage memory via references for the rest of the pipeline.
+ *
  *  not synchronized in any way.  Expected to be used by a single thread only including
  *  close
  */
@@ -50,9 +50,9 @@ public class TCSocketEndpointReader implements AutoCloseable {
   private final Function<Integer, TCByteBuffer> allocator;
   private final Consumer<TCByteBuffer> returns;
   private TCByteBuffer readBuffer;   //  raw buffer to read from the socket
-  private TCReference current;  // complete reference to slice off references to be used by the rest of the system 
+  private TCReference current;  // complete reference to slice off references to be used by the rest of the system
   private int readTo = 0;   // read cursor in the raw buffer
-  
+
   public TCSocketEndpointReader() {
     this.allocator = (s)->TCByteBufferFactory.getInstance(s);
     this.returns = (b)->{};
@@ -62,13 +62,13 @@ public class TCSocketEndpointReader implements AutoCloseable {
     this.allocator = (s)->cache.poll();
     this.returns = cache::offer;
   }
-  
+
   // for testing
   TCSocketEndpointReader(Function<Integer, TCByteBuffer> allocator, Consumer<TCByteBuffer> returns) {
     this.allocator = allocator;
     this.returns = returns;
   }
-  
+
   public TCReference readFromSocket(SocketEndpoint endpoint, int len) throws IOException {
     LOGGER.debug("{} requesting:{} {} {}", endpoint, len, readBuffer, readTo);
     if (readBuffer == null) {
@@ -103,8 +103,8 @@ public class TCSocketEndpointReader implements AutoCloseable {
           received += doRead(endpoint, newBufs);
           LOGGER.debug("rotation:{} received:{}", rotations, received);
         } catch (NoBytesAvailable no) {
-      //  no bytes in the channel, peer may not have written yet, 
-      //  if no bytes are cached, return null here and let the 
+      //  no bytes in the channel, peer may not have written yet,
+      //  if no bytes are cached, return null here and let the
       //  caller call again if needed
           if (received == 0) {
             newBufs.removeFirst();
@@ -172,7 +172,7 @@ public class TCSocketEndpointReader implements AutoCloseable {
       }
     }
   }
-  
+
   private void replaceCurrent(TCByteBuffer raw, TCReference ref, int pos) {
     LOGGER.debug("replacing: {} {} with: {} {}", this.readBuffer, this.readTo, raw, pos);
     if (raw == this.readBuffer) {
@@ -185,7 +185,7 @@ public class TCSocketEndpointReader implements AutoCloseable {
     this.current = ref;
     this.readTo = pos;
   }
-  
+
   private TCReference createCompleteReference(TCByteBuffer buffer) {
     LOGGER.debug("creating complete ref: {} {}", buffer, this.readTo);
     int pos = buffer.position();
@@ -197,17 +197,17 @@ public class TCSocketEndpointReader implements AutoCloseable {
       buffer.position(pos);
     }
   }
-  
+
   private static void returnByteBuffers(List<TCByteBuffer> dest, ByteBuffer[] raw) {
     for (int x=0;x<raw.length;x++) {
       dest.get(x).returnNioBuffer(raw[x]);
     }
   }
-  
+
   private static ByteBuffer[] extractByteBuffers(List<TCByteBuffer> dest) {
     return dest.stream().map(TCByteBuffer::getNioBuffer).toArray(ByteBuffer[]::new);
   }
-  
+
   private long doRead(SocketEndpoint endpoint, List<TCByteBuffer> dest) throws IOException {
     long remain = dest.stream().mapToInt(TCByteBuffer::remaining).asLongStream().sum();
     ByteBuffer[] nioBytes = extractByteBuffers(dest);
@@ -222,8 +222,6 @@ public class TCSocketEndpointReader implements AutoCloseable {
           dest.add(allocator.apply(TCByteBufferFactory.getFixedBufferSize()));
           break;
         case UNDERFLOW:
-          // unexpected
-          throw new IOException();
         case SUCCESS:
           break;
         case ZERO:
@@ -236,16 +234,16 @@ public class TCSocketEndpointReader implements AutoCloseable {
     LOGGER.debug("read from socket: {}", remain);
     return remain;
   }
-  
+
   public void close() {
     if (current != null) {
       current.close();
     }
   }
-  
+
   private static class NoBytesAvailable extends IOException {
-    
+
   }
-  
-  
+
+
 }

@@ -27,6 +27,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import org.terracotta.testing.api.ConfigBuilder;
 
 public class DefaultStartupCommandBuilder implements StartupCommandBuilder, Cloneable {
   private StripeConfiguration stripeConfig;
@@ -36,10 +37,13 @@ public class DefaultStartupCommandBuilder implements StartupCommandBuilder, Clon
   private String serverName;
   private String stripeName;
   private String[] builtCommand;
-  
-  public DefaultStartupCommandBuilder() {
+
+  private final ConfigBuilder builder;
+
+  public DefaultStartupCommandBuilder(ConfigBuilder builder) {
+      this.builder = builder;
   }
-  
+
   public DefaultStartupCommandBuilder copy() {
     try {
       return (DefaultStartupCommandBuilder)this.clone();
@@ -54,12 +58,12 @@ public class DefaultStartupCommandBuilder implements StartupCommandBuilder, Clon
     this.stripeConfig = config;
     return this;
   }
-  
+
   @Override
   public StartupCommandBuilder stripeWorkingDir(Path stripeWorkingDir) {
     this.stripeWorkingDir = stripeWorkingDir;
     return this;
-  }  
+  }
   @Override
   public StartupCommandBuilder serverWorkingDir(Path serverWorkingDir) {
     this.serverWorkingDir = serverWorkingDir;
@@ -88,8 +92,9 @@ public class DefaultStartupCommandBuilder implements StartupCommandBuilder, Clon
     // Create a copy of the server for this installation.
     Files.createDirectories(stripeWorkingDir);
     Files.createDirectories(serverWorkingDir);
-    Path tcConfig = stripeWorkingDir.resolve("tc-config.xml");
-
+    // build the tc-config file
+    builder.withStripeConfiguration(stripeConfig);
+    Path tcConfig = builder.createConfig(stripeWorkingDir);
     //Copy a custom logback configuration
     Files.copy(this.getClass().getResourceAsStream("/tc-logback.xml"), serverWorkingDir.resolve("logback-test.xml"), REPLACE_EXISTING);
     Properties props = new Properties();
@@ -122,7 +127,7 @@ public class DefaultStartupCommandBuilder implements StartupCommandBuilder, Clon
     }
     return builtCommand;
   }
-  
+
   public Path getServerWorkingDir() {
     return serverWorkingDir;
   }
@@ -134,11 +139,11 @@ public class DefaultStartupCommandBuilder implements StartupCommandBuilder, Clon
   public String getServerName() {
     return serverName;
   }
-  
+
   public String getStripeName() {
     return stripeName;
   }
-  
+
   public boolean isConsistentStartup() {
     return stripeConfig.isConsistent();
   }

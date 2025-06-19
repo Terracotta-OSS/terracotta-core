@@ -21,6 +21,10 @@ plugins {
 
 description = 'terracotta-core terracotta management'
 
+java {
+    withSourcesJar()
+}
+
 dependencies {
   implementation project(":common")
 

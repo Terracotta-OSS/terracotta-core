@@ -31,8 +31,8 @@ dependencies {
     api project(":server-api")
     implementation "org.terracotta:ipc-eventbus:1.1.4"
     api "org.terracotta:terracotta-utilities-port-chooser:0.0.19"
-    api "junit:junit:$junitVersion"
 
+    testImplementation "junit:junit:$junitVersion"
     testImplementation "org.mockito:mockito-inline:4.11.0"
     
     terracottaKit project(":tc-server")

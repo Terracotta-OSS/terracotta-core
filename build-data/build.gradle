@@ -23,6 +23,10 @@ plugins {
 
 description = 'terracotta-core build data info'
 
+java {
+    withSourcesJar()
+}
+
 def buildProperties = [
         version: project.version,
         timestamp : now(),
