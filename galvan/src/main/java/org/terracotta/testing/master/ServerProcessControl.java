@@ -102,9 +102,20 @@ public class ServerProcessControl implements IMultiProcessControl {
   }
 
   public synchronized void startServer() throws GalvanFailureException {
-    IGalvanServer server = this.stateInterlock.getOneTerminatedServer();
-    if (null == server) {
-      throw new IllegalStateException("Tried to start one server when none are terminated");
+    IGalvanServer server = null;
+    int tries = 1;
+    while (null == (server = this.stateInterlock.getOneTerminatedServer())) {
+      if (tries++ > 3) {
+        throw new IllegalStateException("Tried to start one server when none are terminated");
+      } else {
+        try {
+          this.wait(500);
+        } catch(InterruptedException e) {
+          Thread.currentThread().interrupt();
+          tries += 3;
+          // loop to throw exception
+        }
+      }
     }
     safeStart(server);
   }

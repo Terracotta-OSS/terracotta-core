@@ -21,6 +21,10 @@ plugins {
 
 description = 'terracotta-core connection API implementation'
 
+java {
+    withSourcesJar()
+}
+
 dependencies {
     compileOnly "org.slf4j:slf4j-api:$slf4jVersion"
     implementation project(':tc-client')
@@ -36,3 +40,4 @@ dependencies {
     testImplementation "ch.qos.logback:logback-classic:$logbackVersion"
     testImplementation 'org.terracotta:terracotta-utilities-port-chooser:0.0.19'
 }
+

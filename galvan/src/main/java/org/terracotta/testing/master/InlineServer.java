@@ -30,6 +30,7 @@ import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.CREATE;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -45,7 +46,7 @@ public class InlineServer extends ServerInstance {
   private final Properties serverProperties;
   private final OutputStream parentOutput;
   private final String[] cmd;
-  
+
   private ServerThread server;
 
   public InlineServer(String serverName, Path serverInstall, Path serverWorkingDir, Properties serverProperties, OutputStream out, String[] cmd) {
@@ -128,7 +129,7 @@ public class InlineServer extends ServerInstance {
     if (null != failureException) {
       this.stateManager.testDidFail(failureException);
     }
-    
+
     setCurrentState(ServerMode.TERMINATED);
 
     reset();
@@ -174,6 +175,7 @@ public class InlineServer extends ServerInstance {
   }
 
   private static Object invokeOnObject(Object server, String method, Object...args) {
+    server = Objects.requireNonNull(server);
     try {
       Class[] clazz = new Class[args.length];
       for (int x=0;x<args.length;x++) {
@@ -194,7 +196,7 @@ public class InlineServer extends ServerInstance {
   private class ServerThread extends Thread {
 
     private Object server;
-    private boolean running = true;
+    private boolean running = false;
 
     public ServerThread() {
       setName("ServerManagementThread - " + serverName);
@@ -204,7 +206,7 @@ public class InlineServer extends ServerInstance {
     public void run() {
       boolean returnValue = true;
       while (returnValue) {
-        try (OutputStream rawOut = Files.newOutputStream(serverWorkingDir.resolve("stdout.txt"), CREATE, APPEND)) {
+        try (OutputStream rawOut = parentOutput != null ? parentOutput : Files.newOutputStream(serverWorkingDir.resolve("stdout.txt"), CREATE, APPEND)) {
           VerboseOutputStream stdout = new VerboseOutputStream(rawOut, serverLogger, false);
           try (OutputStream events = buildEventingStream(stdout)) {
             if (initializeServer(events)) {
@@ -227,10 +229,9 @@ public class InlineServer extends ServerInstance {
       }
     }
 
-    public synchronized boolean initializeServer(OutputStream out) throws Exception {
-      if (running) {
-        server = startIsolatedServer(serverWorkingDir, serverInstall, out, cmd);
-      }
+    private synchronized boolean initializeServer(OutputStream out) throws Exception {
+        server = startIsolatedServer(serverWorkingDir, serverInstall, out, cmd, serverProperties);
+        running = server != null;
       return running;
     }
 
@@ -245,11 +246,16 @@ public class InlineServer extends ServerInstance {
       }
     }
   }
-  
-  public static Object startIsolatedServer(Path serverWorking, Path server, OutputStream out, String[] cmd) {
+
+  private static Object startIsolatedServer(Path serverWorking, Path server, OutputStream out, String[] cmd, Properties serverProperties) {
     ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
     Path tc = server.resolve("tc.jar");
     try {
+      if (serverProperties != null) {
+          for (String key : serverProperties.stringPropertyNames()) {
+              System.setProperty(key, serverProperties.getProperty(key));
+          }
+      }
       Thread.currentThread().setContextClassLoader(null);
       URL url = tc.toUri().toURL();
       URL resource = serverWorking.toUri().toURL();

@@ -68,7 +68,7 @@ public class ServerProcess extends ServerInstance {
     );
   }
 
-  public ServerProcess(String serverName, Path serverInstall, Path serverWorkingDir, int heapInM, 
+  public ServerProcess(String serverName, Path serverInstall, Path serverWorkingDir, int heapInM,
           int debugPort, Properties serverProperties, OutputStream out,
                        String[] startupCommand) {
     super(serverName);
@@ -82,11 +82,11 @@ public class ServerProcess extends ServerInstance {
     this.parentOutput = out;
     // We start up in the shutdown state so notify the interlock.
   }
-  
+
   private synchronized void setLocalProcess(Process local) {
     this.localProcess = local;
   }
-  
+
   private synchronized Process getLocalProcess() {
     return this.localProcess;
   }
@@ -129,7 +129,7 @@ public class ServerProcess extends ServerInstance {
         setCurrentState(ServerMode.STARTUP);
 
         reset();
-        
+
         setStreams(out, stderr);
         // The "build()" starts the process so wrap it in an exit waiter.  We can then drop it since we will can't explicitly terminate it until it reports our PID (at which point we will declare it "running").
         ExitWaiter exitWaiter = new ExitWaiter(()->AnyProcess.newBuilder()
@@ -146,12 +146,12 @@ public class ServerProcess extends ServerInstance {
       exit(token);
     }
   }
-  
+
   private String[] createCommand(String javaHome, Path serverPath, String[] args) {
     Path sjar = serverPath.resolve("tc.jar");
     serverProperties.setProperty("logback.configurationFile", "logback-test.xml");
-    serverProperties.setProperty("tc.install-root", serverPath.toString());    
-    
+    serverProperties.setProperty("tc.install-root", serverPath.toString());
+
     if (!communicateLiveliness) {
       List<String> cmd = new ArrayList<>();
       cmd.add(javaHome + "/bin/java");
@@ -181,10 +181,10 @@ public class ServerProcess extends ServerInstance {
   private String[] getJavaArguments(int debugPort) {
     // We want to bootstrap the variable with whatever is in our current environment.
     String javaOpts = System.getenv("JAVA_OPTS");
-    if (null == javaOpts) {
-      javaOpts = "";
-    }
     List<String> ops = new ArrayList<>();
+    if (javaOpts != null) {
+      ops.addAll(Arrays.asList(javaOpts.split(",")));
+    }
     ops.add("-Xms" + this.heapInM + "m");
     ops.add("-Xmx" + this.heapInM + "m");
     if (debugPort > 0) {
@@ -194,7 +194,7 @@ public class ServerProcess extends ServerInstance {
     }
     serverProperties.entrySet().stream()
         .map(e -> "-D" + e.getKey() + "=" + e.getValue()).forEach(ops::add);
-        
+
     return ops.toArray(String[]::new);
   }
 
@@ -234,7 +234,7 @@ public class ServerProcess extends ServerInstance {
     }
 
     closeStreams();
-    
+
     if (null != failureException) {
       this.stateManager.testDidFail(failureException);
     }
@@ -275,9 +275,9 @@ public class ServerProcess extends ServerInstance {
       // Can't stop something not running.
       if (isServerRunning()) {
         this.setCrashExpected(true);
-        
+
         Process local = getLocalProcess();
-        
+
         if (running.remove(local)) {
           local.destroy();
           int exit = local.waitFor();
@@ -294,7 +294,7 @@ public class ServerProcess extends ServerInstance {
           }
           // Log the intent.
           this.serverLogger.output("Crashing server process: " + this + " (PID " + localPid + ")");
-        
+
           Process process;
           // Destroy the process.
           if (isWindows()) {
@@ -369,7 +369,7 @@ public class ServerProcess extends ServerInstance {
 
   private class ExitWaiter extends Thread {
     private final Supplier<Process> process;
-    
+
     public ExitWaiter(Supplier<Process> process) {
       this.process = process;
     }
@@ -379,10 +379,10 @@ public class ServerProcess extends ServerInstance {
         controller.write('z');
         controller.flush();
       } catch (IOException io) {
-        
+
       }
     }
-    
+
     @Override
     public void run() {
       int returnValue = 11;
@@ -411,12 +411,11 @@ public class ServerProcess extends ServerInstance {
         } catch (Throwable t) {
           Assert.unexpected(t);
           returnValue = 1;
-          ServerProcess.this.didTerminateWithStatus(returnValue);
         } finally {
-          ServerProcess.this.didTerminateWithStatus(returnValue);
           running.remove(instance);
         }
       }
+      ServerProcess.this.didTerminateWithStatus(returnValue);
     }
   }
 }

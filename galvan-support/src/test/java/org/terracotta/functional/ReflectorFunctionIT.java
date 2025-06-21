@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 import org.junit.Rule;
 import org.junit.Test;
+import org.terracotta.testing.config.DefaultLegacyConfigBuilder;
 import org.terracotta.testing.config.DefaultStartupCommandBuilder;
 import org.terracotta.testing.rules.BasicExternalClusterBuilder;
 import org.terracotta.testing.rules.Cluster;
@@ -36,7 +37,7 @@ public class ReflectorFunctionIT {
   @Rule
   public final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(2)
           .inline(false)
-          .startupBuilder(()->new DefaultStartupCommandBuilder() {
+          .startupBuilder(()->new DefaultStartupCommandBuilder(new DefaultLegacyConfigBuilder()) {
             @Override
             public String[] build() {
               List<String> def = new ArrayList<>();
@@ -57,8 +58,8 @@ public class ReflectorFunctionIT {
             }
           })
           .withClientReconnectWindowTime(30).build();
-  
-  
+
+
 
   @Test
   public void testStart() throws Exception {

@@ -20,6 +20,10 @@ plugins {
 
 description = 'terracotta-core tripwire plugin'
 
+java {
+    withSourcesJar()
+}
+
 base {
     archivesName = 'tc-tripwire-plugin'
 }

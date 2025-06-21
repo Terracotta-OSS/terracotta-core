@@ -31,7 +31,7 @@ public class DefaultLegacyConfigBuilder implements LegacyConfigBuilder {
   private String namespaceFragment = "";
   private String serviceFragment = "";
   private StripeConfiguration stripeConfiguration;
-  
+
   @Override
   public void withNamespaceFragment(final String namespaceFragment) {
     if (namespaceFragment == null) {
@@ -39,7 +39,7 @@ public class DefaultLegacyConfigBuilder implements LegacyConfigBuilder {
     }
     this.namespaceFragment = namespaceFragment;
   }
-  
+
   @Override
   public void withServiceFragment(final String serviceFragment) {
     if (serviceFragment == null) {
@@ -47,23 +47,23 @@ public class DefaultLegacyConfigBuilder implements LegacyConfigBuilder {
     }
     this.serviceFragment = serviceFragment;
   }
-  
+
   @Override
   public void withStripeConfiguration(StripeConfiguration config) {
     this.stripeConfiguration = config;
   }
 
-  
+
   @Override
   public Path createConfig(Path stripeInstallationDir) throws IOException {
     Files.createDirectories(stripeInstallationDir);
     Path config = stripeInstallationDir.resolve("tc-config.xml");
     if (!Files.exists(config)) {
-      TcConfigBuilder configBuilder = new TcConfigBuilder(stripeInstallationDir, stripeConfiguration.getServerNames(), stripeConfiguration.getServerPorts(), 
+      TcConfigBuilder configBuilder = new TcConfigBuilder(stripeInstallationDir, stripeConfiguration.getServerNames(), stripeConfiguration.getServerPorts(),
           stripeConfiguration.getServerGroupPorts(), stripeConfiguration.getTcProperties(),
           namespaceFragment, serviceFragment, stripeConfiguration.getReconnectWindow(), stripeConfiguration.getVoters());
 
-      String tcConfig = configBuilder.build();
+      String tcConfig = configBuilder.build().replace("${STRIPE-DIR}", stripeInstallationDir.toString());
       try {
         Path tcConfigPath = Files.createFile(config);
         Files.write(tcConfigPath, tcConfig.getBytes(UTF_8));
@@ -74,5 +74,5 @@ public class DefaultLegacyConfigBuilder implements LegacyConfigBuilder {
     }
     return config;
   }
-  
+
 }

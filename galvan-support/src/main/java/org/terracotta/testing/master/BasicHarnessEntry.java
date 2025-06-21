@@ -23,11 +23,9 @@ import org.terracotta.testing.config.BasicClientArgumentBuilder;
 import org.terracotta.testing.config.ClientsConfiguration;
 import org.terracotta.testing.config.ClusterInfo;
 import org.terracotta.testing.config.StripeConfiguration;
-import org.terracotta.testing.config.TcConfigBuilder;
 import org.terracotta.testing.logging.VerboseManager;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -35,9 +33,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_SERVER_HEAP_MB;
+import org.terracotta.testing.config.DefaultLegacyConfigBuilder;
 import org.terracotta.testing.config.DefaultStartupCommandBuilder;
 import org.terracotta.testing.config.StartupCommandBuilder;
 import org.terracotta.testing.support.PortTool;
@@ -75,15 +73,14 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     Path stripeInstallationDir = harnessOptions.configTestDir.resolve(stripeName);
     Files.createDirectory(stripeInstallationDir);
 
-    Path tcConfig = createTcConfig(serverNames, serverPorts, serverGroupPorts, stripeInstallationDir, harnessOptions);
     VerboseManager stripeVerboseManager = verboseManager.createComponentManager("[" + stripeName + "]");
 
     StripeConfiguration stripeConfig = new StripeConfiguration(serverDebugPorts, serverPorts, serverGroupPorts, serverNames,
-        stripeName, "logback-ext.xml", harnessOptions.serverProperties, harnessOptions.tcProperties, 
+        stripeName, "logback-ext.xml", harnessOptions.serverProperties, harnessOptions.tcProperties,
             harnessOptions.clientReconnectWindow, harnessOptions.voterCount, harnessOptions.consistent);
-    
+
     int serverHeapSize = DEFAULT_SERVER_HEAP_MB;
-    
+
     TestStateManager stateManager = new TestStateManager();
     StateInterlock interlock = new StateInterlock(verboseManager.createComponentManager("[Interlock]").createHarnessLogger(), stateManager);
     StripeInstaller stripeInstaller = new StripeInstaller(interlock, stateManager, stripeVerboseManager);
@@ -97,7 +94,10 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
               "\nkitLocationRelative:" + kitLocationRelative);
       // Determine if we want a debug port.
       int debugPort = stripeConfig.getServerDebugPorts().get(i);
-      StartupCommandBuilder builder = new DefaultStartupCommandBuilder()
+      DefaultLegacyConfigBuilder config = new DefaultLegacyConfigBuilder();
+      config.withNamespaceFragment(harnessOptions.namespaceFragment);
+      config.withServiceFragment(harnessOptions.serviceFragment);
+      StartupCommandBuilder builder = new DefaultStartupCommandBuilder(config)
           .stripeConfiguration(stripeConfig)
           .serverName(serverName)
           .stripeName(stripeName)
@@ -106,10 +106,14 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
           .serverWorkingDir(serverWorkingDir)
           .logConfigExtension("logback-ext.xml");
 
+      if (serverHeapSize <= 0) {
+        System.setProperty("com.tc.tc.messages.packup.enabled", "false");
+      }
+
       ServerInstance serverProcess = serverHeapSize > 0 ?
         new ServerProcess(serverName, kitLocation, serverWorkingDir, serverHeapSize, debugPort, harnessOptions.serverProperties, null, builder.build())
-              : 
-        new InlineServer(serverName, kitLocation, serverWorkingDir, harnessOptions.serverProperties, null, builder.build());               
+              :
+        new InlineServer(serverName, kitLocation, serverWorkingDir, harnessOptions.serverProperties, null, builder.build());
 
       stripeInstaller.installNewServer(serverProcess);
     }
@@ -146,19 +150,5 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
 
   private Path relativize(Path root, Path other) {
     return root.toAbsolutePath().relativize(other.toAbsolutePath());
-  }
-
-  private Path createTcConfig(List<String> serverNames, List<Integer> serverPorts, List<Integer> serverGroupPorts,
-                              Path stripeInstallationDir, CommonHarnessOptions harnessOpts) {
-    TcConfigBuilder configBuilder = new TcConfigBuilder(stripeInstallationDir, serverNames, serverPorts, serverGroupPorts, harnessOpts.tcProperties,
-        harnessOpts.namespaceFragment, harnessOpts.serviceFragment, harnessOpts.clientReconnectWindow, harnessOpts.voterCount);
-    String tcConfig = configBuilder.build();
-    try {
-      Path tcConfigPath = Files.createFile(stripeInstallationDir.resolve("tc-config.xml"));
-      Files.write(tcConfigPath, tcConfig.getBytes(UTF_8));
-      return tcConfigPath;
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
   }
 }

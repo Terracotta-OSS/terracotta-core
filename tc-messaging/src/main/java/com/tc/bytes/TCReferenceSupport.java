@@ -46,11 +46,11 @@ public class TCReferenceSupport {
   private final Consumer<TCByteBuffer> returns;
   private final Collection<TCByteBuffer> items;
   private final AtomicInteger referenceCount = new AtomicInteger();
-  
+
   // Ideally the below variables are not needed.  These are here to track references
   // that are created but not closed, holding resources.
   private final MemoryTracker track;
-  
+
   private static final Logger LOGGER = LoggerFactory.getLogger(TCReferenceSupport.class);
   private static final Set<TCReferenceSupport> COMMITTED_REFERENCES = ConcurrentHashMap.newKeySet();
   private static volatile boolean TRACK_REFERENCES;
@@ -64,27 +64,27 @@ public class TCReferenceSupport {
       track = null;
     }
   }
-  
+
   public static void startMonitoringReferences() {
     TRACK_REFERENCES = true;
   }
-  
+
   public static void stopMonitoringReferences() {
     TRACK_REFERENCES = false;
     COMMITTED_REFERENCES.clear();
   }
-  
+
   public static int checkReferences() {
     return COMMITTED_REFERENCES.stream().mapToInt(TCReferenceSupport::gc).sum();
   }
   /**
-   * General reference counter.  Starts with a reference count of one.  Each duplicate reference 
+   * General reference counter.  Starts with a reference count of one.  Each duplicate reference
    * increases the reference count by one.  Every close decreases by one.  Once all the references
    * are closed, the byte buffers are recycled back to the return queue.
-   * 
+   *
    * @param tracked
    * @param returns
-   * @return 
+   * @return
    */
   public static TCReference createReference(Collection<TCByteBuffer> tracked, Consumer<TCByteBuffer> returns) {
     if (returns == null) {
@@ -92,7 +92,7 @@ public class TCReferenceSupport {
     }
     return new TCReferenceSupport(tracked, returns).reference();
   }
-  
+
   public static TCReference createReference(Consumer<TCByteBuffer> returns, TCByteBuffer...tracked) {
     if (returns == null) {
       returns = c->{};
@@ -116,39 +116,39 @@ public class TCReferenceSupport {
   }
   /**
    * Helper to wrap byte buffers that don't need recycling or are recycled by other reference counting
-   * 
+   *
    * @param tracked
-   * @return 
+   * @return
    */
   public static TCReference createGCReference(Collection<TCByteBuffer> tracked) {
     return new GCRef(tracked);
   }
-  
+
   public static TCReference createGCReference(TCByteBuffer...tracked) {
     return createGCReference(Arrays.asList(tracked));
   }
   /**
-   * An aggregate reference takes a duplicate reference of each item in the collection 
-   * and manages them as a single reference.  The original references plus the aggregate reference must be closed 
+   * An aggregate reference takes a duplicate reference of each item in the collection
+   * and manages them as a single reference.  The original references plus the aggregate reference must be closed
    * in order for the byte buffers to be reclaimed.
    * @param tracked
-   * @return 
+   * @return
    */
   public static TCReference createAggregateReference(Collection<TCReference> tracked) {
     return new RefRef(tracked);
   }
-  
+
   public static TCReference createAggregateReference(TCReference...tracked) {
     return createAggregateReference(Arrays.asList(tracked));
   }
-  
+
   private Ref reference() {
     if (track != null) {
       COMMITTED_REFERENCES.add(this);
     }
     return new Ref(items, TCByteBuffer::asReadOnlyBuffer);
   }
-  
+
   private static class GCRef implements TCReference {
     private final List<TCByteBuffer> buffers;
 
@@ -163,19 +163,19 @@ public class TCReferenceSupport {
 
     @Override
     public void close() {
-      
+
     }
 
     @Override
     public Iterator<TCByteBuffer> iterator() {
       return buffers.iterator();
     }
-  
+
   }
-  
+
   private static class RefRef implements TCReference {
     private final List<TCReference> localItems;
-    
+
     RefRef(Collection<TCReference> run) {
       this.localItems = run.stream().map(TCReference::duplicate).collect(toUnmodifiableList());
     }
@@ -195,19 +195,19 @@ public class TCReferenceSupport {
       return this.localItems.stream().flatMap(r->StreamSupport.stream(r.spliterator(), false)).iterator();
     }
   }
-  
+
   private class Ref implements TCReference {
-    
+
     private final Collection<TCByteBuffer> localItems;
     private final Reference<TCReference> tracker;
     private final SetOnceFlag closed = new SetOnceFlag();
-    
+
     Ref(Collection<TCByteBuffer> localItems, Function<TCByteBuffer, TCByteBuffer> mapper) {
       referenceCount.getAndIncrement();
-      this.tracker = track == null ? null : track.startTracking(this);
       this.localItems = localItems.stream().map(mapper).filter(TCByteBuffer::hasRemaining).collect(toUnmodifiableList());
+      this.tracker = track == null ? null : track.startTracking(this);
     }
-  
+
     @Override
     public void close() {
       if (closed.attemptSet()) {
@@ -225,30 +225,35 @@ public class TCReferenceSupport {
       checkClosed();
       return localItems.iterator();
     }
-    
+
     private void checkClosed() {
       if (closed.isSet()) {
         throw new IllegalStateException("reference is closed");
       }
     }
-  
+
     @Override
     public Ref duplicate() {
       checkClosed();
       return new Ref(localItems, TCByteBuffer::slice);
     }
+
+    @Override
+    public String toString() {
+      return localItems.stream().map(TCByteBuffer::toString).collect(Collectors.joining(",", System.identityHashCode(this) + "@", ""));
+    }
   }
-  
+
   private class MemoryTracker {
     private final Map<Reference<? extends TCReference>, Exception> outRefs = new ConcurrentHashMap<>();
     private final ReferenceQueue<TCReference> gcRefs = new ReferenceQueue<>();
-    
+
     private Reference<TCReference> startTracking(TCReference ref) {
       Reference<TCReference> tracker = new PhantomReference<>(ref, gcRefs);
-      Assert.assertNull(outRefs.put(tracker, new Exception()));
+      Assert.assertNull(outRefs.put(tracker, new Exception(ref.toString())));
       return tracker;
     }
-    
+
     private void stopTracking(Reference<TCReference> ref) {
       Assert.assertNotNull(outRefs.remove(ref));
     }
@@ -259,7 +264,7 @@ public class TCReferenceSupport {
       while (next != null) {
         Exception stack = outRefs.remove(next);
         Assert.assertNotNull(stack);
-        LOGGER.warn("memory reference found that was not properly closed. ", stack);
+        LOGGER.warn("memory reference found that was not properly closed for {}. ", stack.getMessage(), stack);
         if (referenceCount.decrementAndGet() == 0) {
           reclaim();
         }

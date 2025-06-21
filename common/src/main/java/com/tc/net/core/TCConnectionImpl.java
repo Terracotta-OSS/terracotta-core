@@ -89,7 +89,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private volatile SocketEndpoint socket;
 
   private final SocketEndpointFactory socketEndpointFactory;
-  private final boolean clientConnection;              
+  private final boolean clientConnection;
   private final AtomicBoolean transportEstablished = new AtomicBoolean(false);
   private final BlockingQueue<TCNetworkMessage> writeMessages = new ArrayBlockingQueue<>(MSG_GROUPING_MAX_COUNT);
   private final TCConnectionManagerImpl parent;
@@ -169,10 +169,11 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
     this.socketParams = socketParams;
     this.commWorker = nioServiceThread;
-    this.buffers = new TCDirectByteBufferCache(parent.getBufferCache());
+
+    this.buffers = MESSAGE_PACKUP ? new TCDirectByteBufferCache(parent.getBufferCache()) : null;
     this.readAllocator = MESSAGE_PACKUP ? new TCSocketEndpointReader(buffers) : new TCSocketEndpointReader();
   }
-  
+
   @Override
   public Map<String, ?> getState() {
     Map<String, Object> state = new LinkedHashMap<>();
@@ -190,8 +191,13 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     state.put("closed", isClosed());
     state.put("connected", isConnected());
     state.put("transportConnected", isTransportEstablished());
-    state.put("buffers.cached", buffers.size());
-    state.put("buffers.referenced", buffers.referenced());
+    if (buffers != null) {
+        state.put("buffers.type", "direct");
+        state.put("buffers.cached", buffers.size());
+        state.put("buffers.referenced", buffers.referenced());
+    } else {
+        state.put("buffers.type", "heap");
+    }
     if (socket instanceof PrettyPrintable) {
       state.put("buffer", ((PrettyPrintable)this.socket).getStateMap());
     } else {
@@ -241,7 +247,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       return CompletableFuture.completedFuture(null);
     }
   }
-  
+
   private void cleanupUnsentWriteMessages() {
       this.writeMessages.forEach(TCNetworkMessage::complete);
       this.writeMessages.clear();
@@ -277,7 +283,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     }
     this.channel = newSocket;
   }
-  
+
   private void installBufferManager() throws IOException {
     this.socket = socketEndpointFactory.createSocketEndpoint(channel, clientConnection);
     if (this.socket == null) {
@@ -358,10 +364,10 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     } else {
       writeContextControl.lock();
     }
-    
+
     try {
       if (!this.writeMessages.isEmpty()) {
-        ArrayList<TCActionNetworkMessage> currentBatch = new ArrayList<>();    
+        ArrayList<TCActionNetworkMessage> currentBatch = new ArrayList<>();
         int batchSize = 0;
         int batchMsgCount = 0;
         TCNetworkMessage element = this.writeMessages.poll();
@@ -369,7 +375,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         while (element != null) {
           if (this.closed.isSet()) {
             // dropping these messages.  make sure memory is returned
-            currentBatch.forEach(TCActionNetworkMessage::complete); 
+            currentBatch.forEach(TCActionNetworkMessage::complete);
             element.complete();
             return false;
           } else if (element instanceof WireProtocolMessage) {
@@ -424,12 +430,12 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     // We can add this message to the batch if it fits, we don't already have too many messages in the batch
     //  OR if the message batch is currently empty (a degenerate case where a single message is too big to batch but
     //  we still want to send it).
-    return (0 == currentBatchMsgCount) 
+    return (0 == currentBatchMsgCount)
         || ((currentBatchSize + realMessageSize) <= MSG_GROUPING_MAX_SIZE_BYTES
           && (currentBatchMsgCount + 1 <= WireProtocolHeader.MAX_MESSAGE_COUNT));
   }
 
-  private long doReadAndPackage() throws IOException { 
+  private long doReadAndPackage() throws IOException {
     long size = 0;
     try (TCReference ref = readAllocator.readFromSocket(socket, this.protocolAdaptor.getExpectedBytes())) {
       if (ref != null) {
@@ -440,13 +446,13 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     logger.debug("{} packaged {} bytes for {}", Thread.currentThread(), size, this);
     return size;
   }
-  
+
   private long doPackageAndWrite() throws IOException {
     final boolean debug = logger.isDebugEnabled();
     long totalBytesWritten = 0;
-    
+
     WriteContext context = this.writeContexts.poll();
-    
+
     if (context == null) {
       if (buildWriteContextsFromMessages(true)) {
         context = this.writeContexts.poll();
@@ -468,7 +474,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       context.writeComplete();
       context = writeContexts.poll();
     }
-    
+
     if (!this.closed.isSet() && context == null && !buildWriteContextsFromMessages(false)) {
       this.commWorker.removeWriteInterest(this, this.channel);
     }
@@ -482,7 +488,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
     boolean placed = false;
     boolean newData = false;
-    
+
     while (!placed) {
       if (this.closed.isSet()) { message.complete(); return; }
       placed = this.writeMessages.offer(message);
@@ -516,7 +522,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       this.commWorker.requestWriteInterest(this, this.channel);
     }
   }
-  
+
   @Override
   public void close() {
     try {
@@ -829,7 +835,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       this.message = message;
       this.batchSize = batchSize;
     }
-    
+
     private TCReference prep() {
       if (message.prepareToSend()) {
         return message.getEntireMessageData().duplicate();
@@ -841,19 +847,19 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     boolean done() {
       return sent;
     }
-    
+
     void writeComplete() {
       this.message.complete();
     }
-    
+
     boolean isNotValid() {
       return !message.isValid();
     }
-    
+
     int getBatchSize() {
       return batchSize;
     }
-    
+
     long write() throws IOException {
       long written = 0;
       try (TCReference msgRef = prep()) {
@@ -875,7 +881,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
                   throw new IOException("underflow");
                 }
                 break;
-                // not sure what to do here.  need to figure out if there is some way to 
+                // not sure what to do here.  need to figure out if there is some way to
                 // send dummy bytes
             }
           }
@@ -894,7 +900,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     this.commWorker.addConnection(this, this.channel);
     this.transportEstablished.set(true);
   }
-  
+
   public void migrate() {
     if (this.commWorker.getReaderComm() == Thread.currentThread()) {
       this.commWorker.addConnection(this, this.channel);

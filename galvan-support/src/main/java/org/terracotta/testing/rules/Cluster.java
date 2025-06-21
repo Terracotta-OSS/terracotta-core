@@ -22,7 +22,7 @@ import java.util.concurrent.CompletionStage;
 import org.junit.rules.ExternalResource;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
-import org.terracotta.passthrough.IClusterControl;
+import org.terracotta.testing.config.ClusterInfo;
 
 /**
  *
@@ -36,11 +36,13 @@ public abstract class Cluster extends ExternalResource {
 
   public abstract Connection newConnection() throws ConnectionException;
 
-  public abstract IClusterControl getClusterControl();
+  public abstract ClusterControl getClusterControl();
 
   public abstract TestManager getTestManager();
 
   public abstract void expectCrashes(boolean yes);
 
   public abstract CompletionStage<Void> manualStart(String display);
+  
+  public abstract ClusterInfo getClusterInfo();
 }

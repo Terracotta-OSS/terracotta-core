@@ -22,7 +22,6 @@ import org.junit.runners.model.Statement;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
-import org.terracotta.passthrough.IClusterControl;
 import org.terracotta.testing.config.StartupCommandBuilder;
 import org.terracotta.testing.config.StripeConfiguration;
 import org.terracotta.testing.logging.VerboseLogger;
@@ -46,8 +45,8 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 import static java.util.stream.Collectors.toList;
 import java.util.stream.IntStream;
-import org.terracotta.testing.api.ConfigBuilder;
 import org.terracotta.testing.common.Assert;
+import org.terracotta.testing.config.ClusterInfo;
 import org.terracotta.testing.master.InlineServer;
 import org.terracotta.testing.master.ServerInstance;
 import org.terracotta.testing.master.ServerProcess;
@@ -58,7 +57,7 @@ import org.terracotta.utilities.test.net.PortManager;
 /**
  * @author cdennis
  */
-class BasicExternalCluster extends Cluster {
+public class BasicExternalCluster extends Cluster {
 
   private final Path clusterDirectory;
   private final int stripeSize;
@@ -68,10 +67,10 @@ class BasicExternalCluster extends Cluster {
   private final int reconnectWindow;
   private final int voters;
   private final boolean consistent;
-  private final ConfigBuilder legacy;
 
   private final String logConfigExt;
   private final int serverHeapSize;
+  private final int serverDebugPortStart;
   private final OutputStream parentOutput;
   private final Supplier<StartupCommandBuilder> startupBuilder;
 
@@ -86,10 +85,10 @@ class BasicExternalCluster extends Cluster {
   private volatile boolean isInterruptingClient;
   private Thread shepherdingThread;
   private boolean isSafe;
- 
-  BasicExternalCluster(Path clusterDirectory, int stripeSize, Path server, int serverHeapSize, 
-      Properties systemProperties, Properties tcProps, int reconnect, int voters, boolean consistent,  
-      String logConfigExt, OutputStream parentOutput, ConfigBuilder config, Supplier<StartupCommandBuilder> startupBuilder) {
+
+  public BasicExternalCluster(Path clusterDirectory, int stripeSize, Path server, int serverHeapSize,
+      Properties systemProperties, Properties tcProps, int reconnect, int voters, boolean consistent, int serverDebugPort,
+      String logConfigExt, OutputStream parentOutput, Supplier<StartupCommandBuilder> startupBuilder) {
     boolean didCreateDirectories = clusterDirectory.toFile().mkdirs();
     if (Files.exists(clusterDirectory)) {
       if (Files.isRegularFile(clusterDirectory)) {
@@ -107,12 +106,12 @@ class BasicExternalCluster extends Cluster {
     this.reconnectWindow = reconnect;
     this.voters = voters;
     this.consistent = consistent;
-    this.legacy = config;
+    this.serverDebugPortStart = serverDebugPort;
     this.logConfigExt = logConfigExt;
     this.serverHeapSize = serverHeapSize;
     this.parentOutput = parentOutput;
     this.startupBuilder = startupBuilder;
-    this.clientThread = Thread.currentThread();    
+    this.clientThread = Thread.currentThread();
   }
 
   @Override
@@ -133,6 +132,7 @@ class BasicExternalCluster extends Cluster {
     return super.apply(base, description);
   }
 
+  @Override
   public CompletionStage<Void> manualStart(String displayName) {
     this.displayName = displayName;
     CompletableFuture<Void> f = new CompletableFuture<>();
@@ -169,6 +169,11 @@ class BasicExternalCluster extends Cluster {
     };
   }
 
+    @Override
+    public ClusterInfo getClusterInfo() {
+        return this.cluster.getClusterInfo();
+    }
+
   private void internalStart(CompletableFuture<Void> checker) throws Throwable {
     VerboseLogger harnessLogger = new VerboseLogger(System.out, null);
     VerboseLogger fileHelpersLogger = new VerboseLogger(null, null);
@@ -180,8 +185,6 @@ class BasicExternalCluster extends Cluster {
     File testParentDir = File.createTempFile(displayName, "", clusterDirectory.toFile());
     testParentDir.delete();
     testParentDir.mkdir();
-    String debugPortString = System.getProperty("serverDebugPortStart");
-    int serverDebugStartPort = debugPortString != null ? Integer.parseInt(debugPortString) : 0;
 
     stateManager = new TestStateManager();
     interlock = new StateInterlock(verboseManager.createComponentManager("[Interlock]").createHarnessLogger(), stateManager);
@@ -194,7 +197,7 @@ class BasicExternalCluster extends Cluster {
     PortManager portManager = PortManager.getInstance();
     List<PortManager.PortRef> debugPortRefs = new ArrayList<>();
     List<Integer> serverDebugPorts = new ArrayList<>();
-    PortTool.assignDebugPorts(portManager, serverDebugStartPort, stripeSize, debugPortRefs, serverDebugPorts);
+    PortTool.assignDebugPorts(portManager, serverDebugPortStart, stripeSize, debugPortRefs, serverDebugPorts);
 
     List<PortManager.PortRef> serverPortRefs = portManager.reservePorts(stripeSize);
     List<PortManager.PortRef> groupPortRefs = portManager.reservePorts(stripeSize);
@@ -212,31 +215,33 @@ class BasicExternalCluster extends Cluster {
     StripeConfiguration stripeConfig = new StripeConfiguration(serverDebugPorts, serverPorts, serverGroupPorts, serverNames,
         stripeName, logConfigExt, systemProperties, tcProps, reconnectWindow, voters, consistent);
     StripeInstaller stripeInstaller = new StripeInstaller(interlock, stateManager, stripeVerboseManager);
+
+
     // Configure and install each server in the stripe.
     System.setProperty("tc.install-root", server.toString());
-    if (legacy != null) {
-      legacy.withStripeConfiguration(stripeConfig);
-      Path tcConfig = legacy.createConfig(stripeInstallationDir);
-    }
+
     for (int i = 0; i < stripeSize; ++i) {
       String serverName = serverNames.get(i);
       Path serverWorkingDir = stripeInstallationDir.resolve(serverName);
       // Determine if we want a debug port.
       int debugPort = stripeConfig.getServerDebugPorts().get(i);
-      
+
       StartupCommandBuilder builder = startupBuilder.get()
           .stripeConfiguration(stripeConfig)
           .serverName(serverName)
           .stripeName(stripeName)
-          .stripeConfiguration(stripeConfig)
           .stripeWorkingDir(stripeInstallationDir)
           .serverWorkingDir(serverWorkingDir)
           .logConfigExtension(logConfigExt);
-      
+
+      if (serverHeapSize <= 0) {
+        System.setProperty("com.tc.tc.messages.packup.enabled", "false");
+      }
+
       ServerInstance serverProcess = serverHeapSize > 0 ?
         new ServerProcess(serverName, server, serverWorkingDir, serverHeapSize, debugPort, systemProperties, parentOutput, builder.build())
-              : 
-        new InlineServer(serverName, server, serverWorkingDir, systemProperties, parentOutput, builder.build());               
+              :
+        new InlineServer(serverName, server, serverWorkingDir, systemProperties, parentOutput, builder.build());
 
       stripeInstaller.installNewServer(serverProcess);
     }
@@ -354,8 +359,8 @@ class BasicExternalCluster extends Cluster {
   }
 
   @Override
-  public IClusterControl getClusterControl() {
-    return new IClusterControl() {
+  public ClusterControl getClusterControl() {
+    return new ClusterControl() {
       @Override
       public void waitForActive() throws Exception {
         cluster.getStripeControl().waitForActive();

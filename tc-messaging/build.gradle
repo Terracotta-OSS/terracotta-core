@@ -21,6 +21,10 @@ plugins {
 
 description = 'terracotta-core tc-messaging classes'
 
+java {
+    withSourcesJar()
+}
+
 dependencies {
   api project(':common-spi')
 
