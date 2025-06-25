@@ -45,6 +45,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 import static java.util.stream.Collectors.toList;
 import java.util.stream.IntStream;
+import org.terracotta.testing.api.ConfigBuilder;
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.config.ClusterInfo;
 import org.terracotta.testing.master.InlineServer;
@@ -72,6 +73,7 @@ public class BasicExternalCluster extends Cluster {
   private final int serverHeapSize;
   private final int serverDebugPortStart;
   private final OutputStream parentOutput;
+  private final ConfigBuilder configBuilder;
   private final Supplier<StartupCommandBuilder> startupBuilder;
 
   private String displayName;
@@ -88,7 +90,7 @@ public class BasicExternalCluster extends Cluster {
 
   public BasicExternalCluster(Path clusterDirectory, int stripeSize, Path server, int serverHeapSize,
       Properties systemProperties, Properties tcProps, int reconnect, int voters, boolean consistent, int serverDebugPort,
-      String logConfigExt, OutputStream parentOutput, Supplier<StartupCommandBuilder> startupBuilder) {
+      String logConfigExt, OutputStream parentOutput, ConfigBuilder config, Supplier<StartupCommandBuilder> startupBuilder) {
     boolean didCreateDirectories = clusterDirectory.toFile().mkdirs();
     if (Files.exists(clusterDirectory)) {
       if (Files.isRegularFile(clusterDirectory)) {
@@ -110,6 +112,7 @@ public class BasicExternalCluster extends Cluster {
     this.logConfigExt = logConfigExt;
     this.serverHeapSize = serverHeapSize;
     this.parentOutput = parentOutput;
+    this.configBuilder = config;
     this.startupBuilder = startupBuilder;
     this.clientThread = Thread.currentThread();
   }
@@ -208,7 +211,7 @@ public class BasicExternalCluster extends Cluster {
 
     String stripeName = "stripe1";
     Path stripeInstallationDir = testParentDir.toPath().resolve(stripeName);
-    Files.createDirectory(stripeInstallationDir);
+    Files.createDirectories(stripeInstallationDir);
 
     VerboseManager stripeVerboseManager = displayVerboseManager.createComponentManager("[" + stripeName + "]");
 
@@ -219,10 +222,13 @@ public class BasicExternalCluster extends Cluster {
 
     // Configure and install each server in the stripe.
     System.setProperty("tc.install-root", server.toString());
+    configBuilder.withStripeConfiguration(stripeConfig);
+    Path tcConfig = configBuilder.createConfig(stripeInstallationDir);
 
     for (int i = 0; i < stripeSize; ++i) {
       String serverName = serverNames.get(i);
       Path serverWorkingDir = stripeInstallationDir.resolve(serverName);
+      Files.createDirectories(serverWorkingDir);
       // Determine if we want a debug port.
       int debugPort = stripeConfig.getServerDebugPorts().get(i);
 

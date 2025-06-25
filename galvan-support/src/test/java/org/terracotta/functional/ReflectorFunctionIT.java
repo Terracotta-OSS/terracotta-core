@@ -37,7 +37,7 @@ public class ReflectorFunctionIT {
   @Rule
   public final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(2)
           .inline(false)
-          .startupBuilder(()->new DefaultStartupCommandBuilder(new DefaultLegacyConfigBuilder()) {
+          .startupBuilder(()->new DefaultStartupCommandBuilder() {
             @Override
             public String[] build() {
               List<String> def = new ArrayList<>();
