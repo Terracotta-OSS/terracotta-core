@@ -68,6 +68,7 @@ public class BasicExternalCluster extends Cluster {
   private final int reconnectWindow;
   private final int voters;
   private final boolean consistent;
+  private final boolean inline;
 
   private final String logConfigExt;
   private final int serverHeapSize;
@@ -89,7 +90,7 @@ public class BasicExternalCluster extends Cluster {
   private boolean isSafe;
 
   public BasicExternalCluster(Path clusterDirectory, int stripeSize, Path server, int serverHeapSize,
-      Properties systemProperties, Properties tcProps, int reconnect, int voters, boolean consistent, int serverDebugPort,
+      Properties systemProperties, Properties tcProps, int reconnect, int voters, boolean consistent, boolean inline, int serverDebugPort,
       String logConfigExt, OutputStream parentOutput, ConfigBuilder config, Supplier<StartupCommandBuilder> startupBuilder) {
     boolean didCreateDirectories = clusterDirectory.toFile().mkdirs();
     if (Files.exists(clusterDirectory)) {
@@ -108,6 +109,7 @@ public class BasicExternalCluster extends Cluster {
     this.reconnectWindow = reconnect;
     this.voters = voters;
     this.consistent = consistent;
+    this.inline = inline;
     this.serverDebugPortStart = serverDebugPort;
     this.logConfigExt = logConfigExt;
     this.serverHeapSize = serverHeapSize;
@@ -222,6 +224,8 @@ public class BasicExternalCluster extends Cluster {
 
     // Configure and install each server in the stripe.
     System.setProperty("tc.install-root", server.toString());
+    systemProperties.setProperty("tc.install-root", server.toString());
+    
     configBuilder.withStripeConfiguration(stripeConfig);
     Path tcConfig = configBuilder.createConfig(stripeInstallationDir);
 
@@ -240,11 +244,7 @@ public class BasicExternalCluster extends Cluster {
           .serverWorkingDir(serverWorkingDir)
           .logConfigExtension(logConfigExt);
 
-      if (serverHeapSize <= 0) {
-        System.setProperty("com.tc.tc.messages.packup.enabled", "false");
-      }
-
-      ServerInstance serverProcess = serverHeapSize > 0 ?
+      ServerInstance serverProcess = !inline ?
         new ServerProcess(serverName, server, serverWorkingDir, serverHeapSize, debugPort, systemProperties, parentOutput, builder.build())
               :
         new InlineServer(serverName, server, serverWorkingDir, systemProperties, parentOutput, builder.build());

@@ -93,18 +93,21 @@ public class Directories {
     if (jar == null) {
       jar = "tc-server.*\\.jar";
     }
-    Path jarFile = searchForServerJar(getInstallationRoot(), jar);
-    
-    return jarFile;
+    Path path = getInstallationRoot();
+    try {
+      return searchForServerJar(path, jar);
+    } catch (NoSuchElementException no) {
+      throw new FileNotFoundException("searching:" + path + " jar:" + jar);
+    }
   }
   
-  private static Path searchForServerJar(Path directory, String name) {
+  private static Path searchForServerJar(Path directory, String name) throws NoSuchElementException {
     try {
       Optional<Path> possible = Files.find(directory, 5, (path, o)->{
         return path.getFileName().toString().matches(name); }
       ).findAny();
-      return possible.orElse(null);
-    } catch (IOException | NoSuchElementException io) {
+      return possible.orElseThrow();
+    } catch (IOException io) {
       return null;
     }
   }
