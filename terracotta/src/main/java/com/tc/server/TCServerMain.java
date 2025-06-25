@@ -60,11 +60,9 @@ public class TCServerMain {
     try {
       Path serverJar = Directories.getServerJar();
 
-      if (serverJar != null) {
-        ClassLoader serverClassLoader = new URLClassLoader(new URL[] {serverJar.toUri().toURL()}, TCServerMain.class.getClassLoader());
+      ClassLoader serverClassLoader = new URLClassLoader(new URL[] {serverJar.toUri().toURL()}, TCServerMain.class.getClassLoader());
 
-        return ServerFactory.createServer(args, console, serverClassLoader);
-      }
+      return ServerFactory.createServer(args, console, serverClassLoader);
     } catch (RuntimeException t) {
       throw t;
     } catch (IOException io) {
@@ -72,6 +70,5 @@ public class TCServerMain {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
-    throw new RuntimeException("server libraries not found");
   }
 }

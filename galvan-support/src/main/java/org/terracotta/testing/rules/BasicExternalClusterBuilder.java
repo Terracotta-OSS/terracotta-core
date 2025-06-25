@@ -45,10 +45,10 @@ public class BasicExternalClusterBuilder {
   private int reconnectWindow = ConfigConstants.DEFAULT_CLIENT_RECONNECT_WINDOW;
   private int voters = ConfigConstants.DEFAULT_VOTER_COUNT;
   private boolean consistent = false;
+  private boolean inline = true;
 
   private String logConfigExt = "logback-ext.xml";
   private int serverHeapSize = DEFAULT_SERVER_HEAP_MB;
-  private int customHeapSize = DEFAULT_SERVER_HEAP_MB;
   private ConfigBuilder configBuilder;
   private ServerDeploymentBuilder serverBuilder = new ServerDeploymentBuilder();
   private Supplier<StartupCommandBuilder> startupBuilder;
@@ -138,7 +138,6 @@ public class BasicExternalClusterBuilder {
 
   public BasicExternalClusterBuilder withServerHeap(int heapSize) {
     this.serverHeapSize = heapSize;
-    this.customHeapSize = heapSize;
     return this;
   }
 
@@ -163,11 +162,11 @@ public class BasicExternalClusterBuilder {
   }
 
   public BasicExternalClusterBuilder inline(boolean yes) {
+    inline = yes;
     if (yes) {
       this.serverHeapSize = -1;
       tcProperties.put("tc.messages.packup.enabled", false);
     } else {
-      this.serverHeapSize = customHeapSize;
       tcProperties.put("tc.messages.packup.enabled", true);
     }
     return this;
@@ -201,9 +200,9 @@ public class BasicExternalClusterBuilder {
     int serverDebugStartPort = debugPortString != null ? Integer.parseInt(debugPortString) : 0;
 
     return new BasicExternalCluster(clusterDirectory, stripeSize, this.serverBuilder.deploy(), serverHeapSize, systemProperties, tcProperties,
-            this.reconnectWindow, this.voters, this.consistent, serverDebugStartPort,
-        logConfigExt, parentStream,
-            Optional.ofNullable(startupBuilder).orElse(()-> new DefaultStartupCommandBuilder(Optional.ofNullable(configBuilder).orElse(new DefaultLegacyConfigBuilder()))));
+            this.reconnectWindow, this.voters, this.consistent, this.inline, serverDebugStartPort,
+        logConfigExt, parentStream,Optional.ofNullable(configBuilder).orElse(new DefaultLegacyConfigBuilder()),
+            Optional.ofNullable(startupBuilder).orElse(DefaultStartupCommandBuilder::new));
 
   }
 }

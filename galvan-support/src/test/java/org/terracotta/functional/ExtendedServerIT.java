@@ -31,12 +31,9 @@ import org.terracotta.testing.rules.Cluster;
  *
  */
 public class ExtendedServerIT {
-  static {
-    System.setProperty("tc.server-jar", "extended-server");
-  }
-  
   @Rule
   public final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(1).withClientReconnectWindowTime(30)
+      .inline(false)
       .build();
 
   @Test

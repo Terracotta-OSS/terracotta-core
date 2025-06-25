@@ -27,7 +27,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import org.terracotta.testing.api.ConfigBuilder;
+import org.terracotta.testing.common.Assert;
 
 public class DefaultStartupCommandBuilder implements StartupCommandBuilder, Cloneable {
   private StripeConfiguration stripeConfig;
@@ -38,10 +38,7 @@ public class DefaultStartupCommandBuilder implements StartupCommandBuilder, Clon
   private String stripeName;
   private String[] builtCommand;
 
-  private final ConfigBuilder builder;
-
-  public DefaultStartupCommandBuilder(ConfigBuilder builder) {
-      this.builder = builder;
+  public DefaultStartupCommandBuilder() {
   }
 
   public DefaultStartupCommandBuilder copy() {
@@ -89,12 +86,8 @@ public class DefaultStartupCommandBuilder implements StartupCommandBuilder, Clon
   }
 
   protected Path installServer() throws IOException {
-    // Create a copy of the server for this installation.
-    Files.createDirectories(stripeWorkingDir);
-    Files.createDirectories(serverWorkingDir);
-    // build the tc-config file
-    builder.withStripeConfiguration(stripeConfig);
-    Path tcConfig = builder.createConfig(stripeWorkingDir);
+    Path tcConfig = stripeWorkingDir.resolve("tc-config.xml");
+    Assert.assertTrue(tcConfig.toFile().exists());
     //Copy a custom logback configuration
     Files.copy(this.getClass().getResourceAsStream("/tc-logback.xml"), serverWorkingDir.resolve("logback-test.xml"), REPLACE_EXISTING);
     Properties props = new Properties();

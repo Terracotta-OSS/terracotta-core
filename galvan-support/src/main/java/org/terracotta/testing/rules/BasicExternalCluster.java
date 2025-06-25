@@ -45,6 +45,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 import static java.util.stream.Collectors.toList;
 import java.util.stream.IntStream;
+import org.terracotta.testing.api.ConfigBuilder;
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.config.ClusterInfo;
 import org.terracotta.testing.master.InlineServer;
@@ -67,11 +68,13 @@ public class BasicExternalCluster extends Cluster {
   private final int reconnectWindow;
   private final int voters;
   private final boolean consistent;
+  private final boolean inline;
 
   private final String logConfigExt;
   private final int serverHeapSize;
   private final int serverDebugPortStart;
   private final OutputStream parentOutput;
+  private final ConfigBuilder configBuilder;
   private final Supplier<StartupCommandBuilder> startupBuilder;
 
   private String displayName;
@@ -87,8 +90,8 @@ public class BasicExternalCluster extends Cluster {
   private boolean isSafe;
 
   public BasicExternalCluster(Path clusterDirectory, int stripeSize, Path server, int serverHeapSize,
-      Properties systemProperties, Properties tcProps, int reconnect, int voters, boolean consistent, int serverDebugPort,
-      String logConfigExt, OutputStream parentOutput, Supplier<StartupCommandBuilder> startupBuilder) {
+      Properties systemProperties, Properties tcProps, int reconnect, int voters, boolean consistent, boolean inline, int serverDebugPort,
+      String logConfigExt, OutputStream parentOutput, ConfigBuilder config, Supplier<StartupCommandBuilder> startupBuilder) {
     boolean didCreateDirectories = clusterDirectory.toFile().mkdirs();
     if (Files.exists(clusterDirectory)) {
       if (Files.isRegularFile(clusterDirectory)) {
@@ -106,10 +109,12 @@ public class BasicExternalCluster extends Cluster {
     this.reconnectWindow = reconnect;
     this.voters = voters;
     this.consistent = consistent;
+    this.inline = inline;
     this.serverDebugPortStart = serverDebugPort;
     this.logConfigExt = logConfigExt;
     this.serverHeapSize = serverHeapSize;
     this.parentOutput = parentOutput;
+    this.configBuilder = config;
     this.startupBuilder = startupBuilder;
     this.clientThread = Thread.currentThread();
   }
@@ -208,7 +213,7 @@ public class BasicExternalCluster extends Cluster {
 
     String stripeName = "stripe1";
     Path stripeInstallationDir = testParentDir.toPath().resolve(stripeName);
-    Files.createDirectory(stripeInstallationDir);
+    Files.createDirectories(stripeInstallationDir);
 
     VerboseManager stripeVerboseManager = displayVerboseManager.createComponentManager("[" + stripeName + "]");
 
@@ -219,10 +224,15 @@ public class BasicExternalCluster extends Cluster {
 
     // Configure and install each server in the stripe.
     System.setProperty("tc.install-root", server.toString());
+    systemProperties.setProperty("tc.install-root", server.toString());
+    
+    configBuilder.withStripeConfiguration(stripeConfig);
+    Path tcConfig = configBuilder.createConfig(stripeInstallationDir);
 
     for (int i = 0; i < stripeSize; ++i) {
       String serverName = serverNames.get(i);
       Path serverWorkingDir = stripeInstallationDir.resolve(serverName);
+      Files.createDirectories(serverWorkingDir);
       // Determine if we want a debug port.
       int debugPort = stripeConfig.getServerDebugPorts().get(i);
 
@@ -234,11 +244,7 @@ public class BasicExternalCluster extends Cluster {
           .serverWorkingDir(serverWorkingDir)
           .logConfigExtension(logConfigExt);
 
-      if (serverHeapSize <= 0) {
-        System.setProperty("com.tc.tc.messages.packup.enabled", "false");
-      }
-
-      ServerInstance serverProcess = serverHeapSize > 0 ?
+      ServerInstance serverProcess = !inline ?
         new ServerProcess(serverName, server, serverWorkingDir, serverHeapSize, debugPort, systemProperties, parentOutput, builder.build())
               :
         new InlineServer(serverName, server, serverWorkingDir, systemProperties, parentOutput, builder.build());

@@ -71,7 +71,7 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
 
     String stripeName = "stripe1";
     Path stripeInstallationDir = harnessOptions.configTestDir.resolve(stripeName);
-    Files.createDirectory(stripeInstallationDir);
+    Files.createDirectories(stripeInstallationDir);
 
     VerboseManager stripeVerboseManager = verboseManager.createComponentManager("[" + stripeName + "]");
 
@@ -84,7 +84,14 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     TestStateManager stateManager = new TestStateManager();
     StateInterlock interlock = new StateInterlock(verboseManager.createComponentManager("[Interlock]").createHarnessLogger(), stateManager);
     StripeInstaller stripeInstaller = new StripeInstaller(interlock, stateManager, stripeVerboseManager);
-    // Configure and install each server in the stripe.
+
+    DefaultLegacyConfigBuilder config = new DefaultLegacyConfigBuilder();
+    config.withNamespaceFragment(harnessOptions.namespaceFragment);
+    config.withServiceFragment(harnessOptions.serviceFragment);
+    config.withStripeConfiguration(stripeConfig);
+    Path tcConfig = config.createConfig(stripeInstallationDir);
+
+// Configure and install each server in the stripe.
     for (int i = 0; i < stripeSize; ++i) {
       String serverName = stripeConfig.getServerNames().get(i);
       Path serverWorkingDir = stripeInstallationDir.resolve(serverName);
@@ -94,10 +101,9 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
               "\nkitLocationRelative:" + kitLocationRelative);
       // Determine if we want a debug port.
       int debugPort = stripeConfig.getServerDebugPorts().get(i);
-      DefaultLegacyConfigBuilder config = new DefaultLegacyConfigBuilder();
-      config.withNamespaceFragment(harnessOptions.namespaceFragment);
-      config.withServiceFragment(harnessOptions.serviceFragment);
-      StartupCommandBuilder builder = new DefaultStartupCommandBuilder(config)
+
+      Files.createDirectories(serverWorkingDir);
+      StartupCommandBuilder builder = new DefaultStartupCommandBuilder()
           .stripeConfiguration(stripeConfig)
           .serverName(serverName)
           .stripeName(stripeName)
