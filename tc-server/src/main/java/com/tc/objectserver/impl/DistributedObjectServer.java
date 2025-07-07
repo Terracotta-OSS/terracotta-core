@@ -869,26 +869,19 @@ public class DistributedObjectServer {
 
   public CompletableFuture<Void> destroy(boolean immediate) throws Exception {
     CompletableFuture<Void> finished = new CompletableFuture<>();
-    if (this.threadGroup.isStoppable()) {
-      if (this.stopping.attemptSet()) {
-        ThreadUtil.executeInThread(threadGroup.getParent(), ()->{
-          try {
-            if (!immediate) {
-              try {
-                stopped.get();
-              } catch (ExecutionException ee) {
-                logger.warn("stop not complete", ee.getCause());
-              }
-            }
-            killThreads(finished, immediate);
-          }catch(InterruptedException ie) {
-            logger.warn("shutdown thread failed", ie);
-            finished.completeExceptionally(ie);
-          }
-        }, "server shutdown thread", true);
+    if (!immediate) {
+      try {
+        stopped.get();
+      } catch (ExecutionException ee) {
+        finished.completeExceptionally(ee.getCause());
+        return finished;
       }
+    }
+    if (this.stopping.attemptSet() && this.threadGroup.isStoppable()) {
+        ThreadUtil.executeInThread(threadGroup.getParent(), ()->{
+          killThreads(finished);
+        }, "server shutdown thread", true);
     } else {
-      consoleLogger.info("Server Exiting...");
       finished.complete(null);
     }
     return finished;
@@ -911,17 +904,14 @@ public class DistributedObjectServer {
     }
   }
 
-  private void killThreads(CompletableFuture<Void> stopped, boolean immediate) {
+  private void killThreads(CompletableFuture<Void> stopped) {
     try {
       this.seda.getStageManager().stopAll();
-      if (immediate) {
-        threadGroup.interrupt();
-      } else if (!threadGroup.retire(TimeUnit.SECONDS.toMillis(30L), e->L2Utils.handleInterrupted(logger, e))) {
+      while (!threadGroup.retire(TimeUnit.SECONDS.toMillis(10L), e->L2Utils.handleInterrupted(logger, e))) {
         consoleLogger.warn("unable to retire server threads");
         threadGroup.printLiveThreads(logger::warn);
         threadGroup.interrupt();
       }
-      consoleLogger.info("Server Exiting...");
     } finally {
       stopped.complete(null);
     }

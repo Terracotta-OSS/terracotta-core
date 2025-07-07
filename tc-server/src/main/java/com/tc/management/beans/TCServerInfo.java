@@ -57,6 +57,7 @@ import javax.management.AttributeChangeNotification;
 import javax.management.MBeanNotificationInfo;
 import javax.management.NotCompliantMBeanException;
 import org.terracotta.server.ServerEnv;
+import org.terracotta.server.StopAction;
 
 public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInfoMBean, StateChangeListener {
   private static final Logger logger = LoggerFactory.getLogger(TCServerInfo.class);
@@ -156,6 +157,12 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     return server.waitUntilShutdown();
   }
 
+  @Override
+  public boolean halt() {
+    server.stop(StopAction.IMMEDIATE);
+    return server.waitUntilShutdown();
+  }
+  
   @Override
   public boolean isShutdownable() {
     return server.canShutdown();

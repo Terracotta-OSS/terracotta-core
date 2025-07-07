@@ -43,6 +43,8 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   boolean stopAndWait();
 
+  boolean halt();
+
   boolean isShutdownable();
 
   void shutdown();
