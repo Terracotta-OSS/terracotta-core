@@ -46,7 +46,7 @@ public class TCThreadGroup extends ThreadGroup {
   }
 
   public TCThreadGroup(ThrowableHandler throwableHandler, String name, boolean stoppable) {
-    this(throwableHandler, name, stoppable, stoppable);
+    this(throwableHandler, name, stoppable, !stoppable);
   }
 
   public TCThreadGroup(ThrowableHandler throwableHandler, String name, boolean stoppable, boolean ignorePool) {
@@ -81,10 +81,6 @@ public class TCThreadGroup extends ThreadGroup {
     }
   }
 
-  public void interruptThreads() {
-    threads().stream().filter(t -> t != Thread.currentThread() && t.isAlive()).forEach(Thread::interrupt);
-  }
-
   public boolean retire(long timeout, Consumer<InterruptedException> interruptHandler) {
     boolean complete = false;
     long killStart = System.currentTimeMillis();
@@ -97,9 +93,8 @@ public class TCThreadGroup extends ThreadGroup {
           }
         }
       }
-      if (activeCount() == 0) {
-        destroy();
-      }
+    } else {
+      return true;
     }
     if (complete) {
       LOGGER.debug("finished thread exiting in {} seconds", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - killStart));

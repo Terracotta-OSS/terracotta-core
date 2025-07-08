@@ -238,7 +238,7 @@ public class InlineServer extends ServerInstance {
     public synchronized boolean shutdown() {
       if (running) {
         running = false;
-        String result = invokeOnServerMBean(server, "Server","stopAndWait",null);
+        String result = invokeOnServerMBean(server, "Server","halt",null);
         serverLogger.output("stopping. " + result);
         return !Boolean.parseBoolean(result);
       } else {
