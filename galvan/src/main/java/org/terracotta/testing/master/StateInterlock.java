@@ -157,6 +157,13 @@ public class StateInterlock implements IGalvanStateInterlock {
         one = this.servers.stream().filter(s->s.getCurrentState() == ServerMode.TERMINATED).findAny().orElse(null);
       }
       this.logger.output("getOneTerminatedServer " + one);
+      if (one != null) {
+        IGalvanServer newOne = one.newInstance();
+        if (newOne != one) {
+          this.servers.remove(one);
+          one = newOne;
+        }
+      }
       return one;
   }
 
@@ -193,6 +200,7 @@ public class StateInterlock implements IGalvanStateInterlock {
         && this.runningClients.isEmpty();
   }
   // ----- CLEANUP-----
+  @Override
   public void forceShutdown() throws GalvanFailureException {
       this.logger.output("> forceShutdown");
       // Set the flag that we are shutting down.  That way, any servers which were concurrently coming online can be stopped when they check in.

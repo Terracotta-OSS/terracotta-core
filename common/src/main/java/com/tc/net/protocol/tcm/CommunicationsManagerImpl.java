@@ -54,7 +54,6 @@ import com.tc.net.protocol.transport.WireProtocolAdaptorFactoryImpl;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.net.core.ProductID;
 import com.tc.util.Assert;
-import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;

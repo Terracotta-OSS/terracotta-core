@@ -46,7 +46,7 @@ public class TCThreadGroup extends ThreadGroup {
   }
 
   public TCThreadGroup(ThrowableHandler throwableHandler, String name, boolean stoppable) {
-    this(throwableHandler, name, stoppable, !stoppable);
+    this(throwableHandler, name, stoppable, false);
   }
 
   public TCThreadGroup(ThrowableHandler throwableHandler, String name, boolean stoppable, boolean ignorePool) {
@@ -76,6 +76,7 @@ public class TCThreadGroup extends ThreadGroup {
   public void printLiveThreads(Consumer<String> reporter) {
     for (Thread t : threads()) {
       if (t != null && t != Thread.currentThread()) {
+        reporter.accept(t.getThreadGroup().getName() + " - " + t.getName());
         reporter.accept(ThreadDumpUtil.getThreadDump(t));
       }
     }
@@ -121,7 +122,7 @@ public class TCThreadGroup extends ThreadGroup {
     }
   }
 
-  private synchronized List<Thread> threads() {
+  private List<Thread> threads() {
     int ac = activeCount();
     Thread[] list = new Thread[ac];
     enumerate(list, true);

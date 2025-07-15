@@ -397,7 +397,7 @@ public class ServerProcess extends ServerInstance {
             boolean exited = false;
             while (!exited) {
               ping(instance.outputWriter());
-              exited = instance.waitFor(10, TimeUnit.SECONDS);
+              exited = instance.waitFor(2, TimeUnit.SECONDS);
             }
             returnValue = instance.exitValue();
           }

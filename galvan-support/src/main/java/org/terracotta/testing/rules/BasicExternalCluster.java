@@ -247,7 +247,7 @@ public class BasicExternalCluster extends Cluster {
       ServerInstance serverProcess = !inline ?
         new ServerProcess(serverName, server, serverWorkingDir, serverHeapSize, debugPort, systemProperties, parentOutput, builder.build())
               :
-        new InlineServer(serverName, server, serverWorkingDir, systemProperties, parentOutput, builder.build());
+        new InlineServer(serverName, server, serverWorkingDir, serverHeapSize, debugPort, systemProperties, parentOutput, builder.build());
 
       stripeInstaller.installNewServer(serverProcess);
     }

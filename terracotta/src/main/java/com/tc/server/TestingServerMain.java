@@ -37,7 +37,7 @@ public class TestingServerMain extends TCServerMain {
     t = new Thread(()->{
       while (true) {
         try {
-          int code = readNextCode(120, TimeUnit.SECONDS);
+          int code = readNextCode(240, TimeUnit.SECONDS);
           switch (code) {
             case 's', 'z' -> {
               break;
@@ -48,6 +48,7 @@ public class TestingServerMain extends TCServerMain {
         } catch (IOException | InterruptedException io) {
   
         } catch (TimeoutException e) {
+          System.err.println("TestingServerMain: Timed out waiting for a message from the parent process that it is still alive");
           System.exit(2);
         }
       }

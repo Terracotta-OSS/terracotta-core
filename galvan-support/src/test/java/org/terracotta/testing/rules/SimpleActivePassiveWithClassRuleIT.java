@@ -20,7 +20,6 @@ package org.terracotta.testing.rules;
 
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.terracotta.passthrough.IClusterControl;
 
 
 /**
