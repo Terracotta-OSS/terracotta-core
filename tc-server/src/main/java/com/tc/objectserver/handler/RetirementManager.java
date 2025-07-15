@@ -62,7 +62,7 @@ public class RetirementManager {
   }
   
   public boolean hasServerInflightMessages() {
-    return !this.inflightServerMessages.isEmpty();
+    return !this.inflightServerMessages.isEmpty() || !this.currentlyRunning.isEmpty() || !this.waitingForDeferredRegistration.isEmpty();
   }
   
   public boolean isMessageRunning(EntityMessage invokeMessage) {
