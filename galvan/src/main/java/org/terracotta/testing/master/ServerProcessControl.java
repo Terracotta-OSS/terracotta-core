@@ -101,7 +101,7 @@ public class ServerProcessControl implements IMultiProcessControl {
     this.logger.output("<<< startOneServer");
   }
 
-  public synchronized void startServer() throws GalvanFailureException {
+  private synchronized void startServer() throws GalvanFailureException {
     IGalvanServer server = null;
     int tries = 1;
     while (null == (server = this.stateInterlock.getOneTerminatedServer())) {

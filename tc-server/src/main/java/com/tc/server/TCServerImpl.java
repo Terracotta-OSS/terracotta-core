@@ -145,33 +145,38 @@ public class TCServerImpl extends SEDA implements TCServer {
   @Override
   public void stop(StopAction...restartMode) {
     audit("Stop invoked", new Properties());
+    EnumSet<StopAction> set = EnumSet.noneOf(StopAction.class);
+    set.addAll(Arrays.asList(restartMode));
+    boolean restart = (set.contains(StopAction.RESTART));
     if (dsoServer != null) {
       try {
         if (getStateManager().moveToStopStateIf(EnumSet.complementOf(EnumSet.of(ServerMode.STOP)))) {
           consoleLogger.info("Stopping server");
-          EnumSet<StopAction> set = EnumSet.noneOf(StopAction.class);
-          set.addAll(Arrays.asList(restartMode));
+
           if (set.contains(StopAction.ZAP)) {
             TCLogging.getConsoleLogger().info("Setting data to dirty");
             dsoServer.getPersistor().getClusterStatePersistor().setDBClean(false);
           }
           CompletableFuture<Void> dsoStop = dsoServer.destroy(set.contains(StopAction.IMMEDIATE));
-          dsoStop = dsoStop.thenRun(()->{
+          dsoStop = dsoStop.handle((s,e)->{
             consoleLogger.info("Server Exiting...");
+            return null;
           });
-          if (set.contains(StopAction.RESTART)) {
+          if (restart) {
             TCLogging.getConsoleLogger().info("Requesting restart");
-            dsoStop.thenRun(()->shutdownGate.complete(true));
+            dsoStop.handle((s,e)->shutdownGate.complete(true));
           } else {
-            dsoStop.thenRun(()->shutdownGate.complete(false));
+            dsoStop.handle((s,e)->shutdownGate.complete(false));
           }
+        } else {
+          shutdownGate.complete(restart);
         }
       } catch (Throwable e) {
         logger.error("trouble shutting down", e);
         shutdownGate.completeExceptionally(e);
       }
     } else {
-      shutdownGate.complete(false);
+      shutdownGate.complete(restart);
     }
   }
   

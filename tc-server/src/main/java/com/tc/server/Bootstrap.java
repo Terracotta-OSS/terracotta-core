@@ -163,6 +163,10 @@ public class Bootstrap implements BootstrapService {
       public Object getServer() {
         return server;
       }
+
+      public Object getServerThreadGroup() {
+        return threadGroup;
+      }
     };
   }
 

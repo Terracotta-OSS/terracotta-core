@@ -43,7 +43,7 @@ public class StripeInstaller {
   public void installNewServer(ServerInstance serverProcess) throws IOException {
     // Our implementation installs all servers before starting any (just an internal consistency check).
     Assert.assertFalse(this.isBuilt);
-    serverProcess.installIntoStripe(interlock, stateManager, stripeVerboseManager.createComponentManager("[" + serverProcess.serverName + "]"));
+    serverProcess.installIntoStripe(interlock, stateManager, stripeVerboseManager.createComponentManager("[" + serverProcess.serverName + "]").createServerLogger());
     serverProcesses.add(serverProcess);
   }
 

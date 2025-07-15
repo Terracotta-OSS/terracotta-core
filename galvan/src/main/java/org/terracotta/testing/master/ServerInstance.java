@@ -56,10 +56,10 @@ public abstract class ServerInstance implements IGalvanServer {
     this.serverName = serverName;
   }
   
-  public void installIntoStripe(StateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager logging) {
+  public void installIntoStripe(StateInterlock stateInterlock, ITestStateManager stateManager, ContextualLogger logging) {
     this.stateInterlock = stateInterlock;
     this.stateManager = stateManager;
-    this.serverLogger = logging.createServerLogger();
+    this.serverLogger = logging;
     this.stateInterlock.registerNewServer(this);
   }
 
@@ -284,6 +284,11 @@ public abstract class ServerInstance implements IGalvanServer {
     while (currentState != mode) {
       wait();
     }
+  }
+
+  @Override
+  public IGalvanServer newInstance() {
+    return this;
   }
 
   @Override

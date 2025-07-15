@@ -87,6 +87,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.EntityMessage;
 import com.tc.net.protocol.tcm.TCAction;
+import org.terracotta.server.ServerEnv;
 
 public class ProcessTransactionHandler implements ReconnectListener {
 
@@ -583,10 +584,14 @@ public class ProcessTransactionHandler implements ReconnectListener {
           try {
             this.wait();
           } catch (InterruptedException ie) {
-            throw new RuntimeException(ie);
+            L2Utils.handleInterrupted(LOGGER, ie);
           }
         }
       }
+    }
+//  If the server is not active there is no business to be done here
+    if (!ServerEnv.getServer().isActive()) {
+      return;
     }
 
     // Clear the transaction order persistor since we are starting fresh.

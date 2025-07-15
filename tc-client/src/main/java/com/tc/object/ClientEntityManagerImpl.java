@@ -79,8 +79,9 @@ import org.terracotta.exception.EntityServerUncaughtException;
 import static com.tc.object.EntityDescriptor.createDescriptorForLifecycle;
 import static com.tc.object.SafeInvocationCallback.safe;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import static java.util.stream.Collectors.toCollection;
-import static org.terracotta.entity.Invocation.uninterruptiblyGet;
 
 
 public class ClientEntityManagerImpl implements ClientEntityManager {
@@ -183,16 +184,33 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   private byte[] lifecycleAndComplete(EntityID entityId, EntityDescriptor entityDescriptor, VoltronEntityMessage.Type type) throws EntityException {
-    return retryingWhileBusy(entityId, () -> uninterruptiblyGet(
-            lifecycle(entityId, entityDescriptor, type, new byte[0]).invoke(),
-            EntityException.class));
+    return retryingWhileBusy(entityId, () -> getLifecycle(lifecycle(entityId, entityDescriptor, type, new byte[0]).invoke()));
   }
 
   private byte[] lifecycleAndRetire(EntityID entityId, long version, VoltronEntityMessage.Type type, byte[] message) throws EntityException {
     return retryingWhileBusy(entityId, () -> {
       Invocation<byte[]> builder = lifecycle(entityId, createDescriptorForLifecycle(entityId, version), type, message);
-      return uninterruptiblyGet(builder.invokeAndRetire(), EntityException.class);
+      return getLifecycle(builder.invokeAndRetire());
     });
+  }
+
+  private static <R> R getLifecycle(Future<R> future) throws InterruptedException, EntityException {
+    try {
+      return future.get();
+    } catch (ExecutionException ee) {
+      Throwable t = ee.getCause();
+      if (t instanceof EntityException entityException) {
+        throw entityException;
+      } else if (t instanceof InterruptedException ie) {
+        throw ie;
+      } else if (t instanceof RuntimeException rt) {
+        throw rt;
+      } else if (t instanceof Error e) {
+        throw e;
+      } else {
+        throw new RuntimeException(t);
+      }
+    }
   }
 
   private Invocation<byte[]> lifecycle(EntityID entityID, EntityDescriptor entityDescriptor, VoltronEntityMessage.Type type, byte[] message) {
@@ -665,20 +683,20 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private <T> T retryingWhileBusy(EntityID entityID, EntityLifecycleTask<T> task) throws EntityException {
     while (true) {
       try {
-        return task.run();
-      } catch (EntityBusyException busy) {
-        logger.info("Cluster is busy. Requested operation will be retried in 2 seconds");
         try {
+          return task.run();
+        } catch (EntityBusyException busy) {
+          logger.info("Cluster is busy. Requested operation will be retried in 2 seconds");
           TimeUnit.SECONDS.sleep(2);
-        } catch (InterruptedException in) {
-          throw new WrappedEntityException(new EntityServerUncaughtException(entityID.getClassName(), entityID.getEntityName(), "", in));
         }
+      } catch (InterruptedException ie) {
+        throw new RuntimeException(ie);
       }
     }
   }
 
   private interface EntityLifecycleTask<T> {
 
-    T run() throws EntityException;
+    T run() throws EntityException, InterruptedException;
   }
 }

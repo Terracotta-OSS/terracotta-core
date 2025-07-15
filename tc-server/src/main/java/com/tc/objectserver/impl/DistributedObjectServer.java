@@ -877,9 +877,17 @@ public class DistributedObjectServer {
         return finished;
       }
     }
-    if (this.stopping.attemptSet() && this.threadGroup.isStoppable()) {
+    if (this.stopping.attemptSet()) {
         ThreadUtil.executeInThread(threadGroup.getParent(), ()->{
-          killThreads(finished);
+          try {
+            this.seda.getStageManager().stopAll();
+            if (!threadGroup.retire(TimeUnit.SECONDS.toMillis(30L), e->L2Utils.handleInterrupted(logger, e))) {
+              threadGroup.printLiveThreads(logger::warn);
+              threadGroup.interrupt();
+            }
+          } finally {
+            finished.complete(null);
+          }
         }, "server shutdown thread", true);
     } else {
       finished.complete(null);
@@ -901,19 +909,6 @@ public class DistributedObjectServer {
       stopped.complete(null);
     } catch (Throwable in) {
       stopped.completeExceptionally(in);
-    }
-  }
-
-  private void killThreads(CompletableFuture<Void> stopped) {
-    try {
-      this.seda.getStageManager().stopAll();
-      while (!threadGroup.retire(TimeUnit.SECONDS.toMillis(10L), e->L2Utils.handleInterrupted(logger, e))) {
-        consoleLogger.warn("unable to retire server threads");
-        threadGroup.printLiveThreads(logger::warn);
-        threadGroup.interrupt();
-      }
-    } finally {
-      stopped.complete(null);
     }
   }
 
@@ -1090,6 +1085,8 @@ public class DistributedObjectServer {
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.PASSIVE_TO_ACTIVE_DRIVER_STAGE);
     
     control.addTriggerToState(ServerMode.STOP.getState(),s->{
+      // unlock the resends wait in case stuck there
+      pth.reconnectComplete();
       shutdown();
     });
     return control;

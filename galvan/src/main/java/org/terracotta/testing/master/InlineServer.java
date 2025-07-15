@@ -28,11 +28,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.CREATE;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.testing.logging.VerboseOutputStream;
@@ -47,9 +50,13 @@ public class InlineServer extends ServerInstance {
   private final OutputStream parentOutput;
   private final String[] cmd;
 
-  private ServerThread server;
 
-  public InlineServer(String serverName, Path serverInstall, Path serverWorkingDir, Properties serverProperties, OutputStream out, String[] cmd) {
+  private final int heap;
+  private final int debug;
+  private boolean leakDetected = false;
+  private ServerThread serverThread;
+
+  public InlineServer(String serverName, Path serverInstall, Path serverWorkingDir, int heap, int debug, Properties serverProperties, OutputStream out, String[] cmd) {
     super(serverName);
     // We need to specify a positive integer as the heap size.
     this.serverInstall = serverInstall;
@@ -57,6 +64,12 @@ public class InlineServer extends ServerInstance {
     this.serverProperties = serverProperties;
     this.parentOutput = out;
     this.cmd = cmd;
+    this.debug = debug;
+    this.heap = heap;
+  }
+
+  public InlineServer(String serverName, Path serverInstall, Path serverWorkingDir, Properties serverProperties, OutputStream out, String[] cmd) {
+    this(serverName, serverInstall, serverWorkingDir, 512, 0, serverProperties, out, cmd);
   }
 
   /**
@@ -76,10 +89,10 @@ public class InlineServer extends ServerInstance {
     try {
       // First thing we need to do is make sure that we aren't already running.
       Assert.assertFalse(this.isServerRunning());
-      Assert.assertTrue(server == null || server.shutdown());
+      Assert.assertTrue(serverThread == null || serverThread.shutdown());
       setCurrentState(ServerMode.STARTUP);
-      server = new ServerThread();
-      server.start();
+      serverThread = new ServerThread();
+      serverThread.start();
     } finally {
       exit(token);
     }
@@ -147,10 +160,10 @@ public class InlineServer extends ServerInstance {
       // Can't stop something not running.
       if (isServerRunning()) {
         // Log the intent.
-        serverLogger.output("Crashing server process: " + server);
+        serverLogger.output("Crashing server process: " + serverThread);
         // Mark this as expected.
         this.setCrashExpected(true);
-        boolean result = server.shutdown();
+        boolean result = serverThread.shutdown();
         serverLogger.output("Server Stop Command Result: " + result);
       }
     } finally {
@@ -229,21 +242,109 @@ public class InlineServer extends ServerInstance {
       }
     }
 
+    private Object getServerObject() {
+      return server;
+    }
+
     private synchronized boolean initializeServer(OutputStream out) throws Exception {
-        server = startIsolatedServer(serverWorkingDir, serverInstall, out, cmd, serverProperties);
-        running = server != null;
+      server = startIsolatedServer(serverWorkingDir, serverInstall, out, cmd, serverProperties);
+      running = server != null;
       return running;
     }
 
     public synchronized boolean shutdown() {
       if (running) {
         running = false;
-        String result = invokeOnServerMBean(server, "Server","halt",null);
-        serverLogger.output("stopping. " + result);
+        String result = invokeOnServerMBean(server, "Server","stopAndWait",null);
+        serverLogger.output("stopping. restart:" + result);
+        detectThreadLeaks();
         return !Boolean.parseBoolean(result);
       } else {
         return true;
       }
+    }
+  }
+
+  private void detectThreadLeaks() {
+    ThreadGroup grp = (ThreadGroup)invokeOnObject(serverThread.getServerObject(), "getServerThreadGroup");
+    List<Thread> threads = threads(grp);
+    if (!threads.isEmpty()) {
+      LOGGER.warn("Inline server threads are leaking:");
+      LOGGER.warn("server name:{} path:{}", serverName, serverWorkingDir);
+      for (Thread t : threads) {
+        LOGGER.warn("thread group: {}", climbThreadGroupChain(t.getThreadGroup()));
+        LOGGER.warn(getThreadDump(t));
+      }
+      grp.interrupt();
+      leakDetected = false;
+      boolean interrupted = false;
+      try {
+        for (Thread t : threads) {
+          try {
+            t.join(500L);
+            leakDetected = t.isAlive() | leakDetected;
+          } catch (InterruptedException ie) {
+            interrupted = true;
+          }
+        }
+      } finally {
+        if (interrupted) {
+          Thread.currentThread().interrupt();
+        }
+      }
+    }
+  }
+
+  private List<Thread> threads(ThreadGroup grp) {
+    if (grp != null) {
+      int ac = grp.activeCount();
+      Thread[] list = new Thread[ac];
+      grp.enumerate(list, true);
+      return Arrays.stream(list).filter(t -> t != null && t.isAlive()).collect(Collectors.toList());
+    } else {
+      return Collections.emptyList();
+    }
+  }
+
+  private List<ThreadGroup> climbThreadGroupChain(ThreadGroup tg) {
+    List<ThreadGroup> list = new ArrayList<>();
+    while (tg != null) {
+      list.add(tg);
+      tg = tg.getParent();
+    }
+    Collections.reverse(list);
+    return list;
+  }
+
+  private static String getThreadDump(Thread t) {
+    final StringBuilder sb = new StringBuilder(100 * 1024);
+    sb.append("name=");
+    sb.append(t.getName());
+    sb.append(" id=");
+    sb.append(t.getId());
+    sb.append('\n');
+
+    final StackTraceElement[] stea = t.getStackTrace();
+    for (StackTraceElement element : stea) {
+      sb.append("\tat ");
+      sb.append(element.toString());
+      sb.append('\n');
+    }
+    sb.append('\n');
+
+    return sb.toString();
+  }
+
+  @Override
+  public IGalvanServer newInstance() {
+    if (leakDetected) {
+      LOGGER.warn("Leak detected switching to process mode");
+      ServerProcess process = new ServerProcess(serverName, serverInstall, serverWorkingDir, heap,
+          debug, serverProperties, parentOutput, cmd);
+      process.installIntoStripe(stateInterlock, stateManager, this.serverLogger);
+      return process;
+    } else {
+      return this;
     }
   }
 

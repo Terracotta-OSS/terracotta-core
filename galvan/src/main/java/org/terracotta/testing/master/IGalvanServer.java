@@ -39,4 +39,6 @@ public interface IGalvanServer {
   void waitForTermination();
   
   void waitForState(ServerMode mode) throws InterruptedException;
+  
+  IGalvanServer newInstance();
 }
