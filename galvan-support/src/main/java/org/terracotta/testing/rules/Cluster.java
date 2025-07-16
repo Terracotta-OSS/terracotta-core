@@ -38,8 +38,6 @@ public abstract class Cluster extends ExternalResource {
 
   public abstract ClusterControl getClusterControl();
 
-  public abstract TestManager getTestManager();
-
   public abstract void expectCrashes(boolean yes);
 
   public abstract CompletionStage<Void> manualStart(String display);

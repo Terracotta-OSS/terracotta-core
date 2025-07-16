@@ -31,7 +31,6 @@ import org.terracotta.ipceventbus.event.EventListener;
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.common.SimpleEventingStream;
 import org.terracotta.testing.logging.ContextualLogger;
-import org.terracotta.testing.logging.VerboseManager;
 import static org.terracotta.testing.master.ServerMode.ACTIVE;
 
 
@@ -102,6 +101,7 @@ public abstract class ServerInstance implements IGalvanServer {
     return this.isCrashExpected;
   }
 
+  @Override
   public synchronized void setCrashExpected(boolean expect) {
     this.isCrashExpected = expect;
   }

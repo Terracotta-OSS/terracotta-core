@@ -155,29 +155,9 @@ public class BasicExternalCluster extends Cluster {
   }
 
   @Override
-  public TestManager getTestManager() {
-    return new TestManager() {
-      @Override
-      public void testFinished() {
-        stateManager.setTestDidPassIfNotFailed();
-      }
-
-      @Override
-      public void testDidFail(GalvanFailureException failure) {
-        stateManager.testDidFail(failure);
-      }
-
-      @Override
-      public boolean isComplete() throws GalvanFailureException {
-        return stateManager.checkDidPass();
-      }
-    };
+  public ClusterInfo getClusterInfo() {
+      return this.cluster.getClusterInfo();
   }
-
-    @Override
-    public ClusterInfo getClusterInfo() {
-        return this.cluster.getClusterInfo();
-    }
 
   private void internalStart(CompletableFuture<Void> checker) throws Throwable {
     VerboseLogger harnessLogger = new VerboseLogger(System.out, null);
@@ -269,34 +249,30 @@ public class BasicExternalCluster extends Cluster {
           stateManager.waitForFinish();
           didPass = true;
         } catch (GalvanFailureException e) {
-          e.printStackTrace();
           checker.completeExceptionally(e);
           didPass = false;
         } finally {
-          // Whether we passed or failed, bring everything down.
+          setSafeForRun(false);
           try {
-            interlock.forceShutdown();
-          } catch (Exception e) {
-            e.printStackTrace();
-            didPass = false;
-          } finally {
-            setSafeForRun(false);
+            // make sure all servers are down before releasing ports
+            interlock.waitForAllServerTerminated();
+          } catch (GalvanFailureException ge) {
+            
+          }
+          serverPortRefs.forEach(PortManager.PortRef::close);
+          groupPortRefs.forEach(PortManager.PortRef::close);
+          debugPortRefs.stream().filter(Objects::nonNull).forEach(PortManager.PortRef::close);
 
-            serverPortRefs.forEach(PortManager.PortRef::close);
-            groupPortRefs.forEach(PortManager.PortRef::close);
-            debugPortRefs.stream().filter(Objects::nonNull).forEach(PortManager.PortRef::close);
-
-            if (!didPass) {
-              // Typically, we want to interrupt the thread running as the "client" as it might be stuck in a connection
-              // attempt, etc.  When Galvan is run in the purely multi-process mode, this is typically where all
-              // sub-processes would be terminated.  Since we are running the client as another thread, in-process, the
-              // best we can do is interrupt it from a lower-level blocking call.
-              // NOTE:  the "client" is also the thread which created us and will join on our termination, before
-              // returning back to the user code so it is possible that this interruption could be experienced in its
-              // join() call (in which case, we can safely ignore it).
-              isInterruptingClient = true;
-              clientThread.interrupt();
-            }
+          if (!didPass) {
+            // Typically, we want to interrupt the thread running as the "client" as it might be stuck in a connection
+            // attempt, etc.  When Galvan is run in the purely multi-process mode, this is typically where all
+            // sub-processes would be terminated.  Since we are running the client as another thread, in-process, the
+            // best we can do is interrupt it from a lower-level blocking call.
+            // NOTE:  the "client" is also the thread which created us and will join on our termination, before
+            // returning back to the user code so it is possible that this interruption could be experienced in its
+            // join() call (in which case, we can safely ignore it).
+            isInterruptingClient = true;
+            clientThread.interrupt();
           }
         }
       }
@@ -319,7 +295,6 @@ public class BasicExternalCluster extends Cluster {
     try {
       interlock.ignoreServerCrashes(true);
       interlock.forceShutdown();
-      interlock.waitForAllServerTerminated();
     } catch (GalvanFailureException gf) {
       stateManager.testDidFail(gf);
     }
