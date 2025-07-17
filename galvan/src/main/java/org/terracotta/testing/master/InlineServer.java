@@ -163,7 +163,10 @@ public class InlineServer extends ServerInstance {
         serverLogger.output("Crashing server process: " + serverThread);
         // Mark this as expected.
         this.setCrashExpected(true);
-        boolean result = serverThread.shutdown();
+        boolean result;
+        do {
+          result = serverThread.shutdown();
+        } while (!result);
         serverLogger.output("Server Stop Command Result: " + result);
       }
     } finally {
@@ -224,7 +227,7 @@ public class InlineServer extends ServerInstance {
           try (OutputStream events = buildEventingStream(stdout)) {
             if (initializeServer(events)) {
               serverLogger.output("starting server");
-              returnValue = (Boolean)invokeOnObject(server, "waitUntilShutdown");
+              returnValue = (Boolean)invokeOnObject(server, "waitUntilShutdown") && isRunning();
               didTerminateWithStatus(returnValue);
               serverLogger.output("server process exit. restarting:" + returnValue);
             } else {
@@ -244,6 +247,10 @@ public class InlineServer extends ServerInstance {
 
     private Object getServerObject() {
       return server;
+    }
+
+    private synchronized boolean isRunning() {
+      return running;
     }
 
     private synchronized boolean initializeServer(OutputStream out) throws Exception {
