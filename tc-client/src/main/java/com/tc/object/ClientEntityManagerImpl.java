@@ -402,6 +402,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       }
     }
     this.endpointCloser.shutdownNow(); // ignore the return.  nothing we can do
+    this.endpointCloser.shutdown();
     // And then drop them.
     if (logger.isDebugEnabled()) {
       MapListPrettyPrint print = new MapListPrettyPrint();
