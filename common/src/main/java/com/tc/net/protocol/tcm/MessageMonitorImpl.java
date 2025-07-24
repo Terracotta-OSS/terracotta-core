@@ -93,6 +93,7 @@ public class MessageMonitorImpl implements MessageMonitor {
   public void shutdown() {
     currentTask.cancel(true);
     timer.shutdownNow();
+    timer.shutdown();
   }
 
   @Override

@@ -386,6 +386,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 
   public void close() {
     passiveSyncPool.shutdownNow();
+    passiveSyncPool.shutdown();  // bug in java21 under certain class loading scenarios
     while (!waiters.isEmpty()) {
       LOGGER.info("waiters not empty on shutdown.  Removing:" + passiveNodes);
       Iterator<Map.Entry<SyncReplicationActivity.ActivityID, ActivePassiveAckWaiter>> items = waiters.entrySet().iterator();
