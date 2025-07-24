@@ -18,6 +18,7 @@
 package com.tc.util;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -37,7 +38,7 @@ public class SimpleRingBuffer<T> implements Iterable<T> {
   }
   
   public void put(T item) {
-    Objects.nonNull(item);
+    Objects.requireNonNull(item);
     buffer[head++] = item;
     head = head % buffer.length;
   }
@@ -48,26 +49,35 @@ public class SimpleRingBuffer<T> implements Iterable<T> {
 
   @Override
   public Iterator<T> iterator() {
-    final Object[] ref = (buffer[head] != null) ? Arrays.copyOf(buffer, buffer.length) : Arrays.copyOf(buffer, head);
-    final int end = head % ref.length;
-    
-    return new Iterator<T>() {
-      private int pos = (end + 1) % ref.length;
-      
-      @Override
-      public boolean hasNext() {
-        return pos != end;
-      }
+    if (buffer[0] == null) {
+      return Collections.emptyIterator();
+    } else {
+      // there is at least one item in the list;
+      // if the list has not wrapped just reference the non-null list
+      final Object[] ref = (buffer[head] != null) ? Arrays.copyOf(buffer, buffer.length) : Arrays.copyOf(buffer, head);
+      // current head is the oldest item.  If the list hasn't wrapped yet, oldest is the first
+      final int pivot = head != ref.length ? head : 0;
 
-      @Override
-      @SuppressWarnings("unchecked")
-      public T next() {
-        try {
-          return (T)ref[pos++];
-        } finally {
-          pos = pos % ref.length;
+      return new Iterator<T>() {
+        private int pos = pivot;
+        boolean done = false;
+
+        @Override
+        public boolean hasNext() {
+          return !done;
         }
-      }
-    };
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public T next() {
+          try {
+            return (T)ref[pos++];
+          } finally {
+            pos = pos % ref.length;
+            done = pos == pivot;
+          }
+        }
+      };
+    }
   }
 }
