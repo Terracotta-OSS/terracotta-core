@@ -22,9 +22,14 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.CoreConstants;
+import ch.qos.logback.core.FileAppender;
+import ch.qos.logback.core.OutputStreamAppender;
+import ch.qos.logback.core.UnsynchronizedAppenderBase;
 import ch.qos.logback.core.rolling.FixedWindowRollingPolicy;
 import ch.qos.logback.core.rolling.RollingFileAppender;
+import ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy;
 import ch.qos.logback.core.util.FileSize;
 import com.tc.logging.TCLogging;
 import org.slf4j.Logger;
@@ -42,6 +47,9 @@ public class TCLogbackLogging {
   public static final String CONSOLE = TCLogging.CONSOLE_LOGGER_NAME;
   public static final String STDOUT_APPENDER = "STDOUT";
   private static final String TC_PATTERN = "%d [%t] %p %c - %m%n";
+  private static final String SECURITY_LOG_PATTERN = "%d{yyyy-MM-dd HH:mm:ss} %-5level %36X{SECURITY_LOGGER_NAME} - %msg%n";
+  private static final String FILE_EXTENSION = ".log";
+  private static final String FILE_ROLLING_INDEX = ".%i";
   private static final Logger LOGGER = LoggerFactory.getLogger(CONSOLE);
 
   public static void resetLogging() {
@@ -114,11 +122,11 @@ public class TCLogbackLogging {
     String logDir = getPathString(logDirFile);
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
     ch.qos.logback.classic.Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
-
     if (logDirFile != null) {
-      Appender<ILoggingEvent> continuingAppender = installFileAppender(logDir, loggerContext);
+      Appender<ILoggingEvent> continuingAppender = installFileAppender(logDir, "terracotta.server", TC_PATTERN, loggerContext);
       root.addAppender(continuingAppender);
       disableBufferingAppender(continuingAppender);
+      installSecurityLogger(logDirFile);
     } else {
       disableBufferingAppender(null);
     }
@@ -149,8 +157,8 @@ public class TCLogbackLogging {
     }
   }
 
-  private static Appender<ILoggingEvent> installFileAppender(String logDir, LoggerContext loggerContext) {
-    String logLocation = logDir + File.separator + "terracotta.server.log";
+  private static Appender<ILoggingEvent> installFileAppender(String logDir, String logFileName, String logPattern, LoggerContext loggerContext) {
+    String logLocation = logDir + File.separator + logFileName + FILE_EXTENSION;
     LOGGER.info("Log file: {}", logLocation);
 
     RollingFileAppender<ILoggingEvent> fileAppender = new RollingFileAppender<>();
@@ -160,7 +168,7 @@ public class TCLogbackLogging {
 
     PatternLayoutEncoder logEncoder = new PatternLayoutEncoder();
     logEncoder.setContext(loggerContext);
-    logEncoder.setPattern(TC_PATTERN);
+    logEncoder.setPattern(logPattern);
     logEncoder.start();
 
     fileAppender.setEncoder(logEncoder);
@@ -168,7 +176,7 @@ public class TCLogbackLogging {
     FixedWindowRollingPolicy rollingPolicy = new FixedWindowRollingPolicy();
     rollingPolicy.setMinIndex(1);
     rollingPolicy.setMaxIndex(20);
-    rollingPolicy.setFileNamePattern(logDir + File.separator + "terracotta.server.%i.log");
+    rollingPolicy.setFileNamePattern(logDir + File.separator + logFileName + FILE_ROLLING_INDEX + FILE_EXTENSION);
     rollingPolicy.setContext(loggerContext);
     rollingPolicy.setParent(fileAppender);
     rollingPolicy.start();
@@ -205,4 +213,26 @@ public class TCLogbackLogging {
       throw new UncheckedIOException("Error getting canonical path for the logging directory", ioe);
     }
   }
+
+    private static void installSecurityLogger(File logDirFile) {
+        String logDir = getPathString(logDirFile);
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        Appender<ILoggingEvent> fileAppender = installFileAppender(logDir, "terracotta.server.security", SECURITY_LOG_PATTERN, loggerContext);
+
+        PatternLayoutEncoder logEncoder = new PatternLayoutEncoder();
+        logEncoder.setContext(loggerContext);
+        logEncoder.setPattern(SECURITY_LOG_PATTERN);
+        logEncoder.start();
+
+        ConsoleAppender<ILoggingEvent> consoleAppender = new ConsoleAppender<>();
+        consoleAppender.setContext(loggerContext);
+        consoleAppender.setEncoder(logEncoder);
+        consoleAppender.start();
+
+        ch.qos.logback.classic.Logger SECURITY_LOGGER = loggerContext.getLogger("SECURITY_LOGGER");
+        SECURITY_LOGGER.setLevel(Level.DEBUG);
+        SECURITY_LOGGER.setAdditive(false);
+        SECURITY_LOGGER.addAppender(fileAppender);
+        SECURITY_LOGGER.addAppender(consoleAppender);
+    }
 }
