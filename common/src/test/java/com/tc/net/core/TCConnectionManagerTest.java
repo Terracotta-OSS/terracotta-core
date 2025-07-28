@@ -43,8 +43,8 @@ public class TCConnectionManagerTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
     TCPropertiesImpl.getProperties().overwriteTcPropertiesFromConfig(Collections.emptyMap());
-    this.clientConnMgr = new TCConnectionManagerImpl("Client", 0, new ClearTextSocketEndpointFactory());
-    this.serverConnMgr = new TCConnectionManagerImpl("Server", 0, new ClearTextSocketEndpointFactory());
+    this.clientConnMgr = new TCConnectionManagerImpl("Client", null, 0, new ClearTextSocketEndpointFactory());
+    this.serverConnMgr = new TCConnectionManagerImpl("Server", null, 0, new ClearTextSocketEndpointFactory());
     this.lsnr = this.serverConnMgr.createListener(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), new ProtocolAdaptorFactory() {
       @Override
       public TCProtocolAdaptor getInstance() {
@@ -203,7 +203,7 @@ public class TCConnectionManagerTest extends TestCase {
   }
 
   public void testInActiveClientConnections() throws Exception {
-    this.serverConnMgr = new TCConnectionManagerImpl("TestConnMgr", 0, new ClearTextSocketEndpointFactory());
+    this.serverConnMgr = new TCConnectionManagerImpl("TestConnMgr", null, 0, new ClearTextSocketEndpointFactory());
     this.lsnr = this.serverConnMgr.createListener(new InetSocketAddress(0), new ProtocolAdaptorFactory() {
       @Override
       public TCProtocolAdaptor getInstance() {

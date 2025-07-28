@@ -153,7 +153,11 @@ public class GuardianContext {
   }
   
   public static boolean validate(Guardian.Op op, String id, MessageChannel channel) {
-    return getOperationGuardian().validate(op, createGuardContext(id, new Properties(), channel));
+    return validate(op, id, new Properties(), channel);
+  }
+
+  public static boolean validate(Guardian.Op op, String id, Properties props, MessageChannel channel) {
+    return getOperationGuardian().validate(op, createGuardContext(id, props, channel));
   }
 
   public static boolean validate(Guardian.Op op, String id, Properties additional) {

@@ -37,7 +37,9 @@ public interface Guardian {
     SERVER_DUMP,
     SERVER_EXIT,
     GENERIC_OP,
-    AUDIT_OP
+    AUDIT_OP,
+
+    SECURITY_OP
   };
   /**
    * Validate that an operation can proceed based on property context.  

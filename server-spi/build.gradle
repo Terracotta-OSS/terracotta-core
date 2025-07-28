@@ -23,5 +23,6 @@ description = 'terracotta-core server SPI'
 
 dependencies {
   api project(':common-spi')
+  api "org.terracotta:standard-cluster-services:$terracottaApisVersion"
 }
 

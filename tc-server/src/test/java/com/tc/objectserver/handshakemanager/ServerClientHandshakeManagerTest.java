@@ -17,13 +17,26 @@
  */
 package com.tc.objectserver.handshakemanager;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Timer;
+import java.util.function.Supplier;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import org.junit.Before;
+import org.junit.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.slf4j.Logger;
+
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ServerMode;
@@ -38,20 +51,6 @@ import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.entity.LocalPipelineFlushMessage;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
 import com.tc.productinfo.ProductInfo;
-
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Timer;
-import java.util.function.Supplier;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 
 public class ServerClientHandshakeManagerTest {
@@ -198,6 +197,11 @@ public class ServerClientHandshakeManagerTest {
     ClientHandshakeMessage handshake = mock(ClientHandshakeMessage.class);
     when(handshake.getSourceNodeID()).thenReturn(client1);
     when(handshake.getChannel()).thenReturn(mock(MessageChannel.class));
+    when(handshake.getClientAddress()).thenReturn("127.0.0.1");
+    when(handshake.getClientVersion()).thenReturn("1.0");
+    when(handshake.getName()).thenReturn("test");
+    when(handshake.getUUID()).thenReturn("1234567890");
+    when(this.channelManager.getClientIDFor(new ChannelID(1))).thenReturn(client1);
     this.manager.notifyClientConnect(handshake, entityManager, transactionHandler);
     assertTrue(this.manager.isStarted());
     assertTrue(this.manager.getUnconnectedClients().isEmpty());

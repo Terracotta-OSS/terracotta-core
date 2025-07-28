@@ -39,6 +39,7 @@ import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.entity.LocalPipelineFlushMessage;
 import com.tc.objectserver.entity.PlatformEntity;
 import com.tc.objectserver.entity.ReconnectListener;
@@ -46,6 +47,7 @@ import com.tc.objectserver.entity.ReferenceMessage;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
 import com.tc.productinfo.ProductInfo;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.spi.Guardian;
 import com.tc.util.Assert;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,6 +55,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -112,6 +115,14 @@ public class ServerClientHandshakeManager {
     long save = clientID.toLong();
     synchronized (this) {
       this.logger.info("Handling client handshake for " + clientID);
+      Properties props = new Properties();
+      props.setProperty("clientID", clientID.toString());
+      props.setProperty("clientAddress", String.valueOf(handshake.getClientAddress()));
+      props.setProperty("clientVersion", String.valueOf(handshake.getClientVersion()));
+      props.setProperty("clientName", String.valueOf(handshake.getName()));
+      props.setProperty("clientUUID", String.valueOf(handshake.getUUID()));
+      GuardianContext.validate(Guardian.Op.SECURITY_OP, "client handshake started", props);
+
       handshake.getChannel().addAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT, 
           new ClientHandshakeMonitoringInfo(handshake.getClientPID(), handshake.getUUID(), handshake.getName(), handshake.getClientVersion(), handshake.getClientRevision(), handshake.getClientAddress()), false);
       if (canAcceptStats(handshake.getClientVersion())) {
@@ -170,12 +181,27 @@ public class ServerClientHandshakeManager {
 
   public void notifyClientRefused(ClientHandshakeMessage clientMsg, String message) {
     final ClientID clientID = (ClientID) clientMsg.getSourceNodeID();
-    this.channelManager.makeChannelRefuse(clientID, message);
+      Properties props = new Properties();
+      props.setProperty("clientID", clientID.toString());
+      props.setProperty("clientAddress", clientMsg.getClientAddress());
+      props.setProperty("clientVersion", clientMsg.getClientVersion());
+      props.setProperty("clientName", clientMsg.getName());
+      props.setProperty("clientUUID", clientMsg.getUUID());
+      props.setProperty("message", message);
+      GuardianContext.validate(Guardian.Op.SECURITY_OP, "client handshake refused", props);
+      this.channelManager.makeChannelRefuse(clientID, message);
   }
   
   public void notifyDiagnosticClient(ClientHandshakeMessage clientMsg) {
     final ClientID clientID = (ClientID) clientMsg.getSourceNodeID();
-    clientMsg.getChannel().addAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT, 
+       Properties props = new Properties();
+      props.setProperty("clientID", clientID.toString());
+      props.setProperty("clientAddress", clientMsg.getClientAddress());
+      props.setProperty("clientVersion", clientMsg.getClientVersion());
+      props.setProperty("clientName", clientMsg.getName());
+      props.setProperty("clientUUID", clientMsg.getUUID());
+      GuardianContext.validate(Guardian.Op.SECURITY_OP, "diagnostic handshake started", props);
+    clientMsg.getChannel().addAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT,
         new ClientHandshakeMonitoringInfo(clientMsg.getClientPID(), clientMsg.getUUID(), clientMsg.getName(), clientMsg.getClientVersion(), clientMsg.getClientRevision(), clientMsg.getClientAddress()), false);
     ClientHandshakeAckMessage ack = (ClientHandshakeAckMessage)clientMsg.getChannel().createMessage(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE);
     ack.initialize(Collections.emptySet(), clientID, productInfo.version());

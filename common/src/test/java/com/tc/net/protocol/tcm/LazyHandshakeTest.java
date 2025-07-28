@@ -77,8 +77,8 @@ public class LazyHandshakeTest extends TCTestCase {
   }
 
   private void lazySetUp(int proxyPort) {
-    serverConn = new TCConnectionManagerImpl("Server-Connections",  0, new ClearTextSocketEndpointFactory());
-    clientConn = new TCConnectionManagerImpl("Client-Connections", 0, new ClearTextSocketEndpointFactory());
+    serverConn = new TCConnectionManagerImpl("Server-Connections",  null, 0, new ClearTextSocketEndpointFactory());
+    clientConn = new TCConnectionManagerImpl("Client-Connections", null, 0, new ClearTextSocketEndpointFactory());
     serverComms = new CommunicationsManagerImpl(new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
                                                 serverConn,
                                                 new NullConnectionPolicy());

@@ -157,7 +157,6 @@ import com.tc.services.TerracottaServiceProviderRegistryImpl;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.util.Assert;
-import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
 import com.tc.util.startuplock.FileNotCreatedException;
 import com.tc.util.startuplock.LocationNotCreatedException;
@@ -204,6 +203,9 @@ import com.tc.net.core.ClearTextSocketEndpointFactory;
 import com.tc.net.core.DefaultSocketEndpointFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
+import com.tc.net.core.event.TCConnectionErrorEvent;
+import com.tc.net.core.event.TCConnectionEvent;
+import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -238,6 +240,7 @@ import java.util.concurrent.CompletableFuture;
 import org.terracotta.configuration.FailoverBehavior;
 import org.terracotta.server.ServerEnv;
 import com.tc.net.protocol.tcm.TCAction;
+import com.tc.net.utils.ConnectionLogger;
 import com.tc.objectserver.handler.DuplicationTransactionHandler;
 import com.tc.objectserver.handler.RelayTransactionHandler;
 import com.tc.objectserver.persistence.ClusterPersistentState;
@@ -247,8 +250,8 @@ import com.tc.productinfo.ProductInfo;
 import com.tc.productinfo.VersionCompatibility;
 import com.tc.util.version.CollectionVersionCompatibility;
 import com.tc.util.version.DefaultVersionCompatibility;
+import java.util.Properties;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 import org.terracotta.configuration.ConfigurationException;
 
 /**
@@ -568,7 +571,7 @@ public class DistributedObjectServer {
 
     SocketEndpointFactory bufferManagerFactory = getSocketEndpointFactory(platformServiceRegistry);
 
-    TCConnectionManager connectionManager = new TCConnectionManagerImpl(configSetupManager.getServerConfiguration().getName(), commWorkerThreadCount, bufferManagerFactory);
+    TCConnectionManager connectionManager = new TCConnectionManagerImpl(configSetupManager.getServerConfiguration().getName(), new ConnectionLogger("client"), commWorkerThreadCount, bufferManagerFactory);
 
     final MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, logger, threadGroup, connectionManager);
 

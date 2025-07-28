@@ -17,11 +17,21 @@
  */
 package com.tc.objectserver.handler;
 
+import java.net.InetSocketAddress;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.net.core.ProductID;
 import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -29,22 +39,16 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.FetchID;
 import com.tc.object.net.DSOChannelManager;
-import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.core.impl.GuardianContext;
+import static com.tc.objectserver.core.impl.GuardianContext.validate;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.entity.ClientDisconnectMessage;
 import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.PlatformEntity;
-import com.tc.net.core.ProductID;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
-import java.net.InetSocketAddress;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
+import com.tc.spi.Guardian;
+import java.util.Properties;
 
 
 public class ClientChannelLifeCycleHandler implements ChannelManagerEventListener {
@@ -83,6 +87,12 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
       ClientID clientID = (ClientID) nodeID;
       voltronSink.addToSink(createClientDisconnectMessage(clientID));
     }
+    Properties props = new Properties();
+    props.setProperty("address", address.toString());
+    props.setProperty("product", productId.toString());
+    props.setProperty("clientInfo", clientInfo.toString());
+    props.setProperty("nodeId", nodeID.toString());
+    GuardianContext.validate(Guardian.Op.SECURITY_OP, "client disconnect", props);
 
     if (commsManager.isInShutdown()) {
       logger.info("Ignoring transport disconnect for " + nodeID + " while shutting down.");
@@ -130,6 +140,13 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
   }
 
   private void nodeConnected(NodeID nodeID, InetSocketAddress address, ProductID productId, Object clientInfo) {
+    Properties props = new Properties();
+    props.setProperty("address", address.toString());
+    props.setProperty("product", productId.toString());
+    props.setProperty("clientInfo", clientInfo.toString());
+    props.setProperty("nodeId", nodeID.toString());
+    GuardianContext.validate(Guardian.Op.SECURITY_OP, "client connect", props);
+    
     logger.info("Channel Management : Received transport connect.  Starting client " + nodeID + ":" +address + ":" + productId + ":" + clientInfo);
   }
 /**

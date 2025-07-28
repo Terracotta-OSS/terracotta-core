@@ -15,25 +15,15 @@
  *  limitations under the License.
  *
  */
-package com.tc.net.core;
+package com.tc.spi;
 
-import com.tc.net.core.event.TCListenerEventListener;
-
-import java.net.InetSocketAddress;
+import org.terracotta.server.ServerEnv;
 
 /**
- * A handle to a network listening port
- * 
- * @author teck
+ *
  */
-public interface TCListener {
-  public void stop();
-
-  public InetSocketAddress getBindSocketAddress();
-
-  public void addEventListener(TCListenerEventListener lsnr);
-
-  public void removeEventListener(TCListenerEventListener lsnr);
-
-  public boolean isStopped();
+public interface SPIServerEnv {
+  public static SPIServer getServer() {
+    return (SPIServer)ServerEnv.getServer();
+  }
 }

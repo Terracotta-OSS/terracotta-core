@@ -5,13 +5,13 @@ dependency-reduced-pom.xml
 .classpath
 .settings/
 .gradle/
+.vscode/
 
 **/build/
 
 *.iml
 .idea/
 **/bin/
-*~
 nb-configuration.xml
 nbactions.xml
 /common/nbproject/

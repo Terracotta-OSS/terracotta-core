@@ -17,18 +17,22 @@
  */
 package com.tc.object;
 
-import com.tc.net.core.TCConnectionManagerImpl;
+import java.util.Map;
+import java.util.Properties;
+
 import org.slf4j.Logger;
 import org.terracotta.connection.ConnectionPropertyNames;
 
-import com.tc.net.core.SocketEndpointFactory;
 import com.tc.net.core.ProductID;
+import com.tc.net.core.SocketEndpointFactory;
 import com.tc.net.core.TCConnectionManager;
+import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.MessageMonitor;
+import com.tc.net.protocol.tcm.TCAction;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ClientConnectionErrorListener;
@@ -39,10 +43,6 @@ import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForL1;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
-
-import java.util.Map;
-import java.util.Properties;
-import com.tc.net.protocol.tcm.TCAction;
 
 
 public class StandardClientBuilder implements ClientBuilder {
@@ -115,7 +115,7 @@ public class StandardClientBuilder implements ClientBuilder {
 
   @Override
   public TCConnectionManager createConnectionManager(String uuid, String name) {
-    return new TCConnectionManagerImpl(name + "/" + uuid, 0, getSocketEndpointFactory());
+    return new TCConnectionManagerImpl(name + "/" + uuid, null, 0, getSocketEndpointFactory());
   }
 
   protected SocketEndpointFactory getSocketEndpointFactory() {

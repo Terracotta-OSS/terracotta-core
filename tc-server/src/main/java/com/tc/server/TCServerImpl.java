@@ -233,6 +233,10 @@ public class TCServerImpl extends SEDA implements TCServer {
     GuardianContext.validate(Guardian.Op.AUDIT_OP, msg, additional);
   }
 
+  public void security(String msg, Properties additional) {
+    GuardianContext.validate(Guardian.Op.SECURITY_OP, msg, additional);
+  }
+  
   @Override
   public String getConfig() {
     try (InputStream is = this.configurationSetupManager.rawConfigFile()) {

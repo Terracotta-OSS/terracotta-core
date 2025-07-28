@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.state.ConsistencyManager;
-import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
@@ -36,9 +35,14 @@ import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.util.Assert;
 import com.tc.util.State;
+
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import com.tc.objectserver.core.impl.GuardianContext;
+import com.tc.spi.Guardian;
+import java.util.Properties;
 
 
 
@@ -173,6 +177,9 @@ public class L2HACoordinator implements L2Coordinator, ConnectionIDFactoryListen
   @Override
   public void nodeJoined(NodeID nodeID) {
     log(nodeID + " joined the cluster");
+    Properties props = new Properties();
+    props.setProperty("nodeId", nodeID.toString());
+    GuardianContext.validate(Guardian.Op.SECURITY_OP, "server node joined", props);
     if (this.stateManager.isActiveCoordinator()) {
       try {
         this.stateManager.publishActiveState(nodeID);
@@ -199,6 +206,9 @@ public class L2HACoordinator implements L2Coordinator, ConnectionIDFactoryListen
   @Override
   public void nodeLeft(NodeID nodeID) {
     warn(nodeID + " left the cluster");
+    Properties props = new Properties();
+    props.setProperty("nodeId", nodeID.toString());
+    GuardianContext.validate(Guardian.Op.SECURITY_OP, "server node left", props);
     if (this.stateManager.isActiveCoordinator()) {
       Assert.assertFalse(nodeID.getNodeType() == NodeID.CLIENT_NODE_TYPE);
     } else {

@@ -49,7 +49,7 @@ public class NetworkListenerTest extends TestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    connMgr = new TCConnectionManagerImpl("TestCommMgr", 0, new ClearTextSocketEndpointFactory());
+    connMgr = new TCConnectionManagerImpl("TestCommMgr", null, 0, new ClearTextSocketEndpointFactory());
     commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                              new PlainNetworkStackHarnessFactory(), connMgr, new NullConnectionPolicy());
   }

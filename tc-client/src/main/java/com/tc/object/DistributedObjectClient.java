@@ -511,9 +511,6 @@ public class DistributedObjectClient {
         }
       }
     }
-
-    if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L1_SHUTDOWN_FORCE_FINALIZATION)) System
-        .runFinalization();
   }
 
   public void shutdown() {
