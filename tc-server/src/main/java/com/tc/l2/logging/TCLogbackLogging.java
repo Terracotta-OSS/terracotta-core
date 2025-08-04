@@ -47,7 +47,7 @@ public class TCLogbackLogging {
   public static final String CONSOLE = TCLogging.CONSOLE_LOGGER_NAME;
   public static final String STDOUT_APPENDER = "STDOUT";
   private static final String TC_PATTERN = "%d [%t] %p %c - %m%n";
-  private static final String SECURITY_LOG_PATTERN = "%d{yyyy-MM-dd HH:mm:ss} %-5level %36X{SECURITY_LOGGER_NAME} - %msg%n";
+  private static final String SECURITY_LOG_PATTERN = "%d{yyyy-MM-dd HH:mm:ss} %-5level %msg%n";
   private static final String FILE_EXTENSION = ".log";
   private static final String FILE_ROLLING_INDEX = ".%i";
   private static final Logger LOGGER = LoggerFactory.getLogger(CONSOLE);
@@ -229,10 +229,10 @@ public class TCLogbackLogging {
         consoleAppender.setEncoder(logEncoder);
         consoleAppender.start();
 
-        ch.qos.logback.classic.Logger SECURITY_LOGGER = loggerContext.getLogger("SECURITY_LOGGER");
-        SECURITY_LOGGER.setLevel(Level.DEBUG);
-        SECURITY_LOGGER.setAdditive(false);
-        SECURITY_LOGGER.addAppender(fileAppender);
-        SECURITY_LOGGER.addAppender(consoleAppender);
+        ch.qos.logback.classic.Logger securityLogger = loggerContext.getLogger("SECURITY_LOGGER");
+        securityLogger.setLevel(Level.DEBUG);
+        securityLogger.setAdditive(false);
+        securityLogger.addAppender(fileAppender);
+        securityLogger.addAppender(consoleAppender);
     }
 }

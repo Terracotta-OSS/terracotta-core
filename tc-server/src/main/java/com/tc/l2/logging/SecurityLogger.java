@@ -8,12 +8,11 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
-import org.slf4j.MDC;
 
 public class SecurityLogger implements Logger {
 
     private final String name;
-    static final Logger SECURITY_LOGGER = LoggerFactory.getLogger("SECURITY_LOGGER");
+    static final Logger securityLogger = LoggerFactory.getLogger("SECURITY_LOGGER");
 
     public SecurityLogger(String name) {
         if (name == null) {
@@ -22,46 +21,25 @@ public class SecurityLogger implements Logger {
         this.name = name;
     }
 
-    private void logWithMDC(String message, Consumer<String> consumer) {
-        try {
-            MDC.put("SECURITY_LOGGER_NAME", name);
-            consumer.accept(message);
-        } finally {
-            MDC.remove("SECURITY_LOGGER_NAME");
-        }
+    private void logWithName(String message, Consumer<String> consumer) {
+        consumer.accept( name + " - " + message);
     }
 
-    private <T> void logWithMDC(String message, T arg, BiConsumer<String, T> biConsumer) {
-        try {
-            MDC.put("SECURITY_LOGGER_NAME", name);
-            biConsumer.accept(message, arg);
-        } finally {
-            MDC.remove("SECURITY_LOGGER_NAME");
-        }
+    private <T> void logWithName(String message, T arg, BiConsumer<String, T> biConsumer) {
+        biConsumer.accept(name + " - " + message, arg);
     }
 
-    private void logWithMDC(BiConsumer<String, Object[]> biConsumer, String format, Object... arguments) {
-        try {
-            MDC.put("SECURITY_LOGGER_NAME", name);
-            biConsumer.accept(format, arguments);
-        } finally {
-            MDC.remove("SECURITY_LOGGER_NAME");
-        }
+    private void logWithName(BiConsumer<String, Object[]> biConsumer, String format, Object... arguments) {
+        biConsumer.accept(name + " - " + format, arguments);
+    }
+
+    private void logWithName(String format, Object arg1, Object arg2, TriConsumer<String, Object, Object> triConsumer) {
+        triConsumer.accept(name + " - " + format, arg1, arg2);
     }
 
     @FunctionalInterface
     public interface TriConsumer<T, U, V> {
-
         void accept(T t, U u, V v);
-    }
-
-    private void logWithMDC(String format, Object arg1, Object arg2, TriConsumer<String, Object, Object> triConsumer) {
-        try {
-            MDC.put("SECURITY_LOGGER_NAME", name);
-            triConsumer.accept(format, arg1, arg2);
-        } finally {
-            MDC.remove("SECURITY_LOGGER_NAME");
-        }
     }
 
     @Override
@@ -71,32 +49,32 @@ public class SecurityLogger implements Logger {
 
     @Override
     public boolean isTraceEnabled() {
-        return SECURITY_LOGGER.isTraceEnabled();
+        return securityLogger.isTraceEnabled();
     }
 
     @Override
     public void trace(String msg) {
-        logWithMDC(msg, SECURITY_LOGGER::trace);
+        logWithName(msg, securityLogger::trace);
     }
 
     @Override
     public void trace(String format, Object arg) {
-        logWithMDC(format, arg, SECURITY_LOGGER::trace);
+        logWithName(format, arg, securityLogger::trace);
     }
 
     @Override
     public void trace(String format, Object arg1, Object arg2) {
-        logWithMDC(format, arg1, arg1, SECURITY_LOGGER::trace);
+        logWithName(format, arg1, arg1, securityLogger::trace);
     }
 
     @Override
     public void trace(String format, Object... arguments) {
-        logWithMDC(SECURITY_LOGGER::trace, format, arguments);
+        logWithName(securityLogger::trace, format, arguments);
     }
 
     @Override
     public void trace(String msg, Throwable t) {
-        logWithMDC(msg, t, SECURITY_LOGGER::trace);
+        logWithName(msg, t, securityLogger::trace);
     }
 
     @Override
@@ -131,32 +109,32 @@ public class SecurityLogger implements Logger {
 
     @Override
     public boolean isDebugEnabled() {
-        return SECURITY_LOGGER.isDebugEnabled();
+        return securityLogger.isDebugEnabled();
     }
 
     @Override
     public void debug(String msg) {
-        logWithMDC(msg, SECURITY_LOGGER::debug);
+        logWithName(msg, securityLogger::debug);
     }
 
     @Override
     public void debug(String format, Object arg) {
-        logWithMDC(format, arg, SECURITY_LOGGER::debug);
+        logWithName(format, arg, securityLogger::debug);
     }
 
     @Override
     public void debug(String format, Object arg1, Object arg2) {
-        logWithMDC(format, arg1, arg2, SECURITY_LOGGER::debug);
+        logWithName(format, arg1, arg2, securityLogger::debug);
     }
 
     @Override
     public void debug(String format, Object... arguments) {
-        logWithMDC(SECURITY_LOGGER::debug, format, arguments);
+        logWithName(securityLogger::debug, format, arguments);
     }
 
     @Override
     public void debug(String msg, Throwable t) {
-        logWithMDC(msg, t, SECURITY_LOGGER::debug);
+        logWithName(msg, t, securityLogger::debug);
     }
 
     @Override
@@ -191,32 +169,32 @@ public class SecurityLogger implements Logger {
 
     @Override
     public boolean isInfoEnabled() {
-        return SECURITY_LOGGER.isInfoEnabled();
+        return securityLogger.isInfoEnabled();
     }
 
     @Override
     public void info(String msg) {
-        logWithMDC(msg, SECURITY_LOGGER::info);
+        logWithName(msg, securityLogger::info);
     }
 
     @Override
     public void info(String format, Object arg) {
-        logWithMDC(format, arg, SECURITY_LOGGER::info);
+        logWithName(format, arg, securityLogger::info);
     }
 
     @Override
     public void info(String format, Object arg1, Object arg2) {
-        logWithMDC(format, arg1, arg2, SECURITY_LOGGER::info);
+        logWithName(format, arg1, arg2, securityLogger::info);
     }
 
     @Override
     public void info(String format, Object... arguments) {
-        logWithMDC(SECURITY_LOGGER::info, format, arguments);
+        logWithName(securityLogger::info, format, arguments);
     }
 
     @Override
     public void info(String msg, Throwable t) {
-        logWithMDC(msg, t, SECURITY_LOGGER::info);
+        logWithName(msg, t, securityLogger::info);
     }
 
     @Override
@@ -251,32 +229,32 @@ public class SecurityLogger implements Logger {
 
     @Override
     public boolean isWarnEnabled() {
-        return SECURITY_LOGGER.isWarnEnabled();
+        return securityLogger.isWarnEnabled();
     }
 
     @Override
     public void warn(String msg) {
-        logWithMDC(msg, SECURITY_LOGGER::warn);
+        logWithName(msg, securityLogger::warn);
     }
 
     @Override
     public void warn(String format, Object arg) {
-        logWithMDC(format, arg, SECURITY_LOGGER::warn);
+        logWithName(format, arg, securityLogger::warn);
     }
 
     @Override
     public void warn(String format, Object... arguments) {
-        logWithMDC(SECURITY_LOGGER::warn, format, arguments);
+        logWithName(securityLogger::warn, format, arguments);
     }
 
     @Override
     public void warn(String format, Object arg1, Object arg2) {
-        logWithMDC(format, arg1, arg2, SECURITY_LOGGER::warn);
+        logWithName(format, arg1, arg2, securityLogger::warn);
     }
 
     @Override
     public void warn(String msg, Throwable t) {
-        logWithMDC(msg, t, SECURITY_LOGGER::warn);
+        logWithName(msg, t, securityLogger::warn);
     }
 
     @Override
@@ -311,32 +289,32 @@ public class SecurityLogger implements Logger {
 
     @Override
     public boolean isErrorEnabled() {
-        return SECURITY_LOGGER.isErrorEnabled();
+        return securityLogger.isErrorEnabled();
     }
 
     @Override
     public void error(String msg) {
-        logWithMDC(msg, SECURITY_LOGGER::error);
+        logWithName(msg, securityLogger::error);
     }
 
     @Override
     public void error(String format, Object arg) {
-        logWithMDC(format, arg, SECURITY_LOGGER::error);
+        logWithName(format, arg, securityLogger::error);
     }
 
     @Override
     public void error(String format, Object arg1, Object arg2) {
-        logWithMDC(format, arg1, arg2, SECURITY_LOGGER::error);
+        logWithName(format, arg1, arg2, securityLogger::error);
     }
 
     @Override
     public void error(String format, Object... arguments) {
-        logWithMDC(SECURITY_LOGGER::error, format, arguments);
+        logWithName(securityLogger::error, format, arguments);
     }
 
     @Override
     public void error(String msg, Throwable t) {
-        logWithMDC(msg, t, SECURITY_LOGGER::error);
+        logWithName(msg, t, securityLogger::error);
     }
 
     @Override
