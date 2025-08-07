@@ -885,6 +885,7 @@ public class DistributedObjectServer {
           try {
             this.seda.getStageManager().stopAll();
             if (!threadGroup.retire(TimeUnit.SECONDS.toMillis(30L), e->L2Utils.handleInterrupted(logger, e))) {
+              logger.warn("unable to shutdown server threads");
               threadGroup.printLiveThreads(logger::warn);
               threadGroup.interrupt();
             }
