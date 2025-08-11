@@ -17,6 +17,10 @@
  */
 package com.tc.objectserver.core.impl;
 
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.tc.net.ClientID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -28,9 +32,6 @@ import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.server.TCServerImpl;
 import com.tc.spi.Guardian;
 import com.tc.util.Assert;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  *
@@ -56,7 +57,11 @@ public class GuardianContext {
       props.setProperty("clientID", Long.toString(cid.toLong()));
       return props;
     } else {
-      return new Properties();
+      Properties props = new Properties();
+      if (callName != null) {
+        props.setProperty("id", callName);
+      }
+      return props;
     }
   }
   
