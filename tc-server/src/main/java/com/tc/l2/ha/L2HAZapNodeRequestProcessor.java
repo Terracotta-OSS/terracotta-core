@@ -30,11 +30,15 @@ import com.tc.net.NodeID;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.ZapEventListener;
 import com.tc.net.groups.ZapNodeRequestProcessor;
+import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
+import com.tc.spi.Guardian;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
@@ -142,6 +146,13 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
   public void incomingZapNodeRequest(NodeID nodeID, int zapNodeType, String reason, long[] weights) {
     assertOnType(zapNodeType, reason);
     if (stateManager.isActiveCoordinator()) {
+      Properties props = new Properties();
+      props.setProperty("node", nodeID.toString());
+      props.setProperty("type", Integer.toString(zapNodeType));
+      props.setProperty("reason", reason);
+      props.setProperty("weights", Arrays.toString(weights));
+      GuardianContext.validate(Guardian.Op.SECURITY_OP, "zap request received", props);
+      
       logger.warn(StateManager.ACTIVE_COORDINATOR + " received Zap Node request from another "
                   + StateManager.ACTIVE_COORDINATOR + "\n" + getFormatedError(nodeID, zapNodeType, reason));
       handleSplitBrainScenario(nodeID, zapNodeType, reason, weights);

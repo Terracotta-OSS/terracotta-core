@@ -102,7 +102,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static java.util.stream.Collectors.toSet;
 import org.terracotta.server.ServerEnv;
 import com.tc.net.protocol.tcm.TCAction;
+import com.tc.net.utils.ConnectionLogger;
 import java.util.Iterator;
+import java.util.Properties;
 import java.util.function.Supplier;
 
 
@@ -239,7 +241,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
                                                               .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY), ServerEnv.getServer().getIdentifier() + " - TCGroupManager");
     
     if (connectionManager == null) {
-      connectionManager = new TCConnectionManagerImpl(ServerEnv.getServer().getIdentifier() + " - " + CommunicationsManager.COMMSMGR_GROUPS, serverCount <= 1 ? 0 :
+      connectionManager = new TCConnectionManagerImpl(ServerEnv.getServer().getIdentifier() + " - " + CommunicationsManager.COMMSMGR_GROUPS, new ConnectionLogger("server"), serverCount <= 1 ? 0 :
         serverCount, bufferManagerFactory);
     }
     communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), messageRouter,
@@ -425,6 +427,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
     boolean added = membersAdd(member);
     if (added) {
+      Properties props = new Properties();
+      props.setProperty("nodeID", member.getPeerNodeID().toString());
+      GuardianContext.validate(Guardian.Op.SECURITY_OP, "server member added to the group", props, member.getChannel());
       member.setTCGroupManager(this);
       return true;
     } else {
@@ -517,6 +522,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private void shutdownMember(TCGroupMember member) {
     member.setReady(false);
     member.close();
+    Properties props = new Properties();
+    props.setProperty("nodeID", member.getPeerNodeID().toString());
+    GuardianContext.validate(Guardian.Op.SECURITY_OP, "server member removed from the group", props, member.getChannel());
   }
 
   private void notifyAnyPendingRequests(TCGroupMember member) {

@@ -84,13 +84,13 @@ public class TCGroupMessageWrapperTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    clientConns = new TCConnectionManagerImpl("TestCommsMgr-Client", 0, new ClearTextSocketEndpointFactory());
+    clientConns = new TCConnectionManagerImpl("TestCommsMgr-Client", null, 0, new ClearTextSocketEndpointFactory());
     clientComms = new CommunicationsManagerImpl(monitor, new TCMessageRouterImpl(),
                                                 new PlainNetworkStackHarnessFactory(), clientConns,
                                                 new NullConnectionPolicy(), new DisabledHealthCheckerConfigImpl(),
                                                 new TransportHandshakeErrorNullHandler(),  Collections.emptyMap(),
                                                 Collections.emptyMap());
-    serverConns = new TCConnectionManagerImpl("TestCommsMgr-Server", 0, new ClearTextSocketEndpointFactory());
+    serverConns = new TCConnectionManagerImpl("TestCommsMgr-Server", null, 0, new ClearTextSocketEndpointFactory());
     serverComms = new CommunicationsManagerImpl(monitor, new TCMessageRouterImpl(),
                                                 new PlainNetworkStackHarnessFactory(), serverConns,
                                                 new NullConnectionPolicy(), new DisabledHealthCheckerConfigImpl(),

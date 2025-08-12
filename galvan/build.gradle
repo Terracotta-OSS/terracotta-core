@@ -33,7 +33,7 @@ dependencies {
     api "org.terracotta:terracotta-utilities-port-chooser:0.0.19"
 
     testImplementation "junit:junit:$junitVersion"
-    testImplementation "org.mockito:mockito-inline:4.11.0"
+    testImplementation "org.mockito:mockito-core:$mockitoVersion"
     
     terracottaKit project(":tc-server")
     terracottaKit project(":terracotta")

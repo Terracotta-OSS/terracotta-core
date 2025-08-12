@@ -107,14 +107,14 @@ try {
     clientMessageRouter = new TCMessageRouterImpl();
     serverMessageRouter = new TCMessageRouterImpl();
     MessageMonitor mm = new NullMessageMonitor();
-    clientConns = new TCConnectionManagerImpl("TestCommMgr-client", 0, new ClearTextSocketEndpointFactory());
+    clientConns = new TCConnectionManagerImpl("TestCommMgr-client", null, 0, new ClearTextSocketEndpointFactory());
     clientComms = new CommunicationsManagerImpl(mm, clientMessageRouter,
                                                 clientStackHarnessFactory, clientConns, new NullConnectionPolicy(),
                                                 new DisabledHealthCheckerConfigImpl(), new TransportHandshakeErrorHandlerForL1(), 
                                                 Collections.<TCMessageType, Class<? extends TCAction>>emptyMap(),
                                                 Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
 
-    serverConns = new TCConnectionManagerImpl("TestCommMgr-server", 0, new ClearTextSocketEndpointFactory());
+    serverConns = new TCConnectionManagerImpl("TestCommMgr-server", null, 0, new ClearTextSocketEndpointFactory());
     serverComms = new CommunicationsManagerImpl(mm, serverMessageRouter,
                                                 serverStackHarnessFactory, serverConns, new NullConnectionPolicy(),
                                                 new DisabledHealthCheckerConfigImpl(), new TransportHandshakeErrorNullHandler(),
@@ -280,17 +280,17 @@ try {
 
     MessageMonitor mm = new NullMessageMonitor();
     
-    clientConns = new TCConnectionManagerImpl("TestCommMgr-client-1", 0, new ClearTextSocketEndpointFactory());
+    clientConns = new TCConnectionManagerImpl("TestCommMgr-client-1", null, 0, new ClearTextSocketEndpointFactory());
     clientComms = new CommunicationsManagerImpl(mm, new PlainNetworkStackHarnessFactory(),
                                                 clientConns, 
                                                 new NullConnectionPolicy());
 
-    TCConnectionManager serverConns1 = new TCConnectionManagerImpl("TestCommMgr-server-1", 0, new ClearTextSocketEndpointFactory());
+    TCConnectionManager serverConns1 = new TCConnectionManagerImpl("TestCommMgr-server-1", null, 0, new ClearTextSocketEndpointFactory());
     CommunicationsManagerImpl serverComms1 = new CommunicationsManagerImpl(mm,
                                                                        new PlainNetworkStackHarnessFactory(),
                                                                        serverConns1, 
                                                                        new NullConnectionPolicy());
-    TCConnectionManager serverConns2 = new TCConnectionManagerImpl("TestCommMgr-server-2", 0, new ClearTextSocketEndpointFactory());
+    TCConnectionManager serverConns2 = new TCConnectionManagerImpl("TestCommMgr-server-2", null, 0, new ClearTextSocketEndpointFactory());
     CommunicationsManagerImpl serverComms2 = new CommunicationsManagerImpl(mm,
                                                                        new PlainNetworkStackHarnessFactory(),
                                                                        serverConns2, new NullConnectionPolicy());
@@ -301,7 +301,7 @@ try {
     addCommsMappingAndRouting(clientWatcher, serverWatcher, serverComms2);
     NetworkListener lsnr2 = getListener(clientWatcher, serverWatcher, false, serverComms2);
 
-    TCConnectionManager clientConns2 = new TCConnectionManagerImpl("TestCommMgr-client-2", 0, new ClearTextSocketEndpointFactory());
+    TCConnectionManager clientConns2 = new TCConnectionManagerImpl("TestCommMgr-client-2", null, 0, new ClearTextSocketEndpointFactory());
     CommunicationsManager clComms = new CommunicationsManagerImpl(mm,
                                                                   new PlainNetworkStackHarnessFactory(),
                                                                   clientConns2, new NullConnectionPolicy());

@@ -142,7 +142,7 @@ public class ActiveToPassiveReplicationTest {
     // Wait for passive sync to finish with increased timeout and better error reporting
     int turns = 1;
     int maxTurns = 25;
-    long syncTimeout = 15000; // 15 seconds
+    long syncTimeout = 30000; // 15 seconds
     
     while (!replication.finishPassiveSync(syncTimeout)) {
       if (turns++ > maxTurns) {

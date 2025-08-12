@@ -28,6 +28,7 @@ import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.impl.JMXSubsystem;
 import com.tc.productinfo.ProductInfo;
 import com.tc.spi.Pauseable;
+import com.tc.spi.SPIServer;
 import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
@@ -256,11 +257,11 @@ public class Bootstrap implements BootstrapService {
     }
   }
 
-  private static interface PauseableServer extends Server, Pauseable {
+  private static interface PauseableServer extends SPIServer, Pauseable {
 
   }
 
-  private Server wrap(ServerConfigurationManager config, List<String> args, ServiceLocator loader, TCServerImpl impl) {
+  private SPIServer wrap(ServerConfigurationManager config, List<String> args, ServiceLocator loader, TCServerImpl impl) {
     return new PauseableServer() {
 
       @Override
@@ -474,6 +475,11 @@ public class Bootstrap implements BootstrapService {
       @Override
       public void audit(String msg, Properties additional) {
         impl.audit(msg, additional);
+      }
+
+      @Override
+      public void security(String msg, Properties additional) {
+        impl.security(msg, additional);
       }
     };
   }

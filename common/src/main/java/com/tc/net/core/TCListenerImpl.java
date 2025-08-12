@@ -26,7 +26,6 @@ import com.tc.net.core.event.TCListenerEvent;
 import com.tc.net.core.event.TCListenerEventListener;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
 import com.tc.util.Assert;
-import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.TCExceptionResultException;
 import com.tc.util.concurrent.TCFuture;

@@ -1,5 +1,3 @@
-target/
-dependency-reduced-pom.xml
 
 .project
 .classpath
@@ -9,14 +7,4 @@ dependency-reduced-pom.xml
 **/build/
 
 *.iml
-.idea/
-**/bin/
-*~
-nb-configuration.xml
-nbactions.xml
-/common/nbproject/
-/dso-l2/nbproject/
-/dso-l1/nbproject/
-/common-spi/nbproject/
-/default-configuration/nbproject/
 

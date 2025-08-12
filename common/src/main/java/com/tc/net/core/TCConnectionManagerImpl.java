@@ -72,11 +72,11 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   private final TCDirectByteBufferCache buffers = new TCDirectByteBufferCache(TCByteBufferFactory.getFixedBufferSize(), 16 * 1024);
 
   public TCConnectionManagerImpl() {
-    this("ConnectionMgr", 0, new ClearTextSocketEndpointFactory());
+    this("ConnectionMgr", null, 0, new ClearTextSocketEndpointFactory());
   }
 
-  public TCConnectionManagerImpl(String name, int workerCommCount, SocketEndpointFactory socketEndpointFactory) {
-    this.connEvents = new ConnectionEvents();
+  public TCConnectionManagerImpl(String name, TCConnectionEventListener listener, int workerCommCount, SocketEndpointFactory socketEndpointFactory) {
+    this.connEvents = new ConnectionEvents(listener);
     this.listenerEvents = new ListenerEvents();
     this.socketParams = new SocketParams();
     this.socketEndpointFactory = socketEndpointFactory;
@@ -269,10 +269,19 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   }
 
   static class ConnectionEvents implements TCConnectionEventListener {
+    private final TCConnectionEventListener subl;
+
+    public ConnectionEvents(TCConnectionEventListener subl) {
+      this.subl = subl;
+    }
+
     @Override
     public final void connectEvent(TCConnectionEvent event) {
       if (logger.isDebugEnabled()) {
         logger.debug("connect event: " + event.toString());
+      }
+      if (subl != null) {
+        subl.connectEvent(event);
       }
     }
 
@@ -280,6 +289,9 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     public final void closeEvent(TCConnectionEvent event) {
       if (logger.isDebugEnabled()) {
         logger.debug("close event: " + event.toString());
+      }
+      if (subl != null) {
+        subl.closeEvent(event);
       }
     }
 
@@ -297,6 +309,9 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
           } else {
             logger.error("Exception: ", err);
           }
+          if (subl != null) {
+            subl.errorEvent(event);
+          }
         }
       } finally {
         event.getSource().asynchClose();
@@ -308,7 +323,9 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
       if (logger.isDebugEnabled()) {
         logger.debug("EOF event: " + event.toString());
       }
-
+      if (subl != null) {
+        subl.endOfFileEvent(event);
+      }
       event.getSource().asynchClose();
     }
   }

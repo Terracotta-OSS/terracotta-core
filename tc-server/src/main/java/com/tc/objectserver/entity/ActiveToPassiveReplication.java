@@ -50,13 +50,15 @@ import com.tc.l2.state.ServerMode;
 import com.tc.net.ServerID;
 import com.tc.net.utils.L2Utils;
 import com.tc.object.session.SessionID;
+import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.handler.ReplicationReceivingAction;
+import com.tc.spi.Guardian;
 import com.tc.util.DaemonThreadFactory;
 import java.util.AbstractSet;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -171,6 +173,10 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     SessionID session = prime(newNode);
     if (session.isValid()) {
       LOGGER.info("Starting sync to node: {} session: {}", newNode, session);
+      Properties props = new Properties();
+      props.setProperty("server", newNode.toString());
+      props.setProperty("session", session.toString());
+      GuardianContext.validate(Guardian.Op.SECURITY_OP, "passive sync started", props);
       executePassiveSync(newNode, session);
       return true;
     } else {
@@ -215,6 +221,10 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       }
       //  passive sync done message.  causes passive to go into passive standby mode
       LOGGER.info("Finished sync to node: {}", newNode);
+      Properties props = new Properties();
+      props.setProperty("server", newNode.toString());
+      props.setProperty("session", session.toString());
+      GuardianContext.validate(Guardian.Op.SECURITY_OP, "passive sync completed", props);
       replicateActivity(SyncReplicationActivity.createEndSyncMessage(TCByteBufferFactory.wrap(replicateEntityPersistor())), Collections.singleton(session)).waitForCompleted();
       sync.end();
       sync.commit();
@@ -224,9 +234,9 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private byte[] replicateEntityPersistor() {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     try {
-      ObjectOutputStream data = new ObjectOutputStream(out);
-      persistor.serialize(data);
-      data.close();
+      try (ObjectOutputStream data = new ObjectOutputStream(out)) {
+        persistor.serialize(data);
+      }
       return out.toByteArray();
     } catch (IOException ioe) {
       
