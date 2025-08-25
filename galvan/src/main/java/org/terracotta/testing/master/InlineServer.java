@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +49,7 @@ public class InlineServer extends ServerInstance {
   private final Path serverWorkingDir;
   private final Properties serverProperties;
   private final OutputStream parentOutput;
-  private final String[] cmd;
+  private final Supplier<String[]> cmd;
 
 
   private final int heap;
@@ -56,7 +57,7 @@ public class InlineServer extends ServerInstance {
   private boolean leakDetected = false;
   private ServerThread serverThread;
 
-  public InlineServer(String serverName, Path serverInstall, Path serverWorkingDir, int heap, int debug, Properties serverProperties, OutputStream out, String[] cmd) {
+  public InlineServer(String serverName, Path serverInstall, Path serverWorkingDir, int heap, int debug, Properties serverProperties, OutputStream out, Supplier<String[]> cmd) {
     super(serverName);
     // We need to specify a positive integer as the heap size.
     this.serverInstall = serverInstall;
@@ -68,8 +69,16 @@ public class InlineServer extends ServerInstance {
     this.heap = heap;
   }
 
-  public InlineServer(String serverName, Path serverInstall, Path serverWorkingDir, Properties serverProperties, OutputStream out, String[] cmd) {
+  public InlineServer(String serverName, Path serverInstall, Path serverWorkingDir, int heap, int debug, Properties serverProperties, OutputStream out, String[] cmd) {
+    this(serverName, serverInstall, serverWorkingDir, heap, debug, serverProperties, out, ()->cmd);
+  }
+
+  public InlineServer(String serverName, Path serverInstall, Path serverWorkingDir, Properties serverProperties, OutputStream out, Supplier<String[]> cmd) {
     this(serverName, serverInstall, serverWorkingDir, 512, 0, serverProperties, out, cmd);
+  }
+
+  public InlineServer(String serverName, Path serverInstall, Path serverWorkingDir, Properties serverProperties, OutputStream out, String[] cmd) {
+    this(serverName, serverInstall, serverWorkingDir, 512, 0, serverProperties, out, ()->cmd);
   }
 
   /**
@@ -254,7 +263,7 @@ public class InlineServer extends ServerInstance {
     }
 
     private synchronized boolean initializeServer(OutputStream out) throws Exception {
-      server = startIsolatedServer(serverWorkingDir, serverInstall, out, cmd, serverProperties);
+      server = startIsolatedServer(serverWorkingDir, serverInstall, out, cmd.get(), serverProperties);
       running = server != null;
       return running;
     }

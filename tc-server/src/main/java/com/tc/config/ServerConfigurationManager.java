@@ -37,8 +37,12 @@ import java.util.Properties;
 import org.terracotta.configuration.ConfigurationException;
 import com.tc.text.PrettyPrintable;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ServerConfigurationManager implements PrettyPrintable {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(ServerConfigurationManager.class);
 
   private final ConfigurationProvider configurationProvider;
   private final ServiceLocator serviceLocator;
@@ -54,6 +58,8 @@ public class ServerConfigurationManager implements PrettyPrintable {
     Objects.requireNonNull(configurationProvider);
     Objects.requireNonNull(classLoader);
     Objects.requireNonNull(startUpArgs);
+
+    LOGGER.info("server started with the following command line arguments {}", startUpArgs);
 
     this.configurationProvider = configurationProvider;
     this.serviceLocator = classLoader;

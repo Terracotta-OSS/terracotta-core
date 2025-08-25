@@ -24,6 +24,8 @@ public enum ServerMode {
   UNKNOWN,
   DIAGNOSTIC,
   PASSIVE,
+  RELAY,
+  REPLICA,
   ACTIVE,
   STARTUP,
   SHUTDOWN,

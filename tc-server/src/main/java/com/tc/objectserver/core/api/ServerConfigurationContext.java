@@ -46,7 +46,7 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String PASSIVE_REPLICATION_STAGE                            = "passive_replication_stage";
   public static final String PASSIVE_OUTGOING_RESPONSE_STAGE                            = "passive_outgoing_response_stage";
   public static final String PASSIVE_RELAY_STAGE                            = "passive_relay_stage";
-  public static final String PASSIVE_DUPLICATE_STAGE                            = "passive_duplicate_stage";
+  public static final String PASSIVE_REPLICA_STAGE                            = "passive_replica_stage";
   public static final String PASSIVE_REPLICATION_ACK_STAGE                            = "passive_replication_ack_stage";
 
   public static final String PLATFORM_INFORMATION_REQUEST                       = "platform_information_request";

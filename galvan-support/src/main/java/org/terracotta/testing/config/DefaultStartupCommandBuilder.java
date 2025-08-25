@@ -137,6 +137,10 @@ public class DefaultStartupCommandBuilder implements StartupCommandBuilder, Clon
     return stripeName;
   }
 
+  public StripeConfiguration getStripeConfiguration() {
+    return this.stripeConfig;
+  }
+
   public boolean isConsistentStartup() {
     return stripeConfig.isConsistent();
   }

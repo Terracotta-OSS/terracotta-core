@@ -1002,7 +1002,7 @@ public class DistributedObjectServer {
         ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_FLUSH_STAGE,
         ServerConfigurationContext.PASSIVE_TO_ACTIVE_DRIVER_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_STAGE,
-        ServerConfigurationContext.PASSIVE_DUPLICATE_STAGE,
+        ServerConfigurationContext.PASSIVE_REPLICA_STAGE,
         ServerConfigurationContext.PASSIVE_RELAY_STAGE,
         ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE,
         ServerConfigurationContext.REQUEST_PROCESSOR_STAGE,
@@ -1046,27 +1046,34 @@ public class DistributedObjectServer {
 
   private StageController createStageController(ProcessTransactionHandler pth) {
     StageController control = new StageController(this::getContext);
+//  PASSIVE-REPLICA
+
 //  PASSIVE-RELAY
-    control.addStageToState(ServerMode.RELAY.getState(), ServerConfigurationContext.PASSIVE_DUPLICATE_STAGE);
+    control.addStageToState(ServerMode.RELAY.getState(), ServerConfigurationContext.PASSIVE_REPLICA_STAGE);
     control.addStageToState(ServerMode.RELAY.getState(), ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
     control.addStageToState(ServerMode.RELAY.getState(), ServerConfigurationContext.PASSIVE_RELAY_STAGE);
     control.addStageToState(ServerMode.RELAY.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
 //  PASSIVE-UNINITIALIZED handle replicate messages right away.
     // NOTE:  PASSIVE_OUTGOING_RESPONSE_STAGE must be active whenever PASSIVE_REPLICATION_STAGE is.
-    control.addStageToState(ServerMode.UNINITIALIZED.getState(), ServerConfigurationContext.PASSIVE_DUPLICATE_STAGE);
+    control.addStageToState(ServerMode.UNINITIALIZED.getState(), ServerConfigurationContext.PASSIVE_REPLICA_STAGE);
     control.addStageToState(ServerMode.UNINITIALIZED.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
     control.addStageToState(ServerMode.UNINITIALIZED.getState(), ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
     control.addStageToState(ServerMode.UNINITIALIZED.getState(), ServerConfigurationContext.REQUEST_PROCESSOR_STAGE);
 //  REPLICATION needs to continue in STANDBY so include that stage here.  SYNC also needs to be handled.
-    control.addStageToState(ServerMode.SYNCING.getState(), ServerConfigurationContext.PASSIVE_DUPLICATE_STAGE);
+    control.addStageToState(ServerMode.SYNCING.getState(), ServerConfigurationContext.PASSIVE_REPLICA_STAGE);
     control.addStageToState(ServerMode.SYNCING.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
     control.addStageToState(ServerMode.SYNCING.getState(), ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
     control.addStageToState(ServerMode.SYNCING.getState(), ServerConfigurationContext.REQUEST_PROCESSOR_STAGE);
 //  REPLICATION needs to continue in STANDBY so include that stage here. SYNC goes away
-    control.addStageToState(ServerMode.PASSIVE.getState(), ServerConfigurationContext.PASSIVE_DUPLICATE_STAGE);
+    control.addStageToState(ServerMode.PASSIVE.getState(), ServerConfigurationContext.PASSIVE_REPLICA_STAGE);
     control.addStageToState(ServerMode.PASSIVE.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
     control.addStageToState(ServerMode.PASSIVE.getState(), ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
     control.addStageToState(ServerMode.PASSIVE.getState(), ServerConfigurationContext.REQUEST_PROCESSOR_STAGE);
+//  PASSIVE-REPLICA is like PASSIVE-STANDBY    
+    control.addStageToState(ServerMode.REPLICA.getState(), ServerConfigurationContext.PASSIVE_REPLICA_STAGE);
+    control.addStageToState(ServerMode.REPLICA.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
+    control.addStageToState(ServerMode.REPLICA.getState(), ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
+    control.addStageToState(ServerMode.REPLICA.getState(), ServerConfigurationContext.REQUEST_PROCESSOR_STAGE);
 //  turn on the process transaction handler, the active to passive driver, and the replication ack handler, replication handler needs to be shutdown and empty for
 //  active to start
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.SINGLE_THREADED_FAST_PATH);
@@ -1172,7 +1179,7 @@ public class DistributedObjectServer {
       NodeID myNodeId;
       Configuration config = this.configSetupManager.getConfiguration();
       if (config.isRelayDestination()) {
-        consoleLogger.info("connectiong to {} for duplication", config.getRelayPeer());
+        consoleLogger.info("connecting to {} for duplication", config.getRelayPeer());
         myNodeId = this.groupCommManager.join(this.configSetupManager.getGroupConfiguration().directConnect(config.getRelayPeer()));
       } else {
         myNodeId = this.groupCommManager.join(this.configSetupManager.getGroupConfiguration());
@@ -1409,7 +1416,7 @@ public class DistributedObjectServer {
   
   private void routeRelayMessages(StateManager stateMgr, Configuration config) {
     DuplicationTransactionHandler handler = new DuplicationTransactionHandler(stateMgr, n->config.isRelayDestination(), groupCommManager);
-    Stage<RelayMessage> relays = this.seda.getStageManager().createStage(ServerConfigurationContext.PASSIVE_DUPLICATE_STAGE, RelayMessage.class, handler.getEventHandler(), 1);
+    Stage<RelayMessage> relays = this.seda.getStageManager().createStage(ServerConfigurationContext.PASSIVE_REPLICA_STAGE, RelayMessage.class, handler.getEventHandler(), 1);
     this.groupCommManager.routeMessages(RelayMessage.class, relays.getSink());
   }
 }

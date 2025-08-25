@@ -17,14 +17,15 @@
  */
 package com.tc.l2.state;
 
+import java.util.Set;
+
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupException;
-import com.tc.util.State;
-import java.util.Set;
 import com.tc.text.PrettyPrintable;
+import com.tc.util.State;
 
 
 public interface StateManager extends PrettyPrintable {
@@ -35,7 +36,7 @@ public interface StateManager extends PrettyPrintable {
   public final State       PASSIVE_SYNCING = new State("PASSIVE-SYNCING");
   public final State       PASSIVE_STANDBY      = new State("PASSIVE-STANDBY");
   public final State       PASSIVE_RELAY      = new State("PASSIVE-RELAY");
-  public final State       PASSIVE_DUPLICATE      = new State("PASSIVE-DUPLICATE");
+  public final State       PASSIVE_REPLICA      = new State("PASSIVE-REPLICA");
   public final State       START_STATE          = new State("START-STATE");
   public final State       STOP_STATE           = new State("STOP-STATE");
   public final State       DIAGNOSTIC_STATE           = new State("DIAGNOSTIC");

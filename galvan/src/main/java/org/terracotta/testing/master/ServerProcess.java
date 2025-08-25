@@ -48,7 +48,7 @@ public class ServerProcess extends ServerInstance {
   private final Properties serverProperties;
   private final Path serverInstall;
   private final Path serverWorkingDir;
-  private final String[] startupCommand;
+  private final Supplier<String[]> startupCommand;
   private final OutputStream parentOutput;
 
   
@@ -67,10 +67,15 @@ public class ServerProcess extends ServerInstance {
       })
     );
   }
+  
+  public ServerProcess(String serverName, Path serverInstall, Path serverWorkingDir, int heapInM,
+          int debugPort, Properties serverProperties, OutputStream out, String[] startupCommand) {
+    this(serverName, serverInstall, serverWorkingDir, heapInM, debugPort, serverProperties, out, ()->startupCommand);
+  }
 
   public ServerProcess(String serverName, Path serverInstall, Path serverWorkingDir, int heapInM,
           int debugPort, Properties serverProperties, OutputStream out,
-                       String[] startupCommand) {
+                       Supplier<String[]> startupCommand) {
     super(serverName);
     // We need to specify a positive integer as the heap size.
     this.heapInM = heapInM;
@@ -133,7 +138,7 @@ public class ServerProcess extends ServerInstance {
         setStreams(out, stderr);
         // The "build()" starts the process so wrap it in an exit waiter.  We can then drop it since we will can't explicitly terminate it until it reports our PID (at which point we will declare it "running").
         ExitWaiter exitWaiter = new ExitWaiter(()->AnyProcess.newBuilder()
-            .command(createCommand(javaHome, serverInstall, startupCommand))
+            .command(createCommand(javaHome, serverInstall, startupCommand.get()))
             .workingDir(this.serverWorkingDir.toFile())
             .env("JAVA_HOME", javaHome)
             .pipeStdout(out)
