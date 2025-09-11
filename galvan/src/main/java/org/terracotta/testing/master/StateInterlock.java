@@ -81,12 +81,19 @@ public class StateInterlock implements IGalvanStateInterlock {
     this.runningClients.add(runningClient);
   }
 
+  public synchronized void waitForClientTermination() throws GalvanFailureException {
+    waitForClientTermination(0);
+  }
 
   // ----- WAITING-----
-  public synchronized void waitForClientTermination() throws GalvanFailureException {
+  public synchronized void waitForClientTermination(long timeout) throws GalvanFailureException {
     this.logger.output("> waitForClientTermination");
     while (!this.sharedLockState.checkDidPass() && !this.runningClients.isEmpty()) {
-      safeWait();
+      try {
+        wait(timeout);
+      } catch (InterruptedException ie) {
+        throw new GalvanFailureException("interrupted", ie);
+      }
     }
     this.logger.output("< waitForClientTermination");
   }
@@ -118,7 +125,13 @@ public class StateInterlock implements IGalvanStateInterlock {
     this.servers.forEach(server->server.waitForTermination());
     this.logger.output("< waitForAllServerTerminated " + this.servers);
   }
-  
+
+  public void waitForAllServerTerminated(long perServerTimeLimit) throws GalvanFailureException {
+    this.logger.output("> waitForAllServerTerminated " + this.servers);
+    this.servers.forEach(server->server.waitForTermination(perServerTimeLimit));
+    this.logger.output("< waitForAllServerTerminated " + this.servers);
+  }
+
   private void safeWait() throws GalvanFailureException {
     try {
       wait();
@@ -219,6 +232,7 @@ public class StateInterlock implements IGalvanStateInterlock {
         }
 
         collectAllRunningServers().forEach(this::safeStop);
+        collectAllRunningServers().forEach(this::safeWaitForTermination);
       }
       if (System.currentTimeMillis() > timeExpired) {
         this.logger.output("* forceShutdown FAILED waiting on active: " + (getActiveServer() == null)
@@ -232,17 +246,20 @@ public class StateInterlock implements IGalvanStateInterlock {
 
   private void safeStop(IGalvanServer server) {
     try {
-      long start = System.currentTimeMillis();
-      this.logger.output("< safeStop " + server.toString());
       this.logger.output("Stopping " + server);
       server.stop();
-      this.logger.output("> safeStop " + server.toString() + " " + (System.currentTimeMillis() - start) + "ms");
     } catch (InterruptedException e) {
       // Not expected in this usage - we are shutting down.
       Assert.unexpected(e);
     }
   }
 
+  private void safeWaitForTermination(IGalvanServer server) {
+    long start = System.currentTimeMillis();
+    this.logger.output("< waiting for termination " + server.toString());
+    server.waitForTermination(5000);
+    this.logger.output("> waiting for termination " + server.toString() + " " + (System.currentTimeMillis() - start) + "ms");
+  }
 
   @Override
   public String toString() {

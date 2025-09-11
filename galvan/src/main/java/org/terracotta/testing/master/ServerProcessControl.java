@@ -184,11 +184,11 @@ public class ServerProcessControl implements IMultiProcessControl {
 
   private void safeStop(IGalvanServer server) {
     try {
-    long start = System.currentTimeMillis();
-    this.logger.output(">>> stoppingServer " + server.toString());
+      long start = System.currentTimeMillis();
+      this.logger.output(">>> stoppingServer " + server.toString());
       server.stop();
       server.waitForTermination();
-    this.logger.output("<<< stoppingServer " + server.toString() + " " + (System.currentTimeMillis() - start) + "ms");
+      this.logger.output("<<< stoppingServer " + server.toString() + " " + (System.currentTimeMillis() - start) + "ms");
     } catch (InterruptedException e) {
       // Interruption not expected in these tests.
       Assert.unexpected(e);

@@ -78,7 +78,12 @@ public class RelayFunctionIT {
     try (Diagnostics d = DiagnosticsFactory.connect(CLUSTER2.getClusterInfo().getServersInfo().get(1).getAddress(), null)) {
       String rst = d.invoke("RelayManager", "clearRelay");
       Assert.assertTrue(Boolean.parseBoolean(rst));
-      System.out.println(d.invoke("TerracottaServer", "leaveGroup"));
+      String state = d.getState();
+      while (!state.equals("ACTIVE-COORDINATOR")) {
+        System.out.println("leaving group in " + state + " state " + d.invoke("TerracottaServer", "leaveGroup"));
+        TimeUnit.SECONDS.sleep(2);
+        state = d.getState();
+      }
     }
     
 //  wait for active of replica cluster

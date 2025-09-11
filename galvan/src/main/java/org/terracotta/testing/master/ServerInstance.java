@@ -226,7 +226,7 @@ public abstract class ServerInstance implements IGalvanServer {
     EnumSet<ServerMode> modes = EnumSet.of(ServerMode.ZAPPED, ServerMode.STARTUP);
     serverLogger.output("wait for running " + currentState);
     while (loop && modes.contains(currentState)) {
-      loop = uninterruptableWait();
+      loop = uninterruptableWait(0);
     }
     serverLogger.output("running " + currentState);
     return currentState;
@@ -236,7 +236,7 @@ public abstract class ServerInstance implements IGalvanServer {
     EnumSet<ServerMode> modes = EnumSet.of(ServerMode.ACTIVE, ServerMode.PASSIVE, ServerMode.RELAY, ServerMode.REPLICA, ServerMode.DIAGNOSTIC);
     boolean loop = true;
     while (loop && !modes.contains(currentState)) {
-      loop = uninterruptableWait();
+      loop = uninterruptableWait(0);
     }
     serverLogger.output("ready " + currentState);
     return currentState;
@@ -245,14 +245,20 @@ public abstract class ServerInstance implements IGalvanServer {
   public synchronized void waitForTermination() {
     boolean loop = true;
     while (loop && currentState != ServerMode.TERMINATED) {
-      loop = uninterruptableWait();
+      loop = uninterruptableWait(0);
     }
   }
 
-  private synchronized boolean uninterruptableWait() {
+  public synchronized void waitForTermination(long timeLimit) {
+    if (currentState != ServerMode.TERMINATED) {
+      uninterruptableWait(timeLimit);
+    }
+  }
+
+  private synchronized boolean uninterruptableWait(long time) {
     try {
       if (isServerRunning() && !this.stateInterlock.checkDidPass()) {
-        wait();
+        wait(time);
         return true;
       } else {
         return false;
