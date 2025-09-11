@@ -17,43 +17,40 @@
  */
 package com.tc.services;
 
+import com.tc.config.ServerConfigurationManager;
 import java.util.Collection;
 
 import org.terracotta.entity.PlatformConfiguration;
 
-import org.terracotta.configuration.Configuration;
-import org.terracotta.configuration.ServerConfiguration;
 
 /**
  * @author vmad
  */
 public class PlatformConfigurationImpl implements PlatformConfiguration {
 
-  private final ServerConfiguration serverConfig;
-  private final Configuration config;
+  private final ServerConfigurationManager serverConfig;
 
-  public PlatformConfigurationImpl(ServerConfiguration serverConfig, Configuration config) {
+  public PlatformConfigurationImpl(ServerConfigurationManager serverConfig) {
     this.serverConfig = serverConfig;
-    this.config = config;
   }
 
   @Override
   public String getServerName() {
-    return serverConfig.getName();
+    return serverConfig.getServerConfiguration().getName();
   }
 
   @Override
   public String getHost() {
-    return serverConfig.getHost();
+    return serverConfig.getServerConfiguration().getHost();
   }
 
   @Override
   public int getTsaPort() {
-    return serverConfig.getTsaPort().getPort();
+    return serverConfig.getServerConfiguration().getTsaPort().getPort();
   }
 
   @Override
   public <T> Collection<T> getExtendedConfiguration(Class<T> type) {
-    return config.getExtendedConfiguration(type);
+    return serverConfig.getExtendedConfiguration(type);
   }
 }

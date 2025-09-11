@@ -17,24 +17,24 @@
  */
 package com.tc.l2.ha;
 
+import com.tc.config.ServerConfigurationManager;
 import com.tc.l2.ha.WeightGeneratorFactory.WeightGenerator;
-import org.terracotta.configuration.Configuration;
 
 
 public class TopologyWeightGenerator implements WeightGenerator {
 
-  private final Configuration configuration;
+  private final ServerConfigurationManager configuration;
   private final int initialSize;
 
-  public TopologyWeightGenerator(Configuration config) {
+  public TopologyWeightGenerator(ServerConfigurationManager config) {
     this.configuration = config;
-    this.initialSize = config.getServerConfigurations().size();
+    this.initialSize = config.getGroupConfiguration().getNodes().size();
   }
 
   @Override
   public long getWeight() {
     try {
-      return configuration.getServerConfigurations().size();
+      return configuration.getGroupConfiguration().getNodes().size();
     } catch (Throwable t) {
       return initialSize;
     }
