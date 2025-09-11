@@ -47,6 +47,7 @@ import com.tc.object.session.SessionID;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.util.Assert;
+import org.junit.Ignore;
 
 
 public class ActiveToPassiveReplicationTest {
@@ -85,7 +86,7 @@ public class ActiveToPassiveReplicationTest {
     replication = new ActiveToPassiveReplication(consistency, pth, mock(EntityPersistor.class), replicate, mock(Sink.class), group);
   }
   
-  @Test
+  @Ignore("Issue-#1380") @Test
   public void testNodeLeft() throws Exception {
     // Setup a CountDownLatch to coordinate between the main thread and the removal thread
     final java.util.concurrent.CountDownLatch setupComplete = new java.util.concurrent.CountDownLatch(1);

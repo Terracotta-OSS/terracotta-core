@@ -28,7 +28,7 @@ jobs:
     jdkVersion: '17'
     jobName: 'LinuxJava17'
     timeoutInMinutes: 60
-    options: '--no-daemon --no-parallel --no-watch-fs --info'
+    options: '--no-daemon --no-parallel --no-watch-fs'
     gradleOptions: ''
     
 - template: build-templates/gradle-common.yml@templates
@@ -37,5 +37,5 @@ jobs:
     jdkVersion: '17'
     jobName: 'WindowsJava17'
     timeoutInMinutes: 60
-    options: '--no-daemon --no-parallel --no-watch-fs --info'
+    options: '--no-daemon --no-parallel --no-watch-fs'
     gradleOptions: ''

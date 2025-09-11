@@ -1316,7 +1316,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
           }
         }
         if (!valid) {
-          logger.warn("Drop connection from non-member node {} remote:{} relay:{}", peer, msg.getChannel().getRemoteAddress(), relay);
+          logger.warn("Drop connection from non-member node {} remote:{} relay:{}", peer.getName(), msg.getChannel().getRemoteAddress(), TCSocketAddress.getStringForm(relay));
           switchToState(STATE_FAILURE);
           return;
         }

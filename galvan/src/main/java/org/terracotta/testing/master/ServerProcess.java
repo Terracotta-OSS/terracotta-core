@@ -57,7 +57,6 @@ public class ServerProcess extends ServerInstance {
   private OutputStream errorStream;
     
   private static final Set<Process> running = ConcurrentHashMap.newKeySet();
-  private static final boolean communicateLiveliness = true;
   
   private Process localProcess;
   
@@ -157,24 +156,14 @@ public class ServerProcess extends ServerInstance {
     serverProperties.setProperty("logback.configurationFile", "logback-test.xml");
     serverProperties.setProperty("tc.install-root", serverPath.toString());
 
-    if (!communicateLiveliness) {
-      List<String> cmd = new ArrayList<>();
-      cmd.add(javaHome + "/bin/java");
-      cmd.addAll(Arrays.asList(getJavaArguments(debugPort)));
-      cmd.add("-jar");
-      cmd.add(sjar.toString());
-      cmd.addAll(Arrays.asList(args));
-      return cmd.toArray(String[]::new);
-    } else {
-      List<String> cmd = new ArrayList<>();
-      cmd.add(javaHome + "/bin/java");
-      cmd.addAll(Arrays.asList(getJavaArguments(debugPort)));
-      cmd.add("-classpath");
-      cmd.add(sjar.toString());
-      cmd.add("com.tc.server.TestingServerMain");
-      cmd.addAll(Arrays.asList(args));
-      return cmd.toArray(String[]::new);
-    }
+    List<String> cmd = new ArrayList<>();
+    cmd.add(javaHome + "/bin/java");
+    cmd.addAll(Arrays.asList(getJavaArguments(debugPort)));
+    cmd.add("-classpath");
+    cmd.add(sjar.toString() + ":.");
+    cmd.add("com.tc.server.TestingServerMain");
+    cmd.addAll(Arrays.asList(args));
+    return cmd.toArray(String[]::new);
   }
 
   private synchronized void setStreams(OutputStream out, OutputStream err) {
@@ -396,16 +385,13 @@ public class ServerProcess extends ServerInstance {
         setLocalProcess(instance);
         running.add(instance);
         try {
-          if (!communicateLiveliness) {
-            returnValue = instance.waitFor();
-          } else {
-            boolean exited = false;
-            while (!exited) {
-              ping(instance.outputWriter());
-              exited = instance.waitFor(2, TimeUnit.SECONDS);
-            }
-            returnValue = instance.exitValue();
+          boolean exited = false;
+          while (!exited) {
+            ping(instance.outputWriter());
+            exited = instance.waitFor(2, TimeUnit.SECONDS);
           }
+          returnValue = instance.exitValue();
+
           serverLogger.output("server process died with rc=" + returnValue);
         } catch (java.util.concurrent.CancellationException e) {
           returnValue = instance.exitValue();

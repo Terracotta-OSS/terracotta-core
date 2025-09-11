@@ -71,7 +71,22 @@ public class RelayFunctionIT {
     CLUSTER1.getClusterControl().startAllServers();
 // shutdown the active of cluster 2
     CLUSTER2.getClusterControl().terminateActive();
-    TimeUnit.SECONDS.sleep(5);
+
+    try (Diagnostics d = DiagnosticsFactory.connect(CLUSTER2.getClusterInfo().getServersInfo().get(1).getAddress(), null)) {
+      String state = d.getState();
+      int turns = 0;
+      while (!state.equals("PASSIVE-REPLICA")) {
+        System.out.println("waiting for PASSIVE-REPLICA currently " + state);
+        TimeUnit.SECONDS.sleep(2);
+        state = d.getState();
+        if (turns++ > 60) {
+          LOGGER.warn(d.getClusterState());
+          throw new RuntimeException("timeout");
+        }
+      }
+    }
+
+    CLUSTER2.getClusterControl().waitForRunningPassivesInStandby();
 // terminate all servers of the source cluster
     CLUSTER1.getClusterControl().terminateAllServers();
 // connect to the RELAY-REPLICA and clear relay status and leaveGroup to start election    
