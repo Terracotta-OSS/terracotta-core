@@ -70,6 +70,7 @@ public class RelayFunctionIT {
     CLUSTER2.getClusterControl().startAllServers();
     CLUSTER1.getClusterControl().startAllServers();
 // shutdown the active of cluster 2
+    CLUSTER2.getClusterControl().waitForActive();
     CLUSTER2.getClusterControl().terminateActive();
 
     try (Diagnostics d = DiagnosticsFactory.connect(CLUSTER2.getClusterInfo().getServersInfo().get(1).getAddress(), null)) {
@@ -123,7 +124,7 @@ public class RelayFunctionIT {
           return sup.toArray(String[]::new);
         } else {
           ServerInfo server = this.getStripeConfiguration().getClusterInfo().getServersInfo().get(1);
-          RELAY_SRC.set(server.getAddress().getHostString() + ":" + server.getGroupPort());
+          RELAY_SRC.set(server.getAddress().getHostString() + ":" + server.getServerPort() + ":" + server.getGroupPort());
         }
       } else if (this.getStripeName().equals("cluster2") &&
               this.getServerName().equals(getStripeConfiguration().getClusterInfo().getServersInfo().get(1).getName())) {

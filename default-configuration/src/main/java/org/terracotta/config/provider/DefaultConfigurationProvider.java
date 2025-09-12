@@ -121,7 +121,6 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
   private volatile String serverName;
   private volatile TcConfiguration configuration;
   private volatile String relaySrc;
-  private volatile String relayDst;
   private volatile boolean console;
   private volatile TcConfigurationWrapper wrapped;
 
@@ -162,7 +161,26 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
     } finally {
       Thread.currentThread().setContextClassLoader(oldloader);
     }
-    wrapped = new TcConfigurationWrapper(serverName, relaySrc, relayDst, console, configuration);
+    wrapped = new TcConfigurationWrapper(serverName, parseRelayAddress(relaySrc), parseRelayName(relaySrc), console, configuration);
+  }
+
+  private static InetSocketAddress parseRelayAddress(String hostPort) {
+    if (hostPort != null) {
+      String[] sp = hostPort.split(":");
+      if (sp.length == 3) {
+        return InetSocketAddress.createUnresolved(sp[0], Integer.parseInt(sp[2]));
+      }
+    }
+    return null;
+  }
+
+  private static InetSocketAddress parseRelayName(String hostPort) {
+    if (hostPort != null) {
+      String[] sp = hostPort.split(":");
+      return InetSocketAddress.createUnresolved(sp[0], Integer.parseInt(sp[1]));
+    } else {
+      return null;
+    }
   }
 
   @Override
@@ -206,7 +224,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
       this.relaySrc = commandLine.getOptionValue(RELAY_SRC.getShortName(), null);
     }
     if (commandLine.hasOption(RELAY_DST.getShortName())) {
-      this.relayDst = commandLine.getOptionValue(RELAY_DST.getShortName(), null);
+      this.relaySrc = commandLine.getOptionValue(RELAY_DST.getShortName(), null);
     }
     
     if (commandLine.hasOption(CONSOLE.getShortName())) {
@@ -312,32 +330,23 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
     private final TcConfiguration  configuration;
     private final int reconnect;
     private InetSocketAddress relaySrc;
-    private InetSocketAddress relayDst;
+    private InetSocketAddress relayName;
     private boolean console;
 
-    public TcConfigurationWrapper(String serverName, String relaySrc, String relayDst, boolean console, TcConfiguration configuration) {
+    public TcConfigurationWrapper(String serverName, InetSocketAddress relaySrc, InetSocketAddress relayPeerName, boolean console, TcConfiguration configuration) {
       this.serverName = serverName;
       this.configuration = configuration;
       TcConfig pc = configuration.getPlatformConfiguration();
       Servers s = pc.getServers();
       this.reconnect = s.getClientReconnectWindow();
-      this.relaySrc = parseRelay(relaySrc);
-      this.relayDst = parseRelay(relayDst);
+      this.relaySrc = relaySrc;
+      this.relayName = relayPeerName;
       this.console = console;
     }
     
-    private InetSocketAddress parseRelay(String hostPort) {
-      if (hostPort != null) {
-        String[] sp = hostPort.split(":");
-        return InetSocketAddress.createUnresolved(sp[0], Integer.parseInt(sp[1]));
-      } else {
-        return null;
-      }
-    }
-    
     private void clearRelays() {
-      this.relayDst = null;
       this.relaySrc = null;
+      this.relayName = null;
     }
 
     @Override
@@ -481,27 +490,21 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
     }
 
     @Override
-    public InetSocketAddress getRelayPeer() {
-      return relaySrc != null ? relaySrc : relayDst;
+    public InetSocketAddress getRelayPeerSource() {
+      return relaySrc;
     }
 
     @Override
-    public boolean isRelaySource() {
-      return relaySrc != null;
-    }
-
-    @Override
-    public boolean isRelayDestination() {
-      return relayDst != null;
+    public InetSocketAddress getRelayPeerName() {
+      return relayName;
     }
   }
   
   public boolean clearRelays() {
     try {
-      return relaySrc != null | relayDst != null;
+      return relaySrc != null;
     } finally {
       relaySrc = null;
-      relayDst = null;
       wrapped.clearRelays();
     }
   }

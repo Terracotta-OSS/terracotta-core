@@ -46,15 +46,19 @@ public interface Configuration {
     return false;
   }
   
+  default InetSocketAddress getRelayPeerSource() {
+    return null;
+  }
+
+  default InetSocketAddress getRelayPeerName() {
+    return null;
+  }
+
   default boolean isRelaySource() {
-    return false;
+    return getRelayPeerName() != null && getRelayPeerSource() == null;
   }
 
   default boolean isRelayDestination() {
-    return false;
-  }
-  
-  default InetSocketAddress getRelayPeer() {
-    return null;
+    return getRelayPeerName() != null && getRelayPeerSource() != null;
   }
 }

@@ -724,7 +724,7 @@ public class DistributedObjectServer {
     HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, tcProperties);
     haChecker.validateHealthCheckSettingsForHighAvailability();
 
-    StateManager state = new StateManagerImpl(consoleLogger, (n)->!configuration.isRelayDestination(), this.groupCommManager, 
+    StateManager state = new StateManagerImpl(consoleLogger, (n)->!configuration.isRelayDestination(), this.groupCommManager,
         createStageController(processTransactionHandler), eventCollector, stageManager,
         configSetupManager.getGroupConfiguration().getNodes().size(),
         configSetupManager.getGroupConfiguration().getElectionTimeInSecs(),
@@ -735,13 +735,15 @@ public class DistributedObjectServer {
     Stage<Runnable> replicationResponseStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE, Runnable.class,
         new GenericHandler<>(), 1);
 //  routing for passive to receive replication
-    EventHandler<ReplicationMessage> replicationEvents;
-    if (configSetupManager.getConfiguration().isRelaySource()) {
-      replicationEvents = createAndRouteRelayTransactionHandler(replicationResponseStage);
-    } else {
-      if (configSetupManager.getConfiguration().isRelayDestination()) {
+    EventHandler<ReplicationMessage> replicationEvents = null;
+    if (configSetupManager.getConfiguration().getRelayPeerName() != null) {
+      if (configSetupManager.getConfiguration().getRelayPeerSource() != null) {
         routeRelayMessages(state, configSetupManager.getConfiguration());
+      } else {
+        replicationEvents = createAndRouteRelayTransactionHandler(replicationResponseStage);
       }
+    }
+    if (replicationEvents == null) {
       ReplicatedTransactionHandler replicatedTransactionHandler = new ReplicatedTransactionHandler(state, replicationResponseStage, this.persistor, entityManager, groupCommManager);
       sequenceWeight.setReplicatedTransactionHandler(replicatedTransactionHandler);
       replicationEvents = replicatedTransactionHandler.getEventHandler();
@@ -1177,13 +1179,7 @@ public class DistributedObjectServer {
         throw new IllegalStateException("server is not bootstrapped");
       }
       NodeID myNodeId;
-      Configuration config = this.configSetupManager.getConfiguration();
-      if (config.isRelayDestination()) {
-        consoleLogger.info("connecting to {} for duplication", config.getRelayPeer());
-        myNodeId = this.groupCommManager.join(this.configSetupManager.getGroupConfiguration().directConnect(config.getRelayPeer()));
-      } else {
-        myNodeId = this.groupCommManager.join(this.configSetupManager.getGroupConfiguration());
-      }
+      myNodeId = this.groupCommManager.join(this.configSetupManager.getGroupConfiguration());
       logger.info("This L2 Node ID = " + myNodeId);
     } catch (final GroupException e) {
       logger.error("Caught Exception :", e);

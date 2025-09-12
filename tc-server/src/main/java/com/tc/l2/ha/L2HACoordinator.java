@@ -110,9 +110,7 @@ public class L2HACoordinator implements L2Coordinator, ConnectionIDFactoryListen
     if (this.server.getConfigSetupManager().getConfiguration().isPartialConfiguration()) {
       this.stateManager.moveToDiagnosticMode();
       consoleLogger.info("Started the server in diagnostic mode");
-    } else if (this.server.getConfigSetupManager().getConfiguration().isRelaySource()) {
-      this.stateManager.moveToRelayMode();
-    } else if (this.server.getConfigSetupManager().getConfiguration().isRelayDestination()) {
+    } else if (this.server.getConfigSetupManager().getConfiguration().getRelayPeerName() != null) {
       this.stateManager.moveToRelayMode();
     }
     this.stateManager.initializeAndStartElection();

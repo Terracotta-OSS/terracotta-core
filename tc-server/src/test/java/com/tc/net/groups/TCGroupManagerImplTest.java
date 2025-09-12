@@ -978,7 +978,6 @@ public class TCGroupManagerImplTest extends TCTestCase {
     GroupConfiguration groupConfiguration = Mockito.mock(GroupConfiguration.class);
     when(groupConfiguration.getNodes()).thenReturn(nodeSet);
     when(groupConfiguration.getCurrentNode()).thenReturn(node);
-    when(groupConfiguration.directConnect(any())).thenCallRealMethod();
     return groupConfiguration;
   }
 }

@@ -36,6 +36,7 @@ import java.util.Objects;
 import java.util.Properties;
 import org.terracotta.configuration.ConfigurationException;
 import com.tc.text.PrettyPrintable;
+import java.net.InetSocketAddress;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,7 +105,15 @@ public class ServerConfigurationManager implements PrettyPrintable {
 
   public GroupConfiguration getGroupConfiguration() {
     List<ServerConfiguration> serverConfigurationMap = configuration.getServerConfigurations();
-    return new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName());
+    InetSocketAddress relay = configuration.getRelayPeerSource();
+    InetSocketAddress relayName = configuration.getRelayPeerName();
+    if (configuration.isRelaySource()) {
+      return new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName(), relayName.getHostString(), relayName.getPort(), 0);
+    } else if (configuration.isRelayDestination()) {
+      return new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName(), relayName.getHostString(), relayName.getPort(), relay.getPort());
+    } else {
+      return new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName());
+    }
   }
   
   public InputStream rawConfigFile() {
