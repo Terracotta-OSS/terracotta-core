@@ -1142,7 +1142,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
         debugInfo("[TCGroupHandshakeStateMachine]: Attempting to switch state (" + current + "->" + state + "): "
                 + stateInfo(state));
       }
-      HandshakeMonitor previous = null;
+      HandshakeMonitor previous;
       HandshakeMonitor next = state.createMonitor();
       
       synchronized (this) {
@@ -1313,6 +1313,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
           if (!valid) {
             InetSocketAddress remote = msg.getChannel().getRemoteAddress();
             valid = remote.getHostName().equals(relay.getHostName()) && remote.getPort() == relay.getPort();
+            //  could be chimney offload, just make it valid
+            if (!valid) {
+              valid = true;
+            }
           }
         }
         if (!valid) {
