@@ -736,13 +736,16 @@ public class DistributedObjectServer {
         new GenericHandler<>(), 1);
 //  routing for passive to receive replication
     EventHandler<ReplicationMessage> replicationEvents = null;
-    if (configSetupManager.getConfiguration().getRelayPeerName() != null) {
-      if (configSetupManager.getConfiguration().getRelayPeerSource() != null) {
-        routeRelayMessages(state, configSetupManager.getConfiguration());
-      } else {
+    if (configSetupManager.getConfiguration().getRelayPeer() != null) {
+      //  if the relay source, route the relay transaction handler
+      if (configSetupManager.getConfiguration().getRelayPeerGroupPort() == null) {
         replicationEvents = createAndRouteRelayTransactionHandler(replicationResponseStage);
+      } else {
+      //  if destination, route the relay messages coming in
+        routeRelayMessages(state, configSetupManager.getConfiguration());
       }
     }
+    // if no replcation events have been routed yet (not relay source) route them now
     if (replicationEvents == null) {
       ReplicatedTransactionHandler replicatedTransactionHandler = new ReplicatedTransactionHandler(state, replicationResponseStage, this.persistor, entityManager, groupCommManager);
       sequenceWeight.setReplicatedTransactionHandler(replicatedTransactionHandler);

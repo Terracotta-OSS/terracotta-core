@@ -161,17 +161,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
     } finally {
       Thread.currentThread().setContextClassLoader(oldloader);
     }
-    wrapped = new TcConfigurationWrapper(serverName, parseRelayAddress(relaySrc), parseRelayName(relaySrc), console, configuration);
-  }
-
-  private static InetSocketAddress parseRelayAddress(String hostPort) {
-    if (hostPort != null) {
-      String[] sp = hostPort.split(":");
-      if (sp.length == 3) {
-        return InetSocketAddress.createUnresolved(sp[0], Integer.parseInt(sp[2]));
-      }
-    }
-    return null;
+    wrapped = new TcConfigurationWrapper(serverName, parseRelayName(relaySrc), parseRelayAddress(relaySrc), console, configuration);
   }
 
   private static InetSocketAddress parseRelayName(String hostPort) {
@@ -181,6 +171,16 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
     } else {
       return null;
     }
+  }
+  
+  private static InetSocketAddress parseRelayAddress(String hostPort) {
+    if (hostPort != null) {
+      String[] sp = hostPort.split(":");
+      if (sp.length == 3) {
+        return InetSocketAddress.createUnresolved(sp[0], Integer.parseInt(sp[2]));
+      }
+    }
+    return null;
   }
 
   @Override
@@ -329,24 +329,24 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
     private final String serverName;
     private final TcConfiguration  configuration;
     private final int reconnect;
-    private InetSocketAddress relaySrc;
-    private InetSocketAddress relayName;
+    private InetSocketAddress relayPeer;
+    private InetSocketAddress relayGroupPort;
     private boolean console;
 
-    public TcConfigurationWrapper(String serverName, InetSocketAddress relaySrc, InetSocketAddress relayPeerName, boolean console, TcConfiguration configuration) {
+    public TcConfigurationWrapper(String serverName, InetSocketAddress relayPeer, InetSocketAddress relayGroupPort, boolean console, TcConfiguration configuration) {
       this.serverName = serverName;
       this.configuration = configuration;
       TcConfig pc = configuration.getPlatformConfiguration();
       Servers s = pc.getServers();
       this.reconnect = s.getClientReconnectWindow();
-      this.relaySrc = relaySrc;
-      this.relayName = relayPeerName;
+      this.relayPeer = relayPeer;
+      this.relayGroupPort = relayGroupPort;
       this.console = console;
     }
     
     private void clearRelays() {
-      this.relaySrc = null;
-      this.relayName = null;
+      this.relayPeer = null;
+      this.relayGroupPort = null;
     }
 
     @Override
@@ -490,13 +490,13 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
     }
 
     @Override
-    public InetSocketAddress getRelayPeerSource() {
-      return relaySrc;
+    public InetSocketAddress getRelayPeer() {
+      return relayPeer;
     }
 
     @Override
-    public InetSocketAddress getRelayPeerName() {
-      return relayName;
+    public InetSocketAddress getRelayPeerGroupPort() {
+      return relayGroupPort;
     }
   }
   

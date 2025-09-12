@@ -105,8 +105,8 @@ public class ServerConfigurationManager implements PrettyPrintable {
 
   public GroupConfiguration getGroupConfiguration() {
     List<ServerConfiguration> serverConfigurationMap = configuration.getServerConfigurations();
-    InetSocketAddress relay = configuration.getRelayPeerSource();
-    InetSocketAddress relayName = configuration.getRelayPeerName();
+    InetSocketAddress relay = configuration.getRelayPeerGroupPort();
+    InetSocketAddress relayName = configuration.getRelayPeer();
     if (configuration.isRelaySource()) {
       return new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName(), relayName.getHostString(), relayName.getPort(), 0);
     } else if (configuration.isRelayDestination()) {

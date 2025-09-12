@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import static org.terracotta.testing.demos.TestHelpers.isWindows;
+import org.terracotta.utilities.test.runtime.Os;
 
 
 public class ServerProcess extends ServerInstance {
@@ -156,11 +157,17 @@ public class ServerProcess extends ServerInstance {
     serverProperties.setProperty("logback.configurationFile", "logback-test.xml");
     serverProperties.setProperty("tc.install-root", serverPath.toString());
 
+    String pathSep = System.getProperty("path.separator");
+    if (pathSep == null) {
+      pathSep = Os.isWindows() ? ";" : ":";
+    }
+
     List<String> cmd = new ArrayList<>();
     cmd.add(javaHome + "/bin/java");
     cmd.addAll(Arrays.asList(getJavaArguments(debugPort)));
     cmd.add("-classpath");
-    cmd.add(sjar.toString() + ":.");
+    cmd.add(sjar.toString() + pathSep + ".");
+
     cmd.add("com.tc.server.TestingServerMain");
     cmd.addAll(Arrays.asList(args));
     return cmd.toArray(String[]::new);
