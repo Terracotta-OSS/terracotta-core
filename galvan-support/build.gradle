@@ -55,6 +55,7 @@ tasks.named('test', Test) {
     systemProperty "galvan.plugin", layout.buildDirectory.dir("plugin").get().toString()
     systemProperty "galvan.dir", layout.buildDirectory.dir("galvan").get().toString()
     systemProperty "galvan.server", layout.buildDirectory.dir("tmp/tcserver").get().toString()
+    
 //    systemProperty "serverDebugPortStart", "9000"
 }
 

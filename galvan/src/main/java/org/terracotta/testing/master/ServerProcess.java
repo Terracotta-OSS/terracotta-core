@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import static org.terracotta.testing.demos.TestHelpers.isWindows;
+import org.terracotta.utilities.test.runtime.Os;
 
 
 public class ServerProcess extends ServerInstance {
@@ -48,7 +49,7 @@ public class ServerProcess extends ServerInstance {
   private final Properties serverProperties;
   private final Path serverInstall;
   private final Path serverWorkingDir;
-  private final String[] startupCommand;
+  private final Supplier<String[]> startupCommand;
   private final OutputStream parentOutput;
 
   
@@ -57,7 +58,6 @@ public class ServerProcess extends ServerInstance {
   private OutputStream errorStream;
     
   private static final Set<Process> running = ConcurrentHashMap.newKeySet();
-  private static final boolean communicateLiveliness = true;
   
   private Process localProcess;
   
@@ -67,10 +67,15 @@ public class ServerProcess extends ServerInstance {
       })
     );
   }
+  
+  public ServerProcess(String serverName, Path serverInstall, Path serverWorkingDir, int heapInM,
+          int debugPort, Properties serverProperties, OutputStream out, String[] startupCommand) {
+    this(serverName, serverInstall, serverWorkingDir, heapInM, debugPort, serverProperties, out, ()->startupCommand);
+  }
 
   public ServerProcess(String serverName, Path serverInstall, Path serverWorkingDir, int heapInM,
           int debugPort, Properties serverProperties, OutputStream out,
-                       String[] startupCommand) {
+                       Supplier<String[]> startupCommand) {
     super(serverName);
     // We need to specify a positive integer as the heap size.
     this.heapInM = heapInM;
@@ -133,7 +138,7 @@ public class ServerProcess extends ServerInstance {
         setStreams(out, stderr);
         // The "build()" starts the process so wrap it in an exit waiter.  We can then drop it since we will can't explicitly terminate it until it reports our PID (at which point we will declare it "running").
         ExitWaiter exitWaiter = new ExitWaiter(()->AnyProcess.newBuilder()
-            .command(createCommand(javaHome, serverInstall, startupCommand))
+            .command(createCommand(javaHome, serverInstall, startupCommand.get()))
             .workingDir(this.serverWorkingDir.toFile())
             .env("JAVA_HOME", javaHome)
             .pipeStdout(out)
@@ -152,24 +157,20 @@ public class ServerProcess extends ServerInstance {
     serverProperties.setProperty("logback.configurationFile", "logback-test.xml");
     serverProperties.setProperty("tc.install-root", serverPath.toString());
 
-    if (!communicateLiveliness) {
-      List<String> cmd = new ArrayList<>();
-      cmd.add(javaHome + "/bin/java");
-      cmd.addAll(Arrays.asList(getJavaArguments(debugPort)));
-      cmd.add("-jar");
-      cmd.add(sjar.toString());
-      cmd.addAll(Arrays.asList(args));
-      return cmd.toArray(String[]::new);
-    } else {
-      List<String> cmd = new ArrayList<>();
-      cmd.add(javaHome + "/bin/java");
-      cmd.addAll(Arrays.asList(getJavaArguments(debugPort)));
-      cmd.add("-classpath");
-      cmd.add(sjar.toString());
-      cmd.add("com.tc.server.TestingServerMain");
-      cmd.addAll(Arrays.asList(args));
-      return cmd.toArray(String[]::new);
+    String pathSep = System.getProperty("path.separator");
+    if (pathSep == null) {
+      pathSep = Os.isWindows() ? ";" : ":";
     }
+
+    List<String> cmd = new ArrayList<>();
+    cmd.add(javaHome + "/bin/java");
+    cmd.addAll(Arrays.asList(getJavaArguments(debugPort)));
+    cmd.add("-classpath");
+    cmd.add(sjar.toString() + pathSep + ".");
+
+    cmd.add("com.tc.server.TestingServerMain");
+    cmd.addAll(Arrays.asList(args));
+    return cmd.toArray(String[]::new);
   }
 
   private synchronized void setStreams(OutputStream out, OutputStream err) {
@@ -391,16 +392,13 @@ public class ServerProcess extends ServerInstance {
         setLocalProcess(instance);
         running.add(instance);
         try {
-          if (!communicateLiveliness) {
-            returnValue = instance.waitFor();
-          } else {
-            boolean exited = false;
-            while (!exited) {
-              ping(instance.outputWriter());
-              exited = instance.waitFor(2, TimeUnit.SECONDS);
-            }
-            returnValue = instance.exitValue();
+          boolean exited = false;
+          while (!exited) {
+            ping(instance.outputWriter());
+            exited = instance.waitFor(2, TimeUnit.SECONDS);
           }
+          returnValue = instance.exitValue();
+
           serverLogger.output("server process died with rc=" + returnValue);
         } catch (java.util.concurrent.CancellationException e) {
           returnValue = instance.exitValue();

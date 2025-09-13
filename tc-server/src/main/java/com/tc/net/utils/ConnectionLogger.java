@@ -17,13 +17,14 @@
  */
 package com.tc.net.utils;
 
+import java.util.Map;
+import java.util.Properties;
+
 import com.tc.net.core.event.TCConnectionErrorEvent;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.spi.Guardian;
-import java.util.Map;
-import java.util.Properties;
 
 /**
  *
@@ -49,8 +50,8 @@ public class ConnectionLogger implements TCConnectionEventListener {
   @Override
   public void errorEvent(TCConnectionErrorEvent errorEvent) {
     Properties props = connectionProperties(errorEvent);
-    props.setProperty("error", errorEvent.getException().getMessage());
-    props.setProperty("messageContext", errorEvent.getMessageContext().toString());
+    props.setProperty("error", String.valueOf(errorEvent.getException().getMessage()));
+    props.setProperty("messageContext", String.valueOf(errorEvent.getMessageContext()));
     GuardianContext.validate(Guardian.Op.SECURITY_OP, name + " connection error event", props);
   }
 

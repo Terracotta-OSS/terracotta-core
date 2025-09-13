@@ -36,9 +36,14 @@ import java.util.Objects;
 import java.util.Properties;
 import org.terracotta.configuration.ConfigurationException;
 import com.tc.text.PrettyPrintable;
+import java.net.InetSocketAddress;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ServerConfigurationManager implements PrettyPrintable {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(ServerConfigurationManager.class);
 
   private final ConfigurationProvider configurationProvider;
   private final ServiceLocator serviceLocator;
@@ -54,6 +59,8 @@ public class ServerConfigurationManager implements PrettyPrintable {
     Objects.requireNonNull(configurationProvider);
     Objects.requireNonNull(classLoader);
     Objects.requireNonNull(startUpArgs);
+
+    LOGGER.info("server started with the following command line arguments {}", startUpArgs);
 
     this.configurationProvider = configurationProvider;
     this.serviceLocator = classLoader;
@@ -98,7 +105,15 @@ public class ServerConfigurationManager implements PrettyPrintable {
 
   public GroupConfiguration getGroupConfiguration() {
     List<ServerConfiguration> serverConfigurationMap = configuration.getServerConfigurations();
-    return new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName());
+    InetSocketAddress relay = configuration.getRelayPeerGroupPort();
+    InetSocketAddress relayName = configuration.getRelayPeer();
+    if (configuration.isRelaySource()) {
+      return new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName(), relayName.getHostString(), relayName.getPort(), 0);
+    } else if (configuration.isRelayDestination()) {
+      return new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName(), relayName.getHostString(), relayName.getPort(), relay.getPort());
+    } else {
+      return new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName());
+    }
   }
   
   public InputStream rawConfigFile() {

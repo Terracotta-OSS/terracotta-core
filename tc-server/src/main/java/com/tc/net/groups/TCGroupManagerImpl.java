@@ -117,7 +117,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private final Supplier<Set<Node>>                         configuredNodes;
   
   private final String                                      version;
-  private final InetSocketAddress                           relayLocation;
   private final ServerID                                    thisNodeID;
   private final int                                         groupPort;
   private final ConnectionPolicy                            connectionPolicy;
@@ -169,13 +168,8 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.thisNodeID = thisNodeID;
     this.bufferManagerFactory = bufferManagerFactory;
     this.version = configSetupManager.getProductInfo().version();
-    this.relayLocation = configSetupManager.getConfiguration().getRelayPeer();
     this.configuredNodes = ()-> {
-      if (configSetupManager.getConfiguration().isRelayDestination()) {
-        return configSetupManager.getGroupConfiguration().directConnect(relayLocation).getNodes();
-      } else {
-        return configSetupManager.getGroupConfiguration().getNodes();
-      }
+      return configSetupManager.getGroupConfiguration().getNodes();
     };
 
     ServerConfiguration l2DSOConfig = configSetupManager.getServerConfiguration();
@@ -217,7 +211,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.configuredNodes = ()->new HashSet<>(Arrays.asList(servers));
 
     this.groupPort = groupPort;
-    this.relayLocation = null;
     this.version = "UNKNOWN";
     this.weightGeneratorFactory = weightGenerator;
     this.serverCount = 0;
@@ -1019,7 +1012,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       if (isDebugLogging()) {
         debugInfo("Creating handshake state machine for channel: " + channel);
       }
-      stateMachine = new TCGroupHandshakeStateMachine(this, channel, getNodeID(), weightGeneratorFactory, relayLocation, version);
+      stateMachine = new TCGroupHandshakeStateMachine(this, channel, getNodeID(), weightGeneratorFactory, version);
       channel.addAttachment(HANDSHAKE_STATE_MACHINE_TAG, stateMachine, false);
       channel.addListener(new HandshakeChannelEventListener(stateMachine));
       if (channel.isOpen()) {
@@ -1080,7 +1073,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     private final MessageChannel     channel;
     private final ServerID           localNodeID;
     private final WeightGeneratorFactory weightGeneratorFactory;
-    private final InetSocketAddress             relay;
     private final String               version;
 
     private HandshakeMonitor         current;
@@ -1089,12 +1081,11 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     private TCGroupMember            member;
 
     public TCGroupHandshakeStateMachine(TCGroupManagerImpl manager, MessageChannel channel, ServerID localNodeID,
-                                        WeightGeneratorFactory weightGeneratorFactory, InetSocketAddress relay, String version) {
+                                        WeightGeneratorFactory weightGeneratorFactory, String version) {
       this.manager = manager;
       this.channel = channel;
       this.localNodeID = localNodeID;
       this.weightGeneratorFactory = weightGeneratorFactory;
-      this.relay = relay;
       this.version = version;
       this.current = STATE_NEW.createMonitor();
       this.current.complete();
@@ -1142,7 +1133,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
         debugInfo("[TCGroupHandshakeStateMachine]: Attempting to switch state (" + current + "->" + state + "): "
                 + stateInfo(state));
       }
-      HandshakeMonitor previous = null;
+      HandshakeMonitor previous;
       HandshakeMonitor next = state.createMonitor();
       
       synchronized (this) {
@@ -1307,16 +1298,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       public void execute(TCGroupHandshakeMessage msg) {
         ServerID peer = msg.getNodeID();
         setPeerNodeID(peer);
-        boolean valid = manager.getDiscover().isValidClusterNode(peer);
-        if (!valid && relay != null) {
-          valid = peer.getName().equals(TCSocketAddress.getStringForm(relay));
-          if (!valid) {
-            InetSocketAddress remote = msg.getChannel().getRemoteAddress();
-            valid = remote.getHostName().equals(relay.getHostName()) && remote.getPort() == relay.getPort();
-          }
-        }
-        if (!valid) {
-          logger.warn("Drop connection from non-member node {} remote:{} relay:{}", peer, msg.getChannel().getRemoteAddress(), relay);
+
+        if (!manager.getDiscover().isValidClusterNode(peer)) {
+          logger.warn("Drop connection from non-member node {} remote:{}", peer.getName(), msg.getChannel().getRemoteAddress());
           switchToState(STATE_FAILURE);
           return;
         }

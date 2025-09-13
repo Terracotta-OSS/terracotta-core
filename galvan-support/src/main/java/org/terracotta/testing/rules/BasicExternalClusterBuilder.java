@@ -37,6 +37,7 @@ import org.terracotta.testing.api.LegacyConfigBuilder;
 import org.terracotta.testing.config.ConfigConstants;
 
 public class BasicExternalClusterBuilder {
+  private String stripeName = "stripe1";
   private final int stripeSize;
 
   private Path clusterDirectory;
@@ -94,6 +95,11 @@ public class BasicExternalClusterBuilder {
       this.configBuilder = new DefaultLegacyConfigBuilder();
     }
     return (LegacyConfigBuilder)this.configBuilder;
+  }
+
+  public BasicExternalClusterBuilder withStripeName(String name) {
+    this.stripeName = name;
+    return this;
   }
 
   public BasicExternalClusterBuilder withNamespaceFragment(final String namespaceFragment) {
@@ -199,7 +205,7 @@ public class BasicExternalClusterBuilder {
     String debugPortString = System.getProperty("serverDebugPortStart");
     int serverDebugStartPort = debugPortString != null ? Integer.parseInt(debugPortString) : 0;
 
-    return new BasicExternalCluster(clusterDirectory, stripeSize, this.serverBuilder.deploy(), serverHeapSize, systemProperties, tcProperties,
+    return new BasicExternalCluster(clusterDirectory, stripeName, stripeSize, this.serverBuilder.deploy(), serverHeapSize, systemProperties, tcProperties,
             this.reconnectWindow, this.voters, this.consistent, this.inline, serverDebugStartPort,
         logConfigExt, parentStream,Optional.ofNullable(configBuilder).orElse(new DefaultLegacyConfigBuilder()),
             Optional.ofNullable(startupBuilder).orElse(DefaultStartupCommandBuilder::new));

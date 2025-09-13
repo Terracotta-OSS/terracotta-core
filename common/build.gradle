@@ -44,3 +44,7 @@ dependencies {
   testImplementation "commons-io:commons-io:$commonsIOVersion"
 }
 
+test {
+    systemProperty "tc.tests.info.temp-root", layout.buildDirectory.dir("tmp").get().toString()
+}
+

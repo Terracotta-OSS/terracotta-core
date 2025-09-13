@@ -120,6 +120,8 @@ public abstract class ServerInstance implements IGalvanServer {
     String pidEventName = "PID";
     String activeReadyName = "ACTIVE";
     String passiveReadyName = "PASSIVE";
+    String passiveRelay = "RELAY";
+    String passiveReplica = "REPLICA";
     String diagnosticReadyName = "DIAGNOSTIC";
     String zapEventName = "ZAP";
     String warn = "WARN";
@@ -130,6 +132,8 @@ public abstract class ServerInstance implements IGalvanServer {
     eventMap.put("Terracotta Server instance has started up as ACTIVE node", activeReadyName);
     eventMap.put("Moved to State[ PASSIVE-STANDBY ]", passiveReadyName);
     eventMap.put("Moved to State[ DIAGNOSTIC ]", diagnosticReadyName);
+    eventMap.put("Moved to State[ PASSIVE-RELAY ]", passiveRelay);
+    eventMap.put("Moved to State[ PASSIVE-REPLICA ]", passiveReplica);
     eventMap.put("Restarting the server", zapEventName);
     eventMap.put("Requesting restart", zapEventName);
     eventMap.put("WARN", warn);
@@ -156,6 +160,8 @@ public abstract class ServerInstance implements IGalvanServer {
     serverBus.on(starting, (event) -> setCurrentState(ServerMode.UNKNOWN));
     serverBus.on(activeReadyName, (event) -> didBecomeActive());
     serverBus.on(passiveReadyName, (event) -> setCurrentState(ServerMode.PASSIVE));
+    serverBus.on(passiveRelay, (event) -> setCurrentState(ServerMode.RELAY));
+    serverBus.on(passiveReplica, (event) -> setCurrentState(ServerMode.REPLICA));
     serverBus.on(diagnosticReadyName, (event) -> setCurrentState(ServerMode.DIAGNOSTIC));
     serverBus.on(zapEventName, (event)-> instanceWasZapped());
     serverBus.on(warn, (event) -> handleWarnLog(event));
@@ -220,17 +226,17 @@ public abstract class ServerInstance implements IGalvanServer {
     EnumSet<ServerMode> modes = EnumSet.of(ServerMode.ZAPPED, ServerMode.STARTUP);
     serverLogger.output("wait for running " + currentState);
     while (loop && modes.contains(currentState)) {
-      loop = uninterruptableWait();
+      loop = uninterruptableWait(0);
     }
     serverLogger.output("running " + currentState);
     return currentState;
   }
 
   public synchronized ServerMode waitForReady() {
-    EnumSet<ServerMode> modes = EnumSet.of(ServerMode.ACTIVE, ServerMode.PASSIVE, ServerMode.DIAGNOSTIC);
+    EnumSet<ServerMode> modes = EnumSet.of(ServerMode.ACTIVE, ServerMode.PASSIVE, ServerMode.RELAY, ServerMode.REPLICA, ServerMode.DIAGNOSTIC);
     boolean loop = true;
     while (loop && !modes.contains(currentState)) {
-      loop = uninterruptableWait();
+      loop = uninterruptableWait(0);
     }
     serverLogger.output("ready " + currentState);
     return currentState;
@@ -239,14 +245,20 @@ public abstract class ServerInstance implements IGalvanServer {
   public synchronized void waitForTermination() {
     boolean loop = true;
     while (loop && currentState != ServerMode.TERMINATED) {
-      loop = uninterruptableWait();
+      loop = uninterruptableWait(0);
     }
   }
 
-  private synchronized boolean uninterruptableWait() {
+  public synchronized void waitForTermination(long timeLimit) {
+    if (currentState != ServerMode.TERMINATED) {
+      uninterruptableWait(timeLimit);
+    }
+  }
+
+  private synchronized boolean uninterruptableWait(long time) {
     try {
       if (isServerRunning() && !this.stateInterlock.checkDidPass()) {
-        wait();
+        wait(time);
         return true;
       } else {
         return false;

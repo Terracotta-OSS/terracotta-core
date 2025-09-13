@@ -17,19 +17,21 @@
  */
 package com.tc.l2.state;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 import static com.tc.l2.state.StateManager.ACTIVE_COORDINATOR;
 import static com.tc.l2.state.StateManager.BOOTSTRAP_STATE;
+import static com.tc.l2.state.StateManager.DIAGNOSTIC_STATE;
+import static com.tc.l2.state.StateManager.PASSIVE_RELAY;
+import static com.tc.l2.state.StateManager.PASSIVE_REPLICA;
 import static com.tc.l2.state.StateManager.PASSIVE_STANDBY;
 import static com.tc.l2.state.StateManager.PASSIVE_SYNCING;
 import static com.tc.l2.state.StateManager.PASSIVE_UNINITIALIZED;
 import static com.tc.l2.state.StateManager.RECOVERING_STATE;
 import static com.tc.l2.state.StateManager.START_STATE;
 import static com.tc.l2.state.StateManager.STOP_STATE;
-import static com.tc.l2.state.StateManager.DIAGNOSTIC_STATE;
-import static com.tc.l2.state.StateManager.PASSIVE_RELAY;
 import com.tc.util.State;
-import java.util.EnumSet;
-import java.util.Set;
 
 /**
  *
@@ -112,6 +114,17 @@ public enum ServerMode {
       return false;
     }
   },
+  REPLICA(PASSIVE_REPLICA) {
+    @Override
+    public boolean canBeActive() {
+      return true;
+    }
+
+    @Override
+    public boolean canStartElection() {
+      return true;
+    }
+  },
   ACTIVE(ACTIVE_COORDINATOR) {
     @Override
     public boolean canBeActive() {
@@ -175,5 +188,5 @@ public enum ServerMode {
   }
   
   public static final Set<ServerMode> VALID_STATES = EnumSet.allOf(ServerMode.class);
-  public static final Set<ServerMode> PASSIVE_STATES = EnumSet.of(UNINITIALIZED, PASSIVE, SYNCING, RELAY);
+  public static final Set<ServerMode> PASSIVE_STATES = EnumSet.of(UNINITIALIZED, PASSIVE, SYNCING, RELAY, REPLICA);
 };

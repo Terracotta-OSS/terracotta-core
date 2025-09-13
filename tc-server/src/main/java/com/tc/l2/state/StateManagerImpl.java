@@ -17,10 +17,19 @@
  */
 package com.tc.l2.state;
 
-import com.tc.async.api.EventHandler;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Predicate;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.server.ServerEnv;
+import org.terracotta.tripwire.TripwireFactory;
 
+import com.tc.async.api.EventHandler;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.StageController;
@@ -40,19 +49,9 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.impl.Topology;
 import com.tc.objectserver.impl.TopologyManager;
+import com.tc.objectserver.persistence.ServerPersistentState;
 import com.tc.util.Assert;
 import com.tc.util.State;
-
-import java.util.EnumSet;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
-import org.terracotta.server.ServerEnv;
-import org.terracotta.tripwire.TripwireFactory;
-import com.tc.objectserver.persistence.ServerPersistentState;
-import java.util.function.Predicate;
 
 
 public class StateManagerImpl implements StateManager {
@@ -387,7 +386,11 @@ public class StateManagerImpl implements StateManager {
 
   @Override
   public void moveToPassiveStandbyState() {
-    ServerMode old = switchToState(ServerMode.PASSIVE, EnumSet.complementOf(EnumSet.of(ServerMode.ACTIVE)));
+    ServerMode newState = 
+      (this.startElection.test(getActiveNodeID())) ?
+      ServerMode.PASSIVE : ServerMode.REPLICA;
+
+    ServerMode old = switchToState(newState, EnumSet.complementOf(EnumSet.of(ServerMode.ACTIVE)));
     if (old != ServerMode.PASSIVE) {
       clusterStatePersistor.setDBClean(true);
     } else {
@@ -436,7 +439,7 @@ public class StateManagerImpl implements StateManager {
   }
 
   private void moveToActiveState(Set<ServerID> passives, Topology topology) {
-    ServerMode oldState = switchToState(ServerMode.ACTIVE, EnumSet.of(ServerMode.INITIAL, ServerMode.START, ServerMode.PASSIVE));
+    ServerMode oldState = switchToState(ServerMode.ACTIVE, EnumSet.of(ServerMode.INITIAL, ServerMode.START, ServerMode.PASSIVE, ServerMode.REPLICA));
     // TODO :: If state == START_STATE publish cluster ID
     debugInfo("Moving to active state");
     for (NodeID peer : passives) {

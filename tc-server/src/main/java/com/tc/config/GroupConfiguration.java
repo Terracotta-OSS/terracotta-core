@@ -21,7 +21,6 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.Node;
 import static com.tc.properties.TCPropertiesConsts.L2_ELECTION_TIMEOUT;
 import com.tc.properties.TCPropertiesImpl;
-import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,23 +40,26 @@ public class GroupConfiguration {
   private final String serverName;
 
   GroupConfiguration(List<ServerConfiguration> servers, String serverName) {
+    this(servers, serverName, null, 0, 0);
+  }
+
+  GroupConfiguration(List<ServerConfiguration> servers, String serverName, String relayHost, int relayPort, int relayGroupPort) {
     Map<String, Node> base = new HashMap<>();
     for (ServerConfiguration s : servers) {
       base.put(s.getName(), configToNode(s));
     }
+    if (relayGroupPort != 0) {
+      base.entrySet().removeIf(s->!s.getKey().equals(serverName));
+    }
+    if (relayHost != null) {
+      base.put(relayGroupPort != 0 ? "__hidden_relay-source" : "__hidden_relay-destination", addressToNode(relayHost, relayPort, relayGroupPort));
+    }
+
     this.nodes = Collections.unmodifiableMap(base);
     this.serverName = serverName;
     if (MULTI_SERVER_ELECTION_TIMEOUT < 0) {
       throw new AssertionError("server election timeout cannot be less than zero");
     }
-  }
-  
-  GroupConfiguration(InetSocketAddress target, GroupConfiguration parent) {
-    Map<String, Node> base = new HashMap<>();
-    base.put(target.getHostString() + ":" + target.getPort(), addressToNode(target));
-    base.put(parent.serverName, parent.getCurrentNode());
-    this.nodes = Collections.unmodifiableMap(base);
-    this.serverName = parent.serverName;
   }
 
   public Set<Node> getNodes() {
@@ -66,10 +68,6 @@ public class GroupConfiguration {
 
   public Node getCurrentNode() {
     return nodes.get(serverName);
-  }
-  
-  public GroupConfiguration directConnect(InetSocketAddress target) {
-    return new GroupConfiguration(target, this);
   }
   
   private static Node configToNode(ServerConfiguration sc) {
@@ -82,8 +80,8 @@ public class GroupConfiguration {
                            sc.getGroupPort().getPort());
   }
   
-  private static Node addressToNode(InetSocketAddress var) {
-    return new Node(var.getHostName(), 0, var.getPort());
+  private static Node addressToNode(String host, int port, int grpPort) {
+    return new Node(host, port, grpPort);
   }
 
   public int getElectionTimeInSecs() {

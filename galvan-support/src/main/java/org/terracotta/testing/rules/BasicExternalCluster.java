@@ -76,6 +76,7 @@ public class BasicExternalCluster extends Cluster {
   private final OutputStream parentOutput;
   private final ConfigBuilder configBuilder;
   private final Supplier<StartupCommandBuilder> startupBuilder;
+  private final String stripeName;
 
   private String displayName;
   private ReadyStripe cluster;
@@ -89,7 +90,7 @@ public class BasicExternalCluster extends Cluster {
   private Thread shepherdingThread;
   private boolean isSafe;
 
-  public BasicExternalCluster(Path clusterDirectory, int stripeSize, Path server, int serverHeapSize,
+  public BasicExternalCluster(Path clusterDirectory, String stripeName, int stripeSize, Path server, int serverHeapSize,
       Properties systemProperties, Properties tcProps, int reconnect, int voters, boolean consistent, boolean inline, int serverDebugPort,
       String logConfigExt, OutputStream parentOutput, ConfigBuilder config, Supplier<StartupCommandBuilder> startupBuilder) {
     boolean didCreateDirectories = clusterDirectory.toFile().mkdirs();
@@ -102,6 +103,7 @@ public class BasicExternalCluster extends Cluster {
     }
 
     this.clusterDirectory = clusterDirectory;
+    this.stripeName = stripeName;
     this.stripeSize = stripeSize;
     this.server = server;
     this.systemProperties.putAll(systemProperties);
@@ -191,7 +193,6 @@ public class BasicExternalCluster extends Cluster {
     List<Integer> serverGroupPorts = groupPortRefs.stream().map(PortManager.PortRef::port).collect(toList());
     List<String> serverNames = IntStream.range(0, stripeSize).mapToObj(i -> "testServer" + i).collect(toList());
 
-    String stripeName = "stripe1";
     Path stripeInstallationDir = testParentDir.toPath().resolve(stripeName);
     Files.createDirectories(stripeInstallationDir);
 
@@ -225,9 +226,9 @@ public class BasicExternalCluster extends Cluster {
           .logConfigExtension(logConfigExt);
 
       ServerInstance serverProcess = !inline ?
-        new ServerProcess(serverName, server, serverWorkingDir, serverHeapSize, debugPort, systemProperties, parentOutput, builder.build())
+        new ServerProcess(serverName, server, serverWorkingDir, serverHeapSize, debugPort, systemProperties, parentOutput, builder::build)
               :
-        new InlineServer(serverName, server, serverWorkingDir, serverHeapSize, debugPort, systemProperties, parentOutput, builder.build());
+        new InlineServer(serverName, server, serverWorkingDir, serverHeapSize, debugPort, systemProperties, parentOutput, builder::build);
 
       stripeInstaller.installNewServer(serverProcess);
     }
