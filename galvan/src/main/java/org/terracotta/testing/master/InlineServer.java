@@ -16,8 +16,6 @@
  */
 package org.terracotta.testing.master;
 
-import org.terracotta.testing.common.Assert;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
@@ -37,8 +35,10 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.logging.VerboseOutputStream;
 
 
@@ -187,7 +187,6 @@ public class InlineServer extends ServerInstance {
     Object serverJMX = invokeOnObject(server, "getManagement");
     try {
       Method m = serverJMX.getClass().getMethod("call", String.class, String.class, String.class);
-      m.setAccessible(true);
       return m.invoke(serverJMX, target, call, arg).toString();
     } catch (NoSuchMethodException |
             SecurityException |
@@ -208,7 +207,6 @@ public class InlineServer extends ServerInstance {
         clazz[x] = sig;
       }
       Method m = server.getClass().getMethod(method, clazz);
-      m.setAccessible(true);
       return m.invoke(server, args);
     } catch (RuntimeException rt) {
       throw rt;

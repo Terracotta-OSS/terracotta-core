@@ -106,9 +106,6 @@ public class ActiveToPassiveReplicationTest {
     // Create a waiter for the replication activity
     ActivePassiveAckWaiter ack = replication.replicateActivity(activity, replication.passives());
     
-    // Signal that setup is complete
-    setupComplete.countDown();
-    
     // Create a thread to remove the passive node after setup is complete
     Future<?> removal = Executors.newSingleThreadExecutor().submit(() -> {
       try {
@@ -124,7 +121,8 @@ public class ActiveToPassiveReplicationTest {
         throw new RuntimeException("node left failed", i);
       }
     });
-    
+     // Signal that setup is complete
+    setupComplete.countDown();   
     // Wait for the removal to complete with a generous timeout
     boolean removalSucceeded = removalComplete.await(30, TimeUnit.SECONDS);
     Assert.assertTrue("Passive node removal timed out", removalSucceeded);
