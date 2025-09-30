@@ -31,7 +31,7 @@ import org.terracotta.tripwire.EventAppender;
 public class BootstrapConfigurator extends ContextAwareBase implements Configurator {
   
   @Override
-  public void configure(LoggerContext loggerContext) {
+  public ExecutionStatus configure(LoggerContext loggerContext) {
     ch.qos.logback.classic.Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
     
       BufferingAppender appender = new BufferingAppender();
@@ -56,5 +56,6 @@ public class BootstrapConfigurator extends ContextAwareBase implements Configura
       root.setLevel(Level.INFO);
       loggerContext.start();
     }
+    return ExecutionStatus.INVOKE_NEXT_IF_ANY;
   }
 }

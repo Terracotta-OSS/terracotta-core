@@ -51,6 +51,12 @@ public class TCLogbackLogging {
     root.detachAndStopAllAppenders();
     console.detachAndStopAllAppenders();
     loggerContext.reset();
+
+    try {
+      new ch.qos.logback.classic.util.ContextInitializer(loggerContext).autoConfig();
+    } catch (Exception e) {
+      ch.qos.logback.core.util.StatusPrinter.printInCaseOfErrorsOrWarnings(loggerContext);
+    }
   }
 
   public static void setServerName(String name) {
@@ -91,7 +97,7 @@ public class TCLogbackLogging {
       appender.start();
       root.addAppender(appender);
     }
-    
+
     if (!hasJfr && EventAppender.isEnabled()) {
       EventAppender events = new EventAppender();
       events.setName("LogToJFR");
@@ -103,7 +109,7 @@ public class TCLogbackLogging {
     ch.qos.logback.classic.Logger silent = loggerContext.getLogger(TCLogging.SILENT_LOGGER_NAME);
     silent.setAdditive(false);
     silent.setLevel(Level.OFF);
-    
+
     if (!loggerContext.isStarted()) {
       root.setLevel(Level.INFO);
       loggerContext.start();
@@ -122,13 +128,19 @@ public class TCLogbackLogging {
     } else {
       disableBufferingAppender(null);
     }
+
+    Appender<ILoggingEvent> bootstrap = root.getAppender("TC_BASE");
+    if (bootstrap != null) {
+      root.detachAppender(bootstrap);
+      try { bootstrap.stop(); } catch (Exception ignore) {}
+    }
   }
 
   private static void disableBufferingAppender(Appender<ILoggingEvent> continuingAppender) {
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
     ch.qos.logback.classic.Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
     ch.qos.logback.classic.Logger console = loggerContext.getLogger(CONSOLE);
-    
+
     Iterator<Appender<ILoggingEvent>> appenders = root.iteratorForAppenders();
     if (appenders != null) {
       while (appenders.hasNext()) {
