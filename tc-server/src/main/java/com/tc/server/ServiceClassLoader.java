@@ -41,7 +41,7 @@ public class ServiceClassLoader extends ClassLoader {
   @SuppressWarnings({"rawtypes","unchecked"})
   public ServiceClassLoader(ClassLoader loader, Class<?>...serviceTypes) {
     super(loader);
-    ServiceLocator locator = new ServiceLocator(loader);
+    ServiceLocator locator = new ServiceLocator(loader, false);
     for (Class serviceType : serviceTypes) {
       List<Class<?>> svcs = locator.getImplementations(serviceType);
       loadServiceClasses(svcs);

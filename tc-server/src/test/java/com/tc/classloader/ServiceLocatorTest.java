@@ -99,7 +99,7 @@ public class ServiceLocatorTest {
      Assert.assertEquals(interi.getClassLoader(), component);
      
      Thread.currentThread().setContextClassLoader(apiLoader);
-     Collection<Class<? extends Runnable>> list = new ServiceLocator(apiLoader).getImplementationsTypes(Runnable.class, apiLoader);
+     Collection<Class<? extends Runnable>> list = new ServiceLocator(apiLoader, false).getImplementationsTypes(Runnable.class, apiLoader);
      for (Class<? extends Runnable> r : list) {
        r.newInstance().run();
      }
@@ -147,7 +147,7 @@ public class ServiceLocatorTest {
 //  put it in the zip so null parent loader can find it
      zip.putEntry("com/tc/classloader/TestInterface.class", resourceToBytes("com/tc/classloader/TestInterface.class"));
      zip.finish();
-     Collection<Class<?>> map = new ServiceLocator(new URLClassLoader(new URL[] {test.toURI().toURL()})).testingCheckUrls("com.tc.classloader.TestInterface");
+     Collection<Class<?>> map = new ServiceLocator(new URLClassLoader(new URL[] {test.toURI().toURL()}), false).testingCheckUrls("com.tc.classloader.TestInterface");
      Assert.assertTrue(map.size() == 1);
    }
    
@@ -168,7 +168,7 @@ public class ServiceLocatorTest {
      impl.close();
      
      try {
-       Collection<Class<?>> map = new ServiceLocator(new URLClassLoader(new URL[] {base.toURI().toURL()})).testingCheckUrls("com.tc.classloader.TestInterface");
+       Collection<Class<?>> map = new ServiceLocator(new URLClassLoader(new URL[] {base.toURI().toURL()}), false).testingCheckUrls("com.tc.classloader.TestInterface");
        Assert.assertTrue(map.size() == 1);
      } catch (Throwable t) {
        t.printStackTrace();
@@ -197,7 +197,7 @@ public class ServiceLocatorTest {
      impl.close();
 
      try {
-       Collection<Class<?>> map = new ServiceLocator(new URLClassLoader(new URL[] {base.toURI().toURL()})).testingCheckUrls("com.tc.classloader.TestInterface");
+       Collection<Class<?>> map = new ServiceLocator(new URLClassLoader(new URL[] {base.toURI().toURL()}), false).testingCheckUrls("com.tc.classloader.TestInterface");
        Assert.assertTrue(map.size() == 2);
        List<ClassLoader> cls = map.stream().map(Class::getClassLoader).collect(Collectors.toList());
        Assert.assertEquals(cls.get(0), cls.get(1));

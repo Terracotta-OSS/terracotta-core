@@ -81,7 +81,7 @@ public class EntityManagerImplTest {
         new ManagementTopologyEventCollector(mock(IMonitoringProducer.class)),
         processor,
         mock(ManagementKeyCallback.class),
-        new ServiceLocator(this.getClass().getClassLoader())
+        new ServiceLocator(this.getClass().getClassLoader(), false)
     );
     entityManager.setMessageSink(mock(Sink.class));
     id = new EntityID("com.tc.objectserver.testentity.TestEntity", "foo");

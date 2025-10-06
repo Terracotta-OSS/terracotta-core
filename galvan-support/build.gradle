@@ -43,6 +43,7 @@ dependencies {
 
     pluginImpl project(":default-configuration")
     pluginImpl project(":examples:extended-server")
+    pluginImpl project(":examples:logging-config")
 }
 
 def copyPlugins = tasks.register('copyPlugins', Sync) {
