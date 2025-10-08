@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -38,30 +40,61 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-
 /**
- * Top level service locator class used to identify and isolate service dependencies in its own classloader.
- * Caching will allow for one classloader per root jar.
+ * Top level service locator class used to identify and isolate service
+ * dependencies in its own classloader. Caching will allow for one classloader
+ * per root jar.
  */
 public class ServiceLocator extends ManagedServiceLoader {
 
   private static final Logger LOG = LoggerFactory.getLogger(ServiceLocator.class);
   private static final boolean STRICT = !TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.PLUGIN_CLASSLOADER_COMPATIBILITY);
+  private static final Path PLUGIN_PATH = getPluginPath();
   private final ClassLoader defaultClassLoader;
+  private final boolean verify;
   private final Map<String, ClassLoader> locationCache = new ConcurrentHashMap<>();
 
   public ServiceLocator(ClassLoader parent) {
-    defaultClassLoader = parent;
+    this(parent, true);
   }
-  
+
+  public ServiceLocator(ClassLoader parent, boolean verify) {
+    defaultClassLoader = parent;
+    this.verify = verify;
+  }
+
+  private static Path getPluginPath() {
+    try {
+      return Directories.getServerPluginsLibDir();
+    } catch (FileNotFoundException ff) {
+      return null;
+    }
+  }
+
+  private boolean verifyPluginIsInProperDir(String location) {
+    if (verify) {
+      try {
+        return PLUGIN_PATH == null ? false : Path.of(new URI(location).getPath()).startsWith(PLUGIN_PATH);
+      } catch (URISyntaxException notfound) {
+        return false;
+      }
+    } else {
+      return true;
+    }
+  }
+
   @Override
   protected Class<?> loadClass(String className, String location, ClassLoader loader) {
     try {
-      ClassLoader component = locationCache.computeIfAbsent(location, loc->createComponentClassLoader(loc, loader));
-      if (component != null) {
-        return Class.forName(className, true, component);
+      if (verifyPluginIsInProperDir(location)) {
+        ClassLoader component = locationCache.computeIfAbsent(location, loc -> createComponentClassLoader(loc, loader));
+        if (component != null) {
+          return Class.forName(className, true, component);
+        }
+      } else {
+        return null;
       }
-    } catch  (ClassNotFoundException nf) {
+    } catch (ClassNotFoundException nf) {
       LOG.warn("unable to load " + className + " from " + location, nf);
     }
     return super.loadClass(className, location, loader);
@@ -69,18 +102,18 @@ public class ServiceLocator extends ManagedServiceLoader {
 
   private ClassLoader createComponentClassLoader(String location, ClassLoader parent) {
     try {
-      return new ComponentURLClassLoader(new URL[] {new URL(location)}, parent,new AnnotationOrDirectoryStrategyChecker());
+      return new ComponentURLClassLoader(new URL[]{new URL(location)}, parent, new AnnotationOrDirectoryStrategyChecker());
     } catch (MalformedURLException aml) {
       LOG.warn("unable to load " + location, aml);
     }
     return null;
   }
-    
+
   private static boolean fileFilter(Path target) {
     String name = target.toString().toLowerCase();
     return name.endsWith(".jar") || name.endsWith(".zip");
   }
-  
+
   private static URL toURL(Path uri) {
     try {
       return uri.toUri().toURL();
@@ -88,22 +121,22 @@ public class ServiceLocator extends ManagedServiceLoader {
       return null;
     }
   }
-      
+
   private static URL[] createURLS(Path plugins) {
     if (Files.isDirectory(plugins)) {
       try {
         return Files.list(plugins)
-          .filter(ServiceLocator::fileFilter)
-          .map(ServiceLocator::toURL)
-          .filter(u->u!=null)
-          .toArray(i->new URL[i]);
+                .filter(ServiceLocator::fileFilter)
+                .map(ServiceLocator::toURL)
+                .filter(u -> u != null)
+                .toArray(i -> new URL[i]);
       } catch (IOException io) {
         throw new UncheckedIOException(io);
       }
     }
     throw new RuntimeException("plugins directory is not valid");
   }
-  
+
   private static URL[] findPluginURLS() throws FileNotFoundException {
     return createURLS(Directories.getServerPluginsLibDir());
   }
@@ -139,13 +172,13 @@ public class ServiceLocator extends ManagedServiceLoader {
       return new ApiClassLoader(new URL[0], parent);
     }
   }
-  
+
   Collection<Class<?>> testingCheckUrls(String interfaceName) {
     return discoverImplementations(interfaceName, defaultClassLoader);
   }
 
   public <T> List<Class<? extends T>> getImplementations(Class<T> interfaceClass) {
-    return super.getImplementationsTypes(interfaceClass, defaultClassLoader); 
+    return super.getImplementationsTypes(interfaceClass, defaultClassLoader);
   }
 
   public ClassLoader getServiceLoader() {

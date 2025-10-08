@@ -45,12 +45,13 @@ import org.terracotta.server.ServerEnv;
  *
  */
 public class Bootstrap implements BootstrapService {
-  private static final Logger CONSOLE = LoggerFactory.getLogger(TCLogbackLogging.CONSOLE);
   
   @Override
   public Future<Boolean> createServer(List<String> args, OutputStream out, ClassLoader loader) {
-    TCLogbackLogging.bootstrapLogging(out);
     ServiceLocator locator = ServiceLocator.createPlatformServiceLoader(loader);
+    TCLogbackLogging.bootstrapLogging(out, locator);
+
+    Logger console = LoggerFactory.getLogger(TCLogbackLogging.CONSOLE);
 
     ServerConfigurationManager setup = new ServerConfigurationManager(
       getConfigurationProvider(locator),
@@ -58,8 +59,8 @@ public class Bootstrap implements BootstrapService {
       args
     );
 
-    writeVersion(setup.getProductInfo());
-    writePID();
+    writeVersion(setup.getProductInfo(), console);
+    writePID(console);
 
     ThrowableHandler throwableHandler = new BootstrapThrowableHandler(LoggerFactory.getLogger(TCServerImpl.class));
     TCThreadGroup threadGroup = new TCThreadGroup(throwableHandler, Integer.toString(System.identityHashCode(this)), out != null);
@@ -96,35 +97,35 @@ public class Bootstrap implements BootstrapService {
     return new ServerFuture(server, threadGroup);
   }
 
-  private static void writeVersion(ProductInfo info) {
+  private static void writeVersion(ProductInfo info, Logger console) {
     // Write build info always
     String longProductString = info.toLongString();
-    CONSOLE.info(longProductString);
+    console.info(longProductString);
 
-    CONSOLE.info("Extensions:");
+    console.info("Extensions:");
     for (String ext : info.getExtensions()) {
-      CONSOLE.info(ext);
+      console.info(ext);
     }
 
     // Write patch info, if any
     if (info.isPatched()) {
       String longPatchString = info.toLongPatchString();
-      CONSOLE.info(longPatchString);
+      console.info(longPatchString);
     }
 
     String versionMessage = info.versionMessage();
     if (!versionMessage.isEmpty()) {
-      CONSOLE.info(versionMessage);
+      console.info(versionMessage);
     }
   }
 
-  private static void writePID() {
+  private static void writePID(Logger console) {
     try {
       String processName = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
       long pid = Long.parseLong(processName.split("@")[0]);
-      CONSOLE.info("PID is {}", pid);
+      console.info("PID is {}", pid);
     } catch (Throwable t) {
-      CONSOLE.warn("Unable to fetch the PID of this process.");
+      console.warn("Unable to fetch the PID of this process.");
     }
   }
   

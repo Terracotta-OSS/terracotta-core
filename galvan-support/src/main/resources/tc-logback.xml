@@ -1,4 +1,4 @@
-<configuration debug="true">
+<configuration>
   <property resource="logbackVars.properties" />
   <appender name="TC_BASE" class="com.tc.l2.logging.BufferingAppender"/>
 

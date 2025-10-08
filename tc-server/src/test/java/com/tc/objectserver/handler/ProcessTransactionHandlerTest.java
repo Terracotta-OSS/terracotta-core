@@ -138,7 +138,7 @@ public class ProcessTransactionHandlerTest {
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
     when(broker.passives()).thenReturn(Collections.emptySet());
     processor.setReplication(broker);
-    entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop, new ServiceLocator(this.getClass().getClassLoader()));
+    entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop, new ServiceLocator(this.getClass().getClassLoader(), false));
     entityManager.setMessageSink(mock(Sink.class));
 
     this.processTransactionHandler = new ProcessTransactionHandler(persistor, channelManager, entityManager);

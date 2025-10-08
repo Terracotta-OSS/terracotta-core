@@ -20,12 +20,15 @@ package com.tc.l2.logging;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.classic.spi.Configurator;
+import ch.qos.logback.classic.spi.ConfiguratorRank;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.rolling.FixedWindowRollingPolicy;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.util.FileSize;
+import com.tc.classloader.ServiceLocator;
 import com.tc.logging.TCLogging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +38,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 public class TCLogbackLogging {
 
@@ -60,6 +65,35 @@ public class TCLogbackLogging {
       loggerContext.setName(name);
     } else if (!name.equals(currentName)) {
       throw new RuntimeException("server names do not match exsiting:" + loggerContext.getName() + " given:" + name);
+    }
+  }
+
+  public static void bootstrapLogging(OutputStream out, ServiceLocator locator) {
+    bootstrapLogging(out);
+    applyExtraLoggingConfig(locator);
+  }
+
+  private static void applyExtraLoggingConfig(ServiceLocator locator) {
+    LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+    List<Class<? extends Configurator>> configEx = new ArrayList<>(locator.getImplementations(Configurator.class));
+    configEx.sort((o1, o2) -> {
+      ConfiguratorRank r1 = o1.getAnnotation(ConfiguratorRank.class);
+      ConfiguratorRank r2 = o2.getAnnotation(ConfiguratorRank.class);
+      int value1 = r1 == null ? ConfiguratorRank.DEFAULT : r1.value();
+      int value2 = r2 == null ? ConfiguratorRank.DEFAULT : r2.value();
+      return Integer.compare(value2, value1);
+    });
+    Iterator<Class<? extends Configurator>> clist = configEx.iterator();
+    while (clist.hasNext()) {
+      try {
+        Class<? extends Configurator> c = clist.next();
+        Configurator config = c.getDeclaredConstructor().newInstance();
+        if (config.configure(loggerContext) == Configurator.ExecutionStatus.DO_NOT_INVOKE_NEXT_IF_ANY) {
+          break;
+        }
+      } catch (Throwable e) {
+        clist.remove();
+      }
     }
   }
 
@@ -103,11 +137,6 @@ public class TCLogbackLogging {
     ch.qos.logback.classic.Logger silent = loggerContext.getLogger(TCLogging.SILENT_LOGGER_NAME);
     silent.setAdditive(false);
     silent.setLevel(Level.OFF);
-
-    if (!loggerContext.isStarted()) {
-      root.setLevel(Level.INFO);
-      loggerContext.start();
-    }
   }
 
   public static void redirectLogging(File logDirFile) {
@@ -115,7 +144,7 @@ public class TCLogbackLogging {
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
     ch.qos.logback.classic.Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
 
-    if (logDirFile != null) {
+    if (root.getAppender("TC_BASE") != null && logDirFile != null) {
       Appender<ILoggingEvent> continuingAppender = installFileAppender(logDir, loggerContext);
       root.addAppender(continuingAppender);
       disableBufferingAppender(continuingAppender);
@@ -143,7 +172,6 @@ public class TCLogbackLogging {
             console.addAppender(current);
           } else {
             ((BufferingAppender) current).sendContentsTo(e->{});
-            current.stop();
           }
         }
       }
