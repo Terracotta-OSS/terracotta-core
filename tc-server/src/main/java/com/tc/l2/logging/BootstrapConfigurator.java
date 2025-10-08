@@ -23,38 +23,22 @@ import ch.qos.logback.classic.spi.Configurator;
 import ch.qos.logback.core.spi.ContextAwareBase;
 import com.tc.logging.TCLogging;
 import org.slf4j.Logger;
-import org.terracotta.tripwire.EventAppender;
+
+import static ch.qos.logback.classic.spi.Configurator.ExecutionStatus.NEUTRAL;
+import static com.tc.l2.logging.TCLogbackLogging.CONSOLE;
 
 /**
  *
  */
 public class BootstrapConfigurator extends ContextAwareBase implements Configurator {
-  
-  @Override
-  public void configure(LoggerContext loggerContext) {
-    ch.qos.logback.classic.Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
-    
-      BufferingAppender appender = new BufferingAppender();
-      appender.setName("TC_BASE");
-      appender.setContext(loggerContext);
-      appender.start();
-      root.addAppender(appender);
-    
-    if (EventAppender.isEnabled()) {
-      EventAppender events = new EventAppender();
-      events.setName("LogToJFR");
-      events.setContext(loggerContext);
-      events.start();
-      root.addAppender(events);
-    }
 
-    ch.qos.logback.classic.Logger silent = loggerContext.getLogger(TCLogging.SILENT_LOGGER_NAME);
-    silent.setAdditive(false);
-    silent.setLevel(Level.OFF);
-    
-    if (!loggerContext.isStarted()) {
-      root.setLevel(Level.INFO);
-      loggerContext.start();
-    }
+  @Override
+  public ExecutionStatus configure(LoggerContext loggerContext) {
+    ch.qos.logback.classic.Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
+    root.detachAndStopAllAppenders();
+    root.setLevel(Level.INFO);
+    ch.qos.logback.classic.Logger console = loggerContext.getLogger(CONSOLE);
+    console.setLevel(Level.INFO);
+    return NEUTRAL;
   }
 }
