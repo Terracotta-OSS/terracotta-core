@@ -32,7 +32,6 @@
 
   <properties>
     <checkstyle-suppressions-file>${basedir}/../checkstyle-toolkit/suppressions.xml</checkstyle-suppressions-file>
-    <java.build.version>1.8</java.build.version>
   </properties>
 
   <dependencies>

@@ -149,7 +149,7 @@
             <forkCount>0.5C</forkCount>
             <reuseForks>false</reuseForks>
             <workingDirectory>${project.build.directory}/test-fork-${surefire.forkNumber}</workingDirectory>
-            <argLine>-Djava.awt.headless=true</argLine>
+            <argLine>-Djava.awt.headless=true --add-opens java.base/java.lang=ALL-UNNAMED</argLine>
             <systemPropertyVariables>
                 <testClassesDir>${project.build.testOutputDirectory}</testClassesDir>
             </systemPropertyVariables>

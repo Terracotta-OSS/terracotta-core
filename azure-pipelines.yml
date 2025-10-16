@@ -24,3 +24,5 @@ resources:
 
 jobs:
 - template: build-templates/maven-common.yml@templates  
+  parameters:
+    jdkVersion: '17'

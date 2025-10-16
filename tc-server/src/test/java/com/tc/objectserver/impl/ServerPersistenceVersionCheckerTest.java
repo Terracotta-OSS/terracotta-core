@@ -21,6 +21,7 @@ import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.productinfo.ProductInfo;
 import com.tc.test.TCTestCase;
 import com.tc.util.version.Version;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -34,6 +35,7 @@ import static org.mockito.Mockito.when;
 /**
  * @author tim
  */
+@Ignore("Powermock not compatible with java after 8")
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ ProductInfo.class })
 public class ServerPersistenceVersionCheckerTest extends TCTestCase {
