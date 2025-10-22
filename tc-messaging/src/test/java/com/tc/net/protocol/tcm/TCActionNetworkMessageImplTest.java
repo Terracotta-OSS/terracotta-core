@@ -107,7 +107,7 @@ public class TCActionNetworkMessageImplTest {
   @Test
   public void testDoubleLoad() throws Exception {
     TCNetworkHeader header = mock(TCNetworkHeader.class);
-    when(header.getDataBuffer()).thenReturn(mock(TCByteBuffer.class));
+    when(header.getDataBuffer()).thenReturn(TCByteBufferFactory.getInstance(0));
     Supplier<TCReference> payloadSupplier = mock(Supplier.class);
     when(payloadSupplier.get()).thenReturn(TCReferenceSupport.createReference(Arrays.asList(new TCByteBuffer[] {TCByteBufferFactory.getInstance(0)}), null));
     

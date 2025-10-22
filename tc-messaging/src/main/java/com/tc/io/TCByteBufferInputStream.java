@@ -28,18 +28,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.BufferUnderflowException;
 import java.util.Iterator;
-import java.util.stream.StreamSupport;
 
 public class TCByteBufferInputStream extends InputStream implements TCByteBufferInput {
   private static final int            EOF                     = -1;
-  private static final TCByteBuffer[] EMPTY_BYTE_BUFFER_ARRAY = new TCByteBuffer[] {};
 
   private final Runnable   onCloseHook;
 
   private final TCReference              data;
   private final Iterator<TCByteBuffer>     list;
   private TCByteBuffer current;
-  private int                         totalLength;
+  private long                         totalLength;
   private boolean                     closed                  = false;
 
 
@@ -54,11 +52,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     this.list = this.data.iterator();
     this.current = this.list.hasNext() ? this.list.next() : TCByteBufferFactory.getInstance(0);
 
-    long length = StreamSupport.stream(this.data.spliterator(), false).mapToInt(TCByteBuffer::remaining).asLongStream().sum();
-
-    if (length > Integer.MAX_VALUE) { throw new IllegalArgumentException("too much data: " + length); }
-
-    this.totalLength = (int) length;
+    this.totalLength = this.data.available();
 
     this.onCloseHook = this.data::close;
   }
@@ -70,6 +64,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
    * Duplicate this stream. The resulting stream will share data with the source stream (ie. no copying), but the two
    * streams will have independent read positions. The read position of the result stream will initially be the same as
    * the source stream
+   * @return
    */
   @Override
   public TCByteBufferInput duplicate() {
@@ -79,12 +74,22 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
   
   @Override
   public int getTotalLength() {
-    return this.totalLength;
+    return Math.toIntExact(this.totalLength);
   }
 
   @Override
   public int available() {
-    return StreamSupport.stream(this.data.spliterator(), false).mapToInt(TCByteBuffer::remaining).sum();
+    return Math.toIntExact(data.available());
+  }
+
+  @Override
+  public long length() {
+    return this.totalLength;
+  }
+
+  @Override
+  public long remaining() {
+    return this.data.available();
   }
 
   @Override
@@ -105,10 +110,12 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     }
     if (len == 0) { return 0; }
 
-    if (available() == 0) { return EOF; }
+    long remaining = data.available();
+
+    if (remaining == 0) { return EOF; }
 
     int bytesRead = 0;
-    int numToRead = Math.min(available(), len);
+    int numToRead = remaining > Integer.MAX_VALUE ? len : Math.min((int)remaining, len);
 
     TCByteBuffer src = nextBuffer();
     while (src.hasRemaining()) {
@@ -137,7 +144,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
 
     if (len == 0) { return TCByteBufferFactory.getInstance(0); }
 
-    if (available() == 0) { return TCByteBufferFactory.getInstance(0); }
+    if (!data.hasRemaining()) { return TCByteBufferFactory.getInstance(0); }
 
     TCByteBuffer result = TCByteBufferFactory.getInstance(len);
     TCByteBuffer src = nextBuffer();
@@ -197,18 +204,18 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
   public long skip(long skip) {
     checkClosed();
 
-    if (skip > Integer.MAX_VALUE) { throw new IllegalArgumentException("skip value too large: " + skip); }
+    long available = data.available();
 
-    if ((skip <= 0) || (available() == 0)) { return 0; } // per java.io.InputStream.skip() javadoc
+    if ((skip <= 0) || (available == 0)) { return 0L; } // per java.io.InputStream.skip() javadoc
 
-    int numToSkip = Math.min(available(), (int) skip);
+    long numToSkip = Math.min(available, skip);
 
-    int bytesSkipped = 0;
+    long bytesSkipped = 0;
     TCByteBuffer src = nextBuffer();
     while (src.hasRemaining()) {
       int remaining = src.remaining();
       if (remaining > 0) {
-        int numToRead = Math.min(remaining, numToSkip);
+        int numToRead = numToSkip > Integer.MAX_VALUE ? remaining : Math.min(remaining, (int)numToSkip);
         src.position(src.position() + numToRead);
         bytesSkipped += numToRead;
         numToSkip -= numToRead;
@@ -233,7 +240,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     int byte3 = read();
     int byte4 = read();
     if ((byte1 | byte2 | byte3 | byte4) < 0) { throw new EOFException(); }
-    return ((byte1 << 24) + (byte2 << 16) + (byte3 << 8) + (byte4 << 0));
+    return ((byte1 << 24) + (byte2 << 16) + (byte3 << 8) + (byte4));
   }
 
   @Override
@@ -255,7 +262,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     int byte1 = read();
     int byte2 = read();
     if ((byte1 | byte2) < 0) { throw new EOFException(); }
-    return (char) ((byte1 << 8) + (byte2 << 0));
+    return (char) ((byte1 << 8) + (byte2));
   }
 
   @Override
@@ -278,7 +285,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
 
     return (((long) byte1 << 56) + ((long) (byte2 & 255) << 48) + ((long) (byte3 & 255) << 40)
             + ((long) (byte4 & 255) << 32) + ((long) (byte5 & 255) << 24) + ((byte6 & 255) << 16)
-            + ((byte7 & 255) << 8) + ((byte8 & 255) << 0));
+            + ((byte7 & 255) << 8) + ((byte8 & 255)));
   }
 
   @Override
@@ -291,7 +298,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     int byte1 = read();
     int byte2 = read();
     if ((byte1 | byte2) < 0) { throw new EOFException(); }
-    return (short) ((byte1 << 8) + (byte2 << 0));
+    return (short) ((byte1 << 8) + (byte2));
   }
 
   @Override
@@ -347,7 +354,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
 
   @Override
   public final int skipBytes(int n) {
-    return (int) skip(n);
+    return Math.toIntExact(skip(n));
   }
 
   @Override
@@ -362,7 +369,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     int byte1 = read();
     int byte2 = read();
     if ((byte1 | byte2) < 0) { throw new EOFException(); }
-    return (byte1 << 8) + (byte2 << 0);
+    return (byte1 << 8) + (byte2);
   }
 
   @Override
