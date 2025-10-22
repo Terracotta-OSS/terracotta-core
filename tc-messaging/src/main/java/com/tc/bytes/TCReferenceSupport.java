@@ -22,6 +22,7 @@ import com.tc.util.concurrent.SetOnceFlag;
 import java.lang.ref.PhantomReference;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -153,7 +154,17 @@ public class TCReferenceSupport {
     private final List<TCByteBuffer> buffers;
 
     public GCRef(Collection<TCByteBuffer> buffers) {
-      this.buffers = buffers.stream().filter(TCByteBuffer::hasRemaining).map(TCByteBuffer::slice).collect(Collectors.toList());
+      switch (buffers.size()) {
+        case 0:
+          this.buffers = Collections.emptyList();
+          break;
+        case 1:
+          this.buffers = Collections.singletonList(buffers.iterator().next().slice());
+          break;
+        default:
+          this.buffers = buffers.stream().filter(TCByteBuffer::hasRemaining).map(TCByteBuffer::slice).collect(Collectors.toList());
+          break;
+      }
     }
 
     @Override
@@ -167,6 +178,20 @@ public class TCReferenceSupport {
     }
 
     @Override
+    public ByteBuffer[] toByteBufferArray() {
+      ByteBuffer[] raw = new ByteBuffer[buffers.size()];
+      for (int x=0;x<raw.length;x++) {
+        raw[x] = buffers.get(x).getNioBuffer();
+      }
+      return raw;
+    }
+
+    @Override
+    public TCByteBuffer[] toArray() {
+      return buffers.toArray(TCByteBuffer[]::new);
+    }
+
+    @Override
     public Iterator<TCByteBuffer> iterator() {
       return buffers.iterator();
     }
@@ -177,7 +202,17 @@ public class TCReferenceSupport {
     private final List<TCReference> localItems;
 
     RefRef(Collection<TCReference> run) {
-      this.localItems = run.stream().map(TCReference::duplicate).collect(toUnmodifiableList());
+      switch (run.size()) {
+        case 0:
+          this.localItems = Collections.emptyList();
+          break;
+        case 1:
+          this.localItems = Collections.singletonList(run.iterator().next().duplicate());
+          break;
+        default:
+          this.localItems = run.stream().map(TCReference::duplicate).collect(toUnmodifiableList());
+          break;
+      }
     }
 
     @Override
@@ -198,14 +233,19 @@ public class TCReferenceSupport {
 
   private class Ref implements TCReference {
 
-    private final Collection<TCByteBuffer> localItems;
+    private final List<TCByteBuffer> localItems;
     private final Reference<TCReference> tracker;
     private final SetOnceFlag closed = new SetOnceFlag();
 
     Ref(Collection<TCByteBuffer> localItems, Function<TCByteBuffer, TCByteBuffer> mapper) {
       referenceCount.getAndIncrement();
-      this.localItems = localItems.stream().map(mapper).filter(TCByteBuffer::hasRemaining).collect(toUnmodifiableList());
-      this.tracker = track == null ? null : track.startTracking(this);
+      if (localItems.isEmpty()) {
+        this.localItems = Collections.emptyList();
+        this.tracker = null;
+      } else {
+        this.localItems = localItems.stream().map(mapper).filter(TCByteBuffer::hasRemaining).collect(toUnmodifiableList());
+        this.tracker = track == null ? null : track.startTracking(this);
+      }
     }
 
     @Override
@@ -224,6 +264,20 @@ public class TCReferenceSupport {
     public Iterator<TCByteBuffer> iterator() {
       checkClosed();
       return localItems.iterator();
+    }
+
+    @Override
+    public ByteBuffer[] toByteBufferArray() {
+      ByteBuffer[] raw = new ByteBuffer[localItems.size()];
+      for (int i=0;i<raw.length;i++) {
+        raw[i] = localItems.get(i).getNioBuffer();
+      }
+      return raw;
+    }
+
+    @Override
+    public TCByteBuffer[] toArray() {
+      return localItems.toArray(TCByteBuffer[]::new);
     }
 
     private void checkClosed() {
@@ -255,7 +309,9 @@ public class TCReferenceSupport {
     }
 
     private void stopTracking(Reference<TCReference> ref) {
-      Assert.assertNotNull(outRefs.remove(ref));
+      if (ref != null) {
+        Assert.assertNotNull(outRefs.remove(ref));
+      }
     }
 
     private int gc() {
