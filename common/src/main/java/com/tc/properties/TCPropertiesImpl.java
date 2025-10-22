@@ -47,7 +47,7 @@ public class TCPropertiesImpl implements TCProperties {
 
   private static final Logger logger = LoggerFactory.getLogger(TCPropertiesImpl.class);
 
-  private static final Set<String> TC_PROPERTIES_WITH_NO_DEFAULTS = new HashSet<String>(Arrays.asList(TCPropertiesConsts.TC_PROPERTIES_WITH_NO_DEFAULTS));
+  private static final Set<String> TC_PROPERTIES_WITH_NO_DEFAULTS = new HashSet<>(Arrays.asList(TCPropertiesConsts.TC_PROPERTIES_WITH_NO_DEFAULTS));
 
   public static final String            SYSTEM_PROP_PREFIX         = "com.tc.";
 
@@ -64,14 +64,17 @@ public class TCPropertiesImpl implements TCProperties {
 
   private final TCPropertyStore         props                      = new TCPropertyStore();
 
-  private final TCPropertyStore         localTcProperties          = new TCPropertyStore();
-
-  private volatile boolean              initialized                = false;
+  private static final ThreadLocal<TCPropertyStore>         localTcProperties          = new InheritableThreadLocal<>() {
+    @Override
+    protected TCPropertyStore initialValue() {
+      return new TCPropertyStore();
+    }
+  };
 
   static {
     INSTANCE = new TCPropertiesImpl();
   }
-
+  
   private TCPropertiesImpl() {
     super();
 
@@ -88,7 +91,6 @@ public class TCPropertiesImpl implements TCProperties {
     // this happens last -- system properties have highest precedence
     processSystemProperties();
 
-    printLocalProperties();
     warnForOldProperties();
   }
 
@@ -101,8 +103,7 @@ public class TCPropertiesImpl implements TCProperties {
     int len = oldProperties.length;
     for (int i = 0; i < len; i++) {
       if (props.containsKey(oldProperties[i])) {
-        logger
-            .warn("The property \""
+        logger.warn("The property \""
                   + oldProperties[i]
                   + "\" has been removed/renamed in the latest release. Please update the tc.properties file or some of your settings might not work");
       }
@@ -117,7 +118,6 @@ public class TCPropertiesImpl implements TCProperties {
       if (key.startsWith(SYSTEM_PROP_PREFIX)) {
         String value = System.getProperty(key);
         if (value != null) {
-          localTcProperties.setProperty(key.substring(SYSTEM_PROP_PREFIX.length()), value);
           props.setProperty(key.substring(SYSTEM_PROP_PREFIX.length()), value);
         }
       }
@@ -132,13 +132,7 @@ public class TCPropertiesImpl implements TCProperties {
   @Override
   public synchronized void overwriteTcPropertiesFromConfig(Map<String, String> overwriteProps) {
     applyConfigOverrides(overwriteProps);
-
-    if (!initialized) {
-      initialized = true;
-    } else {
-      return;
-    }
-
+    
     logger.debug("Loaded TCProperties : " + toString());
   }
 
@@ -148,6 +142,8 @@ public class TCPropertiesImpl implements TCProperties {
       return;
     }
 
+    TCPropertyStore locals = localTcProperties.get();
+
     for (Entry<String, String> prop : overwriteProps.entrySet()) {
       String propertyName = prop.getKey();
       String propertyValue = prop.getValue();
@@ -155,14 +151,14 @@ public class TCPropertiesImpl implements TCProperties {
         logger.warn("The property \"" + propertyName
                     + "\" is not present in set of defined tc properties. Probably this is misspelled");
       }
-      if (!this.localTcProperties.containsKey(propertyName)) {
+      if (!locals.containsKey(propertyName)) {
         if(TC_PROPERTIES_WITH_NO_DEFAULTS.contains(propertyName)) {
           logger.info("The property \"" + propertyName + "\" was set to " + propertyValue + " by the tc-config file");
         } else {
           logger.info("The property \"" + propertyName + "\" was overridden to " + propertyValue + " from "
                       + props.getProperty(propertyName) + " by the tc-config file");
         }
-        setProperty(propertyName, propertyValue);
+        locals.setProperty(propertyName, propertyValue);
       } else {
         logger.warn("The property \"" + propertyName + "\" was set by local settings to "
                     + props.getProperty(propertyName) + ". This will not be overridden to " + propertyValue
@@ -194,12 +190,11 @@ public class TCPropertiesImpl implements TCProperties {
 
   private void loadOverrides(File file) {
     if (file.canRead()) {
-      try {
-        FileInputStream fin = new FileInputStream(file);
+      TCPropertyStore locals = new TCPropertyStore();
+      try (FileInputStream fin = new FileInputStream(file)) {
         logger.info("Loading override properties from : " + file);
-        localTcProperties.load(fin);
-        fin.close();
-        props.putAll(localTcProperties);
+        locals.load(fin);
+        props.putAll(locals);
       } catch (FileNotFoundException e) {
         logger.info("Couldnt find " + file + ". Ignoring it", e);
       } catch (IOException e) {
@@ -250,11 +245,12 @@ public class TCPropertiesImpl implements TCProperties {
 
   @Override
   public String getProperty(String key, boolean missingOkay) {
-    String val = props.getProperty(key);
-    if (val == null && !missingOkay) { throw new AssertionError("TCProperties : Property not found for " + key); }
-    if (!initialized) {
-      logger.debug("The property \"" + key + "\" was read before initialization completed. \"" + key + "\" = " + val);
+    String val = localTcProperties.get().getProperty(key);
+    if (val == null) {
+      val = props.getProperty(key);
     }
+    if (val == null && !missingOkay) { throw new AssertionError("TCProperties : Property not found for " + key); }
+
     return val;
   }
 
@@ -274,7 +270,7 @@ public class TCPropertiesImpl implements TCProperties {
   private String sortedPropertiesToString() {
     String properties[] = props.keysArray();
     Arrays.sort(properties);
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     for (int i = 0; i < properties.length; i++) {
       sb.append(properties[i]).append(" = ").append(props.getProperty(properties[i]));
       if (i != properties.length - 1) {
@@ -284,29 +280,23 @@ public class TCPropertiesImpl implements TCProperties {
     return sb.toString();
   }
   
-  private void printLocalProperties() {
-    if (!localTcProperties.isEmpty()) {
-      logger.info("using the following local tc properties = {" + sortedPropertiesToString() + " }");
-    }
-  }
-
   @Override
   public boolean getBoolean(String key) {
     String val = getProperty(key);
-    return Boolean.valueOf(val).booleanValue();
+    return Boolean.parseBoolean(val);
   }
 
   @Override
   public boolean getBoolean(String key, boolean defaultValue) {
     String val = getProperty(key, true);
     if (val == null) return defaultValue;
-    return Boolean.valueOf(val).booleanValue();
+    return Boolean.parseBoolean(val);
   }
 
   @Override
   public int getInt(String key) {
     String val = getProperty(key);
-    return Integer.valueOf(val).intValue();
+    return Integer.parseInt(val);
   }
 
   @Override
@@ -319,7 +309,7 @@ public class TCPropertiesImpl implements TCProperties {
   @Override
   public long getLong(String key) {
     String val = getProperty(key);
-    return Long.valueOf(val).longValue();
+    return Long.parseLong(val);
   }
 
   @Override
@@ -332,6 +322,6 @@ public class TCPropertiesImpl implements TCProperties {
   @Override
   public float getFloat(String key) {
     String val = getProperty(key);
-    return Float.valueOf(val).floatValue();
+    return Float.parseFloat(val);
   }
 }
