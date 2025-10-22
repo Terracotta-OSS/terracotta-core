@@ -181,11 +181,8 @@ public class ServerProcess extends ServerInstance {
 
   private String[] getJavaArguments(int debugPort) {
     // We want to bootstrap the variable with whatever is in our current environment.
-    String javaOpts = System.getenv("JAVA_OPTS");
     List<String> ops = new ArrayList<>();
-    if (javaOpts != null) {
-      ops.addAll(Arrays.asList(javaOpts.split(",")));
-    }
+
     ops.add("-Xms" + this.heapInM + "m");
     ops.add("-Xmx" + this.heapInM + "m");
     if (debugPort > 0) {
