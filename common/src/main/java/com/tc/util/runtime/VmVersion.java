@@ -64,7 +64,8 @@ public final class VmVersion {
   }
 
   private static boolean isIBM(Properties props) {
-    return props.getProperty("java.vm.name", "").toLowerCase(Locale.ENGLISH).contains("ibm");
+    String name = props.getProperty("java.vm.name", "").toLowerCase(Locale.ENGLISH);
+    return name.contains("ibm") || name.contains("openj9");
   }
 
   private static boolean isJRockit(Properties props) {

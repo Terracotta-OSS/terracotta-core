@@ -35,6 +35,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -74,8 +75,9 @@ public class ServiceLocator extends ManagedServiceLoader {
   private boolean verifyPluginIsInProperDir(String location) {
     if (verify) {
       try {
-        return PLUGIN_PATH == null ? false : Path.of(new URI(location).getPath()).startsWith(PLUGIN_PATH);
-      } catch (URISyntaxException notfound) {
+        Path loc = Paths.get(new URI(location));
+        return PLUGIN_PATH == null ? false : loc.startsWith(PLUGIN_PATH);
+      } catch (URISyntaxException mal) {
         return false;
       }
     } else {
