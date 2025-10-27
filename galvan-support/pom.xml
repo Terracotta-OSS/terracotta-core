@@ -195,7 +195,9 @@
       </plugin>
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
+        <version>3.5.4</version>
         <configuration>
+            <argLine>-Djava.awt.headless=true --add-opens java.base/java.lang=ALL-UNNAMED</argLine>
           <systemPropertyVariables>
             <kitInstallationPath>${kitUnzipLocation}/terracotta-${project.version}</kitInstallationPath>
             <kitTestDirectory>${project.build.testOutputDirectory}/testing_directory</kitTestDirectory>

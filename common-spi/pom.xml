@@ -29,9 +29,6 @@
 
   <groupId>org.terracotta.internal</groupId>
   <artifactId>common-spi</artifactId>
-  <properties>
-    <java.build.version>1.8</java.build.version>
-  </properties>
 
   <dependencies>
   

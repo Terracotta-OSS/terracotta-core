@@ -37,9 +37,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
+import static org.hamcrest.MatcherAssert.assertThat;
+import org.hamcrest.Matchers;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -104,7 +105,7 @@ public class StageImplTest {
   private void testMultiContextFlush(int size) throws Exception {
     System.out.println("test a multi context flush");
     TCLoggerProvider logger = new DefaultLoggerProvider();
-    final List<BlockingQueue<Object>> cxts = new ArrayList<BlockingQueue<Object>>();
+    final List<SpyQueue<Object>> cxts = new ArrayList<>();
 //  barrier on when the context is actually executed
     final CyclicBarrier barrier = new CyclicBarrier(2);
     EventHandler handler = new EventHandler() {
@@ -127,7 +128,7 @@ public class StageImplTest {
     QueueFactory context = mock(QueueFactory.class);
     when(context.createInstance(ArgumentMatchers.any(), ArgumentMatchers.anyInt())).thenAnswer((InvocationOnMock invocation) -> {
       //  spy each call to put of the queue to make sure each queue is getting hit.
-      BlockingQueue<Object> queue = Mockito.spy(new ArrayBlockingQueue<>((Integer)invocation.getArguments()[1]));
+      SpyQueue<Object> queue = new SpyQueue<>((Integer)invocation.getArguments()[1]);
       cxts.add(queue);
       return queue;
     });
@@ -147,9 +148,27 @@ public class StageImplTest {
     }
 
     barrier.await();
-    for (BlockingQueue q : cxts) {
-      verify(q).put(Mockito.<MultiThreadedEventContext>any());
+    for (SpyQueue q : cxts) {
+      assertThat(q.puts(), Matchers.greaterThan(0));
     }
-    
+  }
+
+  public class SpyQueue<T> extends ArrayBlockingQueue<T> {
+
+    private int puts = 0;
+
+    public SpyQueue(int i) {
+      super(i);
+    }
+
+    @Override
+    public void put(T e) throws InterruptedException {
+      super.put(e);
+      puts += 1;
+    }
+
+    public int puts() {
+      return puts;
+    }
   }
 }

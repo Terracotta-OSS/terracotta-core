@@ -17,14 +17,17 @@
  */
 package com.tc.classloader;
 
+import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLClassLoader;
+import java.nio.file.Path;
+import java.util.Arrays;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.terracotta.utilities.test.runtime.Os;
 
 /**
  *
@@ -55,18 +58,24 @@ public class StrictURLClassLoaderTest {
    */
   @Test
   public void testLoadClassWithAnnotations() throws Exception {
-    System.out.println("loadClass");
-    String name = "";
-    boolean resolve = false;
-    URLClassLoader loader = (URLClassLoader)this.getClass().getClassLoader();
-    URL[] urls = loader.getURLs();
-    StrictURLClassLoader instance = new StrictURLClassLoader(urls,null,new AnnotationBasedCommonComponentChecker());
+    String cp = System.getProperty("java.class.path");
+    String sc = Os.isWindows() ? ";" : ":";
+    String[] split = cp.split(sc);
+    StrictURLClassLoader instance = new StrictURLClassLoader(Arrays.stream(split).map(StrictURLClassLoaderTest::convert).toArray(URL[]::new),null,new AnnotationBasedCommonComponentChecker());
     try {
       instance.loadClass("org.terracotta.config.Config");
     } catch (ClassNotFoundException cla) {
       // expected
     } catch (TypeNotPresentException type) {
       Assert.fail(type.getMessage() + " not expected");
+    }
+  }
+
+  private static URL convert(String url) {
+    try {
+      return Path.of(url).toUri().toURL();
+    } catch (MalformedURLException l) {
+      return null;
     }
   }
 }
