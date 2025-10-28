@@ -16,6 +16,6 @@
  */
 //See Jenkins wiki pages for info
 mavenBuildOSS([maven_goal : 'clean deploy', 
-        maven_goal_pr : 'clean verify'
+        maven_goal_pr : 'clean verify',
         jdk           : 17
 ])
