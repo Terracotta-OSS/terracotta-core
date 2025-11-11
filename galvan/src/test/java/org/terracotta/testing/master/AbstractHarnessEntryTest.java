@@ -16,6 +16,8 @@
  */
 package org.terracotta.testing.master;
 
+import java.lang.ref.Reference;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -76,14 +78,18 @@ public class AbstractHarnessEntryTest {
      */
     ReferenceQueue<HarnessEntry> queue = new ReferenceQueue<>();
     WeakReference<HarnessEntry> harnessEntryReference = new WeakReference<>(entry, queue);
-    entry = null;
+    try {
+      entry = null;
 
-    /*
-     * Now attempt to reserve the port again; a weak reference to the HarnessEntry should permit
-     * the PortRef to be reclaimed.
-     */
-    awaitEnqueue(queue);    // await HarnessEntry move to weakly referenced
-    reservePort(firstPort);
+      /*
+      * Now attempt to reserve the port again; a weak reference to the HarnessEntry should permit
+      * the PortRef to be reclaimed.
+      */
+      awaitEnqueue(queue);    // await HarnessEntry move to weakly referenced
+      reservePort(firstPort);
+    } finally {
+      Reference.reachabilityFence(harnessEntryReference);
+    }
   }
 
   @Test(timeout = 40000)
@@ -106,15 +112,19 @@ public class AbstractHarnessEntryTest {
      */
     ReferenceQueue<HarnessEntry> queue = new ReferenceQueue<>();
     WeakReference<HarnessEntry> harnessEntryReference = new WeakReference<>(entry, queue);
-    entry = null;
+    try {
+      entry = null;
 
-    /*
-     * Now attempt to reserve the port again; a weak reference to the HarnessEntry should permit
-     * the PortRef to be reclaimed.
-     */
-    awaitEnqueue(queue);    // await HarnessEntry move to weakly referenced
-    for (int port = firstPort, i = 0; i < portCount; port++, i++) {
-      reservePort(port);
+      /*
+      * Now attempt to reserve the port again; a weak reference to the HarnessEntry should permit
+      * the PortRef to be reclaimed.
+      */
+      awaitEnqueue(queue);    // await HarnessEntry move to weakly referenced
+      for (int port = firstPort, i = 0; i < portCount; port++, i++) {
+        reservePort(port);
+      }
+    } finally {
+      Reference.reachabilityFence(harnessEntryReference);
     }
   }
 

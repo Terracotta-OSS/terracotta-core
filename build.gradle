@@ -38,7 +38,7 @@ allprojects {
     } else {
       project.version = "$project.defaultVersion"
     }
-    project.setProperty("apiVersion", project.version)
+    project.apiVersion = project.version
 }
 
 /* 

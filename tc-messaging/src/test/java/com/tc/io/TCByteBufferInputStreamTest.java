@@ -494,12 +494,6 @@ public class TCByteBufferInputStreamTest {
         assertEquals(0, is.available());
         int read = is.read();
         assertEquals(-1, read);
-        try {
-          is.skip(Integer.MAX_VALUE + 1L);
-          fail();
-        } catch (IllegalArgumentException iae) {
-          // expected
-        }
       } finally {
         is.close();
       }

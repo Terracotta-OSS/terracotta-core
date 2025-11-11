@@ -155,13 +155,13 @@ public class DefaultConfigurationProviderTest {
   
   @Test
   public void testServiceLoad() throws Exception {
-    List<Class<? extends ConfigurationProvider>> loader = new ServiceLocator(this.getClass().getClassLoader()).getImplementations(ConfigurationProvider.class);
+    List<Class<? extends ConfigurationProvider>> loader = new ServiceLocator(this.getClass().getClassLoader(), false).getImplementations(ConfigurationProvider.class);
     Assert.assertTrue(loader.size() > 0);
   }
   
   @Test
   public void testJaxbLoad() throws Exception {
-    ServiceLocator locate = new ServiceLocator(this.getClass().getClassLoader());
+    ServiceLocator locate = new ServiceLocator(this.getClass().getClassLoader(), false);
     List<Class<? extends ConfigurationProvider>> loader = locate.getImplementations(ConfigurationProvider.class);
     for (Class<? extends ConfigurationProvider> check : loader) {
       if (check.getName().contains("Test")) {

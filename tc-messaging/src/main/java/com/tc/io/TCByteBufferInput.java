@@ -29,6 +29,10 @@ public interface TCByteBufferInput extends TCDataInput {
    */
   public TCByteBufferInput duplicate();
 
+  public long length();
+
+  public long remaining();
+
   public int getTotalLength();
 
   public int available();

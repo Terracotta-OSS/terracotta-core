@@ -26,7 +26,7 @@ import java.util.List;
  */
 public class TestInterfaceHandle implements Runnable {
   public void run() {
-    List<Class<? extends TestInterface>> list = new ServiceLocator(Thread.currentThread().getContextClassLoader()).getImplementations(TestInterface.class);
+    List<Class<? extends TestInterface>> list = new ServiceLocator(Thread.currentThread().getContextClassLoader(), false).getImplementations(TestInterface.class);
      Assert.assertEquals(list.size(), 1);
      Assert.assertEquals(list.get(0).getName(), "com.tc.classloader.TestInterfaceImpl");
      Assert.assertTrue(list.get(0).getClassLoader() instanceof ComponentURLClassLoader);
