@@ -85,7 +85,7 @@ public class StateManagerImpl implements StateManager {
 
   public StateManagerImpl(Logger consoleLogger, Predicate<NodeID> canStartElection, GroupManager<AbstractGroupMessage> groupManager,
                           StageController controller, ManagementTopologyEventCollector eventCollector, StageManager mgr,
-                          int expectedServers, int electionTimeInSec, WeightGeneratorFactory weightFactory,
+                          int electionTimeInSec, WeightGeneratorFactory weightFactory,
                           ConsistencyManager availabilityMgr,
                           ServerPersistentState serverPersitenceState, TopologyManager topologyManager) {
     this.consoleLogger = consoleLogger;

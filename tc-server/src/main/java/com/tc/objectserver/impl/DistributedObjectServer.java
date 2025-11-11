@@ -23,7 +23,6 @@ import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 
 import com.tc.config.ServerConfigurationManager;
-import com.tc.config.GroupConfiguration;
 import com.tc.l2.state.DiagnosticModeConsistencyManager;
 import com.tc.l2.state.SafeStartupManagerImpl;
 import com.tc.logging.TCLogging;
@@ -203,9 +202,7 @@ import com.tc.net.core.ClearTextSocketEndpointFactory;
 import com.tc.net.core.DefaultSocketEndpointFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
-import com.tc.net.core.event.TCConnectionErrorEvent;
-import com.tc.net.core.event.TCConnectionEvent;
-import com.tc.net.core.event.TCConnectionEventListener;
+import com.tc.net.groups.Node;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -250,7 +247,6 @@ import com.tc.productinfo.ProductInfo;
 import com.tc.productinfo.VersionCompatibility;
 import com.tc.util.version.CollectionVersionCompatibility;
 import com.tc.util.version.DefaultVersionCompatibility;
-import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import org.terracotta.configuration.ConfigurationException;
 
@@ -316,7 +312,7 @@ public class DistributedObjectServer {
     this.threadGroup = threadGroup;
     this.seda = seda;
     this.server = server;
-    this.serverBuilder = createServerBuilder(configSetupManager.getGroupConfiguration(), logger, server);
+    this.serverBuilder = createServerBuilder(configSetupManager.getGroupConfiguration().getCurrentNode(), logger, server);
     this.serviceRegistry = new TerracottaServiceProviderRegistryImpl();
     this.topologyManager = new TopologyManager(()->this.configSetupManager.getGroupConfiguration().getHostPorts(), ()-> {
       Configuration config = this.configSetupManager.getConfiguration();
@@ -330,9 +326,9 @@ public class DistributedObjectServer {
     DefaultSocketEndpointFactory.setSocketEndpointFactory(new ClearTextSocketEndpointFactory());
   }
 
-  protected final ServerBuilder createServerBuilder(GroupConfiguration groupConfiguration, Logger tcLogger,
+  protected final ServerBuilder createServerBuilder(Node thisNode, Logger tcLogger,
                                                     TCServer server) {
-    return new StandardServerBuilder(groupConfiguration, tcLogger);
+    return new StandardServerBuilder(thisNode, tcLogger);
   }
 
   protected ServerBuilder getServerBuilder() {
@@ -591,7 +587,7 @@ public class DistributedObjectServer {
     this.connectionIdFactory = new ConnectionIDFactoryImpl(infoConnections, clientStateStore, capablities);
     int voteCount =
         ConsistencyManager.parseVoteCount(configuration.getFailoverPriority(), configuration.getServerConfigurations().size());
-    int knownPeers = this.configSetupManager.allCurrentlyKnownServers().length - 1;
+    int knownPeers = configSetupManager.getConfiguration().getServerConfigurations().size() - 1;
 
     if (voteCount >= 0 && (voteCount + knownPeers + 1) % 2 == 0) {
       consoleLogger.warn("It is recommended to keep the total number of servers and external voters to be an odd number");
@@ -726,7 +722,6 @@ public class DistributedObjectServer {
 
     StateManager state = new StateManagerImpl(consoleLogger, (n)->!configuration.isRelayDestination(), this.groupCommManager,
         createStageController(processTransactionHandler), eventCollector, stageManager,
-        configSetupManager.getGroupConfiguration().getNodes().size(),
         configSetupManager.getGroupConfiguration().getElectionTimeInSecs(),
         this.globalWeightGeneratorFactory, consistencyMgr,
         serverPersistentState, this.topologyManager);

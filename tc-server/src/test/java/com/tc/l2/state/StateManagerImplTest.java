@@ -141,7 +141,7 @@ public class StateManagerImplTest {
       groupManagers[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports.get(i).port(), groupPorts.get(i).port(),
                                                 stageManagers[i], wgf, nodes);
 
-      stateManagers[i] = new StateManagerImpl(tcLogger, (n)->true, groupManagers[i], stageControllers[i], mgmt[i], stageManagers[i], NUM_OF_SERVERS, 5, wgf, mgr,
+      stateManagers[i] = new StateManagerImpl(tcLogger, (n)->true, groupManagers[i], stageControllers[i], mgmt[i], stageManagers[i], 5, wgf, mgr,
                                               clusterStatePersistorMock, topologyManager);
       Sink<L2StateMessage> stateMessageSink = stageManagers[i].createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE, L2StateMessage.class, new L2StateMessageHandler(), 1).getSink();
       groupManagers[i].routeMessages(L2StateMessage.class, stateMessageSink);
@@ -284,7 +284,7 @@ public class StateManagerImplTest {
     when(mgr.createVerificationEnrollment(any(NodeID.class), any(WeightGeneratorFactory.class))).then(i->{
       return EnrollmentFactory.createTrumpEnrollment((NodeID)i.getArguments()[0], weightGeneratorFactory);
     });
-    StateManagerImpl state = new StateManagerImpl(logger, (n)->true, grp, stageController, mgmtController, stageManager, 1, 5, weightGeneratorFactory, mgr,
+    StateManagerImpl state = new StateManagerImpl(logger, (n)->true, grp, stageController, mgmtController, stageManager, 5, weightGeneratorFactory, mgr,
                                                   statePersistor, topologyManager);
     state.initializeAndStartElection();
 
@@ -332,7 +332,7 @@ public class StateManagerImplTest {
     when(mgr.createVerificationEnrollment(any(NodeID.class), any(WeightGeneratorFactory.class))).then(i->{
       return EnrollmentFactory.createTrumpEnrollment((NodeID)i.getArguments()[0], weightGeneratorFactory);
     });
-    StateManagerImpl state = new StateManagerImpl(logger, (n)->true, grp, stageController, mgmtController, stageManager, 1, 5, weightGeneratorFactory, mgr,
+    StateManagerImpl state = new StateManagerImpl(logger, (n)->true, grp, stageController, mgmtController, stageManager, 5, weightGeneratorFactory, mgr,
                                                   statePersistor, topologyManager);
     state.initializeAndStartElection();
 
@@ -417,7 +417,7 @@ public class StateManagerImplTest {
     ServerPersistentState persistor = mock(ServerPersistentState.class);
     when(persistor.isDBClean()).thenReturn(Boolean.TRUE);
     when(persistor.getInitialMode()).thenReturn(ServerMode.SYNCING);
-    StateManagerImpl mgr = new StateManagerImpl(tcLogger, (n)->true, groupManager, stageController, mgmtController, stageMgr, 2, 5, weightGeneratorFactory, availabilityMgr, persistor, this.topologyManager);
+    StateManagerImpl mgr = new StateManagerImpl(tcLogger, (n)->true, groupManager, stageController, mgmtController, stageMgr, 5, weightGeneratorFactory, availabilityMgr, persistor, this.topologyManager);
     mgr.initializeAndStartElection();
     Assert.assertEquals(ServerMode.INITIAL, mgr.getCurrentMode());
     Assert.assertEquals(ServerMode.SYNCING, mgr.getStateMap().get("startState"));

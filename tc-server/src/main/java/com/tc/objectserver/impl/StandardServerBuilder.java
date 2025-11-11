@@ -25,7 +25,6 @@ import org.terracotta.entity.ServiceRegistry;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.StageManager;
 import com.tc.config.ServerConfigurationManager;
-import com.tc.config.GroupConfiguration;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
@@ -36,6 +35,7 @@ import com.tc.net.core.SocketEndpointFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
+import com.tc.net.groups.Node;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.groups.TCGroupManagerImpl;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
@@ -50,13 +50,13 @@ import org.terracotta.persistence.IPlatformPersistence;
 
 
 public class StandardServerBuilder implements ServerBuilder {
-  private final GroupConfiguration groupConfiguration;
+  private final Node thisNode;
 
   protected final Logger logger;
 
-  public StandardServerBuilder(GroupConfiguration groupConfiguration, Logger logger) {
+  public StandardServerBuilder(Node current, Logger logger) {
     this.logger = logger;
-    this.groupConfiguration = groupConfiguration;
+    this.thisNode = current;
   }
 
   @Override
@@ -66,7 +66,7 @@ public class StandardServerBuilder implements ServerBuilder {
                                                                    ServerID serverNodeID,
                                                                    StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
                                                                    SocketEndpointFactory bufferManagerFactory) {
-    return new TCGroupManagerImpl(configManager, stageManager, connections, serverNodeID, this.groupConfiguration.getCurrentNode(),
+    return new TCGroupManagerImpl(configManager, stageManager, connections, serverNodeID, this.thisNode,
                                   weightGeneratorFactory, bufferManagerFactory);
   }
 

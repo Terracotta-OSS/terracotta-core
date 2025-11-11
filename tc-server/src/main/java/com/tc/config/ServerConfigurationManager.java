@@ -96,7 +96,7 @@ public class ServerConfigurationManager implements PrettyPrintable {
   }
 
   public String[] getProcessArguments() {
-    return startUpArgs.toArray(new String[startUpArgs.size()]);
+    return startUpArgs.toArray(String[]::new);
   }
 
   public ServerConfiguration getServerConfiguration() {
@@ -125,10 +125,6 @@ public class ServerConfigurationManager implements PrettyPrintable {
     return configuration.getRawConfiguration();
   }
 
-  public String[] allCurrentlyKnownServers() {
-    return getGroupConfiguration().getMembers();
-  }
-
   public boolean isPartialConfiguration() {
     return this.configuration.isPartialConfiguration();
   }
@@ -143,16 +139,6 @@ public class ServerConfigurationManager implements PrettyPrintable {
 
   public ConfigurationProvider getConfigurationProvider() {
     return configurationProvider;
-  }
-
-  private Map<String, ServerConfiguration> getServerConfigurationMap(Collection<ServerConfiguration> servers) {
-    Map<String, ServerConfiguration> serverConfigurationMap = new HashMap<>();
-    for (ServerConfiguration server : servers) {
-      if (server.getName() != null) {
-        serverConfigurationMap.put(server.getName(), server);
-      }
-    }
-    return serverConfigurationMap;
   }
 
   private static void processTcProperties(Properties tcProperties) {

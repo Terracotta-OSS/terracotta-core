@@ -72,7 +72,7 @@ public class TestStateManagerFactory {
     StageController controller = mock(StageController.class);
     ManagementTopologyEventCollector mgmt = mock(ManagementTopologyEventCollector.class);
     when(cmgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
-    StateManagerImpl mgr = new StateManagerImpl(logging, (n)->true, groupMgr, controller, mgmt, stages, 1, 5,
+    StateManagerImpl mgr = new StateManagerImpl(logging, (n)->true, groupMgr, controller, mgmt, stages, 5,
                                                 RandomWeightGenerator.createTestingFactory(2), cmgr,
                                                 new ClusterPersistentState(new TestClusterStatePersistor()), mock(TopologyManager.class));
     handler.setMgr(mgr);
