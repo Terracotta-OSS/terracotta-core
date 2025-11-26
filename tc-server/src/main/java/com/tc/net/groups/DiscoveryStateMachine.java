@@ -47,6 +47,7 @@ public class DiscoveryStateMachine implements ChannelEventListener {
   private final DiscoveryState STATE_THROWABLE_EXCEP = new ThrowableExceptionState();
   private final DiscoveryState STATE_UNKNOWN_HOST    = new UnknownHostState();
   private final DiscoveryState STATE_MEMBER_IN_GROUP = new MemberInGroupState();
+  private final DiscoveryState STATE_SILENT          = new SilentState();
 
   private DiscoveryState       current;
   private DiscoveryState       previousBadState;
@@ -74,7 +75,7 @@ public class DiscoveryStateMachine implements ChannelEventListener {
   }
 
   private DiscoveryState initialState() {
-    return (STATE_INIT);
+    return node.getGroupPort() == 0 ? STATE_SILENT : STATE_INIT;
   }
 
   private synchronized void switchToState(DiscoveryState state) {
@@ -164,6 +165,10 @@ public class DiscoveryStateMachine implements ChannelEventListener {
     switchToState(STATE_INIT);
   }
 
+  synchronized void silentWait() {
+    switchToState(STATE_SILENT);
+  }
+
   /*
    * DiscoveryState -- base class for member discovery state
    */
@@ -235,6 +240,17 @@ public class DiscoveryStateMachine implements ChannelEventListener {
   private class ConnectedState extends DiscoveryState {
     public ConnectedState() {
       super("Connected");
+    }
+
+    @Override
+    public boolean isTimeToConnect() {
+      return false;
+    }
+  }
+
+  private class SilentState extends DiscoveryState {
+    public SilentState() {
+      super("Silent");
     }
 
     @Override
