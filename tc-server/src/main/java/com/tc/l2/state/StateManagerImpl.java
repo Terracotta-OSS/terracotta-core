@@ -163,7 +163,7 @@ public class StateManagerImpl implements StateManager {
     debugInfo("Starting election");
     // Went down as either PASSIVE_STANDBY or UNITIALIZED, either way we need to wait for the active to zap, just skip
     // the election and wait for a zap.
-    info("Starting election initial state:" + startState);
+    info("Starting election initial state: " + startState);
     if (canStartElection()) {
       runElection();
     } else {
@@ -231,7 +231,12 @@ public class StateManagerImpl implements StateManager {
           debugInfo("Won Election, moving to active state. myNodeID/winner=" + myNodeID);
           if (startState != ServerMode.RELAY && getCurrentMode().canBeActive() && clusterStatePersistor.isDBClean() && 
               this.availabilityMgr.requestTransition(this.state, nodeid, lockedTopology, ConsistencyManager.Transition.MOVE_TO_ACTIVE)) {
-            moveToActiveState(electionMgr.passiveStandbys(), lockedTopology);
+            try {
+              moveToActiveState(electionMgr.passiveStandbys(), lockedTopology);
+            } catch (IllegalStateException ill) {
+              logger.warn("unable to move to active state", ill);
+              rerun = true;
+            }
           } else {
             if (!clusterStatePersistor.isDBClean()) {
               logger.info("rerunning election because " + nodeid + " must be synced to an active");

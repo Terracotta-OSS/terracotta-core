@@ -901,6 +901,7 @@ public class DistributedObjectServer {
   
   private void shutdown() {
     try {
+      logger.info("shutdown initiated");
       this.l2Coordinator.shutdown();
       this.groupCommManager.shutdown();
       this.communicationsManager.shutdown();
@@ -911,6 +912,7 @@ public class DistributedObjectServer {
       this.serviceRegistry.shutdown();
       this.configSetupManager.close();
       stopped.complete(null);
+      logger.info("shutdown compete");
     } catch (Throwable in) {
       stopped.completeExceptionally(in);
     }

@@ -68,7 +68,7 @@ public class DuplicationTransactionHandler {
                 groupManager.sendTo(nodeID, RelayMessage.createResumeMessage(currentSequence));
                 break;
               default:
-                throw new TCServerRestartException("invalid state for duplication");
+                throw new TCServerRestartException("invalid state for duplication " + stateMgr.getCurrentMode());
             }
           } else {
             throw new TCServerRestartException("resyncing duplicate");
