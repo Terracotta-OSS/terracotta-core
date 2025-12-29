@@ -127,10 +127,14 @@ public class ReplicatedTransactionHandler {
     protected void initialize(ConfigurationContext context) {
       ServerConfigurationContext scxt = (ServerConfigurationContext)context;
   //  when this spins up, send  request to active and ask for sync
-      L2Coordinator coordinate = scxt.getL2Coordinator();
-      coordinate.getReplicatedClusterStateManager().setCurrentState(coordinate.getStateManager().getCurrentMode().getState());
       if (stateManager.getCurrentMode() == ServerMode.UNINITIALIZED) {
-        requestPassiveSync();
+        try {
+          requestPassiveSync();
+        } catch (IllegalStateException ill) {
+            LOGGER.warn("unable to request passive sync due to state " + stateManager.getCurrentMode(), ill);
+        }
+      } else {
+        LOGGER.info("not requesting passive sync due to state " + stateManager.getCurrentMode());
       }
     }
 

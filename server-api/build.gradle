@@ -31,9 +31,15 @@ dependencies {
 
     api project(':common-api')
 
-    contentsApi "org.terracotta:entity-server-api:$terracottaApisVersion"
-    contentsApi "org.terracotta:monitoring-support:$terracottaApisVersion"
-    contentsApi "org.terracotta:standard-cluster-services:$terracottaApisVersion"
+    contentsApi ("org.terracotta:entity-server-api:$terracottaApisVersion") {
+        exclude group:'org.slf4j'
+    }
+    contentsApi ("org.terracotta:monitoring-support:$terracottaApisVersion") {
+        exclude group:'org.slf4j'
+    }
+    contentsApi ("org.terracotta:standard-cluster-services:$terracottaApisVersion") {
+        exclude group:'org.slf4j'
+    }
 
     contentsApi project(":tripwire:plugin")
     contentsApi project(':server-spi')

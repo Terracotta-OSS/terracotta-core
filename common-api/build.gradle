@@ -24,9 +24,13 @@ description = 'terracotta-core common-api'
 version = "$apiVersion"
 
 dependencies {
-  contentsApi "org.terracotta:entity-common-api:$terracottaApisVersion"
+  contentsApi ("org.terracotta:entity-common-api:$terracottaApisVersion") {
+        exclude group:'org.slf4j'
+    }
   contentsApi project(':common-spi')
-  contentsApi "org.terracotta:packaging-support:$terracottaApisVersion"
+  contentsApi ("org.terracotta:packaging-support:$terracottaApisVersion") {
+        exclude group:'org.slf4j'
+    }
 }
 
 publishing {

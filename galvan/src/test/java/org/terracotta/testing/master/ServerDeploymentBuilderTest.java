@@ -29,7 +29,6 @@ import org.junit.Test;
 
 /**
  *
- * @author mscott2
  */
 public class ServerDeploymentBuilderTest {
 
@@ -69,5 +68,14 @@ public class ServerDeploymentBuilderTest {
     System.out.println("the server path " + p);
     Stream<Path> s = Files.walk(p);
     Assert.assertTrue(s.peek(System.out::println).anyMatch(w->w.getFileName().toString().equals("tc.jar")));
+  }
+
+  @Test
+  public void testRefresh() throws Exception {
+    Path p = Paths.get(System.getProperty("kitInstallPath")).resolve("galvan-test-server");
+    p = new ServerDeploymentBuilder().installPath(p).deploy();
+    Assert.assertTrue(p.resolve("testprobe").toFile().createNewFile());
+    p = new ServerDeploymentBuilder().installPath(p).deploy(true);
+    Assert.assertTrue(Files.find(p, 1, (path,a)->path.getFileName().toString().equals("testprobe")).findAny().isEmpty());
   }
 }

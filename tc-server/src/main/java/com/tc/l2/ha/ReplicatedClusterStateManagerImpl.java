@@ -63,7 +63,6 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   public synchronized void goActiveAndSyncState() {
     switch (currentMode.get()) {
       case ACTIVE:
-        state.setCurrentState(currentMode.get().getState());
         state.generateStripeIDIfNeeded();
         state.syncActiveState();
 

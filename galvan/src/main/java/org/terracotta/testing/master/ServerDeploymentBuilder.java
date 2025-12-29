@@ -20,6 +20,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -74,7 +77,7 @@ public class ServerDeploymentBuilder {
     }
   }
   
-  private void insureInstallPath() {
+  private Path ensureInstallPath() {
     try {
       if (installPath == null) {
           if (System.getProperty("galvan.server") != null) {
@@ -86,6 +89,7 @@ public class ServerDeploymentBuilder {
       } else {
         installPath = Files.createDirectories(installPath);
       }
+      return installPath;
     } catch (IOException ioe) {
       throw new RuntimeException(ioe);
     }
@@ -96,20 +100,36 @@ public class ServerDeploymentBuilder {
   }
   
   public Path deploy(boolean refresh) {
-    insureInstallPath();
-    byte[] buffer = new byte[4096];
-    try (InputStream is = ServerDeploymentBuilder.class.getResourceAsStream("/galvan-test-server.zip")) {
-      ZipInputStream zip = new ZipInputStream(is);
-      ZipEntry e = zip.getNextEntry();
-      
-      if (Files.find(installPath, 10, (path,attr)->path.getFileName().toString().startsWith("tc-server")).findAny().isPresent()) {
-        if (refresh) {
-          delete(installPath);
-        } else {
-          return installPath;
+    Path ip = ensureInstallPath();
+    Path dl = ip.resolve("deploy.lock");
+    try (FileChannel dc = FileChannel.open(dl, StandardOpenOption.CREATE, StandardOpenOption.DELETE_ON_CLOSE, StandardOpenOption.WRITE)) {
+      try (FileLock lock = dc.lock()) {
+        if (Files.find(ip, 10, (path,attr)->path.getFileName().toString().startsWith("tc-server")).findAny().isPresent()) {
+          if (refresh) {
+            Files.list(ip).forEach(p->{
+              if (!p.getFileName().toString().equals("deploy.lock")) {
+                delete(p);
+              }
+            });
+          } else {
+            return ip;
+          }
         }
+        deployServer();
+        lock.release();
       }
-      Files.createDirectories(installPath);
+    } catch (IOException io) {
+      throw new UncheckedIOException(io);
+    }
+    return ip;
+  }
+
+  private void deployServer() throws IOException {
+    byte[] buffer = new byte[4096];
+    try (InputStream server= org.terracotta.testing.master.ServerDeploymentBuilder.class.getResourceAsStream("/galvan-test-server.zip")) {
+      ZipInputStream zip = new ZipInputStream(server);
+      ZipEntry e = zip.getNextEntry();
+
       while (e != null) {
         if (!e.isDirectory()) {
           Path p = Paths.get(e.getName()).getFileName();
@@ -137,10 +157,7 @@ public class ServerDeploymentBuilder {
           Files.list(p.impl).forEach(s->copy(s, lib));
         }
       }
-    } catch (IOException io) {
-      throw new RuntimeException(io);
     }
-    return installPath;
   }
   
   private void installDefaultPlugins() {

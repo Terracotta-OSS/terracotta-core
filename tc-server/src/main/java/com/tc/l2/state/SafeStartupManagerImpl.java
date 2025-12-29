@@ -69,7 +69,7 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
     map.put("type", "SafeStartup");
     map.put("allowTransition", allowTransition);
     map.put("suspended", suspended);
-    map.put("peerServers", new ArrayList<>(peerServers).stream().map(n->n.toString()).collect(Collectors.toList()));
+    map.put("peerServers", peerServers);
     map.put("disable", disable.isSet());
     map.put("delegate", consistencyManager.getStateMap());
     return map;
