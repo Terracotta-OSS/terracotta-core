@@ -23,12 +23,14 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -38,7 +40,7 @@ import java.util.zip.ZipInputStream;
 public class ServerDeploymentBuilder {
   private Path installPath;
   private final List<Plugin> plugins = new ArrayList<>();
-  
+    
   public ServerDeploymentBuilder() {
     
   }
@@ -62,7 +64,7 @@ public class ServerDeploymentBuilder {
   }
    
   public static ServerDeploymentBuilder begin(File dest) {
-    return new ServerDeploymentBuilder(dest.toPath());
+    return begin(dest.toPath());
   }
   
   private static boolean delete(Path f) {
@@ -103,25 +105,31 @@ public class ServerDeploymentBuilder {
     Path ip = ensureInstallPath();
     Path dl = ip.resolve("deploy.lock");
     try (FileChannel dc = FileChannel.open(dl, StandardOpenOption.CREATE, StandardOpenOption.DELETE_ON_CLOSE, StandardOpenOption.WRITE)) {
-      try (FileLock lock = dc.lock()) {
-        if (Files.find(ip, 10, (path,attr)->path.getFileName().toString().startsWith("tc-server")).findAny().isPresent()) {
-          if (refresh) {
-            Files.list(ip).forEach(p->{
-              if (!p.getFileName().toString().equals("deploy.lock")) {
-                delete(p);
-              }
-            });
-          } else {
-            return ip;
+      while (true) {
+        try (FileLock lock = dc.lock()) {
+          if (Files.find(ip, 10, (path,attr)->path.getFileName().toString().startsWith("tc-server")).findAny().isPresent()) {
+            if (refresh) {
+              Files.list(ip).forEach(p->{
+                if (!p.getFileName().toString().equals("deploy.lock")) {
+                  delete(p);
+                }
+              });
+            } else {
+              return ip;
+            }
           }
+          deployServer();
+          lock.release();
+          return ip;
+        } catch (OverlappingFileLockException overlap) {
+          TimeUnit.SECONDS.sleep(5);
         }
-        deployServer();
-        lock.release();
       }
     } catch (IOException io) {
       throw new UncheckedIOException(io);
+    } catch (InterruptedException i) {
+      throw new RuntimeException(i);
     }
-    return ip;
   }
 
   private void deployServer() throws IOException {
