@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -40,6 +42,7 @@ import java.util.zip.ZipInputStream;
 public class ServerDeploymentBuilder {
   private Path installPath;
   private final List<Plugin> plugins = new ArrayList<>();
+  private static final Logger LOGGER = LoggerFactory.getLogger(ServerDeploymentBuilder.class);
     
   public ServerDeploymentBuilder() {
     
@@ -122,7 +125,8 @@ public class ServerDeploymentBuilder {
           lock.release();
           return ip;
         } catch (OverlappingFileLockException overlap) {
-          TimeUnit.SECONDS.sleep(5);
+          TimeUnit.SECONDS.sleep(1);
+          LOGGER.info("another thread is building the server deployment at {}.  Waiting 1 sec.", ip);
         }
       }
     } catch (IOException io) {
