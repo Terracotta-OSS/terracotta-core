@@ -24,6 +24,7 @@ description = 'terracotta-core common-api'
 version = "$apiVersion"
 
 dependencies {
+  compileOnlyApi "org.slf4j:slf4j-api:$slf4jVersion"
   contentsApi ("org.terracotta:entity-common-api:$terracottaApisVersion") {
         exclude group:'org.slf4j'
     }
