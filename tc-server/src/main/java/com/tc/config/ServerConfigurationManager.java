@@ -52,6 +52,7 @@ public class ServerConfigurationManager implements PrettyPrintable {
 
   private Configuration configuration;
   private ServerConfiguration serverConfiguration;
+  private GroupConfiguration cachedGroupConfig = new GroupConfiguration(Collections.emptyList(), "");
 
   public ServerConfigurationManager(ConfigurationProvider configurationProvider,
                                     ServiceLocator classLoader,
@@ -88,6 +89,7 @@ public class ServerConfigurationManager implements PrettyPrintable {
     if (this.serverConfiguration == null) {
       throw new ConfigurationException("unable to determine server configuration");
     }
+    this.cachedGroupConfig = new GroupConfiguration(Collections.singletonList(serverConfiguration), this.serverConfiguration.getName());
     processTcProperties(configuration.getTcProperties());
   }
 
@@ -104,16 +106,22 @@ public class ServerConfigurationManager implements PrettyPrintable {
   }
 
   public GroupConfiguration getGroupConfiguration() {
-    List<ServerConfiguration> serverConfigurationMap = configuration.getServerConfigurations();
-    InetSocketAddress relay = configuration.getRelayPeerGroupPort();
-    InetSocketAddress relayName = configuration.getRelayPeer();
-    if (configuration.isRelaySource()) {
-      return new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName(), relayName.getHostString(), relayName.getPort(), 0);
-    } else if (configuration.isRelayDestination()) {
-      return new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName(), relayName.getHostString(), relayName.getPort(), relay.getPort());
-    } else {
-      return new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName());
+    try {
+      List<ServerConfiguration> serverConfigurationMap = configuration.getServerConfigurations();
+      if (configuration.isRelaySource()) {
+        InetSocketAddress relayName = configuration.getRelayPeer();
+        cachedGroupConfig = new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName(), relayName.getHostString(), relayName.getPort(), 0);
+      } else if (configuration.isRelayDestination()) {
+        InetSocketAddress relay = configuration.getRelayPeerGroupPort();
+        InetSocketAddress relayName = configuration.getRelayPeer();
+        cachedGroupConfig = new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName(), relayName.getHostString(), relayName.getPort(), relay.getPort());
+      } else {
+        cachedGroupConfig = new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName());
+      }
+    } catch (Throwable t) {
+      LOGGER.info("unable to read configuration, using cached version", cachedGroupConfig);
     }
+    return cachedGroupConfig;
   }
   
   public InputStream rawConfigFile() {
