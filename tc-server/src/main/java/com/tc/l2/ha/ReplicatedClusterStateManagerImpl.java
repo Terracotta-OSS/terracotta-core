@@ -17,6 +17,7 @@
  */
 package com.tc.l2.ha;
 
+import com.tc.config.ServerConfigurationManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,13 +46,13 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
 
   private final GroupManager<AbstractGroupMessage>    groupManager;
   private final ClusterState    state;
-  private final ConfigurationProvider configurationProvider;
+  private final ServerConfigurationManager configurationProvider;
   private final Supplier<ServerMode>    currentMode;
 
   private boolean               isActive = false;
 
   public ReplicatedClusterStateManagerImpl(GroupManager<AbstractGroupMessage> groupManager, Supplier<ServerMode> currentMode,
-                                           ClusterState clusterState, ConfigurationProvider configurationProvider) {
+                                           ClusterState clusterState, ServerConfigurationManager configurationProvider) {
     this.groupManager = groupManager;
     this.currentMode = currentMode;
     this.state = clusterState;

@@ -28,7 +28,6 @@ import org.terracotta.configuration.ServerConfiguration;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,6 +39,8 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.configuration.FailoverBehavior;
+import org.terracotta.entity.ServiceProviderConfiguration;
 
 public class ServerConfigurationManager implements PrettyPrintable {
 
@@ -140,15 +141,51 @@ public class ServerConfigurationManager implements PrettyPrintable {
   public ServiceLocator getServiceLocator() {
     return this.serviceLocator;
   }
-
-  public Configuration getConfiguration() {
-    return configuration;
+  
+  public byte[] getSyncData() {
+    return configurationProvider.getSyncData();
   }
-
-  public ConfigurationProvider getConfigurationProvider() {
-    return configurationProvider;
+  
+  public void sync(byte[] data) {
+    configurationProvider.sync(data);
   }
-
+  
+  public InetSocketAddress getRelayPeer() {
+    return configuration.getRelayPeer();
+  }
+  
+  public InetSocketAddress getRelayPeerGroupPort() {
+    return configuration.getRelayPeerGroupPort();
+  }
+  
+  public List<ServerConfiguration> getServerConfigurations() {
+    return configuration.getServerConfigurations();
+  }
+  
+  public FailoverBehavior getFailoverPriority() {
+    return configuration.getFailoverPriority();
+  }
+  
+  public <T> List<T> getExtendedConfiguration(Class<T> type) {
+    return configuration.getExtendedConfiguration(type);
+  }
+  
+  public List<ServiceProviderConfiguration> getServiceConfigurations() {
+    return configuration.getServiceConfigurations();
+  }
+  
+  public boolean isRelaySource() {
+    return configuration.isRelaySource();
+  }
+  
+  public boolean isRelayDestination() {
+    return configuration.isRelayDestination();
+  }
+  
+  public boolean isConsistentStartup() {
+    return configuration.isConsistentStartup();
+  }
+  
   private static void processTcProperties(Properties tcProperties) {
     Map<String, String> propMap = new HashMap<>();
 
