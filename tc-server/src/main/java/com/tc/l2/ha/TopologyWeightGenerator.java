@@ -28,13 +28,13 @@ public class TopologyWeightGenerator implements WeightGenerator {
 
   public TopologyWeightGenerator(ServerConfigurationManager config) {
     this.configuration = config;
-    this.initialSize = config.getServerConfigurations().size();
+    this.initialSize = config.getNumberOfServers();
   }
 
   @Override
   public long getWeight() {
     try {
-      return configuration.getServerConfigurations().size();
+      return configuration.getNumberOfServers();
     } catch (Throwable t) {
       return initialSize;
     }

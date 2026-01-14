@@ -120,7 +120,7 @@ public class ServerConfigurationManager implements PrettyPrintable {
         cachedGroupConfig = new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName());
       }
     } catch (Throwable t) {
-      LOGGER.info("unable to read configuration, using cached version", cachedGroupConfig);
+      LOGGER.info("unable to read configuration, using cached version", t);
     }
     return cachedGroupConfig;
   }
@@ -158,8 +158,13 @@ public class ServerConfigurationManager implements PrettyPrintable {
     return configuration.getRelayPeerGroupPort();
   }
   
-  public List<ServerConfiguration> getServerConfigurations() {
-    return configuration.getServerConfigurations();
+  public int getNumberOfServers() {
+    try {
+      return configuration.getServerConfigurations().size();
+    } catch (Throwable t) {
+      LOGGER.info("unable to read configuration, using cached version", t);
+      return cachedGroupConfig.getNodes().size();
+    }
   }
   
   public FailoverBehavior getFailoverPriority() {
@@ -171,7 +176,7 @@ public class ServerConfigurationManager implements PrettyPrintable {
   }
   
   public List<ServiceProviderConfiguration> getServiceConfigurations() {
-    return configuration.getServiceConfigurations();
+      return configuration.getServiceConfigurations();
   }
   
   public boolean isRelaySource() {

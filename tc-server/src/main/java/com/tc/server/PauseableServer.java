@@ -65,7 +65,7 @@ public class PauseableServer implements Pauseable, SPIServer {
 
     @Override
     public int getServerCount() {
-        return config.getServerConfigurations().size();
+        return config.getNumberOfServers();
     }
 
     @Override

@@ -585,8 +585,8 @@ public class DistributedObjectServer {
     ClientStatePersistor clientStateStore = this.persistor.getClientStatePersistor();
     this.connectionIdFactory = new ConnectionIDFactoryImpl(infoConnections, clientStateStore, capablities);
     int voteCount =
-        ConsistencyManager.parseVoteCount(configSetupManager.getFailoverPriority(), configSetupManager.getServerConfigurations().size());
-    int knownPeers = configSetupManager.getServerConfigurations().size() - 1;
+        ConsistencyManager.parseVoteCount(configSetupManager.getFailoverPriority(), configSetupManager.getNumberOfServers());
+    int knownPeers = configSetupManager.getNumberOfServers() - 1;
 
     if (voteCount >= 0 && (voteCount + knownPeers + 1) % 2 == 0) {
       consoleLogger.warn("It is recommended to keep the total number of servers and external voters to be an odd number");
