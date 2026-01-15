@@ -24,8 +24,6 @@ description = 'terracotta-core client-api'
 version = "$apiVersion"
 
 dependencies {
-    compileOnlyApi "org.slf4j:slf4j-api:$slf4jVersion"
-
     contentsApi project(':common-api')
     contentsApi ("org.terracotta:entity-client-api:$terracottaApisVersion") {
         exclude group:'org.slf4j'

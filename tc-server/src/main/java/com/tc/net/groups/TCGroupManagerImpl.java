@@ -173,7 +173,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     };
 
     ServerConfiguration l2DSOConfig = configSetupManager.getServerConfiguration();
-    serverCount = configSetupManager.getConfiguration().getServerConfigurations().size();
+    serverCount = configSetupManager.getNumberOfServers();
     
     this.groupPort = l2DSOConfig.getGroupPort().getPort();
     this.weightGeneratorFactory = weightGenerator;

@@ -18,6 +18,7 @@
 package com.tc.services;
 
 import com.tc.classloader.BuiltinService;
+import com.tc.config.ServerConfigurationManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +29,6 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 
 import com.tc.util.Assert;
 import java.io.Closeable;
-import org.terracotta.configuration.Configuration;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -56,7 +56,7 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
   private boolean hasCreatedSubRegistries;
 
   @Override
-  public void initialize(PlatformConfiguration platformConfiguration, Configuration configuration) {
+  public void initialize(PlatformConfiguration platformConfiguration, ServerConfigurationManager configuration) {
     List<ServiceProviderConfiguration> serviceProviderConfigurationList = configuration.getServiceConfigurations();
     Assert.assertFalse(this.hasCreatedSubRegistries);
     if(serviceProviderConfigurationList != null) {

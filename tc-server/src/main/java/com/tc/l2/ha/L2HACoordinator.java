@@ -91,7 +91,7 @@ public class L2HACoordinator implements L2Coordinator, ConnectionIDFactoryListen
                                                                   this.groupManager,
                                                                   stateManager::getCurrentMode,
                                                                   clusterState,
-                                                                  this.server.getConfigSetupManager().getConfigurationProvider());
+                                                                  this.server.getConfigSetupManager());
     this.server.getConnectionIdFactory().registerForConnectionIDEvents(this);
   }
 
@@ -107,10 +107,10 @@ public class L2HACoordinator implements L2Coordinator, ConnectionIDFactoryListen
   
   @Override
   public void start() {
-    if (this.server.getConfigSetupManager().getConfiguration().isPartialConfiguration()) {
+    if (this.server.getConfigSetupManager().isPartialConfiguration()) {
       this.stateManager.moveToDiagnosticMode();
       consoleLogger.info("Started the server in diagnostic mode");
-    } else if (this.server.getConfigSetupManager().getConfiguration().getRelayPeer() != null) {
+    } else if (this.server.getConfigSetupManager().getRelayPeer() != null) {
       this.stateManager.moveToRelayMode();
     }
     this.stateManager.initializeAndStartElection();

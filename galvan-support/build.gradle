@@ -32,7 +32,9 @@ dependencies {
 
     implementation "junit:junit:$junitVersion"
     implementation project(":test-interfaces")
-    implementation "org.terracotta:terracotta-utilities-port-chooser:0.0.19"
+    implementation ("org.terracotta:terracotta-utilities-port-chooser:0.0.19") {
+      exclude group: 'org.slf4j'
+    }
     compileOnly project(':common')
     compileOnly project(':server-api')
 

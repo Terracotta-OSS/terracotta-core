@@ -51,8 +51,6 @@ if (project.hasProperty('publishApi')) {
 }
 
 if (project.hasProperty('overrideVersion')) {
-    artifactoryPublish.skip = true
-
     artifactory {
         contextUrl = "https://na.artifactory.swg-devops.com/artifactory" // Replace with your Artifactory URL
         publish {
