@@ -24,6 +24,7 @@ import java.io.UncheckedIOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -107,7 +108,7 @@ public class ServerDeploymentBuilder {
   public Path deploy(boolean refresh) {
     Path ip = ensureInstallPath();
     Path dl = ip.resolve("deploy.lock");
-    try (FileChannel dc = FileChannel.open(dl, StandardOpenOption.CREATE, StandardOpenOption.DELETE_ON_CLOSE, StandardOpenOption.WRITE)) {
+    try (FileChannel dc = FileChannel.open(dl, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
       while (true) {
         try (FileLock lock = dc.lock()) {
           if (Files.find(ip, 10, (path,attr)->path.getFileName().toString().startsWith("tc-server")).findAny().isPresent()) {
@@ -189,6 +190,8 @@ public class ServerDeploymentBuilder {
       } else {
         Files.copy(s, d.resolve(s.getFileName()));
       }
+    } catch (FileAlreadyExistsException already) {
+      LOGGER.info("ignoring {}", s, already);
     } catch (IOException io) {
       throw new RuntimeException(io);
     }
