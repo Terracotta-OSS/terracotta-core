@@ -31,10 +31,8 @@ import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessageListener;
 import com.tc.net.protocol.transport.ConnectionID;
-import com.tc.net.utils.L2Utils;
 import com.tc.util.Assert;
 import com.tc.util.State;
-import org.terracotta.configuration.ConfigurationProvider;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -83,30 +81,13 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
 
   @Override
   public synchronized void publishClusterState(NodeID nodeID) throws GroupException {
-    waitUntilActive();
-    state.setConfigSyncData(configurationProvider.getSyncData());
-    groupManager
-        .sendTo(nodeID, ClusterStateMessage.createClusterStateMessage(state));
-  }
-
-  private void waitUntilActive() {
-    while (!isActive) {
-      LOGGER.info("Waiting since ReplicatedClusterStateManager hasn't gone ACTIVE yet ...");
-      try {
-        wait(3000);
-      } catch (InterruptedException e) {
-        L2Utils.handleInterrupted(LOGGER, e);
-      }
-    }
-  }
-
-  private boolean validateResponse(NodeID nodeID, ClusterStateMessage msg) {
-    if (msg == null || msg.getType() != ClusterStateMessage.OPERATION_SUCCESS) {
-      LOGGER.error("Recd wrong response from : " + nodeID + " : msg = " + msg
-                   + " while publishing Cluster State");
-      return false;
+    ServerMode current = currentMode.get();
+    if (current == ServerMode.ACTIVE) {
+      state.setConfigSyncData(configurationProvider.getSyncData());
+      groupManager
+          .sendTo(nodeID, ClusterStateMessage.createClusterStateMessage(state));
     } else {
-      return true;
+      LOGGER.info("Cluster state not published to {} since the server is not in active state.  Current state is {}", nodeID, current);
     }
   }
 
