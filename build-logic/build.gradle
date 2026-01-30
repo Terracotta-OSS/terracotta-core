@@ -1,0 +1,12 @@
+plugins {
+  id 'java-gradle-plugin'
+}
+
+gradlePlugin {
+  plugins {
+    checkstyleConvention {
+      id = 'org.terracotta.build.convention.checkstyle'
+      implementationClass = 'org.terracotta.conventions.CheckstyleConvention'
+    }
+  }
+}

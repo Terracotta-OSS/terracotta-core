@@ -1,5 +1,6 @@
 pluginManagement {
     includeBuild 'terracotta-gradle-plugins'
+    includeBuild 'build-logic'
 }
 
 rootProject.name = 'terracotta-core'

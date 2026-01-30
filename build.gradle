@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ plugins {
     id 'org.terracotta.build.package' apply false
     id 'maven-publish'
     id 'com.jfrog.artifactory' version '5.2.5'
+    id 'org.terracotta.build.convention.checkstyle' apply false
 }
 
 description = 'terracotta-core'
@@ -32,6 +33,8 @@ allprojects {
     if (project.getPlugins().hasPlugin('com.jfrog.artifactory')) {
         project.getTasks().getByPath('publish').dependsOn(project.getTasks().getByPath('artifactoryPublish'))
     }
+    
+    project.apply plugin: 'org.terracotta.build.convention.checkstyle'
 
     if (project.hasProperty('overrideVersion')) {
       project.version = project.overrideVersion
