@@ -1,1 +1,1 @@
-rootProject.name = 'build-logic'
+includeBuild '../terracotta-gradle-plugins'

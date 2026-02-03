@@ -42,6 +42,9 @@ dependencies {
   testImplementation "org.terracotta:tcconfig-schema:10.7.5"
 
 }
+// Exclude service provider files from copyright checks
+sourceSets.main.copyright.exclude '**/META-INF/services/**'
+sourceSets.test.copyright.exclude '**/META-INF/services/**'
 
 tasks.named('jar', Jar) {
     manifest {

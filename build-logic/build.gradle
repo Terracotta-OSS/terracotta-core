@@ -2,6 +2,15 @@ plugins {
   id 'java-gradle-plugin'
 }
 
+repositories {
+  gradlePluginPortal()
+  mavenCentral()
+}
+
+dependencies {
+  implementation 'org.terracotta.build:terracotta-gradle-plugins'
+}
+
 gradlePlugin {
   plugins {
     checkstyleConvention {

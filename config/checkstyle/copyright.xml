@@ -12,7 +12,7 @@
   </module>
 
   <module name="SuppressionFilter">
-    <property name="file" value="${project_config}/copyright-suppressions.xml"/>
-    <property name="optional" value="true"/>
+    <property name="file" value="${config_loc}/copyright-suppressions.xml"/>
+    <property name="optional" value="false"/>
   </module>
 </module>
