@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.state.ConsistencyManager;
+import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
@@ -34,7 +35,6 @@ import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.util.Assert;
-import com.tc.util.State;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -130,17 +130,12 @@ public class L2HACoordinator implements L2Coordinator, ConnectionIDFactoryListen
   private synchronized void shutdownReplicatedClusterStateManager() {
     this.rClusterStateMgr = new ReplicatedClusterStateManager() {
       @Override
-      public void goActiveAndSyncState() {
-        //  noop
-      }
-
-      @Override
       public void publishClusterState(NodeID nodeID) throws GroupException {
         //  noop
       }
 
       @Override
-      public void setCurrentState(State currentState) {
+      public void setCurrentState(ServerMode currentState) {
         //  noop
       }
 

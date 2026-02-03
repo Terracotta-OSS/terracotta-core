@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -1145,7 +1145,7 @@ public class DistributedObjectServer {
       
       @Override
       public void l2StateChanged(StateChangedEvent sce) {
-        rcs.setCurrentState(sce.getCurrentState());
+        rcs.setCurrentState(StateManager.convert(sce.getCurrentState()));
         if (sce.movedToActive()) {
     // transition the local monitoring producer to active so the tree is rebuilt as a new active of the stripe
           monitoringShimService.serverIsActive();
@@ -1161,7 +1161,6 @@ public class DistributedObjectServer {
           Set<ConnectionID> existingConnections = existingClients.stream()
               .map(cid->new ConnectionID(ConnectionID.NULL_JVM_ID, cid.toLong(), stripeIDStateManager.getStripeID().getName())).collect(Collectors.toSet());
           getContext().getClientHandshakeManager().setStarting(existingClients);
-          l2Coordinator.getReplicatedClusterStateManager().goActiveAndSyncState();
           startL1Listener(existingConnections);
         } else if (!diagnosticsStarted && StateManager.convert(sce.getCurrentState()) != ServerMode.STOP) {
           startDiagnosticListener();

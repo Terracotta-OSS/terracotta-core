@@ -279,7 +279,7 @@ public class DistributedObjectClient {
     } catch (CommStackMismatchException |
             MaxConnectionsExceededException |
             TCTimeoutException tt) {
-      DSO_LOGGER.error(tt.getMessage());
+      DSO_LOGGER.error("connection error", tt);
       throw new IllegalStateException(tt);
     } catch (IOException io) {
       DSO_LOGGER.debug("connection error", io);

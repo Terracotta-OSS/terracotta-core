@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,10 +31,6 @@ import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessageListener;
 import com.tc.net.protocol.transport.ConnectionID;
-import com.tc.net.utils.L2Utils;
-import com.tc.util.Assert;
-import com.tc.util.State;
-import org.terracotta.configuration.ConfigurationProvider;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -48,8 +44,8 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   private final ClusterState    state;
   private final ServerConfigurationManager configurationProvider;
   private final Supplier<ServerMode>    currentMode;
-
-  private boolean               isActive = false;
+  
+  private boolean stateActivated = false;
 
   public ReplicatedClusterStateManagerImpl(GroupManager<AbstractGroupMessage> groupManager, Supplier<ServerMode> currentMode,
                                            ClusterState clusterState, ServerConfigurationManager configurationProvider) {
@@ -59,18 +55,32 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     this.configurationProvider = configurationProvider;
     groupManager.registerForMessages(ClusterStateMessage.class, this);
   }
-
-  @Override
-  public synchronized void goActiveAndSyncState() {
-    switch (currentMode.get()) {
-      case ACTIVE:
+  
+  private synchronized void activateClusterState() {
+    if (!stateActivated) {
         state.generateStripeIDIfNeeded();
         state.syncActiveState();
+        stateActivated = true;
+    }
+    state.setConfigSyncData(configurationProvider.getSyncData());
+  }
+  
+  private synchronized void syncClusterState(ClusterStateMessage msg) {
+    if (!stateActivated) {
+      msg.initState(state);
+      if (msg.getType() == ClusterStateMessage.COMPLETE_STATE) {
+        configurationProvider.sync(state.getConfigSyncData());
+      }
+      state.syncSequenceState();
+    }
+  }
 
+  private void syncState() {
+    switch (currentMode.get()) {
+      case ACTIVE:
+        activateClusterState();
         // Sync state to external passive servers
-        state.setConfigSyncData(configurationProvider.getSyncData());
         publishToAll(ClusterStateMessage.createClusterStateMessage(state));
-        isActive = true;
         break;
       case STOP:
         TCLogging.getConsoleLogger().warn("Failed to activate.  Server is stopping");
@@ -78,48 +88,29 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
       default:
         throw new AssertionError("cannot activate. State:" + currentMode.get());
     }
-    notifyAll();
   }
 
   @Override
-  public synchronized void publishClusterState(NodeID nodeID) throws GroupException {
-    waitUntilActive();
-    state.setConfigSyncData(configurationProvider.getSyncData());
-    groupManager
-        .sendTo(nodeID, ClusterStateMessage.createClusterStateMessage(state));
-  }
-
-  private void waitUntilActive() {
-    while (!isActive) {
-      LOGGER.info("Waiting since ReplicatedClusterStateManager hasn't gone ACTIVE yet ...");
-      try {
-        wait(3000);
-      } catch (InterruptedException e) {
-        L2Utils.handleInterrupted(LOGGER, e);
-      }
-    }
-  }
-
-  private boolean validateResponse(NodeID nodeID, ClusterStateMessage msg) {
-    if (msg == null || msg.getType() != ClusterStateMessage.OPERATION_SUCCESS) {
-      LOGGER.error("Recd wrong response from : " + nodeID + " : msg = " + msg
-                   + " while publishing Cluster State");
-      return false;
+  public void publishClusterState(NodeID nodeID) throws GroupException {
+    //  this will only get called if active or stopped
+    ServerMode current = currentMode.get();
+    if (current == ServerMode.ACTIVE) {
+      activateClusterState();
+      groupManager
+          .sendTo(nodeID, ClusterStateMessage.createClusterStateMessage(state));
     } else {
-      return true;
+      LOGGER.info("Cluster state not published to {} since the server is not in active state.  Current state is {}", nodeID, current);
     }
   }
 
   @Override
-  public synchronized void connectionIDCreated(ConnectionID connectionID) {
-    Assert.assertTrue(isActive);
+  public void connectionIDCreated(ConnectionID connectionID) {
     state.addNewConnection(connectionID);
     publishToAll(ClusterStateMessage.createNewConnectionCreatedMessage(connectionID));
   }
 
   @Override
-  public synchronized void connectionIDDestroyed(ConnectionID connectionID) {
-    Assert.assertTrue(isActive);
+  public void connectionIDDestroyed(ConnectionID connectionID) {
     state.removeConnection(connectionID);
     publishToAll(ClusterStateMessage.createConnectionDestroyedMessage(connectionID));
   }
@@ -132,11 +123,11 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   public void messageReceived(NodeID fromNode, ClusterStateMessage msg) {
     handleClusterStateMessage(fromNode, msg);
   }
-
   private void handleClusterStateMessage(NodeID fromNode, ClusterStateMessage msg) {
-    if (isActive) {
+    ServerMode current = this.currentMode.get();
+    if (current == ServerMode.ACTIVE) {
       LOGGER.warn("Recd ClusterStateMessage from " + fromNode
-                  + " while I am the cluster co-ordinator. This is bad. Sending NG response. ");
+                  + " while I am the cluster co-ordinator. This is bad. Ignoring the message.");
     } else {
       // XXX:: Is it a good idea to check if the message we are receiving is from the active server that we think is
       // active ? There is a race between publishing active and pushing cluster state and hence we don't do the check.
@@ -144,19 +135,18 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
       if (msg.isSplitBrainMessage()) {
         return; // About to get zapped no need to actually do anything with the split brain message.
       }
-      if (ServerMode.PASSIVE_STATES.contains(this.currentMode.get())) {
-        msg.initState(state);
-        if (msg.getType() == ClusterStateMessage.COMPLETE_STATE) {
-          configurationProvider.sync(state.getConfigSyncData());
-        }
-        state.syncSequenceState();
+      if (ServerMode.PASSIVE_STATES.contains(current)) {
+        syncClusterState(msg);
       }
     }
   }
 
   @Override
-  public synchronized void setCurrentState(State currentState) {
-    this.state.setCurrentState(currentState);
+  public void setCurrentState(ServerMode currentState) {
+    this.state.setCurrentState(currentState.getState());
+    if (currentState == ServerMode.ACTIVE) {
+      syncState();
+    }
   }
 
   @Override

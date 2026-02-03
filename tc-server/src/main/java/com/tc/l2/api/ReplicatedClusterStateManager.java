@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,19 +17,17 @@
  */
 package com.tc.l2.api;
 
+import com.tc.l2.state.ServerMode;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
-import com.tc.util.State;
 import java.util.Map;
 
 public interface ReplicatedClusterStateManager extends ConnectionIDFactoryListener {
 
-  public void goActiveAndSyncState();
-
   public void publishClusterState(NodeID nodeID) throws GroupException;
 
-  public void setCurrentState(State currentState);
+  public void setCurrentState(ServerMode currentState);
   
   public void reportStateToMap(Map<String, Object> state);
 }
