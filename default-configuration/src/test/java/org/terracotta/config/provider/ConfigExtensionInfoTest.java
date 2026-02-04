@@ -39,7 +39,7 @@ public class ConfigExtensionInfoTest {
   @BeforeClass
   public static void setUpClass() {
   }
-   
+
   @AfterClass
   public static void tearDownClass() {
   }

@@ -112,10 +112,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private static final Logger logger = LoggerFactory.getLogger(TCGroupManagerImpl.class);
 
   public static final String                                HANDSHAKE_STATE_MACHINE_TAG = "TcGroupCommHandshake";
-  
+
   private volatile int                                      serverCount;
   private final Supplier<Set<Node>>                         configuredNodes;
-  
+
   private final String                                      version;
   private final ServerID                                    thisNodeID;
   private final int                                         groupPort;
@@ -158,7 +158,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, ConnectionPolicy connectionPolicy,
-                            StageManager stageManager, 
+                            StageManager stageManager,
                             TCConnectionManager comms,
                             ServerID thisNodeID, Node thisNode,
                             WeightGeneratorFactory weightGenerator, SocketEndpointFactory bufferManagerFactory) {
@@ -174,10 +174,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
     ServerConfiguration l2DSOConfig = configSetupManager.getServerConfiguration();
     serverCount = configSetupManager.getNumberOfServers();
-    
+
     this.groupPort = l2DSOConfig.getGroupPort().getPort();
     this.weightGeneratorFactory = weightGenerator;
-    
+
     InetSocketAddress socketAddress;
     // proxy group port. use a different group port from tc.properties (if exist) than the one on tc-config
     // currently used by L2Reconnect proxy test.
@@ -232,13 +232,13 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     initMessageTypeClassMapping(messageTypeClassMapping);
     HealthCheckerConfig hcconfig = new HealthCheckerConfigImpl(tcProperties
                                                               .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY), ServerEnv.getServer().getIdentifier() + " - TCGroupManager");
-    
+
     if (connectionManager == null) {
       connectionManager = new TCConnectionManagerImpl(ServerEnv.getServer().getIdentifier() + " - " + CommunicationsManager.COMMSMGR_GROUPS, new ConnectionLogger("server"), serverCount <= 1 ? 0 :
         serverCount, bufferManagerFactory);
     }
     communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), messageRouter,
-                                                          networkStackHarnessFactory, 
+                                                          networkStackHarnessFactory,
                                                           this.connectionManager,
                                                           this.connectionPolicy,
                                                           hcconfig,
@@ -280,7 +280,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   protected Sink<DiscoveryStateMachine> getDiscoveryHandlerSink() {
     return discoveryStage.getSink();
   }
-  
+
   Set<Node> getConfiguredServers() {
     return this.configuredNodes.get();
   }
@@ -376,7 +376,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     }
     membersClear();
   }
-  
+
   public TCConnectionManager getConnectionManager() {
     return this.connectionManager;
   }
@@ -394,7 +394,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   public void unregisterForGroupEvents(GroupEventsListener listener) {
     groupListeners.remove(listener);
   }
-  
+
   private void fireNodeEvent(TCGroupMember member, boolean joined) {
     ServerID newNode = member.getPeerNodeID();
     member.setReady(joined);
@@ -432,13 +432,13 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   public NodeID directedJoin(String target, ChannelEventListener listener) throws GroupException {
     String[] hostPort = target.split("[:]");
-    
+
     try {
       openChannel(hostPort[0], Integer.parseInt(hostPort[1]), listener);
     } catch (CommStackMismatchException | IOException | MaxConnectionsExceededException | NumberFormatException | TCTimeoutException e) {
       throw new GroupException(e);
     }
-    
+
     return getNodeID();
   }
 
@@ -459,7 +459,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     }
     return (getNodeID());
   }
-  
+
   @Override
   public void disconnect() {
     Collection<ServerID> check = new ArrayList<>(members.keySet());
@@ -479,13 +479,13 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       logger.warn("Closing down member for " + serverID + " - member doesn't exist.");
     }
   }
-  
+
   @Override
   public void closeMember(String nodeName) {
     Collection<ServerID> check = new ArrayList<>(members.keySet());
     check.stream().filter(id->id.getName().equals(nodeName)).forEach(this::closeMember);
   }
-  
+
   private void closeMember(TCGroupMember member) {
     Assert.assertNotNull(member);
     if (isDebugLogging()) {
@@ -1135,7 +1135,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       }
       HandshakeMonitor previous;
       HandshakeMonitor next = state.createMonitor();
-      
+
       synchronized (this) {
         previous = this.current;
         if (current.getState() == STATE_FAILURE) {
@@ -1146,7 +1146,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
         }
         this.current = next;
       }
-      
+
       if (isDebugLogging()) {
         debugInfo("[TCGroupHandshakeStateMachine]: Entering state: " + state + ", for channel: " + channel);
       }
@@ -1157,7 +1157,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     MessageChannel getChannel() {
       return channel;
     }
-    
+
     ServerID getPeerNodeID() {
       return peerNodeID;
     }
@@ -1507,7 +1507,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   public boolean isServerConnected(String nodeName) {
     return this.discover.isServerConnected(nodeName);
   }
-  
+
   public int getBufferCount() {
     return connectionManager.getBufferCount();
   }
@@ -1515,7 +1515,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private static void debugInfo(String message) {
     L2DebugLogging.log(logger, LogLevel.INFO, message, null);
   }
-  
+
   private static boolean isDebugLogging() {
     return L2DebugLogging.isDebugLogging();
   }

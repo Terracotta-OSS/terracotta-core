@@ -80,7 +80,7 @@ public class ServerConfigurationManager implements PrettyPrintable {
 
   public void initialize() throws ConfigurationException {
     this.configurationProvider.initialize(this.startUpArgs);
-    
+
     this.configuration = configurationProvider.getConfiguration();
     if (this.configuration == null) {
       throw new ConfigurationException("unable to determine server configuration");
@@ -124,7 +124,7 @@ public class ServerConfigurationManager implements PrettyPrintable {
     }
     return cachedGroupConfig;
   }
-  
+
   public InputStream rawConfigFile() {
     String text = configuration.getRawConfiguration();
     return new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8));
@@ -141,23 +141,23 @@ public class ServerConfigurationManager implements PrettyPrintable {
   public ServiceLocator getServiceLocator() {
     return this.serviceLocator;
   }
-  
+
   public byte[] getSyncData() {
     return configurationProvider.getSyncData();
   }
-  
+
   public void sync(byte[] data) {
     configurationProvider.sync(data);
   }
-  
+
   public InetSocketAddress getRelayPeer() {
     return configuration.getRelayPeer();
   }
-  
+
   public InetSocketAddress getRelayPeerGroupPort() {
     return configuration.getRelayPeerGroupPort();
   }
-  
+
   public int getNumberOfServers() {
     try {
       return configuration.getServerConfigurations().size();
@@ -166,31 +166,31 @@ public class ServerConfigurationManager implements PrettyPrintable {
       return cachedGroupConfig.getNodes().size();
     }
   }
-  
+
   public FailoverBehavior getFailoverPriority() {
     return configuration.getFailoverPriority();
   }
-  
+
   public <T> List<T> getExtendedConfiguration(Class<T> type) {
     return configuration.getExtendedConfiguration(type);
   }
-  
+
   public List<ServiceProviderConfiguration> getServiceConfigurations() {
       return configuration.getServiceConfigurations();
   }
-  
+
   public boolean isRelaySource() {
     return configuration.isRelaySource();
   }
-  
+
   public boolean isRelayDestination() {
     return configuration.isRelayDestination();
   }
-  
+
   public boolean isConsistentStartup() {
     return configuration.isConsistentStartup();
   }
-  
+
   private static void processTcProperties(Properties tcProperties) {
     Map<String, String> propMap = new HashMap<>();
 

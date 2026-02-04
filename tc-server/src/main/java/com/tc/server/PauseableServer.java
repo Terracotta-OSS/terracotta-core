@@ -47,7 +47,7 @@ public class PauseableServer implements Pauseable, SPIServer {
         this.args = args;
         this.loader = loader;
     }
- 
+
     @Override
     public Map<String, ?> getStateMap() {
         return impl.getStateMap();
@@ -207,7 +207,7 @@ public class PauseableServer implements Pauseable, SPIServer {
     public ServerJMX getManagement() {
       return new JMXRouter(impl.getJMX());
     }
-    
+
     @Override
     public Properties getCurrentChannelProperties() {
     return GuardianContext.getCurrentChannelProperties();

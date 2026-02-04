@@ -44,33 +44,33 @@ public class ServerDeploymentBuilder {
   private Path installPath;
   private final List<Plugin> plugins = new ArrayList<>();
   private static final Logger LOGGER = LoggerFactory.getLogger(ServerDeploymentBuilder.class);
-    
+
   public ServerDeploymentBuilder() {
-    
+
   }
 
   public ServerDeploymentBuilder(Path install) {
     this.installPath = install;
   }
-  
+
   public ServerDeploymentBuilder installPath(Path install) {
     this.installPath = install;
     return this;
   }
-  
+
   public ServerDeploymentBuilder addPlugin(Path api, Path impl) {
     plugins.add(new Plugin(api, impl));
     return this;
   }
-  
+
   public static ServerDeploymentBuilder begin(Path dest) {
     return new ServerDeploymentBuilder(dest);
   }
-   
+
   public static ServerDeploymentBuilder begin(File dest) {
     return begin(dest.toPath());
   }
-  
+
   private static boolean delete(Path f) {
     try {
       if (Files.isDirectory(f)) {
@@ -82,7 +82,7 @@ public class ServerDeploymentBuilder {
       return false;
     }
   }
-  
+
   private Path ensureInstallPath() {
     try {
       if (installPath == null) {
@@ -100,11 +100,11 @@ public class ServerDeploymentBuilder {
       throw new RuntimeException(ioe);
     }
   }
-  
+
   public Path deploy() {
     return deploy(false);
   }
-  
+
   public Path deploy(boolean refresh) {
     Path ip = ensureInstallPath();
     Path dl = ip.resolve("deploy.lock");
@@ -172,7 +172,7 @@ public class ServerDeploymentBuilder {
       }
     }
   }
-  
+
   private void installDefaultPlugins() {
     String defaultPlugin = System.getProperty("galvan.plugin");
     if (defaultPlugin != null) {
@@ -182,7 +182,7 @@ public class ServerDeploymentBuilder {
       }
     }
   }
-  
+
   private static void copy(Path s, Path d) {
     try {
       if (Files.isDirectory(s)) {
@@ -196,11 +196,11 @@ public class ServerDeploymentBuilder {
       throw new RuntimeException(io);
     }
   }
-  
+
   public static void main(String[] args) {
     new ServerDeploymentBuilder().deploy();
   }
-  
+
   static class Plugin {
     private final Path api;
     private final Path impl;

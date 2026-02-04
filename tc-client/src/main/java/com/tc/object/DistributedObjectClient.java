@@ -107,7 +107,7 @@ import com.tc.util.runtime.ThreadDumpUtil;
 public class DistributedObjectClient {
 
   protected static final Logger DSO_LOGGER = LoggerFactory.getLogger(DistributedObjectClient.class);
-  
+
   private final ClientBuilder                        clientBuilder;
   private final Iterable<InetSocketAddress> serverAddresses;
   private final TCThreadGroup                        threadGroup;
@@ -128,9 +128,9 @@ public class DistributedObjectClient {
   private final SetOnceFlag                          connectionMade                      = new SetOnceFlag();
   private final SetOnceRef<Thread>                   connectionThread                    = new SetOnceRef<>();
   private final SetOnceRef<Exception>                exceptionMade                       = new SetOnceRef<>();
- 
+
   private ClientEntityManager clientEntityManager;
-  
+
   public DistributedObjectClient(Iterable<InetSocketAddress> serverAddresses, TCThreadGroup threadGroup,
                                  Properties properties) {
     this(serverAddresses, new StandardClientBuilderFactory("terracotta").create(properties), threadGroup,
@@ -146,7 +146,7 @@ public class DistributedObjectClient {
     this.uuid = uuid;
     this.name = name;
   }
-  
+
   public boolean isShutdown() {
     return this.clientStopped.isSet();
   }
@@ -169,7 +169,7 @@ public class DistributedObjectClient {
       throw e;
     }
   }
-  
+
   private int getSocketConnectTimeout() {
     final TCProperties tcProperties = TCPropertiesImpl.getProperties();
     final int socketConnectTimeout = tcProperties.getInt(TCPropertiesConsts.L1_SOCKET_CONNECT_TIMEOUT);
@@ -236,9 +236,9 @@ public class DistributedObjectClient {
         map.put("messageHandler", mutil.getStateMap());
         return map;
       }, true);
-    
+
     final ProductInfo pInfo = ProductInfo.getInstance(getClass().getClassLoader());
-    
+
     ClientHandshakeMessageFactory chmf = (u, n, c, r, reconnect)->{
       ClientMessageChannel cmc = getClientMessageChannel();
       if (cmc != null) {
@@ -254,7 +254,7 @@ public class DistributedObjectClient {
         return null;
       }
     };
-    
+
     this.clientHandshakeManager = this.clientBuilder
         .createClientHandshakeManager(cidLoggerProvider.getLogger(ClientHandshakeManagerImpl.class), chmf,
                                           this.uuid, this.name, pInfo.version(), pInfo.buildRevision(), clientEntityManager);
@@ -362,7 +362,7 @@ public class DistributedObjectClient {
       }
     }
   }
-  
+
   private void waitForHandshake(ClientMessageChannel channel) {
     this.clientHandshakeManager.waitForHandshake();
     ClientMessageChannel cmc = this.getClientMessageChannel();
@@ -393,7 +393,7 @@ public class DistributedObjectClient {
     return messageTypeClassMapping;
   }
 
-  private void initChannelMessageRouter(TCMessageRouter messageRouter, Sink<ClientHandshakeResponse> ack, 
+  private void initChannelMessageRouter(TCMessageRouter messageRouter, Sink<ClientHandshakeResponse> ack,
                                          Sink<VoltronEntityMultiResponse> multiSink, ClientEntityManager cem, RequestReceiveHandler single) {
     Function<VoltronEntityResponse, VoltronEntityMultiResponse> multiConverter = (response)-> {
       return new ReplayVoltronEntityMultiResponse() {
@@ -475,7 +475,7 @@ public class DistributedObjectClient {
         this.communicationsManager = null;
       }
     }
-    
+
     if (this.connectionManager != null) {
       try {
         this.connectionManager.shutdown();
@@ -485,7 +485,7 @@ public class DistributedObjectClient {
         this.connectionManager = null;
       }
     }
-    
+
     CommonShutDownHook.shutdown();
 
     if (this.threadGroup != null) {
@@ -528,7 +528,7 @@ public class DistributedObjectClient {
       this.shutdownManager.execute();
     }
   }
-  
+
   private int getPID() {
     String vmName = ManagementFactory.getRuntimeMXBean().getName();
     int index = vmName.indexOf('@');
@@ -537,7 +537,7 @@ public class DistributedObjectClient {
 
     return Integer.parseInt(vmName.substring(0, index));
   }
-  
+
   private synchronized ClientMessageChannel getClientMessageChannel() {
     return this.channel;
   }

@@ -92,7 +92,7 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
       logger.info("exception closing service", e);
     }
   }
-  
+
   private void loadClasspathBuiltins(PlatformConfiguration platformConfiguration) {
     List<Class<? extends ServiceProvider>> providers = ServerEnv.getServer().getImplementations(ServiceProvider.class);
     for (Class<? extends ServiceProvider> clazz : providers) {
