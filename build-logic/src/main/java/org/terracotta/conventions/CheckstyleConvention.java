@@ -87,11 +87,8 @@ public abstract class CheckstyleConvention implements Plugin<Project> {
     Set<String> modifiedFiles = new HashSet<>();
 
     try {
-      // Get staged files
-      modifiedFiles.addAll(executeGit("diff", "--cached", "--name-only"));
-      
-      // Get unstaged files
-      modifiedFiles.addAll(executeGit("diff", "--name-only"));
+      // Get files that differ from master branch
+      modifiedFiles.addAll(executeGit("diff", "--name-only", "master"));
       
       // Get untracked files
       modifiedFiles.addAll(executeGit("ls-files", "--others", "--exclude-standard"));
