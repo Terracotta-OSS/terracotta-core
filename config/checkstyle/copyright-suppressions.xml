@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Puppy Crawl//DTD Suppressions 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+<suppressions>
+  <!-- Suppress copyright checks for Java resource files -->
+  <!-- Resource files like service provider files, config files, etc. should not have copyright headers -->
+  <suppress checks="RegexpHeader" files=".*[/\\]META-INF[/\\]services[/\\].*"/>
+  <suppress checks="RegexpHeader" files=".*[/\\]src[/\\]main[/\\]resources[/\\].*"/>
+  <suppress checks="RegexpHeader" files=".*[/\\]src[/\\]test[/\\]resources[/\\].*"/>
+</suppressions>

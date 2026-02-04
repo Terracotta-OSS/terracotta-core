@@ -54,6 +54,9 @@ sourceSets.main {
     resources.srcDir(galvanKit.map { it.destinationDirectory })
 }
 
+// Exclude empty.txt from copyright checks
+sourceSets.main.copyright.exclude '**/empty.txt'
+
 tasks.named('test', Test) {
     systemProperty "kitInstallPath", layout.buildDirectory.dir("galvan-default").get().toString()
 }

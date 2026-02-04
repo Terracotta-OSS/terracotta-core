@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE module PUBLIC
+    "-//Puppy Crawl//DTD Check Configuration 1.3//EN"
+    "http://www.puppycrawl.com/dtds/configuration_1_3.dtd">
+<module name="Checker">
+  <property name="charset" value="UTF-8"/>
+
+  <!-- Basic code style -->
+  <!-- No tabs -->
+  <module name="FileTabCharacter"/>
+  <!-- Enforce UNIX line endings. -->
+  <module name="RegexpMultiline">
+    <property name="format" value="(?s:\r\n.*)"/>
+  </module>
+  <!-- no trailing whitespace -->
+  <module name="RegexpSingleline">
+    <property name="format" value="\s+$"/>
+    <property name="message" value="Trailing whitespace"/>
+  </module>
+
+  <module name="SuppressionFilter">
+    <property name="file" value="${project_config}/suppressions.xml"/>
+    <property name="optional" value="true"/>
+  </module>
+
+  <module name="TreeWalker">
+    <!--
+    Disallow use of org.junit.rules.TemporaryFolder;
+    use org.terracotta.org.junit.rules.TemporaryFolder until JUnit 4.13 is adopted.
+    -->
+    <module name="IllegalImport">
+      <property name="illegalClasses" value="org.junit.rules.TemporaryFolder"/>
+    </module>
+    <module name="IllegalInstantiation">
+      <property name="classes" value="org.junit.rules.TemporaryFolder"/>
+    </module>
+  </module>
+</module>

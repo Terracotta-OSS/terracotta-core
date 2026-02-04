@@ -44,6 +44,10 @@ dependencies {
   testImplementation "commons-io:commons-io:$commonsIOVersion"
 }
 
+// Exclude service provider files from copyright checks
+sourceSets.main.copyright.exclude '**/META-INF/services/**'
+sourceSets.test.copyright.exclude '**/META-INF/services/**'
+
 test {
     systemProperty "tc.tests.info.temp-root", layout.buildDirectory.dir("tmp").get().toString()
 }

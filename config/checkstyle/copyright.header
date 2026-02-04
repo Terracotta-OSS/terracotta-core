@@ -1,0 +1,7 @@
+^#!
+^<\?xml.*>$
+^<!DOCTYPE .*>$
+^\W*$
+^\W*Copyright Terracotta, Inc.$
+^\W*Copyright IBM Corp. (?:\d{4}, )?(?:\d{4})\W*$
+^\W*$

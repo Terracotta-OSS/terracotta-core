@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,11 +24,12 @@ import com.tc.util.TCServiceLoader;
  */
 public class DefaultSocketEndpointFactory {
   private static SocketEndpointFactory DEFAULT;
-  
+
   public static void setSocketEndpointFactory(SocketEndpointFactory d) {
     DEFAULT = d;
+
   }
-  
+
   public static SocketEndpointFactory getSocketEndpointFactory() {
     if (DEFAULT == null) {
       DEFAULT = (SocketEndpointFactory)TCServiceLoader.loadServices(SocketEndpointFactory.class).stream().findFirst().orElseThrow(()->new RuntimeException("not found"));
