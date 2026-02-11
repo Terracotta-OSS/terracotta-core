@@ -49,14 +49,14 @@ public abstract class CheckstyleConvention implements Plugin<Project> {
           return modifiedFiles.contains(relativePath);
         }));
       });
-      
+
       checkstyleTask.onlyIf(task -> {
         if (modifiedFiles.isEmpty()) {
           // No modified files at all, skip checkstyle
           project.getLogger().info("Skipping checkstyle - no modified files in repository");
           return false;
         }
-        
+
         // Check if this specific task will have any files to check
         // We need to filter the source to see if any files match
         long matchingFiles = checkstyleTask.getSource().getFiles().stream()
@@ -66,12 +66,12 @@ public abstract class CheckstyleConvention implements Plugin<Project> {
             return modifiedFiles.contains(relativePath);
           })
           .count();
-        
+
         if (matchingFiles == 0) {
           project.getLogger().info("Skipping checkstyle for " + project.getName() + " - no modified files in this module");
           return false;
         }
-        
+
         return true;
       });
     });
@@ -89,10 +89,10 @@ public abstract class CheckstyleConvention implements Plugin<Project> {
     try {
       // Get files that differ from master branch
       modifiedFiles.addAll(executeGit("diff", "--name-only", "master"));
-      
+
       // Get untracked files
       modifiedFiles.addAll(executeGit("ls-files", "--others", "--exclude-standard"));
-      
+
     } catch (Exception e) {
       project.getLogger().warn("Failed to get modified files from git: " + e.getMessage());
       project.getLogger().warn("Checkstyle will run on all files");
@@ -100,16 +100,17 @@ public abstract class CheckstyleConvention implements Plugin<Project> {
 
     return modifiedFiles;
   }
-  
+
   private Set<String> executeGit(String... command) throws Exception {
     String result = getGit().get().execute(spec -> {
-      spec.args(command);
+      Object[] args = Arrays.copyOf(command, command.length, Object[].class);
+      spec.args(args);
     });
-    
+
     if (result.isEmpty()) {
       return new HashSet<>();
     }
-    
+
     return new HashSet<>(Arrays.asList(result.split("\n")));
   }
 }
