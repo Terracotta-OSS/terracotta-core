@@ -25,3 +25,12 @@ dependencies {
     compileOnly project(':server-api')
     implementation project(':examples:clustered-map:common')
 }
+
+jar {
+  archiveBaseName = 'example-clustered-map-server'
+    manifest {
+        attributes(
+            'Class-Path': configurations.runtimeClasspath.collect { it.getName() }.join(' ')
+        )
+    }
+}
