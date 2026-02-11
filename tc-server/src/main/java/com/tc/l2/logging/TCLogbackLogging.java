@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import ch.qos.logback.classic.spi.Configurator;
 import ch.qos.logback.classic.spi.ConfiguratorRank;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.rolling.FixedWindowRollingPolicy;
 import ch.qos.logback.core.rolling.RollingFileAppender;
@@ -113,6 +114,10 @@ public class TCLogbackLogging {
         }
       } else if (check instanceof EventAppender) {
         hasJfr = true;
+      } else if (check instanceof ConsoleAppender && check.getName().equals("console")) {
+        // this is from the basic configurator in logback, we don't want it.
+        check.stop();
+        root.detachAppender(check);
       }
     }
     if (!hasBuffer) {
