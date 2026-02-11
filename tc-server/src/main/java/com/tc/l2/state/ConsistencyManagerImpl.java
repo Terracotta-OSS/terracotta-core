@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
 import static java.util.stream.Collectors.toSet;
 
 public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsListener {
-  
+
   private static final Logger CONSOLE = TCLogging.getConsoleLogger();
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsistencyManagerImpl.class);
   private final TopologyManager topologyManager;
@@ -56,7 +56,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   private final ServerVoterManager voter;
   private final Set<NodeID> activePeers = Collections.synchronizedSet(new HashSet<>());
   private final Set<NodeID> passives = Collections.synchronizedSet(new HashSet<>());
-  
+
   @Override
   public Map<String, ?> getStateMap() {
     Map<String, Object> map = new LinkedHashMap<>();
@@ -77,7 +77,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     map.put("voter", voteMap);
     return map;
   }
-  
+
   public ConsistencyManagerImpl(Supplier<ServerMode> mode, TopologyManager topologyManager) {
     this.topologyManager = topologyManager;
     try {
@@ -86,11 +86,11 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
       throw new RuntimeException(e);
     }
   }
-  
+
   public synchronized long getBlockingTimestamp() {
     return blockedAt;
   }
-        
+
   @Override
   public void nodeJoined(NodeID nodeID) {
     activePeers.add(nodeID);
@@ -100,17 +100,17 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   public void nodeLeft(NodeID nodeID) {
     activePeers.remove(nodeID);
   }
-  
+
   @Override
   public long getCurrentTerm() {
     return voteTerm;
   }
-  
+
   @Override
   public void setCurrentTerm(long term) {
     voteTerm = term;
   }
-        
+
   @Override
   public boolean requestTransition(ServerMode mode, NodeID sourceNode, Topology topology, Transition newMode) throws IllegalStateException {
     if (topology == null) {
@@ -122,8 +122,6 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     }
 
     if (newMode == Transition.ADD_PASSIVE) {
- //  starting passive sync to a new node, at this point the passive can be consisdered a
- //  vote for the current active and the passive sync rules will make sure all the data is replicated      
       passives.add(sourceNode);
       Assert.assertEquals(mode, ServerMode.ACTIVE);
       //  adding a passive to an active is always OK
@@ -136,10 +134,6 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
       return true;
     }
     if (newMode == Transition.REMOVE_PASSIVE) {
- //  try and remove the passive from the list of 
- //  votes for an active, need to check below if the 
- //  server can remove waiters for client transactions, can only do this
- //  with a quorum of votes
       passives.remove(sourceNode);
       Assert.assertEquals(mode, ServerMode.ACTIVE);
     }
@@ -148,7 +142,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
       return !isBlocked();
     }
     boolean allow = false;
-    
+
     // activate voting to lock the voting members and return the number of server votes
     int serverVotes = activateVoting(mode, newMode, topology);
     int peerServers = topology.getServers().size() - 1;
@@ -215,7 +209,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
       return (voteCount>>1);  // floor of half because the self vote will tip the scales
     }
   }
-  
+
   private synchronized int activateVoting(ServerMode mode, Transition moveTo, Topology topology) {
     if (!activeVote) {
       blocked = true;
@@ -228,23 +222,23 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
       voter.startVoting(voteTerm, stateTransition);
     }
     actions.add(moveTo);
-    //  for zapping, only need to count the servers connected since they are 
-    //  presumably participating in election
-    if (mode != ServerMode.ACTIVE || moveTo == Transition.ZAP_NODE) {
-      return filterActivePeers(activePeers, topology).size();
-    } else {
-      return this.passives.size();
-    }
+    // can no longer rely on the fact the activePeers will be
+    // passive soon because of new PASSIVE-RELAY.  We will rely solely
+    // on valid peers that are from the part of the stripe.  This is ok, as
+    // the previous model was being extra cautious waiting for passive to
+    // start the sync
+    return filterActivePeers(activePeers, topology).size();
   }
-  
+
   private void promotePeers(Set<NodeID> activePeers) {
     passives.addAll(activePeers);
   }
 
   private static Set<NodeID> filterActivePeers(Set<NodeID> activePeers, Topology topology) {
-    return activePeers.stream().filter(p -> topology.getServers().contains(((ServerID)p).getName())).collect(toSet());
+    final Set<String> servers = topology.getServers();
+    return activePeers.stream().filter(p -> servers.contains(((ServerID)p).getName())).collect(toSet());
   }
-  
+
   @SuppressWarnings("fallthrough")
   private synchronized void endVoting(boolean allowed, Transition moveTo, Topology topology) {
     Assert.assertTrue(moveTo.isStateTransition());
@@ -270,19 +264,19 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
       }
     }
   }
-  
+
   public synchronized Collection<Transition> getActions() {
     return new ArrayList<>(actions);
   }
-   
+
   public synchronized boolean isVoting() {
     return activeVote;
   }
-  
+
   public synchronized boolean isBlocked() {
     return blocked;
   }
-  
+
   @Override
   public Enrollment createVerificationEnrollment(NodeID lastActive, WeightGeneratorFactory weightFactory) {
     return EnrollmentFactory.createVerificationEnrollment(lastActive, weightFactory);
