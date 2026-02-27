@@ -1258,9 +1258,12 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
           }
 
           @Override
-          public synchronized void complete() {
-            start();
-            signalComplete();
+          public void complete() {
+            try {
+              start();
+            } finally {
+              signalComplete();
+            }
           }
 
           private synchronized void signalComplete() {
