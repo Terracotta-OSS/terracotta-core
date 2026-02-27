@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public class BootstrapThrowableHandler implements ThrowableHandler {
 
   /**
    * Construct a new ThrowableHandler with a logger
-   * 
+   *
    * @param logger Logger
    */
   public BootstrapThrowableHandler(Logger logger) {
@@ -110,7 +110,7 @@ public class BootstrapThrowableHandler implements ThrowableHandler {
 
   /**
    * Handle throwable occurring on thread
-   * 
+   *
    * @param thread Thread receiving Throwable
    * @param t Throwable
    */
@@ -216,7 +216,7 @@ public class BootstrapThrowableHandler implements ThrowableHandler {
   protected synchronized void exit(boolean status) {
     // let all the logging finish
 //    ThreadUtil.reallySleep(2000);
-    StopAction[] actions = status ? new StopAction[] {StopAction.RESTART} : new StopAction[0];
+    StopAction[] actions = status ? new StopAction[] {StopAction.RESTART, StopAction.IMMEDIATE} : new StopAction[] {StopAction.IMMEDIATE};
     ServerEnv.getServer().stop(actions);
   }
 }
