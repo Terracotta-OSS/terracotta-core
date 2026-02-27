@@ -1048,10 +1048,11 @@ public class DistributedObjectServer {
 
   private StageController createStageController(ProcessTransactionHandler pth) {
     StageController control = new StageController(this::getContext);
-//  PASSIVE-REPLICA
-
+//  PASSIVE-REPLICA-START
+    control.addStageToState(ServerMode.REPLICA_START.getState(), ServerConfigurationContext.PASSIVE_REPLICA_STAGE);
+    control.addStageToState(ServerMode.REPLICA_START.getState(), ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
+    control.addStageToState(ServerMode.REPLICA_START.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
 //  PASSIVE-RELAY
-    control.addStageToState(ServerMode.RELAY.getState(), ServerConfigurationContext.PASSIVE_REPLICA_STAGE);
     control.addStageToState(ServerMode.RELAY.getState(), ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
     control.addStageToState(ServerMode.RELAY.getState(), ServerConfigurationContext.PASSIVE_RELAY_STAGE);
     control.addStageToState(ServerMode.RELAY.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);

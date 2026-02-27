@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import static com.tc.l2.state.StateManager.BOOTSTRAP_STATE;
 import static com.tc.l2.state.StateManager.DIAGNOSTIC_STATE;
 import static com.tc.l2.state.StateManager.PASSIVE_RELAY;
 import static com.tc.l2.state.StateManager.PASSIVE_REPLICA;
+import static com.tc.l2.state.StateManager.PASSIVE_REPLICA_START;
 import static com.tc.l2.state.StateManager.PASSIVE_STANDBY;
 import static com.tc.l2.state.StateManager.PASSIVE_SYNCING;
 import static com.tc.l2.state.StateManager.PASSIVE_UNINITIALIZED;
@@ -74,7 +75,7 @@ public enum ServerMode {
     public boolean containsData() {
       return false;
     }
-  },    
+  },
   RECOVERING(RECOVERING_STATE),
   SYNCING(PASSIVE_SYNCING),
   PASSIVE(PASSIVE_STANDBY) {
@@ -93,7 +94,33 @@ public enum ServerMode {
     public boolean isStartup() {
       return true;
     }
-    
+
+    @Override
+    public boolean canStartElection() {
+      return false;
+    }
+
+    @Override
+    public boolean containsData() {
+      return false;
+    }
+
+    @Override
+    public boolean canBeActive() {
+      return false;
+    }
+
+    @Override
+    public boolean requiresElection() {
+      return false;
+    }
+  },
+  REPLICA_START(PASSIVE_REPLICA_START) {
+    @Override
+    public boolean isStartup() {
+      return true;
+    }
+
     @Override
     public boolean canStartElection() {
       return false;
@@ -162,15 +189,15 @@ public enum ServerMode {
   public String getName() {
     return name.getName();
   }
-  
+
   public boolean equals() {
     throw new AssertionError();
   }
-  
+
   public boolean canBeActive() {
     return false;
   }
-  
+
   public boolean containsData() {
     return true;
   }
@@ -182,11 +209,11 @@ public enum ServerMode {
   public boolean canStartElection() {
     return isStartup();
   }
-  
+
   public boolean requiresElection() {
     return true;
   }
-  
+
   public static final Set<ServerMode> VALID_STATES = EnumSet.allOf(ServerMode.class);
-  public static final Set<ServerMode> PASSIVE_STATES = EnumSet.of(UNINITIALIZED, PASSIVE, SYNCING, RELAY, REPLICA);
+  public static final Set<ServerMode> PASSIVE_STATES = EnumSet.of(UNINITIALIZED, PASSIVE, SYNCING, RELAY, REPLICA_START, REPLICA);
 };

@@ -57,7 +57,7 @@ public class L2HACoordinator implements L2Coordinator, ConnectionIDFactoryListen
   private ReplicatedClusterStateManager                     rClusterStateMgr;
 
   public L2HACoordinator(Logger consoleLogger, DistributedObjectServer server,
-                         StateManager stateManager, 
+                         StateManager stateManager,
                          GroupManager<AbstractGroupMessage> groupCommsManager,
                          Persistor persistor,
                          WeightGeneratorFactory weightGeneratorFactory,
@@ -68,7 +68,7 @@ public class L2HACoordinator implements L2Coordinator, ConnectionIDFactoryListen
     this.server = server;
     this.groupManager = groupCommsManager;
     this.stateManager = stateManager;
-    
+
     init(persistor,
         weightGeneratorFactory, stripeIDStateManager, consistencyMgr);
   }
@@ -104,14 +104,19 @@ public class L2HACoordinator implements L2Coordinator, ConnectionIDFactoryListen
   public void connectionIDDestroyed(ConnectionID connectionID) {
     getReplicatedClusterStateManager().connectionIDDestroyed(connectionID);
   }
-  
+
   @Override
   public void start() {
     if (this.server.getConfigSetupManager().isPartialConfiguration()) {
       this.stateManager.moveToDiagnosticMode();
       consoleLogger.info("Started the server in diagnostic mode");
     } else if (this.server.getConfigSetupManager().getRelayPeer() != null) {
-      this.stateManager.moveToRelayMode();
+      if (this.server.getConfigSetupManager().isRelaySource()) {
+        this.stateManager.moveToRelayMode();
+      } else {
+        Assert.assertTrue(this.server.getConfigSetupManager().isRelayDestination());
+        this.stateManager.moveToReplicaMode();
+      }
     }
     this.stateManager.initializeAndStartElection();
   }
