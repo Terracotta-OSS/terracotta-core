@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -40,11 +40,6 @@ class TCSubProperties implements TCProperties {
   }
 
   @Override
-  public String getProperty(String key) {
-    return properties.getProperty(getActualKey(key));
-  }
-
-  @Override
   public String toString() {
     return "TCSubProperties(" + category + ")";
   }
@@ -55,43 +50,8 @@ class TCSubProperties implements TCProperties {
   }
 
   @Override
-  public boolean getBoolean(String key) {
-    return properties.getBoolean(getActualKey(key));
-  }
-
-  @Override
-  public float getFloat(String key) {
-    return properties.getFloat(getActualKey(key));
-  }
-
-  @Override
-  public int getInt(String key) {
-    return properties.getInt(getActualKey(key));
-  }
-
-  @Override
-  public long getLong(String key) {
-    return properties.getLong(getActualKey(key));
-  }
-
-  @Override
-  public long getLong(String key, long defaultValue) {
-    return properties.getLong(getActualKey(key), defaultValue);
-  }
-
-  @Override
   public String getProperty(String key, boolean missingOkay) {
     return properties.getProperty(getActualKey(key), missingOkay);
-  }
-
-  @Override
-  public int getInt(String key, int defaultValue) {
-    return properties.getInt(getActualKey(key), defaultValue);
-  }
-
-  @Override
-  public boolean getBoolean(String key, boolean defaultValue) {
-    return properties.getBoolean(getActualKey(key), defaultValue);
   }
 
   @Override
