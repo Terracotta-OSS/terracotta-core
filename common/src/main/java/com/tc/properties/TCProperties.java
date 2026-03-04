@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,25 +22,56 @@ import java.util.Properties;
 
 public interface TCProperties {
 
-  int getInt(String key);
+  default int getInt(String key) {
+    return Integer.parseInt(getProperty(key));
+  }
 
-  int getInt(String key, int defaultValue);
+  default int getInt(String key, int defaultValue) {
+    String val = getProperty(key, true);
+    if (val == null) {
+      return defaultValue;
+    } else {
+      return Integer.parseInt(val);
+    }
+  }
 
-  long getLong(String key);
+  default long getLong(String key) {
+    return Long.parseLong(getProperty(key));
+  }
 
-  long getLong(String key, long defaultValue);
+  default long getLong(String key, long defaultValue) {
+    String val = getProperty(key, true);
+    if (val == null) {
+      return defaultValue;
+    } else {
+      return Long.parseLong(val);
+    }
+  }
 
-  boolean getBoolean(String key);
+  default boolean getBoolean(String key) {
+    return Boolean.parseBoolean(getProperty(key));
+  }
 
-  boolean getBoolean(String key, boolean defaultValue);
+  default boolean getBoolean(String key, boolean defaultValue) {
+    String val = getProperty(key, true);
+    if (val == null) {
+      return defaultValue;
+    } else {
+      return Boolean.parseBoolean(val);
+    }
+  }
 
-  String getProperty(String key);
+  default String getProperty(String key) {
+    return getProperty(key, false);
+  }
 
   TCProperties getPropertiesFor(String key);
 
   String getProperty(String key, boolean missingOkay);
 
-  float getFloat(String key);
+  default float getFloat(String key) {
+    return Float.parseFloat(getProperty(key));
+  }
 
   Properties addAllPropertiesTo(Properties properties);
 
