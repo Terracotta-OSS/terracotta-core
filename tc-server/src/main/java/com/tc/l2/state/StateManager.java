@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,13 +29,14 @@ import com.tc.util.State;
 
 
 public interface StateManager extends PrettyPrintable {
-  
+
   public final State       ACTIVE_COORDINATOR   = new State("ACTIVE-COORDINATOR");
   public final State       RECOVERING_STATE           = new State("RECOVERING");
   public final State       PASSIVE_UNINITIALIZED = new State("PASSIVE-UNINITIALIZED");
   public final State       PASSIVE_SYNCING = new State("PASSIVE-SYNCING");
   public final State       PASSIVE_STANDBY      = new State("PASSIVE-STANDBY");
   public final State       PASSIVE_RELAY      = new State("PASSIVE-RELAY");
+  public final State       PASSIVE_REPLICA_START      = new State("PASSIVE-REPLICA-START");
   public final State       PASSIVE_REPLICA      = new State("PASSIVE-REPLICA");
   public final State       START_STATE          = new State("START-STATE");
   public final State       STOP_STATE           = new State("STOP-STATE");
@@ -55,15 +56,17 @@ public interface StateManager extends PrettyPrintable {
   public boolean isActiveCoordinator();
 
   public void moveToPassiveSyncing(NodeID connectedTo);
-  
+
   public void moveToPassiveStandbyState();
-  
+
   public void moveToDiagnosticMode();
-  
+
   public void moveToRelayMode();
-  
+
+  public void moveToReplicaMode();
+
   public void moveToPassiveUnitialized();
-  
+
   public boolean moveToStopStateIf(Set<ServerMode> validStates);
 
   public void publishActiveState(NodeID nodeID) throws GroupException;
@@ -71,11 +74,11 @@ public interface StateManager extends PrettyPrintable {
   public void handleClusterStateMessage(L2StateMessage clusterMsg);
 
   public NodeID getActiveNodeID();
-  
+
   public Set<ServerID> getPassiveStandbys();
 
   public void shutdown();
-  
+
   public static ServerMode convert(State state) {
     if (state == null) {
       return ServerMode.START;

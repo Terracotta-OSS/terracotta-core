@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -45,12 +45,12 @@ import org.slf4j.LoggerFactory;
 public class DuplicationTransactionHandler {
   private static final Logger PLOGGER = LoggerFactory.getLogger(MessagePayload.class);
   private static final Logger LOGGER = LoggerFactory.getLogger(DuplicationTransactionHandler.class);
-  
+
 
   private final GroupManager<AbstractGroupMessage> groupManager;
   private final GroupEventsListener listener;
   private volatile long currentSequence = 0L;
-  
+
   public DuplicationTransactionHandler(StateManager stateMgr, Predicate<NodeID> duplicator, GroupManager<AbstractGroupMessage> groupManager) {
     this.groupManager = groupManager;
     this.listener = new GroupEventsListener() {
@@ -59,12 +59,12 @@ public class DuplicationTransactionHandler {
         try {
           if (duplicator.test(nodeID)) {
             switch (stateMgr.getCurrentMode()) {
-              case RELAY:
+              case REPLICA_START:
                 TCLogging.getConsoleLogger().info("requesting duplication sync");
                 stateMgr.moveToPassiveSyncing(nodeID);
                 groupManager.sendTo(nodeID, RelayMessage.createStartSync());
                 break;
-              case PASSIVE:
+              case REPLICA:
                 groupManager.sendTo(nodeID, RelayMessage.createResumeMessage(currentSequence));
                 break;
               default:
@@ -87,7 +87,7 @@ public class DuplicationTransactionHandler {
 
   private final EventHandler<RelayMessage> eventHandler = new AbstractEventHandler<RelayMessage>() {
    private Stage<ReplicationMessage> sendToNext;
-   
+
    @Override
     public void handleEvent(RelayMessage message) throws EventHandlerException {
      switch (message.getType()) {
@@ -119,14 +119,14 @@ public class DuplicationTransactionHandler {
       super.destroy();
       groupManager.unregisterForGroupEvents(listener);
     }
-    
-    
+
+
   };
 
   public EventHandler<RelayMessage> getEventHandler() {
     return eventHandler;
   }
-  
+
   private void processMessage(Stage<ReplicationMessage> sendToNext, RelayMessage rep) throws ServerException {
     if (rep.getType() == RelayMessage.RELAY_BATCH) {
       long last = rep.unwindBatch(m->sendToNext.getSink().addToSink(m));

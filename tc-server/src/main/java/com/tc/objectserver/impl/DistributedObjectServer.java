@@ -601,8 +601,8 @@ public class DistributedObjectServer {
     final InetSocketAddress dsoBind = new InetSocketAddress(l2DSOConfig.getTsaPort().getHostString(), l2DSOConfig.getTsaPort().getPort());
     this.l1Listener = this.communicationsManager.createListener(dsoBind, (MessageChannel c)->!c.getProductID().isReconnectEnabled() || !server.isReconnectWindow(),
                                                                 this.connectionIdFactory, (MessageTransport t)->{
-                                                                  return getContext().getClientHandshakeManager().isStarting() 
-                                                                          || t.getConnectionID().getProductId() == ProductID.DIAGNOSTIC 
+                                                                  return getContext().getClientHandshakeManager().isStarting()
+                                                                          || t.getConnectionID().getProductId() == ProductID.DIAGNOSTIC
                                                                           || consistencyMgr.requestTransition(context.getL2Coordinator().getStateManager().getCurrentMode(),
                                                                                 t.getConnectionID().getClientID(), ConsistencyManager.Transition.ADD_CLIENT);
                                                                 });
@@ -612,9 +612,9 @@ public class DistributedObjectServer {
 
     final DSOChannelManager channelManager = new DSOChannelManagerImpl(this.l1Listener.getChannelManager(), pInfo.version());
     channelManager.addEventListener(this.connectionIdFactory);
-    
+
     ServerPersistentState serverPersistentState = configSetupManager.isRelaySource() ? new RelayPersistentState() : new ClusterPersistentState(this.persistor.getClusterStatePersistor());
-    
+
     if (serverPersistentState.getInitialMode() == ServerMode.ACTIVE && configSetupManager.isRelayDestination()) {
       throw new TCShutdownServerException("Unable to start as a relay destination.  The server was shutdown as active");
     }
@@ -705,7 +705,7 @@ public class DistributedObjectServer {
     if (consistencyMgr instanceof GroupEventsListener) {
       this.groupCommManager.registerForGroupEvents((GroupEventsListener)consistencyMgr);
     }
-    
+
     final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler, getVersionCompatibility()), 1);
 
     Stage<HydrateContext> hydrator = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_STAGE, HydrateContext.class, new HydrateHandler(), L2Utils.getOptimalCommWorkerThreads());
@@ -745,7 +745,7 @@ public class DistributedObjectServer {
       sequenceWeight.setReplicatedTransactionHandler(replicatedTransactionHandler);
       replicationEvents = replicatedTransactionHandler.getEventHandler();
     }
-    
+
 // This requires both the stage for handling the replication/sync messages.
     Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class,
         replicationEvents, 1);
@@ -820,10 +820,10 @@ public class DistributedObjectServer {
     this.groupCommManager.registerForGroupEvents(dispatchHandler.createDispatcher(groupEvents.getSink()));
   //  TODO:  These stages should probably be activated and destroyed dynamically
 //  Replicated messages need to be ordered
-       
+
 
     this.groupCommManager.routeMessages(ReplicationMessage.class,new OrderedSink<>(logger, replicationStage.getSink()));
-    
+
     this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStageAck.getSink());
     Sink<PlatformInfoRequest> info = createPlatformInformationStages(stageManager, monitoringShimService);
     dispatchHandler.addListener(connectPassiveEvents(info, monitoringShimService));
@@ -838,14 +838,14 @@ public class DistributedObjectServer {
         pInfo,
         consoleLogger
     );
-    
+
     this.context = this.serverBuilder.createServerConfigurationContext(configSetupManager.getServerConfiguration().getName(), stageManager, channelManager,
                                                                        channelStats, this.l2Coordinator,
                                                                        clientHandshakeManager,
                                                                        this.connectionIdFactory);
     this.context.addShutdownItem(passives::close);
     toInit.add(this.serverBuilder);
-    
+
     startStages(stageManager, toInit);
 
     // XXX: yucky casts
@@ -877,26 +877,28 @@ public class DistributedObjectServer {
         finished.completeExceptionally(ee.getCause());
         return finished;
       }
-    }
-    if (this.stopping.attemptSet()) {
-        ThreadUtil.executeInThread(threadGroup.getParent(), ()->{
-          try {
-            this.seda.getStageManager().stopAll();
-            if (!threadGroup.retire(TimeUnit.SECONDS.toMillis(30L), e->L2Utils.handleInterrupted(logger, e))) {
-              logger.warn("unable to shutdown server threads");
-              threadGroup.printLiveThreads(logger::warn);
-              threadGroup.interrupt();
+      if (this.stopping.attemptSet()) {
+          ThreadUtil.executeInThread(threadGroup.getParent(), ()->{
+            try {
+              this.seda.getStageManager().stopAll();
+              if (!threadGroup.retire(TimeUnit.SECONDS.toMillis(30L), e->L2Utils.handleInterrupted(logger, e))) {
+                logger.warn("unable to shutdown server threads");
+                threadGroup.printLiveThreads(logger::warn);
+                threadGroup.interrupt();
+              }
+            } finally {
+              finished.complete(null);
             }
-          } finally {
-            finished.complete(null);
-          }
-        }, "server shutdown thread", true);
+          }, "server shutdown thread", true);
+      } else {
+        //  already stopping
+      }
     } else {
       finished.complete(null);
     }
     return finished;
   }
-  
+
   private void shutdown() {
     try {
       logger.info("shutdown initiated");
@@ -1046,10 +1048,11 @@ public class DistributedObjectServer {
 
   private StageController createStageController(ProcessTransactionHandler pth) {
     StageController control = new StageController(this::getContext);
-//  PASSIVE-REPLICA
-
+//  PASSIVE-REPLICA-START
+    control.addStageToState(ServerMode.REPLICA_START.getState(), ServerConfigurationContext.PASSIVE_REPLICA_STAGE);
+    control.addStageToState(ServerMode.REPLICA_START.getState(), ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
+    control.addStageToState(ServerMode.REPLICA_START.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
 //  PASSIVE-RELAY
-    control.addStageToState(ServerMode.RELAY.getState(), ServerConfigurationContext.PASSIVE_REPLICA_STAGE);
     control.addStageToState(ServerMode.RELAY.getState(), ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
     control.addStageToState(ServerMode.RELAY.getState(), ServerConfigurationContext.PASSIVE_RELAY_STAGE);
     control.addStageToState(ServerMode.RELAY.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
@@ -1069,7 +1072,7 @@ public class DistributedObjectServer {
     control.addStageToState(ServerMode.PASSIVE.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
     control.addStageToState(ServerMode.PASSIVE.getState(), ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
     control.addStageToState(ServerMode.PASSIVE.getState(), ServerConfigurationContext.REQUEST_PROCESSOR_STAGE);
-//  PASSIVE-REPLICA is like PASSIVE-STANDBY    
+//  PASSIVE-REPLICA is like PASSIVE-STANDBY
     control.addStageToState(ServerMode.REPLICA.getState(), ServerConfigurationContext.PASSIVE_REPLICA_STAGE);
     control.addStageToState(ServerMode.REPLICA.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
     control.addStageToState(ServerMode.REPLICA.getState(), ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
@@ -1094,7 +1097,7 @@ public class DistributedObjectServer {
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_FLUSH_STAGE);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.PASSIVE_TO_ACTIVE_DRIVER_STAGE);
-    
+
     control.addTriggerToState(ServerMode.STOP.getState(),s->{
       // unlock the resends wait in case stuck there
       pth.reconnectComplete();
@@ -1142,7 +1145,7 @@ public class DistributedObjectServer {
   private void connectServerStateToReplicatedState(LocalMonitoringProducer monitoringShimService, StateManager mgr, ReplicatedClusterStateManager rcs) {
     mgr.registerForStateChangeEvents(new StateChangeListener() {
       private boolean diagnosticsStarted = false;
-      
+
       @Override
       public void l2StateChanged(StateChangedEvent sce) {
         rcs.setCurrentState(StateManager.convert(sce.getCurrentState()));
@@ -1169,7 +1172,7 @@ public class DistributedObjectServer {
       }
     });
   }
-  
+
   private void startGroupManagers() {
     try {
       if (this.groupCommManager == null) {
@@ -1253,7 +1256,7 @@ public class DistributedObjectServer {
       }
     }
   }
-  
+
   public boolean isL1Listening() {
     return this.l1Listener.isStarted();
   }
@@ -1336,7 +1339,7 @@ public class DistributedObjectServer {
       return new CollectionVersionCompatibility(compat);
     }
   }
-  
+
   public int getGroupPort() {
     final ServerConfiguration l2DSOConfig = this.configSetupManager.getServerConfiguration();
     final int configValue = l2DSOConfig.getGroupPort().getPort();
@@ -1376,7 +1379,7 @@ public class DistributedObjectServer {
   public Persistor getPersistor() {
     return persistor;
   }
-    
+
   private EventHandler<ReplicationMessage> createAndRouteRelayTransactionHandler(Stage<Runnable> current) {
     RelayTransactionHandler handler = new RelayTransactionHandler(current, groupCommManager);
     Stage<RelayMessage> relays = this.seda.getStageManager().createStage(ServerConfigurationContext.PASSIVE_RELAY_STAGE, RelayMessage.class, new AbstractEventHandler<RelayMessage>() {
@@ -1384,20 +1387,20 @@ public class DistributedObjectServer {
       public void handleEvent(RelayMessage context) throws EventHandlerException {
         if (context.getType() == RelayMessage.START_SYNC) {
           if (!handler.registerRelayConsumer(context.messageFrom())) {
-            throw new TCServerRestartException("restarting relay"); 
+            throw new TCServerRestartException("restarting relay");
           }
         } else if (context.getType() == RelayMessage.RELAY_RESUME) {
           if (!handler.resumeRelayConsumer(context.messageFrom(), context.getLastSeen())) {
             try {
               groupCommManager.sendTo(context.messageFrom(), RelayMessage.createInvalid());
             } catch (GroupException e) {
-              throw new TCServerRestartException("restarting relay"); 
+              throw new TCServerRestartException("restarting relay");
             }
           } else {
             try {
               groupCommManager.sendTo(context.messageFrom(), RelayMessage.createSuccess());
             } catch (GroupException e) {
-              throw new TCServerRestartException("restarting relay"); 
+              throw new TCServerRestartException("restarting relay");
             }
           }
         }
@@ -1406,7 +1409,7 @@ public class DistributedObjectServer {
     this.groupCommManager.routeMessages(RelayMessage.class, relays.getSink());
     return handler.getEventHandler();
   }
-  
+
   private void routeRelayMessages(StateManager stateMgr, ServerConfigurationManager config) {
     DuplicationTransactionHandler handler = new DuplicationTransactionHandler(stateMgr, n->config.isRelayDestination(), groupCommManager);
     Stage<RelayMessage> relays = this.seda.getStageManager().createStage(ServerConfigurationContext.PASSIVE_REPLICA_STAGE, RelayMessage.class, handler.getEventHandler(), 1);
