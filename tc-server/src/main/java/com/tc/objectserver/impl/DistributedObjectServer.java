@@ -877,28 +877,26 @@ public class DistributedObjectServer {
         finished.completeExceptionally(ee.getCause());
         return finished;
       }
-      if (this.stopping.attemptSet()) {
-          ThreadUtil.executeInThread(threadGroup.getParent(), ()->{
-            try {
-              this.seda.getStageManager().stopAll();
-              if (!threadGroup.retire(TimeUnit.SECONDS.toMillis(30L), e->L2Utils.handleInterrupted(logger, e))) {
-                logger.warn("unable to shutdown server threads");
-                threadGroup.printLiveThreads(logger::warn);
-                threadGroup.interrupt();
-              }
-            } finally {
-              finished.complete(null);
+    }
+    if (this.stopping.attemptSet()) {
+        ThreadUtil.executeInThread(threadGroup.getParent(), ()->{
+          try {
+            this.seda.getStageManager().stopAll();
+            if (!threadGroup.retire(TimeUnit.SECONDS.toMillis(30L), e->L2Utils.handleInterrupted(logger, e))) {
+              logger.warn("unable to shutdown server threads");
+              threadGroup.printLiveThreads(logger::warn);
+              threadGroup.interrupt();
             }
-          }, "server shutdown thread", true);
-      } else {
-        //  already stopping
-      }
+          } finally {
+            finished.complete(null);
+          }
+        }, "server shutdown thread", true);
     } else {
       finished.complete(null);
     }
     return finished;
   }
-
+  
   private void shutdown() {
     try {
       logger.info("shutdown initiated");

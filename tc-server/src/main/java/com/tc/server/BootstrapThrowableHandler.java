@@ -216,7 +216,7 @@ public class BootstrapThrowableHandler implements ThrowableHandler {
   protected synchronized void exit(boolean status) {
     // let all the logging finish
 //    ThreadUtil.reallySleep(2000);
-    StopAction[] actions = status ? new StopAction[] {StopAction.RESTART, StopAction.IMMEDIATE} : new StopAction[] {StopAction.IMMEDIATE};
+    StopAction[] actions = status ? new StopAction[] {StopAction.RESTART} : new StopAction[0];
     ServerEnv.getServer().stop(actions);
   }
 }
