@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -64,11 +64,10 @@ public class TCServerImplTest {
   public void setUp() throws Exception {
     dso = mock(DistributedObjectServer.class);
     tcServer = new TCServerImpl(dso, mock(ServerConfigurationManager.class), mock(TCThreadGroup.class), mock(JMXSubsystem.class), mock(ConnectionPolicy.class));
-    when(dso.destroy(anyBoolean())).thenReturn(CompletableFuture.completedFuture(null));
     ServerManagementContext smc = mock(ServerManagementContext.class);
     DSOChannelManagerMBean cm = mock(DSOChannelManagerMBean.class);
     when(cm.getActiveChannels()).thenReturn(new MessageChannel[0]);
-    when(smc.getChannelManager()).thenReturn(cm);    
+    when(smc.getChannelManager()).thenReturn(cm);
     when(smc.getOperationGuardian()).thenReturn((o,p)->true);
     when(dso.getManagementContext()).thenReturn(smc);
     cxt = mock(ServerConfigurationContext.class);
@@ -86,7 +85,7 @@ public class TCServerImplTest {
 
     ServerEnv.setServer(mock(Server.class));
   }
-  
+
   private void setState(ServerMode state) {
     currentState = state;
   }
@@ -94,35 +93,35 @@ public class TCServerImplTest {
   @Test
   public void testForceStop() throws Exception {
     tcServer.stop();
-    verify(dso).destroy(ArgumentMatchers.anyBoolean());
+    verify(dso.getContext().getL2Coordinator().getStateManager()).moveToStopStateIf(ArgumentMatchers.anySet());
   }
 
   @Test
   public void testForceRestart() throws Exception {
     tcServer.stop(RESTART);
-    verify(dso).destroy(ArgumentMatchers.anyBoolean());
     Assert.assertTrue(tcServer.waitUntilShutdown());
+    verify(dso.getContext().getL2Coordinator().getStateManager()).moveToStopStateIf(ArgumentMatchers.anySet());
   }
 
   @Test
   public void testStopIfPassive() throws Exception {
     setState(ServerMode.PASSIVE);
     tcServer.stopIfPassive();
-    verify(dso).destroy(ArgumentMatchers.anyBoolean());
+    verify(dso.getContext().getL2Coordinator().getStateManager()).moveToStopStateIf(ArgumentMatchers.anySet());
   }
 
   @Test
   public void testStopIfPassiveWhenStateStateIsUninitialized() throws Exception {
     setState(ServerMode.UNINITIALIZED);
     tcServer.stopIfPassive();
-    verify(dso).destroy(ArgumentMatchers.anyBoolean());
+    verify(dso.getContext().getL2Coordinator().getStateManager()).moveToStopStateIf(ArgumentMatchers.anySet());
   }
 
   @Test
   public void testStopIfPassiveWhenStateStateIsSyncing() throws Exception {
     setState(ServerMode.SYNCING);
     tcServer.stopIfPassive();
-    verify(dso).destroy(ArgumentMatchers.anyBoolean());
+    verify(dso.getContext().getL2Coordinator().getStateManager()).moveToStopStateIf(ArgumentMatchers.anySet());
   }
 
   @Test
@@ -136,15 +135,15 @@ public class TCServerImplTest {
   public void testStopIfPassiveWithRestart() throws Exception {
     setState(ServerMode.PASSIVE);
     tcServer.stopIfPassive(RESTART);
-    verify(dso).destroy(ArgumentMatchers.anyBoolean());
     Assert.assertTrue(tcServer.waitUntilShutdown());
+    verify(dso.getContext().getL2Coordinator().getStateManager()).moveToStopStateIf(ArgumentMatchers.anySet());
   }
 
   @Test
   public void testStopIfActive() throws Exception {
     setState(ServerMode.ACTIVE);
     tcServer.stopIfActive();
-    verify(dso).destroy(ArgumentMatchers.anyBoolean());
+    verify(dso.getContext().getL2Coordinator().getStateManager()).moveToStopStateIf(ArgumentMatchers.anySet());
   }
 
   @Test
@@ -158,8 +157,8 @@ public class TCServerImplTest {
   public void testStopIfActiveWithRestart() throws Exception {
     setState(ServerMode.ACTIVE);
     tcServer.stopIfActive(RESTART);
-    verify(dso).destroy(ArgumentMatchers.anyBoolean());
     Assert.assertTrue(tcServer.waitUntilShutdown());
+    verify(dso.getContext().getL2Coordinator().getStateManager()).moveToStopStateIf(ArgumentMatchers.anySet());
   }
 
   @Test
@@ -173,7 +172,7 @@ public class TCServerImplTest {
     when(dso.isL1Listening()).thenReturn(Boolean.TRUE);
     Assert.assertTrue(tcServer.isAcceptingClients());
   }
-  
+
 
   @Test
   public void testAcceptingClientsWithReconnect() throws Exception {
@@ -187,5 +186,5 @@ public class TCServerImplTest {
     verify(handshake).isStarted();
     when(handshake.isStarted()).thenReturn(Boolean.TRUE);
     Assert.assertTrue(tcServer.isAcceptingClients());
-  }  
+  }
 }

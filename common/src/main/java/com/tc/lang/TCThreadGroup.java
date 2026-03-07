@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@ package com.tc.lang;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.util.runtime.ThreadDumpUtil;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
@@ -34,13 +36,14 @@ public class TCThreadGroup extends ThreadGroup {
   private final ThrowableHandler throwableHandler;
   private final boolean stoppable;
   private final boolean ignorePoolThreads;
+  private final Map<Class<?>, Object> groupVariables = new HashMap<>();
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TCThreadGroup.class);
 
   public TCThreadGroup(ThrowableHandler throwableHandler) {
     this(throwableHandler, "TC Thread Group");
   }
-  
+
   public TCThreadGroup(ThrowableHandler throwableHandler, String name) {
     this(throwableHandler, name, true, true);
   }
@@ -56,6 +59,24 @@ public class TCThreadGroup extends ThreadGroup {
     this.ignorePoolThreads = ignorePool;
   }
 
+  public static <T> T threadGroupSingleton(Class<T> type) {
+    ThreadGroup group = Thread.currentThread().getThreadGroup();
+    if (group != null && group instanceof TCThreadGroup tcgroup) {
+      synchronized (tcgroup) {
+        return type.cast(tcgroup.groupVariables.computeIfAbsent(type, clz->{
+          try {
+            return clz.getConstructor().newInstance();
+          } catch (Exception e) {
+            LOGGER.warn("unable to initialize thread group singleton", e);
+            return null;
+          }
+        }));
+      }
+    } else {
+      return null;
+    }
+  }
+
   @Override
   public void uncaughtException(Thread thread, Throwable throwable) {
     throwableHandler.handleThrowable(thread, throwable);
@@ -64,7 +85,7 @@ public class TCThreadGroup extends ThreadGroup {
   public void addCallbackOnExitDefaultHandler(CallbackOnExitHandler callbackOnExitHandler) {
     throwableHandler.addCallbackOnExitDefaultHandler(callbackOnExitHandler);
   }
-  
+
   public void addCallbackOnExitExceptionHandler(Class<?> c, CallbackOnExitHandler callbackOnExitHandler) {
     throwableHandler.addCallbackOnExitExceptionHandler(c, callbackOnExitHandler);
   }
@@ -107,7 +128,7 @@ public class TCThreadGroup extends ThreadGroup {
   }
 
   private boolean lookForThreadExit(Thread t, Consumer<InterruptedException> interruptHandler) {
-    if (ignorePoolThreads && (t.getName().startsWith("pool-") || 
+    if (ignorePoolThreads && (t.getName().startsWith("pool-") ||
         (t instanceof ForkJoinWorkerThread && ((ForkJoinWorkerThread)t).getPool() == ForkJoinPool.commonPool()))) {
       //  this is horrible but skip threads that are system threads created by either
       //  an ExecutorService using the default thread factory or the ForkJoin common pool
