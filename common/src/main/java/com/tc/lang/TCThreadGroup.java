@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public class TCThreadGroup extends ThreadGroup {
   public TCThreadGroup(ThrowableHandler throwableHandler) {
     this(throwableHandler, "TC Thread Group");
   }
-  
+
   public TCThreadGroup(ThrowableHandler throwableHandler, String name) {
     this(throwableHandler, name, true, true);
   }
@@ -64,7 +64,7 @@ public class TCThreadGroup extends ThreadGroup {
   public void addCallbackOnExitDefaultHandler(CallbackOnExitHandler callbackOnExitHandler) {
     throwableHandler.addCallbackOnExitDefaultHandler(callbackOnExitHandler);
   }
-  
+
   public void addCallbackOnExitExceptionHandler(Class<?> c, CallbackOnExitHandler callbackOnExitHandler) {
     throwableHandler.addCallbackOnExitExceptionHandler(c, callbackOnExitHandler);
   }
@@ -107,7 +107,7 @@ public class TCThreadGroup extends ThreadGroup {
   }
 
   private boolean lookForThreadExit(Thread t, Consumer<InterruptedException> interruptHandler) {
-    if (ignorePoolThreads && (t.getName().startsWith("pool-") || 
+    if (ignorePoolThreads && (t.getName().startsWith("pool-") ||
         (t instanceof ForkJoinWorkerThread && ((ForkJoinWorkerThread)t).getPool() == ForkJoinPool.commonPool()))) {
       //  this is horrible but skip threads that are system threads created by either
       //  an ExecutorService using the default thread factory or the ForkJoin common pool
