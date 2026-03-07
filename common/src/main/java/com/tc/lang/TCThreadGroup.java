@@ -20,7 +20,9 @@ package com.tc.lang;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.util.runtime.ThreadDumpUtil;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +36,7 @@ public class TCThreadGroup extends ThreadGroup {
   private final ThrowableHandler throwableHandler;
   private final boolean stoppable;
   private final boolean ignorePoolThreads;
+  private final Map<Class<?>, Object> groupVariables = new HashMap<>();
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TCThreadGroup.class);
 
@@ -54,6 +57,24 @@ public class TCThreadGroup extends ThreadGroup {
     this.throwableHandler = throwableHandler;
     this.stoppable = stoppable;
     this.ignorePoolThreads = ignorePool;
+  }
+
+  public static <T> T threadGroupSingleton(Class<T> type) {
+    ThreadGroup group = Thread.currentThread().getThreadGroup();
+    if (group != null && group instanceof TCThreadGroup tcgroup) {
+      synchronized (tcgroup) {
+        return type.cast(tcgroup.groupVariables.computeIfAbsent(type, clz->{
+          try {
+            return clz.getConstructor().newInstance();
+          } catch (Exception e) {
+            LOGGER.warn("unable to initialize thread group singleton", e);
+            return null;
+          }
+        }));
+      }
+    } else {
+      return null;
+    }
   }
 
   @Override

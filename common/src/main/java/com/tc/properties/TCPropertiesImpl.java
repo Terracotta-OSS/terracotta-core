@@ -18,6 +18,7 @@
 package com.tc.properties;
 
 
+import com.tc.lang.TCThreadGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -133,10 +135,13 @@ public class TCPropertiesImpl implements TCProperties {
       return;
     }
 
-    Map<String, String> locals = localTcProperties.get();
+    Map<String, String> locals = TCThreadGroup.threadGroupSingleton(TCPropertyStore.class);
     if (locals == null) {
-      locals = new LinkedHashMap<>();
-      localTcProperties.set(locals);
+      locals = localTcProperties.get();
+      if (locals == null) {
+        locals = new LinkedHashMap<>();
+        localTcProperties.set(locals);
+      }
     }
 
     for (Entry<String, String> prop : overwriteProps.entrySet()) {
@@ -149,20 +154,27 @@ public class TCPropertiesImpl implements TCProperties {
         logger.warn("The property \"" + propertyName
                     + "\" is not present in set of defined tc properties. Probably this is misspelled");
       }
-      if (!locals.containsKey(key)) {
-        if(TC_PROPERTIES_WITH_NO_DEFAULTS.contains(key)) {
-          logger.info("The property \"" + propertyName + "\" was set to " + propertyValue + " by the tc-config file");
+      if (locals != null) {
+        if (!locals.containsKey(key)) {
+          if(TC_PROPERTIES_WITH_NO_DEFAULTS.contains(key)) {
+            logger.info("The property \"" + propertyName + "\" was set to " + propertyValue + " by the tc-config file");
+          } else {
+            logger.info("The property \"" + propertyName + "\" was overridden to " + propertyValue + " from "
+                        + props.get(key) + " by the tc-config file");
+          }
+          locals.put(key, value);
         } else {
-          logger.info("The property \"" + propertyName + "\" was overridden to " + propertyValue + " from "
-                      + props.get(key) + " by the tc-config file");
+          logger.warn("The property \"" + propertyName + "\" was set by local settings to "
+                      + props.get(key) + ". This will not be overridden to " + propertyValue
+                      + " from the tc-config file");
         }
-        locals.put(key, value);
       } else {
-        logger.warn("The property \"" + propertyName + "\" was set by local settings to "
-                    + props.get(key) + ". This will not be overridden to " + propertyValue
-                    + " from the tc-config file");
+        props.put(key, value);
+        logger.info("The property \"" + propertyName + "\" was overridden to " + propertyValue + " from "
+                        + props.get(key) + " by the tc-config file");
       }
     }
+
   }
 
   Properties addAllPropertiesTo(Properties properties, String filter) {
@@ -253,7 +265,10 @@ public class TCPropertiesImpl implements TCProperties {
   private String getProperty(String propertyName, Supplier<String> missing) {
     String key = key(propertyName);
 
-    Map<String, String> localProperties = localTcProperties.get();
+    Map<String, String> localProperties = TCThreadGroup.threadGroupSingleton(TCPropertyStore.class);
+    if (localProperties == null) {
+      localProperties = localTcProperties.get();
+    }
 
     String val = localProperties == null ? null : localProperties.get(key);
     if (val == null) {
@@ -290,5 +305,9 @@ public class TCPropertiesImpl implements TCProperties {
 
   private static String key(String key) {
     return key.toLowerCase(Locale.ROOT);
+  }
+
+  private static class TCPropertyStore extends HashMap<String, String> {
+
   }
 }
