@@ -223,7 +223,6 @@ import com.tc.spi.DiagnosticFormat;
 import com.tc.spi.Guardian;
 import com.tc.spi.NetworkTranslator;
 import com.tc.spi.ProductCapabilities;
-import org.terracotta.configuration.Configuration;
 import org.terracotta.configuration.ServerConfiguration;
 import java.net.InetSocketAddress;
 
@@ -231,7 +230,6 @@ import java.util.stream.Collectors;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.SetOnceFlag;
-import com.tc.util.concurrent.ThreadUtil;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import org.terracotta.configuration.FailoverBehavior;
@@ -247,7 +245,6 @@ import com.tc.productinfo.ProductInfo;
 import com.tc.productinfo.VersionCompatibility;
 import com.tc.util.version.CollectionVersionCompatibility;
 import com.tc.util.version.DefaultVersionCompatibility;
-import java.util.concurrent.ExecutionException;
 import org.terracotta.configuration.ConfigurationException;
 
 /**
@@ -288,7 +285,6 @@ public class DistributedObjectServer {
   private WeightGeneratorFactory globalWeightGeneratorFactory;
   private EntityManagerImpl entityManager;
 
-  private final SetOnceFlag  stopping = new SetOnceFlag();
   private final CompletableFuture<Void> stopped = new CompletableFuture<>();
 
   // used by a test
@@ -868,35 +864,10 @@ public class DistributedObjectServer {
     this.l2Coordinator.start();
   }
 
-  public CompletableFuture<Void> destroy(boolean immediate) throws Exception {
-    CompletableFuture<Void> finished = new CompletableFuture<>();
-    if (!immediate) {
-      try {
-        stopped.get();
-      } catch (ExecutionException ee) {
-        finished.completeExceptionally(ee.getCause());
-        return finished;
-      }
-    }
-    if (this.stopping.attemptSet()) {
-        ThreadUtil.executeInThread(threadGroup.getParent(), ()->{
-          try {
-            this.seda.getStageManager().stopAll();
-            if (!threadGroup.retire(TimeUnit.SECONDS.toMillis(30L), e->L2Utils.handleInterrupted(logger, e))) {
-              logger.warn("unable to shutdown server threads");
-              threadGroup.printLiveThreads(logger::warn);
-              threadGroup.interrupt();
-            }
-          } finally {
-            finished.complete(null);
-          }
-        }, "server shutdown thread", true);
-    } else {
-      finished.complete(null);
-    }
-    return finished;
+  public void waitForShutdown() throws Exception {
+    stopped.get();
   }
-  
+
   private void shutdown() {
     try {
       logger.info("shutdown initiated");
@@ -1277,7 +1248,7 @@ public class DistributedObjectServer {
           throw new RuntimeException(bind);
         }
       } catch (IOException ioe) {
-        if (!stopping.isSet()) {
+        if (l2Coordinator.getStateManager().getCurrentMode() != ServerMode.STOP) {
           consoleLogger.info("Unable to start Terracotta Server instance diagnostic listening on {}", this.l1Diagnostics, ioe);
           throw new RuntimeException(ioe);
         } else {
@@ -1294,7 +1265,7 @@ public class DistributedObjectServer {
       this.l1Diagnostics.start(Collections.emptySet());
       consoleLogger.info("Terracotta Server instance has started diagnostic listening on  {}", this.l1Diagnostics);
     } catch (IOException ioe) {
-      if (!stopping.isSet()) {
+      if (l2Coordinator.getStateManager().getCurrentMode() != ServerMode.STOP) {
         consoleLogger.info("Unable to start Terracotta Server instance diagnostic listening on {}", this.l1Diagnostics, ioe);
         throw new RuntimeException(ioe);
       } else {
