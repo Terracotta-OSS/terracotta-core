@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -53,7 +53,6 @@ public class EntityMessengerServiceTest {
     // Create the service.
     EntityMessengerService service = new EntityMessengerService(sink, entity, true);
     when(entity.isDestroyed()).thenReturn(false);
-    ActiveServerEntity ae = mock(ActiveServerEntity.class);
     service.entityCreated(entity);
 
     EntityMessage deferrableMessage = mock(EntityMessage.class);
@@ -66,7 +65,7 @@ public class EntityMessengerServiceTest {
     // verify that got scheduled.
     verify(sink).addToSink(any());
   }
-  
+
   @Test
   public void testEarlySend() throws Exception {
     ISimpleTimer timer = mock(ISimpleTimer.class);

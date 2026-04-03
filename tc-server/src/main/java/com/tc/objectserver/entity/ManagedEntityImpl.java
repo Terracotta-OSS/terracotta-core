@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.tc.exception.TCServerRestartException;
 import com.tc.exception.TCShutdownServerException;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ClientID;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.utils.L2Utils;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
@@ -472,6 +473,12 @@ public class ManagedEntityImpl implements ManagedEntity {
     Lock read = reconnectAccessLock.readLock();
     logger.info("Client:" + request.getNodeID() + ":" + request.getClientInstance() + " Invoking lifecycle " + request.getAction() + " on " + getID() + ":" + this.fetchID);
     GuardianContext.setCurrentChannelID(request.getNodeID().getChannelID());
+    MessageChannel channel = GuardianContext.getCurrentMessageChannel();
+    if (channel != null) {
+      channel.addAttachment("TransactionID", request.getTransaction(), true);
+      channel.addAttachment("OldestTransactionID", request.getOldestTransactionOnClient(), true);
+      channel.addAttachment("ClientInstanceID", request.getClientInstance(), true);
+    }
     read.lock();
     try {
       switch (request.getAction()) {
@@ -534,7 +541,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       logger.error("configuration error during a lifecyle operation ", ce);
       resp.failure(ServerException.createConfigurationException(id, ce));
     } catch (TCShutdownServerException | TCServerRestartException shutdown) {
-      throw shutdown;      
+      throw shutdown;
     } catch (RuntimeException rt) {
       throw rt;
     } catch (Exception e) {
@@ -577,6 +584,12 @@ public class ManagedEntityImpl implements ManagedEntity {
     response.received(); // call received locally
 
     GuardianContext.setCurrentChannelID(request.getNodeID().getChannelID());
+    MessageChannel channel = GuardianContext.getCurrentMessageChannel();
+    if (channel != null) {
+      channel.addAttachment("TransactionID", request.getTransaction(), true);
+      channel.addAttachment("OldestTransactionID", request.getOldestTransactionOnClient(), true);
+      channel.addAttachment("ClientInstanceID", request.getClientInstance(), true);
+    }
     Lock read = reconnectAccessLock.readLock();
     try {
       read.lock();
@@ -979,17 +992,17 @@ public class ManagedEntityImpl implements ManagedEntity {
       ClientID clientID = getEntityRequest.getNodeID();
       ClientDescriptorImpl descriptor = new ClientDescriptorImpl(clientID, getEntityRequest.getClientInstance());
       boolean added = clientEntityStateManager.addReference(descriptor, this.fetchID);
-      
+
       if (canDelete) {
         if (added) {
           clientReferenceCount += 1;
           Assert.assertTrue(clientReferenceCount > 0);
         } else {
-          // this should never happen.  Ther server is expecting sane things from the client. 
+          // this should never happen.  Ther server is expecting sane things from the client.
           logger.warn("the client has attempted to fetch the same entity instance twice {}", descriptor);
         }
       }
-      
+
       if (this.isInActiveState) {
         if (!added) {
           //  Exception the client.  Don't crash the server
@@ -1069,7 +1082,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           response.failure(ServerException.createNotFoundException(id));
           return;
         }
-        
+
         this.activeServerEntity.disconnected(clientInstance);
         // Fire the event that the client released the entity.
         this.eventCollector.clientDidReleaseEntity(clientID, this.id, this.consumerID, request.getClientInstance());

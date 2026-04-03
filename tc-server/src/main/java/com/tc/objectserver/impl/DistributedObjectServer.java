@@ -737,7 +737,7 @@ public class DistributedObjectServer {
     }
     // if no replcation events have been routed yet (not relay source) route them now
     if (replicationEvents == null) {
-      ReplicatedTransactionHandler replicatedTransactionHandler = new ReplicatedTransactionHandler(state, replicationResponseStage, this.persistor, entityManager, groupCommManager);
+      ReplicatedTransactionHandler replicatedTransactionHandler = new ReplicatedTransactionHandler(state, replicationResponseStage, this.persistor, entityManager, groupCommManager, configSetupManager.isRelayDestination());
       sequenceWeight.setReplicatedTransactionHandler(replicatedTransactionHandler);
       replicationEvents = replicatedTransactionHandler.getEventHandler();
     }

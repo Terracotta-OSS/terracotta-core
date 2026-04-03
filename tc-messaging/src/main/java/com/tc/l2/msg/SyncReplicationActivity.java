@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -61,12 +61,12 @@ public class SyncReplicationActivity implements OrderedEventContext {
     DESTROY_ENTITY,
     FETCH_ENTITY,
     RELEASE_ENTITY,
-    
+
     /**
      * The SYNC_START message is special in that it tells the passive to setup the synchronization machinery.
      */
     SYNC_START,
-    
+
     /**
      * It is the SYNC_BEGIN message which actually contains the information to describe all the entities which will be
      *  synchronized, in order, and how to create them.
@@ -76,7 +76,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
      */
     SYNC_BEGIN,
     SYNC_END,
-    
+
     /**
      * Tells the passive that the active is next going to begin syncing this entity.
      * NOTE:  This entity should have already been created in SYNC_BEGIN.
@@ -86,7 +86,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
     SYNC_ENTITY_CONCURRENCY_BEGIN,
     SYNC_ENTITY_CONCURRENCY_PAYLOAD,
     SYNC_ENTITY_CONCURRENCY_END,
-    
+
     DISCONNECT_CLIENT;
   }
 
@@ -136,17 +136,17 @@ public class SyncReplicationActivity implements OrderedEventContext {
     int referenceCount = 0;
     return new SyncReplicationActivity(ActivityID.getNextID(), null, EntityID.NULL_ID, EntityDescriptor.INVALID_VERSION, fetch, src, instance, tid, oldest, ActivityType.ORDERING_PLACEHOLDER, null, 0, referenceCount, debugId);
   }
-  
+
   private static EnumSet<ActivityType> lifecycle = EnumSet.of(
-      ActivityType.CREATE_ENTITY, 
+      ActivityType.CREATE_ENTITY,
       ActivityType.DESTROY_ENTITY,
       ActivityType.FETCH_ENTITY,
       ActivityType.RELEASE_ENTITY,
       ActivityType.RECONFIGURE_ENTITY,
       ActivityType.DISCONNECT_CLIENT
     );
-      
-  
+
+
   public static SyncReplicationActivity createLifecycleMessage(EntityID eid, long version, FetchID fetch, ClientID src, ClientInstanceID instance, TransactionID tid, TransactionID oldest, ActivityType action, TCByteBuffer payload) {
     Assert.assertTrue(lifecycle.contains(action));
     return new SyncReplicationActivity(ActivityID.getNextID(),null,eid,version,fetch,src,instance,tid,oldest,action,payload,0,0,null);
@@ -186,7 +186,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
   }
 
   public static SyncReplicationActivity createEndEntityKeyMessage(EntityID id, long version, FetchID fetchID, int concurrency) {
-    // We can only synchronize positive-number keys.    
+    // We can only synchronize positive-number keys.
     Assert.assertTrue(concurrency > 0);
     int referenceCount = 0;
     return new SyncReplicationActivity(ActivityID.getNextID(), null, id, version, fetchID, ClientID.NULL_ID, ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_ENTITY_CONCURRENCY_END, null, concurrency, referenceCount, null);
@@ -218,7 +218,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
   final int concurrency;
   // NOTE:  referenceCount is only used by SYNC_ENTITY_BEGIN.
   final int referenceCount;
-  
+
   final FetchID fetchID;
 
   final String debugId;
@@ -235,7 +235,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
     Assert.assertNotNull(src);
     Assert.assertNotNull(tid);
     Assert.assertNotNull(oldest);
-    
+
     this.id = id;
     this.action = action;
     this.entitiesForSyncStart = entitiesForSyncStart;
@@ -270,26 +270,26 @@ public class SyncReplicationActivity implements OrderedEventContext {
 //    Assert.assertTrue(ActivityType.SYNC_BEGIN != this.action);
     return payload == null ? TCByteBufferFactory.getInstance(0) : payload.duplicate();
   }
-  
+
   public ClientID getSource() {
     Assert.assertTrue(ActivityType.SYNC_BEGIN != this.action);
     return src;
   }
-  
+
   public ClientInstanceID getClientInstanceID() {
     Assert.assertTrue(ActivityType.SYNC_BEGIN != this.action);
     return instance;
-  }  
-  
+  }
+
   public TransactionID getTransactionID() {
     return tid;
   }
-  
+
   public TransactionID getOldestTransactionOnClient() {
     Assert.assertTrue(ActivityType.SYNC_BEGIN != this.action);
     return oldest;
   }
-  
+
   public EntityID getEntityID() {
     return entityID;
   }
@@ -298,14 +298,10 @@ public class SyncReplicationActivity implements OrderedEventContext {
     return version;
   }
 
-  public ClientID getSrc() {
-    return src;
-  }
-
   public FetchID getFetchID() {
     return fetchID;
   }
-  
+
   public int getConcurrency() {
     // SYNC_ENTITY_BEGIN contains reference-count, not concurrency.
     Assert.assertFalse(ActivityType.SYNC_ENTITY_BEGIN == this.action);
@@ -339,10 +335,10 @@ public class SyncReplicationActivity implements OrderedEventContext {
     Assert.assertTrue(ActivityType.FLUSH_LOCAL_PIPELINE != this.action);
     // We should NOT be serializing local flush activities.
     Assert.assertTrue(ActivityType.LOCAL_ENTITY_GC != this.action);
-        
+
     out.writeLong(this.id.id);
     out.writeInt(this.action.ordinal());
-    
+
     // We take very different paths depending on our type.
     if (ActivityType.SYNC_BEGIN == this.action) {
       out.writeInt(this.entitiesForSyncStart.length);
@@ -362,7 +358,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
       out.writeLong(instance.getID());
       out.writeLong(tid.toLong());
       out.writeLong(oldest.toLong());
-      
+
       if (payload != null) {
 //        byte[] data = TCByteBufferFactory.unwrap(payload);
 //        out.writeInt(data.length);
@@ -391,7 +387,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
   public static SyncReplicationActivity deserializeFrom(TCByteBufferInput in) throws IOException {
     ActivityID activityID = new ActivityID(in.readLong());
     ActivityType action = ActivityType.values()[in.readInt()];
-    
+
     // We take very different paths depending on our type.
     EntityCreationTuple[] entitiesForSyncStart = null;
     EntityID entityID = EntityID.NULL_ID;
@@ -423,12 +419,12 @@ public class SyncReplicationActivity implements OrderedEventContext {
       instance =  new ClientInstanceID(in.readLong());
       tid = new TransactionID(in.readLong());
       oldest = new TransactionID(in.readLong());
-      
+
       int length = in.readInt();
       if (length > 0) {
         payload = in.read(length);
       }
-      
+
       // Note that we only pass concurrency key or reference count in certain cases.
       concurrency = 0;
       referenceCount = 0;
@@ -459,8 +455,8 @@ public class SyncReplicationActivity implements OrderedEventContext {
     public final long consumerID;
     public final byte[] configPayload;
     public final boolean canDelete;
-    
-    
+
+
     public EntityCreationTuple(EntityID id, long version, long consumerID, byte[] configPayload, boolean canDelete) {
       this.id = id;
       this.version = version;
@@ -468,7 +464,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
       this.configPayload = configPayload;
       this.canDelete = canDelete;
     }
-    
+
     public void serializeTo(TCByteBufferOutput out) {
       this.id.serializeTo(out);
       out.writeLong(this.version);

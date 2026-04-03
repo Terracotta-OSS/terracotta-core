@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,12 +23,14 @@ import com.tc.bytes.TCByteBufferFactory;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.exception.ServerException;
 import com.tc.net.ClientID;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ManagedEntity.LifecycleListener;
+import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.entity.CreateMessage;
 import com.tc.objectserver.entity.DestroyMessage;
 import com.tc.objectserver.entity.ReconfigureMessage;
@@ -107,7 +109,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     // Make sure we have started.
     scheduleMessage(message, response);
   }
-  
+
   @Override
   public ExplicitRetirementHandle deferRetirement(String tag,
                                                   M originalMessageToDefer,
@@ -117,12 +119,12 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     // return handle
     return new Handle(tag, futureMessage);
   }
-  
+
   @Override
   public void messageSelfAndDeferRetirement(M originalMessageToDefer,
                                             M newMessageToSchedule) throws MessageCodecException {
     this.messageSelfAndDeferRetirement(originalMessageToDefer, newMessageToSchedule, null);
-  }  
+  }
 
   @Override
   public void messageSelfAndDeferRetirement(M originalMessageToDefer,
@@ -132,7 +134,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     // Schedule the message, as per normal.
     scheduleMessage(newMessageToSchedule, response);
   }
-  
+
   @Override
   public synchronized void entityCreated(ManagedEntity sender) {
 
@@ -149,7 +151,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     FakeEntityMessage interEntityMessage = encodeAsFake(message, response);
     // if the entity isDestroyed(), this message could be being sent during the create sequence
 
-    // register this server message with the retirement manager.  Once the message is retired, 
+    // register this server message with the retirement manager.  Once the message is retired,
     // the retirement manager will take care off tracking.  This is needed so the entity is not
     // destroyed from under the server initiated message
     this.retirementManager.registerServerMessage(message);
@@ -170,6 +172,9 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     private final TCByteBuffer message;
     private final Consumer<MessageResponse<R>> response;
     private final boolean waitForReceived;
+    private final ClientID clientID;
+    private final TransactionID transactionID;
+    private final TransactionID oldestTransactionID;
 
     public FakeEntityMessage(EntityDescriptor descriptor, EntityMessage identityMessage, TCByteBuffer message, Consumer<MessageResponse<R>> response, boolean waitForReceived) {
       Assert.assertNotNull(message);
@@ -178,16 +183,33 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
       this.message = message.asReadOnlyBuffer();
       this.response = response;
       this.waitForReceived = waitForReceived;
+      MessageChannel channel = GuardianContext.getCurrentMessageChannel();
+      ClientID cid = null;
+      TransactionID tid = null;
+      TransactionID oid = null;
+
+      if (channel != null) {
+        cid = (ClientID)channel.getRemoteNodeID();
+        tid = (TransactionID)channel.getAttachment("TransactionID");
+        oid = (TransactionID)channel.getAttachment("OldestTransactionID");
+      }
+      if (cid == null) cid = ClientID.NULL_ID;
+      if (tid == null) tid = new TransactionID(NEXT_FAKE_TXN_ID.incrementAndGet());
+      if (oid == null) oid = TransactionID.NULL_ID;
+
+      this.clientID = cid;
+      this.transactionID = tid;
+      this.oldestTransactionID = oid;
     }
 
     @Override
     public ClientID getSource() {
-      return ClientID.NULL_ID;
+      return clientID;
     }
 
     @Override
     public TransactionID getTransactionID() {
-      return new TransactionID(NEXT_FAKE_TXN_ID.incrementAndGet());
+      return this.transactionID;
     }
 
     @Override
@@ -209,7 +231,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     public boolean doesRequestRetired() {
       return false;
     }
-  
+
     @Override
     public Type getVoltronType() {
       return Type.INVOKE_ACTION;
@@ -222,14 +244,14 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
 
     @Override
     public TransactionID getOldestTransactionOnClient() {
-      return TransactionID.NULL_ID;
+      return this.oldestTransactionID;
     }
 
     @Override
     public EntityMessage getEntityMessage() {
       return this.identityMessage;
     }
-    
+
     public Consumer<byte[]> getCompletionHandler() {
       return response == null ? null : (raw)->this.response.accept(new MessageResponse() {
         @Override
@@ -252,7 +274,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
         }
       });
     }
-    
+
     public Consumer<ServerException> getExceptionHandler() {
       return response == null ? null : (exception)->this.response.accept(new MessageResponse() {
         @Override
@@ -304,7 +326,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
         EntityMessengerService.this.messageSelf(futureMessage, consumer);
       }
     }
-    
+
     public boolean isActive() {
       return active;
     }
