@@ -96,6 +96,8 @@ import org.terracotta.tripwire.TripwireFactory;
 
 
 public class ManagedEntityImpl implements ManagedEntity {
+  public static final String REQUEST_CONTEXT_KEY = "RequestContext";
+
   private static final Logger logger   = LoggerFactory.getLogger(ManagedEntityImpl.class);
 
   private final RequestProcessor executor;
@@ -467,33 +469,31 @@ public class ManagedEntityImpl implements ManagedEntity {
     return null;
   }
 
-  private void setThreadLocalAttachment(MessageChannel channel, String name, Object value) {
-    @SuppressWarnings("unchecked")
-    ThreadLocal<Object> local = (ThreadLocal<Object>)channel.getAttachment(name);
-
-    if (local == null) {
-      local = (ThreadLocal<Object>)channel.getAttachment(name);
-      if (local == null) {
-        local = new ThreadLocal<>();
-        channel.addAttachment(name, local, false);
-      }
-    }
-
-    local.set(value);
-  }
-
-  private void clearThreadLocalAttachments(MessageChannel channel) {
+  private void setRequestContext(MessageChannel channel, ServerEntityRequest request) {
     if (channel == null) {
       return;
     }
 
-    String[] keys = {"TransactionID", "OldestTransactionID", "ClientInstanceID"};
-    for (String key : keys) {
-      @SuppressWarnings("unchecked")
-      ThreadLocal<Object> local = (ThreadLocal<Object>) channel.getAttachment(key);
-      if (local != null) {
-        local.remove();
-      }
+    @SuppressWarnings("unchecked")
+    ThreadLocal<ServerEntityRequest> local = (ThreadLocal<ServerEntityRequest>) channel.getAttachment(REQUEST_CONTEXT_KEY);
+
+    if (local == null) {
+      channel.addAttachment(REQUEST_CONTEXT_KEY, new ThreadLocal<>(), false);
+      local = (ThreadLocal<ServerEntityRequest>) channel.getAttachment(REQUEST_CONTEXT_KEY);
+    }
+
+    local.set(request);
+  }
+
+  private void clearRequestContext(MessageChannel channel) {
+    if (channel == null) {
+      return;
+    }
+
+    @SuppressWarnings("unchecked")
+    ThreadLocal<ServerEntityRequest> local = (ThreadLocal<ServerEntityRequest>) channel.getAttachment(REQUEST_CONTEXT_KEY);
+    if (local != null) {
+      local.remove();
     }
   }
 
@@ -504,11 +504,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     logger.info("Client:" + request.getNodeID() + ":" + request.getClientInstance() + " Invoking lifecycle " + request.getAction() + " on " + getID() + ":" + this.fetchID);
     GuardianContext.setCurrentChannelID(request.getNodeID().getChannelID());
     MessageChannel channel = GuardianContext.getCurrentMessageChannel();
-    if (channel != null) {
-      setThreadLocalAttachment(channel, "TransactionID", request.getTransaction());
-      setThreadLocalAttachment(channel, "OldestTransactionID", request.getOldestTransactionOnClient());
-      setThreadLocalAttachment(channel, "ClientInstanceID", request.getClientInstance());
-    }
+    setRequestContext(channel, request);
     read.lock();
     try {
       switch (request.getAction()) {
@@ -581,8 +577,8 @@ public class ManagedEntityImpl implements ManagedEntity {
       throw uncaught;
     } finally {
       read.unlock();
-      clearThreadLocalAttachments(channel);
       GuardianContext.clearCurrentChannelID(request.getNodeID().getChannelID());
+      clearRequestContext(channel);
       if (this.isInActiveState) {
         interop.finishLifecycle();
       }
@@ -616,11 +612,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
     GuardianContext.setCurrentChannelID(request.getNodeID().getChannelID());
     MessageChannel channel = GuardianContext.getCurrentMessageChannel();
-    if (channel != null) {
-      setThreadLocalAttachment(channel, "TransactionID", request.getTransaction());
-      setThreadLocalAttachment(channel, "OldestTransactionID", request.getOldestTransactionOnClient());
-      setThreadLocalAttachment(channel, "ClientInstanceID", request.getClientInstance());
-    }
+    setRequestContext(channel, request);
     Lock read = reconnectAccessLock.readLock();
     try {
       read.lock();
@@ -659,8 +651,8 @@ public class ManagedEntityImpl implements ManagedEntity {
       throw new RuntimeException(e);
     } finally {
       read.unlock();
-      clearThreadLocalAttachments(channel);
       GuardianContext.clearCurrentChannelID(request.getNodeID().getChannelID());
+      clearRequestContext(channel);
     }
     trace.end();
   }

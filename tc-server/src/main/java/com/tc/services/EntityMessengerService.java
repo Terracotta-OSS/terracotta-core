@@ -30,9 +30,11 @@ import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ManagedEntity.LifecycleListener;
+import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.entity.CreateMessage;
 import com.tc.objectserver.entity.DestroyMessage;
+import static com.tc.objectserver.entity.ManagedEntityImpl.REQUEST_CONTEXT_KEY;
 import com.tc.objectserver.entity.ReconfigureMessage;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.util.Assert;
@@ -173,8 +175,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     private final Consumer<MessageResponse<R>> response;
     private final boolean waitForReceived;
     private final ClientID clientID;
-    private final TransactionID transactionID;
-    private final TransactionID oldestTransactionID;
+    private final ServerEntityRequest parent;
 
     public FakeEntityMessage(EntityDescriptor descriptor, EntityMessage identityMessage, TCByteBuffer message, Consumer<MessageResponse<R>> response, boolean waitForReceived) {
       Assert.assertNotNull(message);
@@ -184,22 +185,14 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
       this.response = response;
       this.waitForReceived = waitForReceived;
       MessageChannel channel = GuardianContext.getCurrentMessageChannel();
-      ClientID cid = null;
-      TransactionID tid = null;
-      TransactionID oid = null;
 
       if (channel != null) {
-        cid = (ClientID)channel.getRemoteNodeID();
-        tid = (TransactionID)channel.getAttachment("TransactionID");
-        oid = (TransactionID)channel.getAttachment("OldestTransactionID");
+        this.clientID = (ClientID)channel.getRemoteNodeID();
+        parent = (ServerEntityRequest)channel.getAttachment(REQUEST_CONTEXT_KEY);
+      } else {
+        this.clientID = ClientID.NULL_ID;
+        this.parent = null;
       }
-      if (cid == null) cid = ClientID.NULL_ID;
-      if (tid == null) tid = new TransactionID(NEXT_FAKE_TXN_ID.incrementAndGet());
-      if (oid == null) oid = TransactionID.NULL_ID;
-
-      this.clientID = cid;
-      this.transactionID = tid;
-      this.oldestTransactionID = oid;
     }
 
     @Override
@@ -209,7 +202,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
 
     @Override
     public TransactionID getTransactionID() {
-      return this.transactionID;
+      return this.parent == null ? new TransactionID(NEXT_FAKE_TXN_ID.incrementAndGet()) : parent.getTransaction();
     }
 
     @Override
@@ -244,7 +237,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
 
     @Override
     public TransactionID getOldestTransactionOnClient() {
-      return this.oldestTransactionID;
+      return this.parent == null ? TransactionID.NULL_ID : parent.getOldestTransactionOnClient();
     }
 
     @Override
