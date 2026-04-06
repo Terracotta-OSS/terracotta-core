@@ -467,6 +467,36 @@ public class ManagedEntityImpl implements ManagedEntity {
     return null;
   }
 
+  private void setThreadLocalAttachment(MessageChannel channel, String name, Object value) {
+    @SuppressWarnings("unchecked")
+    ThreadLocal<Object> local = (ThreadLocal<Object>)channel.getAttachment(name);
+
+    if (local == null) {
+      local = (ThreadLocal<Object>)channel.getAttachment(name);
+      if (local == null) {
+        local = new ThreadLocal<>();
+        channel.addAttachment(name, local, false);
+      }
+    }
+
+    local.set(value);
+  }
+
+  private void clearThreadLocalAttachments(MessageChannel channel) {
+    if (channel == null) {
+      return;
+    }
+
+    String[] keys = {"TransactionID", "OldestTransactionID", "ClientInstanceID"};
+    for (String key : keys) {
+      @SuppressWarnings("unchecked")
+      ThreadLocal<Object> local = (ThreadLocal<Object>) channel.getAttachment(key);
+      if (local != null) {
+        local.remove();
+      }
+    }
+  }
+
   private void invokeLifecycleOperation(final ServerEntityRequest request, MessagePayload payload, ResultCapture resp) {
     Trace trace = new Trace(request.getTraceID(), "ManagedEntityImpl.invokeLifecycleOperation");
     trace.start();
@@ -475,9 +505,9 @@ public class ManagedEntityImpl implements ManagedEntity {
     GuardianContext.setCurrentChannelID(request.getNodeID().getChannelID());
     MessageChannel channel = GuardianContext.getCurrentMessageChannel();
     if (channel != null) {
-      channel.addAttachment("TransactionID", request.getTransaction(), true);
-      channel.addAttachment("OldestTransactionID", request.getOldestTransactionOnClient(), true);
-      channel.addAttachment("ClientInstanceID", request.getClientInstance(), true);
+      setThreadLocalAttachment(channel, "TransactionID", request.getTransaction());
+      setThreadLocalAttachment(channel, "OldestTransactionID", request.getOldestTransactionOnClient());
+      setThreadLocalAttachment(channel, "ClientInstanceID", request.getClientInstance());
     }
     read.lock();
     try {
@@ -551,6 +581,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       throw uncaught;
     } finally {
       read.unlock();
+      clearThreadLocalAttachments(channel);
       GuardianContext.clearCurrentChannelID(request.getNodeID().getChannelID());
       if (this.isInActiveState) {
         interop.finishLifecycle();
@@ -586,9 +617,9 @@ public class ManagedEntityImpl implements ManagedEntity {
     GuardianContext.setCurrentChannelID(request.getNodeID().getChannelID());
     MessageChannel channel = GuardianContext.getCurrentMessageChannel();
     if (channel != null) {
-      channel.addAttachment("TransactionID", request.getTransaction(), true);
-      channel.addAttachment("OldestTransactionID", request.getOldestTransactionOnClient(), true);
-      channel.addAttachment("ClientInstanceID", request.getClientInstance(), true);
+      setThreadLocalAttachment(channel, "TransactionID", request.getTransaction());
+      setThreadLocalAttachment(channel, "OldestTransactionID", request.getOldestTransactionOnClient());
+      setThreadLocalAttachment(channel, "ClientInstanceID", request.getClientInstance());
     }
     Lock read = reconnectAccessLock.readLock();
     try {
@@ -628,6 +659,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       throw new RuntimeException(e);
     } finally {
       read.unlock();
+      clearThreadLocalAttachments(channel);
       GuardianContext.clearCurrentChannelID(request.getNodeID().getChannelID());
     }
     trace.end();

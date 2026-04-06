@@ -55,12 +55,37 @@ public class SyncReplicationActivity implements OrderedEventContext {
      *  run as a placeholder of ordering data (which matters for correctly ordering re-sends upon fail-over).
      */
     ORDERING_PLACEHOLDER,
-    CREATE_ENTITY,
-    RECONFIGURE_ENTITY,
+    CREATE_ENTITY {
+      @Override
+      public boolean isLifecycleActivity() {
+        return true;
+      }
+    },
+    RECONFIGURE_ENTITY {
+      @Override
+      public boolean isLifecycleActivity() {
+        return true;
+      }
+    },
     INVOKE_ACTION,
-    DESTROY_ENTITY,
-    FETCH_ENTITY,
-    RELEASE_ENTITY,
+    DESTROY_ENTITY {
+      @Override
+      public boolean isLifecycleActivity() {
+        return true;
+      }
+    },
+    FETCH_ENTITY {
+      @Override
+      public boolean isLifecycleActivity() {
+        return true;
+      }
+    },
+    RELEASE_ENTITY {
+      @Override
+      public boolean isLifecycleActivity() {
+        return true;
+      }
+    },
 
     /**
      * The SYNC_START message is special in that it tells the passive to setup the synchronization machinery.
@@ -88,6 +113,10 @@ public class SyncReplicationActivity implements OrderedEventContext {
     SYNC_ENTITY_CONCURRENCY_END,
 
     DISCONNECT_CLIENT;
+
+    public boolean isLifecycleActivity() {
+      return false;
+    }
   }
 
 

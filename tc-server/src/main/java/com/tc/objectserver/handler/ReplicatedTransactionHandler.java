@@ -543,8 +543,8 @@ public class ReplicatedTransactionHandler {
 
   private ServerEntityRequest activityToLocalRequest(SyncReplicationActivity activity) {
     ActivityType activityType = activity.getActivityType();
-    ClientID source = isReplica ? activity.getSource() : ClientID.NULL_ID;
-    ClientInstanceID instance = isReplica ? activity.getClientInstanceID() : ClientInstanceID.NULL_ID;
+    ClientID source = isReplica && activityType == ActivityType.INVOKE_ACTION ? ClientID.NULL_ID : activity.getSource();
+    ClientInstanceID instance = isReplica && activityType == ActivityType.INVOKE_ACTION ? ClientInstanceID.NULL_ID : activity.getClientInstanceID();
     TransactionID transactionID = activity.getTransactionID();
     TransactionID oldestTransactionID = activity.getOldestTransactionOnClient();
     Assert.assertTrue(ActivityType.SYNC_BEGIN != activityType);
