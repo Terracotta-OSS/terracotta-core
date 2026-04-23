@@ -17,6 +17,8 @@
  */
 package com.tc.net.groups;
 
+import com.tc.spi.metric.MetricService;
+import com.tc.stats.ChannelMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -135,6 +137,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private final AtomicBoolean                               alreadyJoined               = new AtomicBoolean(false);
   private final WeightGeneratorFactory                      weightGeneratorFactory;
   private final SocketEndpointFactory                        bufferManagerFactory;
+  private final MetricService metricService;
 
   private CommunicationsManager                             communicationsManager;
   private TCConnectionManager                               connectionManager;
@@ -152,16 +155,16 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, StageManager stageManager,
                             TCConnectionManager comms,
                             ServerID thisNodeID, Node thisNode,
-                            WeightGeneratorFactory weightGenerator, SocketEndpointFactory bufferManagerFactory) {
+                            WeightGeneratorFactory weightGenerator, SocketEndpointFactory bufferManagerFactory, MetricService metricService) {
     this(configSetupManager, new NullConnectionPolicy(), stageManager, comms, thisNodeID, thisNode, weightGenerator,
-         bufferManagerFactory);
+         bufferManagerFactory, metricService);
   }
 
-  public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, ConnectionPolicy connectionPolicy,
+  private TCGroupManagerImpl(ServerConfigurationManager configSetupManager, ConnectionPolicy connectionPolicy,
                             StageManager stageManager,
                             TCConnectionManager comms,
                             ServerID thisNodeID, Node thisNode,
-                            WeightGeneratorFactory weightGenerator, SocketEndpointFactory bufferManagerFactory) {
+                            WeightGeneratorFactory weightGenerator, SocketEndpointFactory bufferManagerFactory, MetricService metricService) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     this.connectionManager = comms;
@@ -177,6 +180,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
     this.groupPort = l2DSOConfig.getGroupPort().getPort();
     this.weightGeneratorFactory = weightGenerator;
+    this.metricService = metricService;
 
     InetSocketAddress socketAddress;
     // proxy group port. use a different group port from tc.properties (if exist) than the one on tc-config
@@ -209,7 +213,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.stageManager = stageManager;
     this.bufferManagerFactory = new ClearTextSocketEndpointFactory();
     this.configuredNodes = ()->new HashSet<>(Arrays.asList(servers));
-
+    this.metricService = MetricService.NOOP;
     this.groupPort = groupPort;
     this.version = "UNKNOWN";
     this.weightGeneratorFactory = weightGenerator;
@@ -249,6 +253,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     groupListener = communicationsManager.createListener(socketAddress, (c)->true, new DefaultConnectionIdFactory(), (MessageTransport t)->true);
     // Listen to channel creation/removal
     groupListener.getChannelManager().addEventListener(this);
+    groupListener.getChannelManager().addEventListener(new ChannelMetrics(metricService));
 
     registerForMessages(GroupZapNodeMessage.class, new ZapNodeRequestRouter());
   }
@@ -335,12 +340,14 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private boolean membersAdd(TCGroupMember member) {
     ServerID nodeID = member.getPeerNodeID();
     TCGroupMember old = members.putIfAbsent(nodeID, member);
+    metricService.event("member.join");
     return old == null;
   }
 
   private void membersRemove(TCGroupMember member) {
     ServerID nodeID = member.getPeerNodeID();
     members.remove(nodeID);
+    metricService.event("member.leave");
   }
 
   private void removeIfMemberReconnecting(ServerID newNodeID) {
@@ -721,10 +728,8 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     return (handshakeTimer);
   }
 
-  /*
-   * for testing only
-   */
-  int size() {
+  @Override
+  public int size() {
     return members.size();
   }
 

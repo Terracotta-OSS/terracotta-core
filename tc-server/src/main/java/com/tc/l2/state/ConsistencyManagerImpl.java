@@ -35,7 +35,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -78,13 +77,9 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     return map;
   }
 
-  public ConsistencyManagerImpl(Supplier<ServerMode> mode, TopologyManager topologyManager) {
+  public ConsistencyManagerImpl(TopologyManager topologyManager, ServerVoterManager voter) {
     this.topologyManager = topologyManager;
-    try {
-      this.voter = new ServerVoterManagerImpl(mode, topologyManager::getExternalVoters);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    this.voter = voter;
   }
 
   public synchronized long getBlockingTimestamp() {

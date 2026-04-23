@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  */
 package com.tc.objectserver.impl;
 
+import com.tc.spi.metric.MetricService;
 import org.slf4j.Logger;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceException;
@@ -61,13 +62,14 @@ public class StandardServerBuilder implements ServerBuilder {
 
   @Override
   public GroupManager<AbstractGroupMessage> createGroupCommManager(ServerConfigurationManager configManager,
-                                                                   StageManager stageManager, 
+                                                                   StageManager stageManager,
                                                                    TCConnectionManager connections,
                                                                    ServerID serverNodeID,
                                                                    StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
-                                                                   SocketEndpointFactory bufferManagerFactory) {
+                                                                   SocketEndpointFactory bufferManagerFactory,
+                                                                   MetricService metricService) {
     return new TCGroupManagerImpl(configManager, stageManager, connections, serverNodeID, this.thisNode,
-                                  weightGeneratorFactory, bufferManagerFactory);
+                                  weightGeneratorFactory, bufferManagerFactory, metricService);
   }
 
   @Override
@@ -82,7 +84,7 @@ public class StandardServerBuilder implements ServerBuilder {
         clientHandshakeManager, channelStats, coordinator
     );
   }
-  
+
   @Override
   public void initializeContext(ConfigurationContext context) {
     // Nothing to initialize here
@@ -90,13 +92,13 @@ public class StandardServerBuilder implements ServerBuilder {
 
   @Override
   public L2Coordinator createL2HACoordinator(Logger consoleLogger, DistributedObjectServer server,
-                                             StateManager stateMgr, 
+                                             StateManager stateMgr,
                                              GroupManager<AbstractGroupMessage> groupCommsManager,
                                              Persistor persistor,
                                              WeightGeneratorFactory weightGeneratorFactory,
                                              StripeIDStateManager stripeStateManager,
                                              ConsistencyManager consistencyMgr) {
-    return new L2HACoordinator(consoleLogger, server, stateMgr, 
+    return new L2HACoordinator(consoleLogger, server, stateMgr,
         groupCommsManager, persistor,
         weightGeneratorFactory, stripeStateManager, consistencyMgr);
   }

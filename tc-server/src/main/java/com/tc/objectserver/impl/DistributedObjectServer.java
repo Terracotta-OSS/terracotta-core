@@ -25,11 +25,15 @@ import com.tc.async.api.EventHandlerException;
 import com.tc.config.ServerConfigurationManager;
 import com.tc.l2.state.DiagnosticModeConsistencyManager;
 import com.tc.l2.state.SafeStartupManagerImpl;
+import com.tc.l2.state.ServerVoterManager;
+import com.tc.l2.state.ServerVoterManagerImpl;
 import com.tc.logging.TCLogging;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.services.PlatformConfigurationImpl;
 import com.tc.services.PlatformServiceProvider;
 
+import com.tc.spi.metric.MetricService;
+import com.tc.stats.ChannelMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.PlatformConfiguration;
@@ -229,7 +233,6 @@ import java.net.InetSocketAddress;
 import java.util.stream.Collectors;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.concurrent.SetOnceFlag;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import org.terracotta.configuration.FailoverBehavior;
@@ -251,6 +254,8 @@ import org.terracotta.configuration.ConfigurationException;
  * Startup and shutdown point. Builds and starts the server
  */
 public class DistributedObjectServer {
+  private static final long PLATFORM_CONSUMER_ID = 0;
+
   private final ConnectionPolicy                 connectionPolicy;
   private final TCServer                         server;
   private final ServerBuilder                    serverBuilder;
@@ -287,6 +292,8 @@ public class DistributedObjectServer {
 
   private final CompletableFuture<Void> stopped = new CompletableFuture<>();
 
+  private MetricService metricService;
+
   // used by a test
   public DistributedObjectServer(ServerConfigurationManager configSetupManager, TCThreadGroup threadGroup,
                                  ConnectionPolicy connectionPolicy) {
@@ -321,6 +328,8 @@ public class DistributedObjectServer {
     DefaultSocketEndpointFactory.setSocketEndpointFactory(new ClearTextSocketEndpointFactory());
   }
 
+  public ServiceRegistry getPlatformServiceRegistry() { return this.serviceRegistry.subRegistry(PLATFORM_CONSUMER_ID); }
+
   protected final ServerBuilder createServerBuilder(Node thisNode, Logger tcLogger,
                                                     TCServer server) {
     return new StandardServerBuilder(thisNode, tcLogger);
@@ -333,14 +342,14 @@ public class DistributedObjectServer {
   public byte[] getClusterState(Charset set, PrettyPrinter pp) {
     try {
       if (pp == null) {
-        pp = this.serviceRegistry.subRegistry(0).getService(new BasicServiceConfiguration<>(PrettyPrinter.class));
+        pp = this.getPlatformServiceRegistry().getService(new BasicServiceConfiguration<>(PrettyPrinter.class));
       }
     } catch (ServiceException se) {
       logger.warn("error getting printer for cluster state", se);
     }
     try {
       if (pp == null) {
-        DiagnosticFormat format = this.serviceRegistry.subRegistry(0).getService(new BasicServiceConfiguration<>(DiagnosticFormat.class));
+        DiagnosticFormat format = this.getPlatformServiceRegistry().getService(new BasicServiceConfiguration<>(DiagnosticFormat.class));
         if (format != null) {
             pp = new PrettyPrinter() {
             @Override
@@ -507,8 +516,7 @@ public class DistributedObjectServer {
     // ***** NOTE:  At this point, since we are about to create a subregistry for the platform, the serviceRegistry must be complete!
 
     // The platform gets the reserved consumerID 0.
-    long platformConsumerID = 0;
-    InternalServiceRegistry platformServiceRegistry = serviceRegistry.subRegistry(platformConsumerID);
+    final InternalServiceRegistry platformServiceRegistry = serviceRegistry.subRegistry(PLATFORM_CONSUMER_ID);
 
     Set<ProductID> capablities = EnumSet.allOf(ProductID.class);
 
@@ -539,6 +547,8 @@ public class DistributedObjectServer {
       //  if the DB was zapped and not started in diagnostic mode, reset the flag until the server has finished sync
       persistor.getClusterStatePersistor().setDBClean(!wasZapped);
     }
+
+    this.metricService = MetricService.load(platformServiceRegistry);
 
     new ServerPersistenceVersionChecker(pInfo).checkAndBumpPersistedVersion(persistor.getClusterStatePersistor());
 
@@ -592,7 +602,7 @@ public class DistributedObjectServer {
       consoleLogger.warn("It is not recommended to configure external voters when there is an odd number of servers in the stripe");
     }
 
-    ConsistencyManager consistencyMgr = createConsistencyManager(configSetupManager, knownPeers, voteCount);
+    ConsistencyManager consistencyMgr = createConsistencyManager(knownPeers, voteCount);
 
     final InetSocketAddress dsoBind = new InetSocketAddress(l2DSOConfig.getTsaPort().getHostString(), l2DSOConfig.getTsaPort().getPort());
     this.l1Listener = this.communicationsManager.createListener(dsoBind, (MessageChannel c)->!c.getProductID().isReconnectEnabled() || !server.isReconnectWindow(),
@@ -602,7 +612,10 @@ public class DistributedObjectServer {
                                                                           || consistencyMgr.requestTransition(context.getL2Coordinator().getStateManager().getCurrentMode(),
                                                                                 t.getConnectionID().getClientID(), ConsistencyManager.Transition.ADD_CLIENT);
                                                                 });
+    this.l1Listener.getChannelManager().addEventListener(new ChannelMetrics(metricService));
+
     this.l1Diagnostics = createDiagnosticsListener(dsoBind, infoConnections);
+    this.l1Diagnostics.getChannelManager().addEventListener(new ChannelMetrics(metricService));
 
     this.stripeIDStateManager = new StripeIDStateManagerImpl(this.persistor.getClusterStatePersistor());
 
@@ -675,7 +688,7 @@ public class DistributedObjectServer {
     ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(serviceInterface);
     ClientEntityStateManager clientEntityStateManager = new ClientEntityStateManagerImpl();
 
-    entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::flushLocalPipeline, this.configSetupManager.getServiceLocator());
+    entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::flushLocalPipeline, this.configSetupManager.getServiceLocator(), this.metricService);
     // We need to set up a stage to point at the ProcessTransactionHandler and we also need to register it for events, below.
     final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor, channelManager, entityManager);
     stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, fastStageSize, USE_DIRECT, true).setSpinningCount(1000);
@@ -696,7 +709,7 @@ public class DistributedObjectServer {
     this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager, connectionManager,
                                                                       this.thisServerNodeID,
                                                                       this.stripeIDStateManager, this.globalWeightGeneratorFactory,
-                                                                      bufferManagerFactory);
+                                                                      bufferManagerFactory, this.metricService);
 
     if (consistencyMgr instanceof GroupEventsListener) {
       this.groupCommManager.registerForGroupEvents((GroupEventsListener)consistencyMgr);
@@ -749,7 +762,7 @@ public class DistributedObjectServer {
     final ClientChannelLifeCycleHandler channelLifeCycleHandler = new ClientChannelLifeCycleHandler(this.communicationsManager,
                                                                                         stageManager, channelManager,
                                                                                         clientEntityStateManager,
-                                                                                        processTransactionHandler, eventCollector);
+                                                                                        processTransactionHandler, eventCollector, this.metricService);
     channelManager.addEventListener(channelLifeCycleHandler);
     this.l1Diagnostics.getChannelManager().addEventListener(channelLifeCycleHandler);
 
@@ -851,6 +864,10 @@ public class DistributedObjectServer {
 
     final CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
+
+    this.metricService.addSupplier("members", groupCommManager::size);
+    this.metricService.addSupplier("clients", channelLifeCycleHandler::getClientCount);
+    this.metricService.addSupplier("entity.fetches", clientEntityStateManager::referenceCount);
   }
 
   public synchronized void openNetworkPorts() throws ConfigurationException {
@@ -871,6 +888,10 @@ public class DistributedObjectServer {
   private void shutdown() {
     try {
       logger.info("shutdown initiated");
+      this.metricService.removeSupplier("members");
+      this.metricService.removeSupplier("clients");
+      this.metricService.removeSupplier("voters");
+      this.metricService.removeSupplier("entity.fetches");
       this.l2Coordinator.shutdown();
       this.groupCommManager.shutdown();
       this.communicationsManager.shutdown();
@@ -887,9 +908,8 @@ public class DistributedObjectServer {
     }
   }
 
-  private ConsistencyManager createConsistencyManager(ServerConfigurationManager configSetupManager,
-                                                             int knownPeers,
-                                                             int voteCount) {
+  private ConsistencyManager createConsistencyManager(int knownPeers,
+                                                      int voteCount) {
     // start the server in diagnostic mode if the configuration is not complete
     if (configSetupManager.isPartialConfiguration()) {
       if (knownPeers != 0) {
@@ -899,10 +919,17 @@ public class DistributedObjectServer {
     }
 
     boolean consistentStartup = knownPeers > 0 && (configSetupManager.isConsistentStartup() || voteCount >= 0);
+    ServerVoterManager voter;
+    try {
+      voter = new ServerVoterManagerImpl(()->this.l2Coordinator != null ? this.l2Coordinator.getStateManager().getCurrentMode() : ServerMode.START, topologyManager::getExternalVoters, this.metricService);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    this.metricService.addSupplier("voters", voter::getRegisteredVoters);
     return new SafeStartupManagerImpl(
         consistentStartup,
         knownPeers,
-        new ConsistencyManagerImpl(()->this.l2Coordinator != null ? this.l2Coordinator.getStateManager().getCurrentMode() : ServerMode.START, this.topologyManager)
+        new ConsistencyManagerImpl(this.topologyManager, voter)
     );
   }
 
@@ -936,7 +963,7 @@ public class DistributedObjectServer {
     boolean enabled = tcProperties.getBoolean(TCPropertiesConsts.L2_L1REDIRECT_ENABLED, true);
     NetworkTranslator translator = null;
     try {
-      translator = this.serviceRegistry.subRegistry(0).getService(new BasicServiceConfiguration<>(NetworkTranslator.class));
+      translator = this.getPlatformServiceRegistry().getService(new BasicServiceConfiguration<>(NetworkTranslator.class));
     } catch (ServiceException se) {
       logger.warn("error getting printer for cluster state", se);
     }
@@ -1299,7 +1326,7 @@ public class DistributedObjectServer {
   }
 
   private VersionCompatibility getVersionCompatibility() {
-    Collection<VersionCompatibility> compat = serviceRegistry.subRegistry(0).getServices(()->VersionCompatibility.class);
+    Collection<VersionCompatibility> compat = getPlatformServiceRegistry().getServices(()->VersionCompatibility.class);
     if (compat == null || compat.isEmpty()) {
       return new DefaultVersionCompatibility();
     } else if (compat.size() == 1) {

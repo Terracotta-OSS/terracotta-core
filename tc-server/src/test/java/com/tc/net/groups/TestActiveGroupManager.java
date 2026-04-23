@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class TestActiveGroupManager implements GroupManager<GroupMessage> {
   public boolean isNodeConnected(NodeID sid) {
     return connected;
   }
-  
+
   public void setConnected(boolean connected) {
     this.connected = connected;
   }
@@ -67,7 +67,7 @@ public class TestActiveGroupManager implements GroupManager<GroupMessage> {
 
   @Override
   public void disconnect() {
-    throw new UnsupportedOperationException("Not supported yet."); 
+    throw new UnsupportedOperationException("Not supported yet.");
   }
 
   @Override
@@ -167,7 +167,7 @@ public class TestActiveGroupManager implements GroupManager<GroupMessage> {
 
   @Override
   public void shutdown() {
-    
+
   }
 
   static class SendToMessage {
@@ -232,5 +232,8 @@ public class TestActiveGroupManager implements GroupManager<GroupMessage> {
     return 0;
   }
 
-
+  @Override
+  public int size() {
+    return 0;
+  }
 }

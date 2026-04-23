@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
   public boolean verifyNoClientReferences(ClientID eid) {
     return !clientStates.keySet().stream().anyMatch((led)->led.getNodeID().equals(eid));
   }
-  
+
   @Override
   public List<FetchID> clientDisconnected(ClientID client) {
     return clientStates.entrySet().stream()
@@ -73,7 +73,7 @@ public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
         .distinct()
         .collect(Collectors.toList());
   }
-  
+
   @Override
   public List<EntityDescriptor> clientDisconnectedFromEntity(ClientID client, FetchID entity) {
     return clientStates.entrySet().stream()
@@ -87,5 +87,10 @@ public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
     Set<ClientID> msgs = clientStates.keySet().stream().map(ClientDescriptorImpl::getNodeID).distinct().collect(Collectors.toSet());
     clientStates.clear();
     return msgs;
+  }
+
+  @Override
+  public int referenceCount() {
+    return clientStates.size();
   }
 }

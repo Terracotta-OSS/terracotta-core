@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.services.MappedStateCollector;
 import com.tc.spi.Guardian;
+import com.tc.spi.metric.MetricService;
 import com.tc.tracing.Trace;
 import com.tc.util.Assert;
 import org.slf4j.Logger;
@@ -105,6 +106,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private final long version;
   private final long consumerID;
   private final InternalServiceRegistry registry;
+  private final MetricService metricService;
   private final Sink<VoltronEntityMessage> messageSelf;
   private final ClientEntityStateManager clientEntityStateManager;
   private final ManagementTopologyEventCollector eventCollector;
@@ -143,7 +145,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   ManagedEntityImpl(EntityID id, long version, long consumerID, ManagementKeyCallback flushLocalPipeline, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ManagementTopologyEventCollector eventCollector,
                     Sink<VoltronEntityMessage> msg,
                     RequestProcessor process, EntityServerService<EntityMessage, EntityResponse> factory,
-                    boolean isInActiveState, boolean canDelete) {
+                    boolean isInActiveState, boolean canDelete, MetricService metricService) {
     this.id = id;
     this.isDestroyed = true;
     this.version = version;
@@ -152,6 +154,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.fetchID = new FetchID(consumerID);
     this.flushLocalPipeline = flushLocalPipeline;
     this.registry = registry;
+    this.metricService = metricService;
     this.messageSelf = msg;
     Assert.assertNotNull(this.messageSelf);
     this.clientEntityStateManager = clientEntityStateManager;
@@ -483,6 +486,8 @@ public class ManagedEntityImpl implements ManagedEntity {
           }
           break;
         case FETCH_ENTITY:
+          metricService.event("entity.fetch");
+          metricService.event("entity.fetch." + this.id.getClassName());
           if (!GuardianContext.validate(Guardian.Op.ENTITY_FETCH, this.getID().getClassName() + ":" + this.getID().getEntityName())) {
             resp.failure(ServerException.createPermissionDenied(this.getID()));
           } else {
@@ -490,6 +495,8 @@ public class ManagedEntityImpl implements ManagedEntity {
           }
           break;
         case RELEASE_ENTITY:
+          metricService.event("entity.release");
+          metricService.event("entity.release." + this.id.getClassName());
           releaseEntity(request, resp);
           break;
         case RECONFIGURE_ENTITY:
@@ -534,7 +541,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       logger.error("configuration error during a lifecyle operation ", ce);
       resp.failure(ServerException.createConfigurationException(id, ce));
     } catch (TCShutdownServerException | TCServerRestartException shutdown) {
-      throw shutdown;      
+      throw shutdown;
     } catch (RuntimeException rt) {
       throw rt;
     } catch (Exception e) {
@@ -586,7 +593,11 @@ public class ManagedEntityImpl implements ManagedEntity {
       switch (request.getAction()) {
         case INVOKE_ACTION:
           Optional.ofNullable(decodeMessage(message, response))
-              .ifPresent(em->performAction(request, em, response, concurrencyKey));
+              .ifPresent( em -> {
+                metricService.event("entity.invocation");
+                metricService.event("entity.invocation." + this.id.getClassName());
+                performAction(request, em, response, concurrencyKey);
+              });
           break;
         case REQUEST_SYNC_ENTITY:
           performSync(response, request.replicateTo(Collections.emptySet()), concurrencyKey);
@@ -979,17 +990,17 @@ public class ManagedEntityImpl implements ManagedEntity {
       ClientID clientID = getEntityRequest.getNodeID();
       ClientDescriptorImpl descriptor = new ClientDescriptorImpl(clientID, getEntityRequest.getClientInstance());
       boolean added = clientEntityStateManager.addReference(descriptor, this.fetchID);
-      
+
       if (canDelete) {
         if (added) {
           clientReferenceCount += 1;
           Assert.assertTrue(clientReferenceCount > 0);
         } else {
-          // this should never happen.  Ther server is expecting sane things from the client. 
+          // this should never happen.  Ther server is expecting sane things from the client.
           logger.warn("the client has attempted to fetch the same entity instance twice {}", descriptor);
         }
       }
-      
+
       if (this.isInActiveState) {
         if (!added) {
           //  Exception the client.  Don't crash the server
@@ -1069,7 +1080,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           response.failure(ServerException.createNotFoundException(id));
           return;
         }
-        
+
         this.activeServerEntity.disconnected(clientInstance);
         // Fire the event that the client released the entity.
         this.eventCollector.clientDidReleaseEntity(clientID, this.id, this.consumerID, request.getClientInstance());
