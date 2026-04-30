@@ -65,6 +65,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import com.tc.net.protocol.tcm.TCActionNetworkMessage;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -201,7 +202,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     if (socket instanceof PrettyPrintable) {
       state.put("buffer", ((PrettyPrintable)this.socket).getStateMap());
     } else {
-      state.put("buffer", this.socket.toString());
+      state.put("buffer", Objects.toString(this.socket));
     }
     return state;
   }
@@ -463,13 +464,13 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       long bytesWritten = context.write();
       messageBatch.increment();
       if (debug) {
-        logger.debug("Wrote " + bytesWritten + " bytes on connection " + this.channel.toString() + " with batch size " + context.getBatchSize());
+        logger.debug("Wrote " + bytesWritten + " bytes on connection " + this.channel + " with batch size " + context.getBatchSize());
       }
       totalBytesWritten += bytesWritten;
 
       Assert.assertTrue(context.done());
       if (debug) {
-        logger.debug("Complete message sent on connection " + this.channel.toString());
+        logger.debug("Complete message sent on connection " + this.channel);
       }
       context.writeComplete();
       context = writeContexts.poll();
@@ -500,7 +501,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     }
 
     if (debug) {
-      logger.debug("Connection (" + this.channel.toString() + ") has " + this.writeMessages.size() + " messages queued");
+      logger.debug("Connection (" + this.channel + ") has " + this.writeMessages.size() + " messages queued");
     }
 
     if (newData) {
@@ -792,14 +793,14 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   public void closeReadOnException(IOException ioe) throws IOException {
     if (ioe instanceof EOFException) {
       if (logger.isDebugEnabled()) {
-        logger.debug("EOF reading from channel " + this.channel.toString());
+        logger.debug("EOF reading from channel " + this.channel);
       }
       this.eventCaller.fireEndOfFileEvent(this.eventListeners, this);
     } else {
       if (!isClosed()) {
-        logger.info("error reading from channel " + this.channel.toString() + ": " + ioe.getMessage());
+        logger.info("error reading from channel " + this.channel + ": " + ioe.getMessage());
       } else if  (logger.isDebugEnabled()) {
-        logger.debug("error reading from channel " + this.channel.toString() + ": " + ioe.getMessage());
+        logger.debug("error reading from channel " + this.channel + ": " + ioe.getMessage());
       }
 
       this.eventCaller.fireErrorEvent(this.eventListeners, this, ioe, null);
@@ -809,12 +810,12 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   public void closeWriteOnException(IOException ioe) throws IOException {
     if (ioe instanceof EOFException) {
       if (logger.isDebugEnabled()) {
-        logger.debug("EOF writing to channel " + this.channel.toString());
+        logger.debug("EOF writing to channel " + this.channel);
       }
       this.eventCaller.fireEndOfFileEvent(this.eventListeners, this);
     } else {
       if (logger.isInfoEnabled()) {
-        logger.info("error writing to channel " + this.channel.toString() + ": " + ioe.getMessage());
+        logger.info("error writing to channel " + this.channel + ": " + ioe.getMessage());
       }
 
       this.eventCaller.fireErrorEvent(this.eventListeners, this, ioe, null);

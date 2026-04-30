@@ -446,7 +446,7 @@ public class BasicConnection implements TCConnection {
     if (socket instanceof PrettyPrintable) {
       state.put("buffer", ((PrettyPrintable)this.socket).getStateMap());
     } else {
-      state.put("buffer", this.socket.toString());
+      state.put("buffer", Objects.toString(this.socket));
     }
     return state;
   }  
