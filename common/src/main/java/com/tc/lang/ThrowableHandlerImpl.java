@@ -33,7 +33,6 @@ import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.startuplock.FileNotCreatedException;
 import com.tc.util.startuplock.LocationNotCreatedException;
 
-import java.lang.reflect.Field;
 import java.net.BindException;
 import java.util.HashMap;
 import java.util.List;
@@ -68,7 +67,7 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
 
   /**
    * Construct a new ThrowableHandler with a logger
-   * 
+   *
    * @param logger Logger
    */
   public ThrowableHandlerImpl(Logger logger) {
@@ -105,7 +104,7 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
 
   /**
    * Handle throwable occurring on thread
-   * 
+   *
    * @param thread Thread receiving Throwable
    * @param t Throwable
    */
