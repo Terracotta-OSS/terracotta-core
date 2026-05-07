@@ -45,7 +45,7 @@ public class GuardianContext {
   public static void setServer(TCServerImpl server) {
     GuardianContext.server = server;
   }
-  
+
   private static Properties createGuardContext(String callName) {
     return createGuardContext(callName, new Properties());
   }
@@ -64,7 +64,7 @@ public class GuardianContext {
       return props;
     }
   }
-  
+
   private static Properties createGuardContext(String callName, Properties props, MessageChannel c) {
     if (callName != null) {
       props.setProperty("id", callName);
@@ -88,7 +88,7 @@ public class GuardianContext {
     }
     return props;
   }
-  
+
   private static void translateMaptoProperty(Properties props, String root, Map<String, ?> map) {
     map.forEach((k, v) -> {
       if (v instanceof Map) {
@@ -106,11 +106,11 @@ public class GuardianContext {
   public static void channelRemoved(MessageChannel channel) {
     CONTEXT.remove(channel.getChannelID());
   }
-  
+
   public static void clientRemoved(ClientID removed) {
     CONTEXT.remove(removed.getChannelID());
   }
-  
+
   public static boolean attach(String name, Object data) {
     MessageChannel channel = CONTEXT.get(CURRENTID.get());
     if (channel != null) {
@@ -120,26 +120,30 @@ public class GuardianContext {
       return false;
     }
   }
-  
+
   public static void setCurrentChannelID(ChannelID cid) {
     CURRENTID.set(cid);
   }
-  
+
   public static void clearCurrentChannelID(ChannelID cid) {
     ChannelID current = CURRENTID.get();
     Assert.assertEquals(cid, current);
     CURRENTID.remove();
   }
-  
+
   public static Properties getCurrentChannelProperties() {
     return createGuardContext("context");
   }
 
   public static MessageChannel getCurrentMessageChannel() {
     ChannelID current = CURRENTID.get();
-    return CONTEXT.get(current);
+    if (current != null) {
+      return CONTEXT.get(current);
+    } else {
+      return null;
+    }
   }
-  
+
   private static Guardian getOperationGuardian() {
     if (server != null) {
       DistributedObjectServer dso = server.getDSOServer();
@@ -152,11 +156,11 @@ public class GuardianContext {
     }
     return (o, p)->true;
   }
-  
+
   public static boolean validate(Guardian.Op op, String id) {
     return getOperationGuardian().validate(op, createGuardContext(id));
   }
-  
+
   public static boolean validate(Guardian.Op op, String id, MessageChannel channel) {
     return validate(op, id, new Properties(), channel);
   }

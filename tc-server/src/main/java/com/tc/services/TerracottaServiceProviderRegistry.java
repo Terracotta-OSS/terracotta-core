@@ -18,7 +18,6 @@
 package com.tc.services;
 
 import com.tc.config.ServerConfigurationManager;
-import org.terracotta.configuration.Configuration;
 
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProvider;
