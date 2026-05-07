@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,11 +23,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
-import org.junit.After;
-import org.junit.AfterClass;
+import java.util.NoSuchElementException;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -38,24 +35,8 @@ import static org.mockito.Mockito.when;
  *
  */
 public class TCReferenceSupportTest {
-  
+
   public TCReferenceSupportTest() {
-  }
-  
-  @BeforeClass
-  public static void setUpClass() {
-  }
-  
-  @AfterClass
-  public static void tearDownClass() {
-  }
-  
-  @Before
-  public void setUp() {
-  }
-  
-  @After
-  public void tearDown() {
   }
 
   @Test
@@ -86,8 +67,8 @@ public class TCReferenceSupportTest {
     it.next(); // has two buffers
     Assert.assertFalse(it.hasNext());
     dup.close();
-  } 
-  
+  }
+
   @Test
   public void testArrayCollection() {
     TCByteBuffer buf1 = TCByteBufferFactory.getInstance(512);
@@ -102,9 +83,9 @@ public class TCReferenceSupportTest {
     it.next(); // has two buffers
     Assert.assertFalse(it.hasNext());
     dup.close();
-  }  
-  
-  
+  }
+
+
   @Test
   public void testDoubleClose() {
     TCByteBuffer buf1 = mock(TCByteBuffer.class);
@@ -124,7 +105,7 @@ public class TCReferenceSupportTest {
     dup.close();
     verify(buf1).reInit();
   }
-  
+
   @Test
   public void testReferenceDroppedReferenceGC() throws Exception {
     LinkedList<TCByteBuffer> returns = new LinkedList<>();
@@ -144,10 +125,10 @@ public class TCReferenceSupportTest {
     TCReferenceSupport.startMonitoringReferences();
     TCReference ref = TCReferenceSupport.createReference(Arrays.asList(bufs), returns::add);
     TCReference dup = ref.duplicate();
-    
+
     ref = null;
     dup = null;
-    
+
     int count = 0;
     System.gc();
     while (count < 2) {
@@ -155,9 +136,9 @@ public class TCReferenceSupportTest {
       count += TCReferenceSupport.checkReferences();
     }
     verify(buf2).reInit();
-  }  
-  
-  
+  }
+
+
   @Test
   public void testTruncate() throws Exception {
     LinkedList<TCByteBuffer> returns = new LinkedList<>();
@@ -169,15 +150,37 @@ public class TCReferenceSupportTest {
     TCReference dup = ref.duplicate();
     dup.iterator().next().position(32);
     TCReference truncate = dup.truncate(312);
-    
+
     Assert.assertEquals(312, truncate.available());
     Iterator<TCByteBuffer> sec = truncate.iterator();
     Assert.assertEquals(312, sec.next().remaining());
     Assert.assertFalse(sec.next().hasRemaining());
-    
+
     TCReference trimmed = truncate.duplicate();
     sec = trimmed.iterator();
     Assert.assertEquals(312, sec.next().limit());
     Assert.assertFalse(sec.hasNext());
-  }  
+  }
+
+  @Test
+  public void testNestedIterator() throws Exception {
+    TCByteBuffer b1 = TCByteBufferFactory.getInstance(512);
+    TCReference ref1 = TCReferenceSupport.createGCReference(b1);
+    TCByteBuffer b2 = TCByteBufferFactory.getInstance(512);
+    TCReference ref2 = TCReferenceSupport.createGCReference(b2);
+    TCByteBuffer b3 = TCByteBufferFactory.getInstance(512);
+    TCReference ref3 = TCReferenceSupport.createGCReference(b3);
+    TCReference nested = TCReferenceSupport.createAggregateReference(ref3, TCReferenceSupport.createAggregateReference(ref2, TCReferenceSupport.createAggregateReference(ref1)));
+    Iterator ni = nested.iterator();
+    int count = 0;
+    try {
+      while (true) {
+        ni.next();
+        count++;
+      }
+    } catch (NoSuchElementException none) {
+// ignore
+    }
+    Assert.assertEquals(3, count);
+  }
 }
