@@ -469,6 +469,19 @@ public class ManagedEntityImpl implements ManagedEntity {
     return null;
   }
 
+  @Override
+  public ServerEntityRequest getCurrentRequestMessage() {
+    MessageChannel channel = GuardianContext.getCurrentMessageChannel();
+    if (channel == null) {
+      return null;
+    }
+    ThreadLocal<ServerEntityRequest> tl = (ThreadLocal<ServerEntityRequest>)channel.getAttachment(REQUEST_CONTEXT_KEY);
+    if (tl == null) {
+      return null;
+    }
+    return (ServerEntityRequest)tl.get();
+  }
+
   private void setRequestContext(MessageChannel channel, ServerEntityRequest request) {
     if (channel == null) {
       return;

@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class PlatformEntity implements ManagedEntity {
     // We always start in the passive state.
     this.isActive = false;
   }
-  
+
   @Override
   public EntityID getID() {
     return PLATFORM_ID;
@@ -64,7 +64,7 @@ public class PlatformEntity implements ManagedEntity {
   public void addRequestMessage(ServerEntityRequest request, MessagePayload payload, ResultCapture capture) {
     // We don't actually invoke the message, only complete it, so make sure that it wasn't deserialized as something we
     // expect to use.
-    processor.scheduleRequest(false, PLATFORM_ID, VERSION, PLATFORM_FETCH_ID, request, payload, (w)-> {capture.complete(payload.getRawPayload());}, false, payload.getConcurrency());    
+    processor.scheduleRequest(false, PLATFORM_ID, VERSION, PLATFORM_FETCH_ID, request, payload, (w)-> {capture.complete(payload.getRawPayload());}, false, payload.getConcurrency());
   }
 
   @Override
@@ -94,12 +94,12 @@ public class PlatformEntity implements ManagedEntity {
   public void sync(SessionID passive) {
   //  never sync
   }
-  
+
   @Override
   public SyncReplicationActivity.EntityCreationTuple  startSync() {
     return null;
   }
-  
+
   @Override
   public void loadEntity(byte[] configuration) {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
@@ -140,6 +140,11 @@ public class PlatformEntity implements ManagedEntity {
   public RetirementManager getRetirementManager() {
     // The platform entity doesn't expose this since it isn't expecting message interdependencies, internally.
     Assert.fail();
+    return null;
+  }
+
+  @Override
+  public ServerEntityRequest getCurrentRequestMessage() {
     return null;
   }
 

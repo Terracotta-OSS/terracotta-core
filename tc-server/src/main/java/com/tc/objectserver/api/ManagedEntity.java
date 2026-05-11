@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,56 +38,56 @@ import org.terracotta.entity.EntityResponse;
  */
 public interface ManagedEntity {
   public final static int UNDELETABLE_ENTITY = -1;
-  
+
   public EntityID getID();
-  
+
   public long getVersion();
- /** 
+ /**
   * Schedules the request with the entity on the execution queue.
-  * 
+  *
   * @param request translated request for execution on the server
    * @param data the payload data of the message
-   * @param results capture the results for upper layer to communicate to the clients or 
+   * @param results capture the results for upper layer to communicate to the clients or
    * the active server
    * @return a token which can be waited on
-  */ 
+  */
   void addRequestMessage(ServerEntityRequest request, MessagePayload data, ResultCapture results);
 
   /**
-   * Called to sync an entity.  Caller initiates sync of an entity through this method.  
-   * 
+   * Called to sync an entity.  Caller initiates sync of an entity through this method.
+   *
    * @param passive target passive
    */
   void sync(SessionID passive);
   /**
   * Called when passive sync wants to start sync on this entity.
-  * 
+  *
   * @return The message tuple describing how to instantiate this entity (or null if it can't be synced).
   */
   SyncReplicationActivity.EntityCreationTuple startSync();
-  
+
   void loadEntity(byte[] configuration) throws ConfigurationException;
-  
+
   Runnable promoteEntity() throws ConfigurationException;
-    
+
   boolean isDestroyed();
-  
+
   boolean isActive();
-  
+
   boolean isRemoveable();
 
   boolean canDelete();
-  
+
   boolean clearQueue();
 
   boolean isCompatibleEntity(EntityID type);
-  
+
   void resetReferences(int count);
 
   /**
    * Used when an external component (such as CommunicatorService) needs to translate to/from something specific to this
    * entity's dialect.
-   * 
+   *
    * @return The codec which can translate to/from this entity's message dialect.
    */
   MessageCodec<? extends EntityMessage, ? extends EntityResponse> getCodec();
@@ -95,18 +95,25 @@ public interface ManagedEntity {
   /**
    * Of specific interest to the EntityMessengerService since it may need to install dependencies between messages to this
    * entity.
-   * 
+   *
    * @return The entity's local RetirementManager instance.
    */
   public RetirementManager getRetirementManager();
 
   /**
+   *
+   * @return the current active request message
+   *
+   */
+  public ServerEntityRequest getCurrentRequestMessage();
+
+  /**
    * Called in cases where the entities need to be sorted, for example.
-   * 
+   *
    * @return The unique ID associated with the receiver.
    */
   public long getConsumerID();
-  
+
   public Map<String, Object> getState();
 
   /**
@@ -116,14 +123,14 @@ public interface ManagedEntity {
    * @param listener The listener to notify when the receiver is finished being created or loaded.
    */
   public void addLifecycleListener(LifecycleListener listener);
-  
+
   /**
    * Interface used to describe the argument to setSuccessfulCreateListener.
    */
   public interface LifecycleListener {
     /**
      * Called by sender when it is finished being created from new or loaded from existing.
-     * 
+     *
      * @param sender The entity which is ready.
      */
     public void entityCreated(ManagedEntity sender);
