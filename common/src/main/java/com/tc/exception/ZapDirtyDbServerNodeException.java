@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,11 +18,15 @@
 package com.tc.exception;
 
 /**
- * RMP-309 : Zap Node which joined with dirty db 
+ * RMP-309 : Zap Node which joined with dirty db
  */
 
 public class ZapDirtyDbServerNodeException extends TCServerRestartException {
   public ZapDirtyDbServerNodeException(String message) {
     super(message);
+  }
+
+  public  ZapDirtyDbServerNodeException(String message, Throwable cause) {
+    super(message, cause);
   }
 }

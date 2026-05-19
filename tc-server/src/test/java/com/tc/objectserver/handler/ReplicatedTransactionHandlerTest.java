@@ -125,7 +125,7 @@ public class ReplicatedTransactionHandlerTest {
       return null;
     }).when(sink).addToSink(any(Runnable.class));
 
-    this.rth = new ReplicatedTransactionHandler(stateManager, runner, persistor, this.entityManager, this.groupManager, false);
+    this.rth = new ReplicatedTransactionHandler(stateManager, persistor, this.entityManager, new PassiveAckSender(groupManager, m->true, sink));
     // We need to do things like serialize/deserialize this so we can't easily use a mocked source.
     this.source = new ClientID(1);
     this.instance = new ClientInstanceID(1);

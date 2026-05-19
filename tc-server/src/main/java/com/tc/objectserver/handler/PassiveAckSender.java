@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,6 +22,25 @@ import com.tc.l2.msg.ReplicationAckTuple;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.l2.msg.SyncReplicationActivity;
+import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.CREATE_ENTITY;
+import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.DESTROY_ENTITY;
+import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.DISCONNECT_CLIENT;
+import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.FETCH_ENTITY;
+import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE;
+import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.INVOKE_ACTION;
+import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.LOCAL_ENTITY_GC;
+import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER;
+import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.RECONFIGURE_ENTITY;
+import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.RELEASE_ENTITY;
+import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.SYNC_BEGIN;
+import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.SYNC_END;
+import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN;
+import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN;
+import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_END;
+import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD;
+import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.SYNC_ENTITY_END;
+import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.SYNC_START;
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
@@ -29,7 +48,12 @@ import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessage;
 import com.tc.net.utils.L2Utils;
+import com.tc.object.ClientInstanceID;
+import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.api.ServerEntityAction;
+import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.Assert;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
@@ -39,7 +63,7 @@ import org.slf4j.LoggerFactory;
 /**
  *
  */
-public class PassiveAckSender {
+public class PassiveAckSender implements PassiveMessageResultCollector {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RelayTransactionHandler.class);
 
@@ -64,6 +88,7 @@ public class PassiveAckSender {
     this.local = groupManager.getLocalNodeID();
   }
 
+  @Override
   public void acknowledge(ServerID activeSender, SyncReplicationActivity activity, ReplicationResultCode code) {
 //  when is the right time to send the ack?
     if (!activeSender.equals(ServerID.NULL_ID)) {
@@ -72,6 +97,7 @@ public class PassiveAckSender {
     }
   }
 
+  @Override
   public void ackReceived(ServerID activeSender, SyncReplicationActivity activity, Future<Void> future) {
     if (!activeSender.equals(ServerID.NULL_ID)) {
       if (future != null) {
@@ -123,16 +149,72 @@ public class PassiveAckSender {
       }
     });
   }
-  
+
+  @Override
   public ServerID getLocalNodeID() {
     return local;
   }
 
+  @Override
   public void requestPassiveSync(NodeID target) {
     try {
       groupManager.sendTo(target, ReplicationMessageAck.createSyncRequestMessage());
     } catch (GroupException ge) {
       LOGGER.warn("can't request passive sync", ge);
+    }
+  }
+
+  @Override
+  public ServerEntityRequest transform(SyncReplicationActivity activity) {
+    SyncReplicationActivity.ActivityType activityType = activity.getActivityType();
+    ClientID source = activity.getSource();
+    ClientInstanceID instance = activity.getClientInstanceID();
+    TransactionID transactionID = activity.getTransactionID();
+    TransactionID oldestTransactionID = activity.getOldestTransactionOnClient();
+    Assert.assertTrue(SyncReplicationActivity.ActivityType.SYNC_BEGIN != activityType);
+    return new ReplicatedTransactionHandler.BasicServerEntityRequest(decodeReplicationType(activityType), source, instance, transactionID, oldestTransactionID);
+  }
+
+
+  public static ServerEntityAction decodeReplicationType(SyncReplicationActivity.ActivityType networkType) {
+    switch(networkType) {
+      case SYNC_BEGIN:
+        throw Assert.failure("Shouldn't decode this type into an internal action");
+      case SYNC_START:
+      case SYNC_END:
+      case ORDERING_PLACEHOLDER:
+        return ServerEntityAction.ORDER_PLACEHOLDER_ONLY;
+      case LOCAL_ENTITY_GC:
+        return ServerEntityAction.MANAGED_ENTITY_GC;
+      case FLUSH_LOCAL_PIPELINE:
+        // Note that these are never replicated from the active but we do synthesize them, internally, in some cases.
+        return ServerEntityAction.LOCAL_FLUSH;
+      case CREATE_ENTITY:
+        return ServerEntityAction.CREATE_ENTITY;
+      case RECONFIGURE_ENTITY:
+        return ServerEntityAction.RECONFIGURE_ENTITY;
+      case INVOKE_ACTION:
+        return ServerEntityAction.INVOKE_ACTION;
+      case DESTROY_ENTITY:
+        return ServerEntityAction.DESTROY_ENTITY;
+      case FETCH_ENTITY:
+        return ServerEntityAction.FETCH_ENTITY;
+      case RELEASE_ENTITY:
+        return ServerEntityAction.RELEASE_ENTITY;
+      case SYNC_ENTITY_BEGIN:
+        return ServerEntityAction.RECEIVE_SYNC_ENTITY_START_SYNCING;
+      case SYNC_ENTITY_CONCURRENCY_BEGIN:
+        return ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_START;
+      case SYNC_ENTITY_CONCURRENCY_PAYLOAD:
+        return ServerEntityAction.RECEIVE_SYNC_PAYLOAD;
+      case SYNC_ENTITY_CONCURRENCY_END:
+        return ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END;
+      case SYNC_ENTITY_END:
+        return ServerEntityAction.RECEIVE_SYNC_ENTITY_END;
+      case DISCONNECT_CLIENT:
+        return ServerEntityAction.DISCONNECT_CLIENT;
+      default:
+        throw new AssertionError("bad replication type: " + networkType);
     }
   }
 }

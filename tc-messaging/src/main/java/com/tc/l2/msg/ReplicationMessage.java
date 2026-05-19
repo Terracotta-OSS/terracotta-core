@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -53,17 +53,17 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   // (Note that this check can be removed in the future - it is mostly to validate during refactoring and buffering
   //  implementation).
   private boolean didCreateLocally;
-  
+
   public ReplicationMessage() {
     super(IGNORED);
     this.didCreateLocally = false;
   }
-  
+
   protected ReplicationMessage(int type) {
     super(type);
     this.didCreateLocally = false;
   }
-  
+
 //  a true replicated message
   private ReplicationMessage(SyncReplicationActivity activity) {
     super(IGNORED);
@@ -71,7 +71,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     this.activities.add(activity);
     this.didCreateLocally = true;
   }
-  
+
   @Override
   public void setSequenceID(long rid) {
     this.rid = rid;
@@ -90,6 +90,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   /**
    * @return The current number of activities batched in this message.
    */
+  @Override
   public int getBatchSize() {
     return this.activities.size();
   }
@@ -136,7 +137,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
         break;
     }
   }
-  
+
   public String getDebugId() {
     return this.getType() + " " + ((this.activities != null) ? (this.activities.size() + " activities") : "no activities");
   }

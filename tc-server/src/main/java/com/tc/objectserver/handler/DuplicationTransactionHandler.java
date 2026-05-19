@@ -27,15 +27,25 @@ import com.tc.exception.ZapDirtyDbServerNodeException;
 import com.tc.l2.dup.RelayMessage;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.l2.msg.ReplicationMessage;
+import com.tc.l2.msg.ReplicationResultCode;
+import com.tc.l2.msg.SyncReplicationActivity;
+import com.tc.l2.msg.SyncReplicationActivity.ActivityID;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.util.Assert;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.function.Predicate;
 
 import org.slf4j.Logger;
@@ -50,6 +60,7 @@ public class DuplicationTransactionHandler {
   private final GroupManager<AbstractGroupMessage> groupManager;
   private final GroupEventsListener listener;
   private volatile long currentSequence = 0L;
+  private final Map<ActivityID, CompletableFuture<ReplicationResultCode>> waitFors = new ConcurrentHashMap<>();
 
   public DuplicationTransactionHandler(StateManager stateMgr, Predicate<NodeID> duplicator, GroupManager<AbstractGroupMessage> groupManager) {
     this.groupManager = groupManager;
@@ -129,10 +140,41 @@ public class DuplicationTransactionHandler {
 
   private void processMessage(Stage<ReplicationMessage> sendToNext, RelayMessage rep) throws ServerException {
     if (rep.getType() == RelayMessage.RELAY_BATCH) {
-      long last = rep.unwindBatch(m->sendToNext.getSink().addToSink(m));
-      currentSequence = Long.max(currentSequence, last);
+      for (ReplicationMessage msg : rep.getMessages()) {
+        for (SyncReplicationActivity a : msg.getActivities()) {
+          if (a.getActivityType() == SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN) {
+            waitFors.put(a.getActivityID(), new CompletableFuture<>());
+          }
+        }
+        currentSequence = Long.max(currentSequence, msg.getSequenceID());
+        sendToNext.getSink().addToSink(msg);
+
+        for (ActivityID a : waitFors.keySet()) {
+          try {
+            if (waitFors.get(a).get() == ReplicationResultCode.FAIL) {
+              throw new ZapDirtyDbServerNodeException("create entity failed");
+            }
+          } catch (ExecutionException | InterruptedException ee) {
+            throw new ZapDirtyDbServerNodeException("create entity failed", ee);
+          }
+        }
+        waitFors.clear();
+      }
     } else {
       throw new UnsupportedOperationException("relay message:" + rep);
     }
+  }
+
+  public void acknowledge(ServerID activeSender, SyncReplicationActivity activity, ReplicationResultCode code) {
+    CompletableFuture<ReplicationResultCode> result = waitFors.get(activity.getActivityID());
+    if (result != null) {
+      result.complete(code);
+    } else if (code == ReplicationResultCode.FAIL) {
+      throw new ZapDirtyDbServerNodeException("replication action failed. type:" + activity.getActivityType());
+    }
+  }
+
+  public void ackReceived(ServerID activeSender, SyncReplicationActivity activity, Future<Void> future) {
+
   }
 }
