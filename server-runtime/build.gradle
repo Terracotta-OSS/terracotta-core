@@ -1,7 +1,9 @@
+import org.gradle.api.internal.project.ProjectInternal
+import org.gradle.api.plugins.jvm.internal.JvmPluginServices
 
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,37 +18,61 @@
  * limitations under the License.
  */
 plugins {
-  id 'java-library'
+  id 'java-platform'
   id 'maven-publish'
-    id 'com.jfrog.artifactory'
+  id 'com.jfrog.artifactory'
+}
+
+def serverBucket = configurations.dependencyScope("server")
+def serverClasspath = configurations.resolvable("serverClasspath") {
+    extendsFrom(serverBucket.get())
+    ((ProjectInternal) project).services.get(JvmPluginServices.class).configureAsRuntimeClasspath(it)
 }
 
 description = 'terracotta-core server-runtime'
 
 dependencies {
-  compileOnlyApi project(':server-api')
-  
-  implementation project(':tc-server')
-  implementation project(':terracotta')
+    server project(':tc-server')
+    server project(':terracotta')
 }
 
 def serverBundle = tasks.register('serverBundle', Zip) {
-    from(configurations.runtimeClasspath)
+    from(configurations.serverClasspath)
     archiveBaseName = 'server-bundle'
     archiveExtension = 'zip'
 }
 
+def serverElements = configurations.consumable("serverElements") {
+    ((ProjectInternal) project).services.get(JvmPluginServices.class).configureAsRuntimeElements(it)
+}
+
 artifacts {
-    'default' serverBundle
+    add(serverElements.name, serverBundle)
+}
+
+configurations.api {
+    dependencyConstraints.addAllLater(
+        serverClasspath.map {
+            it.resolvedConfiguration.resolvedArtifacts*.id*.componentIdentifier.findAll {
+                !(it instanceof org.gradle.api.artifacts.component.ProjectComponentIdentifier)
+            }.collect {
+                project.dependencies.constraints.create(it.getDisplayName())
+            }
+        }
+    )
+}
+
+components.named('javaPlatform', AdhocComponentWithVariants) {
+    it.addVariantsFromConfiguration(serverElements.get()) {}
 }
 
 publishing {
     publications {
         runtime(MavenPublication) {
+            from components.javaPlatform
             groupId = 'org.terracotta.internal'
             version = "$project.version"
             artifactId = "$project.name"
-            artifact(serverBundle)
         }
     }
 }
