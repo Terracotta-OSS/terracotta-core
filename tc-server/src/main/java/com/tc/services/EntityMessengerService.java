@@ -23,7 +23,6 @@ import com.tc.bytes.TCByteBufferFactory;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.exception.ServerException;
 import com.tc.net.ClientID;
-import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.FetchID;
@@ -31,10 +30,9 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ManagedEntity.LifecycleListener;
 import com.tc.objectserver.api.ServerEntityRequest;
-import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.entity.CreateMessage;
 import com.tc.objectserver.entity.DestroyMessage;
-import static com.tc.objectserver.entity.ManagedEntityImpl.REQUEST_CONTEXT_KEY;
+import com.tc.objectserver.entity.ManagedEntityImpl;
 import com.tc.objectserver.entity.ReconfigureMessage;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.util.Assert;
@@ -48,6 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import org.terracotta.entity.EntityResponse;
 
 /**
@@ -64,6 +63,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
   private final EntityDescriptor fakeDescriptor;
   private final EntityDescriptor lifecycleDescriptor;
   private final ConcurrentHashMap<ExplicitRetirementHandle, Handle> retirementHandles = new ConcurrentHashMap<>();
+  private final Supplier<ServerEntityRequest> parentContext;
 
   @SuppressWarnings("unchecked")
   public EntityMessengerService(Sink<VoltronEntityMessage> messageSink,
@@ -84,6 +84,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
 
     this.fakeDescriptor = EntityDescriptor.createDescriptorForInvoke(new FetchID(owningEntity.getConsumerID()),ClientInstanceID.NULL_ID);
     this.lifecycleDescriptor = EntityDescriptor.createDescriptorForLifecycle(owningEntity.getID(), owningEntity.getVersion());
+    this.parentContext = ()->owningEntity.getCurrentRequestMessage();
   }
 
   @Override
@@ -184,14 +185,12 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
       this.message = message.asReadOnlyBuffer();
       this.response = response;
       this.waitForReceived = waitForReceived;
-      MessageChannel channel = GuardianContext.getCurrentMessageChannel();
+      this.parent = parentContext.get();
 
-      if (channel != null) {
-        this.clientID = (ClientID)channel.getRemoteNodeID();
-        parent = (ServerEntityRequest)channel.getAttachment(REQUEST_CONTEXT_KEY);
+      if (parent != null) {
+        this.clientID = parent.getNodeID();
       } else {
         this.clientID = ClientID.NULL_ID;
-        this.parent = null;
       }
     }
 

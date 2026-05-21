@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.startuplock.FileNotCreatedException;
 import com.tc.util.startuplock.LocationNotCreatedException;
 
-import java.lang.reflect.Field;
 import java.net.BindException;
 import java.util.HashMap;
 import java.util.List;
@@ -68,7 +67,7 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
 
   /**
    * Construct a new ThrowableHandler with a logger
-   * 
+   *
    * @param logger Logger
    */
   public ThrowableHandlerImpl(Logger logger) {
@@ -105,7 +104,7 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
 
   /**
    * Handle throwable occurring on thread
-   * 
+   *
    * @param thread Thread receiving Throwable
    * @param t Throwable
    */

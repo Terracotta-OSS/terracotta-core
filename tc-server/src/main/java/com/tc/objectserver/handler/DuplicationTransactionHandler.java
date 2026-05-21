@@ -23,7 +23,7 @@ import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Stage;
 import com.tc.exception.ServerException;
-import com.tc.exception.TCServerRestartException;
+import com.tc.exception.ZapDirtyDbServerNodeException;
 import com.tc.l2.dup.RelayMessage;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.l2.msg.ReplicationMessage;
@@ -68,10 +68,10 @@ public class DuplicationTransactionHandler {
                 groupManager.sendTo(nodeID, RelayMessage.createResumeMessage(currentSequence));
                 break;
               default:
-                throw new TCServerRestartException("invalid state for duplication " + stateMgr.getCurrentMode());
+                throw new ZapDirtyDbServerNodeException("invalid state for duplication " + stateMgr.getCurrentMode());
             }
           } else {
-            throw new TCServerRestartException("resyncing duplicate");
+            throw new ZapDirtyDbServerNodeException("resyncing duplicate");
           }
         } catch (GroupException ge) {
 
@@ -92,7 +92,7 @@ public class DuplicationTransactionHandler {
     public void handleEvent(RelayMessage message) throws EventHandlerException {
      switch (message.getType()) {
        case RelayMessage.RELAY_INVALID:
-         throw new TCServerRestartException("duplicate server is no longer in sync with relay");
+         throw new ZapDirtyDbServerNodeException("duplicate server is no longer in sync with relay");
        case RelayMessage.RELAY_SUCCESS:
          TCLogging.getConsoleLogger().info("relay resume is successful");
          break;

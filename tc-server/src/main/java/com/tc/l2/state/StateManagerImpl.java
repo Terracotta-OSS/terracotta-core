@@ -33,7 +33,7 @@ import com.tc.async.api.EventHandler;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.StageController;
-import com.tc.exception.TCServerRestartException;
+import com.tc.exception.ZapDirtyDbServerNodeException;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.ha.WeightGeneratorFactory;
@@ -618,8 +618,7 @@ public class StateManagerImpl implements StateManager {
   }
 
   private void zapAndResyncLocalNode(String msg) {
-    clusterStatePersistor.setDBClean(false);
-    throw new TCServerRestartException("Clear and resync - " + msg);
+    throw new ZapDirtyDbServerNodeException("Clear and resync - " + msg);
   }
 
   private synchronized void handleElectionResultMessage(L2StateMessage msg) throws GroupException {

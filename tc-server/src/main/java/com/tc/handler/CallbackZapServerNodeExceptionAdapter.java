@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.tc.objectserver.persistence.ClusterStatePersistor;
 public class CallbackZapServerNodeExceptionAdapter extends CallbackDirtyDatabaseCleanUpAdapter {
 
   private final Logger consoleLogger;
-  private String         consoleMessage = "This Terracotta server instance restarted because of a "
+  private final String         consoleMessage = "This Terracotta server instance restarted because of a "
                                           + "conflict or communication failure with another Terracotta "
                                           + "server instance.";
 

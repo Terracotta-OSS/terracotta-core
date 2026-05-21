@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -68,11 +68,11 @@ import java.util.Set;
  */
 public class BasicConnection implements TCConnection {
   private static final Logger LOGGER = LoggerFactory.getLogger(BasicConnection.class);
-  
+
   private long connect = 0;
   private volatile long last = System.currentTimeMillis();
   private volatile long received = System.currentTimeMillis();
-  
+
   private final Consumer<TCConnection> closeRunnable;
   private final Consumer<WireProtocolMessage> write;
   private final TCProtocolAdaptor adaptor;
@@ -85,8 +85,8 @@ public class BasicConnection implements TCConnection {
   private volatile Thread serviceThread;
   private volatile ExecutorService readerExec;
   private final String id;
-  
-  
+
+
   public BasicConnection(String id, TCProtocolAdaptor adapter, SocketEndpointFactory buffers, Consumer<TCConnection> close) {
     this.id = id;
     this.socketEndpointFactory = buffers;
@@ -157,7 +157,7 @@ public class BasicConnection implements TCConnection {
   public long getIdleReceiveTime() {
     return System.currentTimeMillis() - received;
   }
-  
+
   void markReceived() {
     received = System.currentTimeMillis();
   }
@@ -204,7 +204,7 @@ public class BasicConnection implements TCConnection {
       fireClosed();
     }
   }
-  
+
   private void close(Closeable c) {
     try {
       c.close();
@@ -212,15 +212,15 @@ public class BasicConnection implements TCConnection {
       LOGGER.debug("failed", t);
     }
   }
-  
+
   private void tryOp(Callable op) {
     try {
       op.call();
     } catch (Exception t) {
       LOGGER.debug("failed", t);
     }
-  }  
-    
+  }
+
   private Future<Void> shutdownAndAwaitTermination() {
     ExecutorService reader = readerExec;
     if (reader != null) {
@@ -256,34 +256,34 @@ public class BasicConnection implements TCConnection {
           reader.awaitTermination(timeout, unit);
         }
         return null;
-      } 
+      }
     };
   }
 
   private synchronized List<TCConnectionEventListener> getListeners() {
     return new ArrayList<>(listeners);
   }
-  
+
   private void fireClosed() {
     TCConnectionEvent event = new TCConnectionEvent(this);
     getListeners().forEach(l->l.closeEvent(event));
   }
-  
+
   private void fireConnect() {
     TCConnectionEvent event = new TCConnectionEvent(this);
     getListeners().forEach(l->l.connectEvent(event));
   }
-  
+
   private void fireEOF() {
     TCConnectionEvent event = new TCConnectionEvent(this);
     getListeners().forEach(l->l.endOfFileEvent(event));
   }
-  
+
   private void fireError(Exception err, TCNetworkMessage cxt) {
     TCConnectionErrorEvent event = new TCConnectionErrorEvent(this, err, cxt);
     getListeners().forEach(l->l.errorEvent(event));
   }
-  
+
   @Override
   public synchronized Socket connect(InetSocketAddress addr, int timeout) throws IOException, TCTimeoutException {
     boolean interrupted = Thread.interrupted();
@@ -360,7 +360,7 @@ public class BasicConnection implements TCConnection {
       this.write.accept(msg);
     }
   }
-  
+
   private void readMessages() {
     Assert.assertNull(readerExec);
     readerExec = Executors.newFixedThreadPool(1, (r) -> {
@@ -405,7 +405,7 @@ public class BasicConnection implements TCConnection {
       LOGGER.debug("EXITED {} connected:{} established:{}", System.identityHashCode(this), connected, established);
     });
   }
-    
+
   private WireProtocolMessage buildWireProtocolMessage(TCNetworkMessage message) {
     Objects.requireNonNull(message);
     if (message instanceof WireProtocolMessage) {
@@ -415,9 +415,9 @@ public class BasicConnection implements TCConnection {
       if (action.load() && action.commit()) {
         WireProtocolMessage wireMessage = WireProtocolMessageImpl.wrapMessage(action, this);
         return finalizeWireProtocolMessage(wireMessage);
-      } 
+      }
     }
-    
+
     return null;
   }
 
@@ -430,7 +430,7 @@ public class BasicConnection implements TCConnection {
     hdr.setMessageCount(1);
     hdr.computeChecksum();
     return message;
-  } 
+  }
 
   @Override
   public Map<String, ?> getState() {
@@ -446,8 +446,8 @@ public class BasicConnection implements TCConnection {
     if (socket instanceof PrettyPrintable) {
       state.put("buffer", ((PrettyPrintable)this.socket).getStateMap());
     } else {
-      state.put("buffer", this.socket.toString());
+      state.put("buffer", Objects.toString(this.socket));
     }
     return state;
-  }  
+  }
 }

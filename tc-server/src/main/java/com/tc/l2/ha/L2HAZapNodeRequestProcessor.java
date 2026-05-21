@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -152,7 +152,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
       props.setProperty("reason", reason);
       props.setProperty("weights", Arrays.toString(weights));
       GuardianContext.validate(Guardian.Op.SECURITY_OP, "zap request received", props);
-      
+
       logger.warn(StateManager.ACTIVE_COORDINATOR + " received Zap Node request from another "
                   + StateManager.ACTIVE_COORDINATOR + "\n" + getFormatedError(nodeID, zapNodeType, reason));
       handleSplitBrainScenario(nodeID, zapNodeType, reason, weights);
@@ -162,7 +162,6 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
         String message = "Terminating due to Zap request from " + getFormatedError(nodeID, zapNodeType, reason);
         logger.error(message);
         if (zapNodeType == NODE_JOINED_WITH_DIRTY_DB) {
-          clusterStatePersistor.setDBClean(false);
           throw new ZapDirtyDbServerNodeException(message);
         } else if (zapNodeType == INSUFFICIENT_RESOURCES) {
           throw new TCShutdownServerException(message);
