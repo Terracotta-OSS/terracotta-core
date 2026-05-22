@@ -619,7 +619,9 @@ public class DistributedObjectServer {
     ServerPersistentState serverPersistentState = configSetupManager.isRelaySource() ? new RelayPersistentState() : new ClusterPersistentState(this.persistor.getClusterStatePersistor());
 
     if (serverPersistentState.getInitialMode() == ServerMode.ACTIVE && configSetupManager.isRelayDestination()) {
-      throw new TCShutdownServerException("Unable to start as a relay destination.  The server was shutdown as active");
+      // server can't revert back to replica.  Ignore replica setting
+      logger.warn("Server shutdown as ACTIVE.  Server is ignoring configuration as replica");
+      this.configSetupManager.ignoreReplicaSettings();
     }
 
     final boolean availableMode = voteCount < 0;

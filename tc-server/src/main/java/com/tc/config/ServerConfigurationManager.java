@@ -54,6 +54,7 @@ public class ServerConfigurationManager implements PrettyPrintable {
   private Configuration configuration;
   private ServerConfiguration serverConfiguration;
   private GroupConfiguration cachedGroupConfig = new GroupConfiguration(Collections.emptyList(), "");
+  private volatile boolean ignoreReplica;
 
   public ServerConfigurationManager(ConfigurationProvider configurationProvider,
                                     ServiceLocator classLoader,
@@ -112,7 +113,7 @@ public class ServerConfigurationManager implements PrettyPrintable {
       if (configuration.isRelaySource()) {
         InetSocketAddress relayName = configuration.getRelayPeer();
         cachedGroupConfig = new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName(), relayName.getHostString(), relayName.getPort(), 0);
-      } else if (configuration.isRelayDestination()) {
+      } else if (!ignoreReplica && configuration.isRelayDestination()) {
         InetSocketAddress relay = configuration.getRelayPeerGroupPort();
         InetSocketAddress relayName = configuration.getRelayPeer();
         cachedGroupConfig = new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName(), relayName.getHostString(), relayName.getPort(), relay.getPort());
@@ -184,11 +185,15 @@ public class ServerConfigurationManager implements PrettyPrintable {
   }
 
   public boolean isRelayDestination() {
-    return configuration.isRelayDestination();
+    return !ignoreReplica && configuration.isRelayDestination();
   }
 
   public boolean isConsistentStartup() {
     return configuration.isConsistentStartup();
+  }
+
+  public void ignoreReplicaSettings() {
+    ignoreReplica = true;
   }
 
   private static void processTcProperties(Properties tcProperties) {
