@@ -618,10 +618,22 @@ public class DistributedObjectServer {
 
     ServerPersistentState serverPersistentState = configSetupManager.isRelaySource() ? new RelayPersistentState() : new ClusterPersistentState(this.persistor.getClusterStatePersistor());
 
-    if (serverPersistentState.getInitialMode() == ServerMode.ACTIVE && configSetupManager.isRelayDestination()) {
+    if (configSetupManager.isRelayDestination()) {
       // server can't revert back to replica.  Ignore replica setting
-      logger.warn("Server shutdown as ACTIVE.  Server is ignoring configuration as replica");
-      this.configSetupManager.ignoreReplicaSettings();
+      ServerMode initialState = serverPersistentState.getInitialMode();
+      switch (initialState) {
+        case ACTIVE:
+        case PASSIVE:
+        case UNINITIALIZED:
+          // protect these states for now.  There may be a way to leak after a replica has failed over
+          // through other states but these are the important ones.
+          logger.warn("Server shutdown as {}.  Server is ignoring configuration as replica", initialState);
+          this.configSetupManager.ignoreReplicaSettings();
+          break;
+        default:
+          logger.info("Server shutdown as {}.  Server is starting as replica due to configuration setting", initialState);
+          break;
+      }
     }
 
     final boolean availableMode = voteCount < 0;

@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -87,11 +87,11 @@ public class ElectionManagerImpl implements ElectionManager {
     state = ELECTION_SHUTDOWN;
     notifyAll();
   }
-  
+
   private synchronized boolean isShutdown() {
     return state == ELECTION_SHUTDOWN;
   }
-  
+
   public EventHandler<ElectionContext> getEventHandler() {
     return new AbstractEventHandler<ElectionContext> () {
       @Override
@@ -107,7 +107,7 @@ public class ElectionManagerImpl implements ElectionManager {
       }
     };
   }
-  
+
   public Set<ServerID> passiveStandbys() {
     return passiveStandbys;
   }
@@ -239,7 +239,7 @@ public class ElectionManagerImpl implements ElectionManager {
     }
     return winnerID;
   }
-  
+
   private synchronized void sendToNewMember(NodeID node) {
     if (state == ELECTION_IN_PROGRESS) {
       L2StateMessage msg = L2StateMessage.createElectionStartedMessage(this.myVote, this.serverState);
@@ -250,13 +250,13 @@ public class ElectionManagerImpl implements ElectionManager {
         logger.error("Error during election : ", ge);
       }
     } else {
-      debugInfo("no election in progress not sending to " + node);      
+      debugInfo("no election in progress not sending to " + node);
     }
   }
 
   private synchronized void electionStarted(Enrollment e, State serverState, int expectedServers) {
     if (this.state == ELECTION_IN_PROGRESS) { throw new AssertionError("Election Already in Progress"); }
-    this.state = ELECTION_IN_PROGRESS;
+    this.state = expectedServers > 1 ? ELECTION_IN_PROGRESS : ELECTION_VOTED;
     this.expectedServers = expectedServers;
     this.myVote = e;
     this.serverState = serverState;

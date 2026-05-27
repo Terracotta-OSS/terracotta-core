@@ -52,6 +52,7 @@ import com.tc.objectserver.impl.TopologyManager;
 import com.tc.objectserver.persistence.ServerPersistentState;
 import com.tc.util.Assert;
 import com.tc.util.State;
+import java.util.Collections;
 
 
 public class StateManagerImpl implements StateManager {
@@ -225,7 +226,9 @@ public class StateManagerImpl implements StateManager {
     boolean isNew = isFreshServer();
     if (getActiveNodeID().isNull()) {
       debugInfo("Running election - isNew: " + isNew);
-      electionSink.addToSink(new ElectionContext(myNodeID, lockedTopology.getServers(), isNew, weightsFactory, state.getState(), (nodeid)-> {
+      // if a server is replica, it should not be communicating with any other servers even if they are configured
+      Set<String> peers = getCurrentMode() != ServerMode.REPLICA ? lockedTopology.getServers() : Collections.emptySet();
+      electionSink.addToSink(new ElectionContext(myNodeID,  peers, isNew, weightsFactory, state.getState(), (nodeid)-> {
         boolean rerun = false;
         if (nodeid == myNodeID) {
           debugInfo("Won Election, moving to active state. myNodeID/winner=" + myNodeID);
@@ -267,6 +270,12 @@ public class StateManagerImpl implements StateManager {
       }));
     } else {
       electionFinished();
+      // this should not be possible but replicas should never lose elections
+      if (getCurrentMode() == ServerMode.REPLICA) {
+        logger.warn("replicas should not lose elections");
+        electionMgr.reset(ServerID.NULL_ID, null);
+        runElection();
+      }
     }
   }
 
@@ -660,7 +669,7 @@ public class StateManagerImpl implements StateManager {
   }
 
   private void verifyActiveDeclarationAndRespond(L2StateMessage clusterMsg) {
-    boolean verify = checkIfPeerWinsVerificationElection(clusterMsg) && !isActiveCoordinator();
+    boolean verify = checkIfPeerWinsVerificationElection(clusterMsg) && !isActiveCoordinator() && getCurrentMode() != ServerMode.REPLICA;
     boolean transition = verify && availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE);
 
     if (transition) {
@@ -713,7 +722,10 @@ public class StateManagerImpl implements StateManager {
             // will be zapped.  the only way to get here is because this server is active
             Assert.assertTrue(isActiveCoordinator());
           } else if (peerState.canBeActive()) {
-            zapAndResyncLocalNode("Passive has more recent data compared to active, node is restarting");
+            // a replica server should not be reponding to any actives
+            if (getCurrentMode() != ServerMode.REPLICA) {
+              zapAndResyncLocalNode("Passive has more recent data compared to active, node is restarting");
+            }
           } else {
             logger.info("Node peer has more current data yet cannot be active.  Server is going dormant until next election.");
           }
@@ -755,7 +767,6 @@ public class StateManagerImpl implements StateManager {
         //  need to zap and start over.  The active being synced to is gone.
         logger.error("Passive only partially synced when active disappeared.");
         elect = true;
-//        zapAndResyncLocalNode("Passive only partially synced when active disappeared.  Restarting");
       } else if (state != ServerMode.ACTIVE && activeNode.isNull()) {
         elect = true;
       }
