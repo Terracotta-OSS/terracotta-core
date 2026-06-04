@@ -50,8 +50,31 @@ def galvanKit = tasks.register('galvanServerZip', Zip) {
     }
 }
 
+def generateChecksum = tasks.register('generateGalvanChecksum') {
+    dependsOn galvanKit
+    
+    def checksumFile = layout.buildDirectory.file('galvan-kit/galvan-test-server.zip.sha256')
+    
+    inputs.files(galvanKit.map { it.archiveFile })
+    outputs.file(checksumFile)
+    
+    doLast {
+        def zipFile = galvanKit.get().archiveFile.get().asFile
+        def checksum = java.security.MessageDigest.getInstance('SHA-256')
+            .digest(zipFile.bytes)
+            .encodeHex()
+            .toString()
+        checksumFile.get().asFile.text = checksum
+    }
+}
+
 sourceSets.main {
     resources.srcDir(galvanKit.map { it.destinationDirectory })
+}
+
+// Ensure checksum is generated before processing resources
+tasks.named('processResources') {
+    dependsOn(generateChecksum)
 }
 
 // Exclude empty.txt from copyright checks
