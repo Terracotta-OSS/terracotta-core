@@ -118,7 +118,6 @@ public class ServerDeploymentBuilder {
           String storedChecksum = readStoredChecksum(ip);
 
           boolean needsRefresh = refresh ||
-              !Files.find(ip, 10, (path,attr)->path.getFileName().toString().startsWith("tc-server")).findAny().isPresent() ||
               !currentChecksum.equals(storedChecksum);
 
           if (needsRefresh) {
