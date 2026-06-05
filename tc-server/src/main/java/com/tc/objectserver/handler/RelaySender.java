@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.tc.l2.msg.ReplicationAckTuple;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.l2.msg.SyncReplicationActivity;
-import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
@@ -122,16 +121,8 @@ public class RelaySender {
       }
     });
   }
-  
+
   public ServerID getLocalNodeID() {
     return local;
-  }
-
-  public void requestPassiveSync(NodeID target) {
-    try {
-      groupManager.sendTo(target, ReplicationMessageAck.createSyncRequestMessage());
-    } catch (GroupException ge) {
-      LOGGER.warn("can't request passive sync", ge);
-    }
   }
 }

@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -45,15 +45,15 @@ public interface TCServer extends Pauseable {
   boolean isActive();
 
   boolean isStopped();
-  
+
   boolean isPassiveUnitialized();
-  
+
   boolean isPassiveStandby();
-  
+
   boolean isReconnectWindow();
 
   boolean isAcceptingClients();
-    
+
   State getState();
 
   long getStartTime();
@@ -73,7 +73,7 @@ public interface TCServer extends Pauseable {
   int getTSAListenPort();
 
   int getTSAGroupPort();
-  
+
   int getReconnectWindowTimeout();
 
   boolean waitUntilShutdown();
@@ -87,8 +87,10 @@ public interface TCServer extends Pauseable {
   ProductInfo productInfo();
 
   List<Client> getConnectedClients();
-  
+
   void disconnectPeer(String nodeName);
-  
+
   void leaveGroup();
+
+  boolean replicaFailoverToActive();
 }

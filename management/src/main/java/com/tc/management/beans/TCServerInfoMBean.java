@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -54,9 +54,9 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   String getBuildID();
 
   boolean isPatched();
-  
+
   String getMonkier();
-  
+
   String getKitID();
 
   String getPatchLevel();
@@ -94,28 +94,30 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   String getState();
 
   boolean isVerboseGC();
-  
+
   boolean isReconnectWindow();
 
   boolean isAcceptingClients();
-  
+
   int getReconnectWindowTimeout();
 
   void setVerboseGC(boolean verboseGC);
 
   void gc();
-  
+
   void setPipelineMonitoring(boolean monitor);
-  
+
   boolean disconnectClient(String id);
-  
+
   String getClusterState(boolean shortForm);
 
   String getConnectedClients() throws IOException;
 
   String getCurrentChannelProperties() throws IOException;
-  
+
   void disconnectPeer(String nodeName);
-  
+
   void leaveGroup();
+
+  boolean replicaFailoverToActive();
 }

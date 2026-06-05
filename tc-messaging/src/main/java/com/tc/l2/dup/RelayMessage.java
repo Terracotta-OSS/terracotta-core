@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.function.Consumer;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -58,12 +59,12 @@ public class RelayMessage extends AbstractGroupMessage implements IBatchableGrou
       payloadMessages = new ArrayList<>();
     }
   }
-  
+
   RelayMessage(long lastSeen) {
     super(RELAY_RESUME);
     this.lastSeen = lastSeen;
   }
-  
+
   public long getLastSeen() {
     return lastSeen;
   }
@@ -97,27 +98,27 @@ public class RelayMessage extends AbstractGroupMessage implements IBatchableGrou
         break;
     }
   }
-  
+
   public static AbstractGroupMessage createStartSync() {
     return new RelayMessage(START_SYNC);
   }
-  
+
   public static RelayMessage createRelayBatch() {
     return new RelayMessage(RELAY_BATCH);
   }
-  
+
   public static RelayMessage createInvalid() {
     return new RelayMessage(RELAY_INVALID);
   }
-  
+
   public static RelayMessage createSuccess() {
     return new RelayMessage(RELAY_SUCCESS);
   }
-  
+
   public static AbstractGroupMessage createResumeMessage(long lastSeen) {
     return new RelayMessage(lastSeen);
   }
-  
+
   private void createReplicationBatch(TCByteBufferOutput output) {
     try (GZIPOutputStream compress = new GZIPOutputStream(new OutputWrapper(output));) {
       try (TCByteBufferOutputStream out = new TCByteBufferOutputStream()) {
@@ -132,11 +133,15 @@ public class RelayMessage extends AbstractGroupMessage implements IBatchableGrou
       throw new RuntimeException(io);
     }
   }
-  
+
   public long unwindBatch(Consumer<ReplicationMessage> next) {
     return payloadMessages.stream().peek(next).map(ReplicationMessage::getSequenceID).reduce(Long::max).orElse(Long.MIN_VALUE);
   }
-  
+
+  public Collection<ReplicationMessage> getMessages() {
+    return Collections.unmodifiableCollection(payloadMessages);
+  }
+
   private void loadReplicationBatch(TCByteBufferInput source) {
     TCByteBufferOutputStream output = new TCByteBufferOutputStream();
     try (GZIPInputStream decompress = new GZIPInputStream(new InputWrapper(source))) {
@@ -159,7 +164,7 @@ public class RelayMessage extends AbstractGroupMessage implements IBatchableGrou
       }
     }
   }
-  
+
   private static long transfer(InputStream in, OutputStream out) throws IOException {
     long transferred = 0;
     byte[] buffer = new byte[1024];
@@ -170,7 +175,7 @@ public class RelayMessage extends AbstractGroupMessage implements IBatchableGrou
     }
     return transferred;
   }
-  
+
   @Override
   public void addToBatch(ReplicationMessage element) {
     payloadMessages.add(element);

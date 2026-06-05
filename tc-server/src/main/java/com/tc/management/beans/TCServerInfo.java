@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -162,7 +162,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     server.stop(StopAction.IMMEDIATE);
     return server.waitUntilShutdown();
   }
-  
+
   @Override
   public boolean isShutdownable() {
     return server.canShutdown();
@@ -189,18 +189,23 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     };
     timer.schedule(task, 1000);
   }
-  
+
   @Override
   public void disconnectPeer(String nodeName) {
     server.disconnectPeer(nodeName);
   }
-  
-  
+
+
   @Override
   public void leaveGroup() {
     server.leaveGroup();
   }
-  
+
+  @Override
+  public boolean replicaFailoverToActive() {
+    return server.replicaFailoverToActive();
+  }
+
   @Override
   public MBeanNotificationInfo[] getNotificationInfo() {
     return Arrays.asList(NOTIFICATION_INFO).toArray(EMPTY_NOTIFICATION_INFO);
@@ -241,8 +246,8 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   public String getBuildID() {
     return buildID;
   }
-  
-  
+
+
 
   @Override
   public boolean isPatched() {
@@ -494,7 +499,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     if (found.isPresent()) {
       return true;
     }
-    
+
     long lid = Long.parseLong(id);
     found = server.getConnectedClients().stream().filter(c->c.getClientID() == lid).findFirst();
     found.ifPresent(Client::killClient);

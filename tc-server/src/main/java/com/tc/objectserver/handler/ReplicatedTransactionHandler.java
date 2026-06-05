@@ -25,7 +25,6 @@ import com.tc.async.api.Stage;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.exception.ServerException;
-import com.tc.l2.api.L2Coordinator;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationResultCode;
@@ -82,14 +81,12 @@ public class ReplicatedTransactionHandler {
   private static final Logger PLOGGER = LoggerFactory.getLogger(MessagePayload.class);
   private static final Logger LOGGER = LoggerFactory.getLogger(ReplicatedTransactionHandler.class);
 
-  private final PassiveAckSender ackMessenger;
+  private final PassiveMessageResultCollector ackMessenger;
 
   private final EntityManager entityManager;
   private final Persistor persistor;
   private final StateManager stateManager;
   private final ManagedEntity platform;
-
-  private final boolean isReplica;
 
   private final SyncState state = new SyncState();
 
@@ -99,18 +96,17 @@ public class ReplicatedTransactionHandler {
     return currentSequence;
   }
 
-  public ReplicatedTransactionHandler(StateManager state, Stage<Runnable> sendToActive, Persistor persistor,
-      EntityManager manager, GroupManager<AbstractGroupMessage> groupManager, boolean isReplica) {
+  public ReplicatedTransactionHandler(StateManager state, Persistor persistor,
+      EntityManager manager, PassiveMessageResultCollector collector) {
     this.stateManager = state;
     this.entityManager = manager;
     this.persistor = persistor;
-    this.ackMessenger = new PassiveAckSender(groupManager, m->!stateManager.isActiveCoordinator(), sendToActive.getSink());
+    this.ackMessenger = collector;
     try {
       platform = entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(PlatformEntity.PLATFORM_ID, PlatformEntity.VERSION)).get();
     } catch (ServerException ee) {
       throw new RuntimeException(ee);
     }
-    this.isReplica = isReplica;
   }
 
   private final EventHandler<ReplicationMessage> eventHorizon = new AbstractEventHandler<ReplicationMessage>() {
@@ -128,7 +124,6 @@ public class ReplicatedTransactionHandler {
 
     @Override
     protected void initialize(ConfigurationContext context) {
-      ServerConfigurationContext scxt = (ServerConfigurationContext)context;
   //  when this spins up, send  request to active and ask for sync
       if (stateManager.getCurrentMode() == ServerMode.UNINITIALIZED) {
         try {
@@ -542,13 +537,7 @@ public class ReplicatedTransactionHandler {
   }
 
   private ServerEntityRequest activityToLocalRequest(SyncReplicationActivity activity) {
-    ActivityType activityType = activity.getActivityType();
-    ClientID source = isReplica && activityType == ActivityType.INVOKE_ACTION ? ClientID.NULL_ID : activity.getSource();
-    ClientInstanceID instance = isReplica && activityType == ActivityType.INVOKE_ACTION ? ClientInstanceID.NULL_ID : activity.getClientInstanceID();
-    TransactionID transactionID = activity.getTransactionID();
-    TransactionID oldestTransactionID = activity.getOldestTransactionOnClient();
-    Assert.assertTrue(ActivityType.SYNC_BEGIN != activityType);
-    return new BasicServerEntityRequest(decodeReplicationType(activityType), source, instance, transactionID, oldestTransactionID);
+    return ackMessenger.transform(activity);
   }
 
   private void beforeSyncAction(SyncReplicationActivity activity) {
@@ -583,48 +572,6 @@ public class ReplicatedTransactionHandler {
         break;
       default:
         break;
-    }
-  }
-
-  private static ServerEntityAction decodeReplicationType(SyncReplicationActivity.ActivityType networkType) {
-    switch(networkType) {
-      case SYNC_BEGIN:
-        throw Assert.failure("Shouldn't decode this type into an internal action");
-      case SYNC_START:
-      case SYNC_END:
-      case ORDERING_PLACEHOLDER:
-        return ServerEntityAction.ORDER_PLACEHOLDER_ONLY;
-      case LOCAL_ENTITY_GC:
-        return ServerEntityAction.MANAGED_ENTITY_GC;
-      case FLUSH_LOCAL_PIPELINE:
-        // Note that these are never replicated from the active but we do synthesize them, internally, in some cases.
-        return ServerEntityAction.LOCAL_FLUSH;
-      case CREATE_ENTITY:
-        return ServerEntityAction.CREATE_ENTITY;
-      case RECONFIGURE_ENTITY:
-        return ServerEntityAction.RECONFIGURE_ENTITY;
-      case INVOKE_ACTION:
-        return ServerEntityAction.INVOKE_ACTION;
-      case DESTROY_ENTITY:
-        return ServerEntityAction.DESTROY_ENTITY;
-      case FETCH_ENTITY:
-        return ServerEntityAction.FETCH_ENTITY;
-      case RELEASE_ENTITY:
-        return ServerEntityAction.RELEASE_ENTITY;
-      case SYNC_ENTITY_BEGIN:
-        return ServerEntityAction.RECEIVE_SYNC_ENTITY_START_SYNCING;
-      case SYNC_ENTITY_CONCURRENCY_BEGIN:
-        return ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_START;
-      case SYNC_ENTITY_CONCURRENCY_PAYLOAD:
-        return ServerEntityAction.RECEIVE_SYNC_PAYLOAD;
-      case SYNC_ENTITY_CONCURRENCY_END:
-        return ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END;
-      case SYNC_ENTITY_END:
-        return ServerEntityAction.RECEIVE_SYNC_ENTITY_END;
-      case DISCONNECT_CLIENT:
-        return ServerEntityAction.DISCONNECT_CLIENT;
-      default:
-        throw new AssertionError("bad replication type: " + networkType);
     }
   }
 

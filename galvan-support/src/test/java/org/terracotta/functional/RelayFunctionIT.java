@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -41,7 +40,7 @@ import org.terracotta.testing.rules.Cluster;
 public class RelayFunctionIT {
 
   private static Logger LOGGER = LoggerFactory.getLogger(RelayFunctionIT.class);
-  
+
   @ClassRule
   public static final Cluster CLUSTER1 = BasicExternalClusterBuilder.newCluster(2)
           .startupBuilder(RelayStartupCommandBuilder::new)
@@ -90,18 +89,16 @@ public class RelayFunctionIT {
     CLUSTER2.getClusterControl().waitForRunningPassivesInStandby();
 // terminate all servers of the source cluster
     CLUSTER1.getClusterControl().terminateAllServers();
-// connect to the RELAY-REPLICA and clear relay status and leaveGroup to start election    
+// connect to the RELAY-REPLICA and clear relay status and leaveGroup to start election
     try (Diagnostics d = DiagnosticsFactory.connect(CLUSTER2.getClusterInfo().getServersInfo().get(1).getAddress(), null)) {
-      String rst = d.invoke("RelayManager", "clearRelay");
-      Assert.assertTrue(Boolean.parseBoolean(rst));
       String state = d.getState();
       while (!state.equals("ACTIVE-COORDINATOR")) {
-        System.out.println("leaving group in " + state + " state " + d.invoke("TerracottaServer", "leaveGroup"));
+        System.out.println("leaving group in " + state + " state " + d.invoke("TerracottaServer", "replicaFailoverToActive"));
         TimeUnit.SECONDS.sleep(2);
         state = d.getState();
       }
     }
-    
+
 //  wait for active of replica cluster
     CLUSTER2.getClusterControl().waitForActive();
     CLUSTER2.getClusterControl().startAllServers();

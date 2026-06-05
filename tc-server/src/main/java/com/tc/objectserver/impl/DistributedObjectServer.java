@@ -88,6 +88,7 @@ import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.PlatformInfoRequest;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
+import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.l2.msg.SyncReplicationActivity;
 import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE;
 import static java.lang.Math.max;
@@ -236,7 +237,12 @@ import org.terracotta.configuration.FailoverBehavior;
 import org.terracotta.server.ServerEnv;
 import com.tc.net.protocol.tcm.TCAction;
 import com.tc.net.utils.ConnectionLogger;
+import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.handler.DuplicationTransactionHandler;
+import com.tc.objectserver.handler.PassiveAckSender;
+import static com.tc.objectserver.handler.PassiveAckSender.decodeReplicationType;
+import com.tc.objectserver.handler.PassiveMessageResultCollector;
 import com.tc.objectserver.handler.RelayTransactionHandler;
 import com.tc.objectserver.persistence.ClusterPersistentState;
 import com.tc.objectserver.persistence.RelayPersistentState;
@@ -245,6 +251,7 @@ import com.tc.productinfo.ProductInfo;
 import com.tc.productinfo.VersionCompatibility;
 import com.tc.util.version.CollectionVersionCompatibility;
 import com.tc.util.version.DefaultVersionCompatibility;
+import java.util.concurrent.Future;
 import org.terracotta.configuration.ConfigurationException;
 
 /**
@@ -611,8 +618,22 @@ public class DistributedObjectServer {
 
     ServerPersistentState serverPersistentState = configSetupManager.isRelaySource() ? new RelayPersistentState() : new ClusterPersistentState(this.persistor.getClusterStatePersistor());
 
-    if (serverPersistentState.getInitialMode() == ServerMode.ACTIVE && configSetupManager.isRelayDestination()) {
-      throw new TCShutdownServerException("Unable to start as a relay destination.  The server was shutdown as active");
+    if (configSetupManager.isRelayDestination()) {
+      // server can't revert back to replica.  Ignore replica setting
+      ServerMode initialState = serverPersistentState.getInitialMode();
+      switch (initialState) {
+        case ACTIVE:
+        case PASSIVE:
+        case UNINITIALIZED:
+          // protect these states for now.  There may be a way to leak after a replica has failed over
+          // through other states but these are the important ones.
+          logger.warn("Server shutdown as {}.  Server is ignoring configuration as replica", initialState);
+          this.configSetupManager.ignoreReplicaSettings();
+          break;
+        default:
+          logger.info("Server shutdown as {}.  Server is starting as replica due to configuration setting", initialState);
+          break;
+      }
     }
 
     final boolean availableMode = voteCount < 0;
@@ -726,18 +747,22 @@ public class DistributedObjectServer {
         new GenericHandler<>(), 1);
 //  routing for passive to receive replication
     EventHandler<ReplicationMessage> replicationEvents = null;
+    PassiveMessageResultCollector collector = null;
     if (configSetupManager.getRelayPeer() != null) {
       //  if the relay source, route the relay transaction handler
       if (configSetupManager.getRelayPeerGroupPort() == null) {
         replicationEvents = createAndRouteRelayTransactionHandler(replicationResponseStage);
       } else {
       //  if destination, route the relay messages coming in
-        routeRelayMessages(state, configSetupManager);
+        collector = routeRelayMessages(state, configSetupManager);
       }
     }
     // if no replcation events have been routed yet (not relay source) route them now
     if (replicationEvents == null) {
-      ReplicatedTransactionHandler replicatedTransactionHandler = new ReplicatedTransactionHandler(state, replicationResponseStage, this.persistor, entityManager, groupCommManager, configSetupManager.isRelayDestination());
+      if (collector == null) {
+        collector = new PassiveAckSender(groupCommManager, m->!state.isActiveCoordinator(), replicationResponseStage.getSink());
+      }
+      ReplicatedTransactionHandler replicatedTransactionHandler = new ReplicatedTransactionHandler(state, this.persistor, entityManager, collector);
       sequenceWeight.setReplicatedTransactionHandler(replicatedTransactionHandler);
       replicationEvents = replicatedTransactionHandler.getEventHandler();
     }
@@ -1379,9 +1404,41 @@ public class DistributedObjectServer {
     return handler.getEventHandler();
   }
 
-  private void routeRelayMessages(StateManager stateMgr, ServerConfigurationManager config) {
+  private PassiveMessageResultCollector routeRelayMessages(StateManager stateMgr, ServerConfigurationManager config) {
     DuplicationTransactionHandler handler = new DuplicationTransactionHandler(stateMgr, n->config.isRelayDestination(), groupCommManager);
     Stage<RelayMessage> relays = this.seda.getStageManager().createStage(ServerConfigurationContext.PASSIVE_REPLICA_STAGE, RelayMessage.class, handler.getEventHandler(), 1);
     this.groupCommManager.routeMessages(RelayMessage.class, relays.getSink());
+    return new PassiveMessageResultCollector() {
+      @Override
+      public void acknowledge(ServerID activeSender, SyncReplicationActivity activity, ReplicationResultCode code) {
+        handler.acknowledge(activeSender, activity, code);
+      }
+
+      @Override
+      public void ackReceived(ServerID activeSender, SyncReplicationActivity activity, Future<Void> future) {
+        handler.ackReceived(activeSender, activity, future);
+      }
+
+      @Override
+      public ServerID getLocalNodeID() {
+        return getServerNodeID();
+      }
+
+      @Override
+      public void requestPassiveSync(NodeID target) {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public ServerEntityRequest transform(SyncReplicationActivity activity) {
+        SyncReplicationActivity.ActivityType activityType = activity.getActivityType();
+        ClientID source = (activityType == SyncReplicationActivity.ActivityType.INVOKE_ACTION) ? ClientID.NULL_ID : activity.getSource();
+        ClientInstanceID instance = (activityType == SyncReplicationActivity.ActivityType.INVOKE_ACTION) ? ClientInstanceID.NULL_ID : activity.getClientInstanceID();
+        TransactionID transactionID = activity.getTransactionID();
+        TransactionID oldestTransactionID = activity.getOldestTransactionOnClient();
+        Assert.assertTrue(SyncReplicationActivity.ActivityType.SYNC_BEGIN != activityType);
+        return new ReplicatedTransactionHandler.BasicServerEntityRequest(decodeReplicationType(activityType), source, instance, transactionID, oldestTransactionID);
+      }
+    };
   }
 }

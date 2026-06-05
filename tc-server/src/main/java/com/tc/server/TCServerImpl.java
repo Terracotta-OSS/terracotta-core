@@ -504,6 +504,17 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   @Override
+  public boolean replicaFailoverToActive() {
+    if (getStateManager().getCurrentMode() == ServerMode.REPLICA) {
+      dsoServer.getConfigSetupManager().ignoreReplicaSettings();
+      leaveGroup();
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  @Override
   public void pause(String path) {
     if (path.equalsIgnoreCase("L1")) {
       try {
