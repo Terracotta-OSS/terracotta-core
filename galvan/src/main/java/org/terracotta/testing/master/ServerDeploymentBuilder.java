@@ -29,6 +29,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -44,6 +46,7 @@ public class ServerDeploymentBuilder {
   private Path installPath;
   private final List<Plugin> plugins = new ArrayList<>();
   private static final Logger LOGGER = LoggerFactory.getLogger(ServerDeploymentBuilder.class);
+  private static final String CHECKSUM_FILE = ".galvan-checksum";
 
   public ServerDeploymentBuilder() {
 
@@ -111,18 +114,26 @@ public class ServerDeploymentBuilder {
     try (FileChannel dc = FileChannel.open(dl, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
       while (true) {
         try (FileLock lock = dc.lock()) {
-          if (Files.find(ip, 10, (path,attr)->path.getFileName().toString().startsWith("tc-server")).findAny().isPresent()) {
-            if (refresh) {
+          String currentChecksum = calculateZipChecksum();
+          String storedChecksum = readStoredChecksum(ip);
+
+          boolean needsRefresh = refresh ||
+              !currentChecksum.equals(storedChecksum);
+
+          if (needsRefresh) {
+            LOGGER.info("Deploying server kit to {} (checksum: {})", ip, currentChecksum);
+            if (Files.exists(ip)) {
               Files.list(ip).forEach(p->{
                 if (!p.getFileName().toString().equals("deploy.lock")) {
                   delete(p);
                 }
               });
-            } else {
-              return ip;
             }
+            deployServer();
+            writeChecksum(ip, currentChecksum);
+          } else {
+            LOGGER.debug("Server kit at {} is up-to-date (checksum: {})", ip, currentChecksum);
           }
-          deployServer();
           lock.release();
           return ip;
         } catch (OverlappingFileLockException overlap) {
@@ -195,6 +206,62 @@ public class ServerDeploymentBuilder {
     } catch (IOException io) {
       throw new RuntimeException(io);
     }
+  }
+
+  private String calculateZipChecksum() throws IOException {
+    // First try to read the pre-calculated checksum from the build
+    try (InputStream checksumStream = ServerDeploymentBuilder.class.getResourceAsStream("/galvan-test-server.zip.sha256")) {
+      if (checksumStream != null) {
+        String checksum = new String(checksumStream.readAllBytes()).trim();
+        if (!checksum.isEmpty()) {
+          LOGGER.debug("Using pre-calculated checksum: {}", checksum);
+          return checksum;
+        }
+      }
+    } catch (IOException e) {
+      LOGGER.warn("Failed to read pre-calculated checksum, will calculate at runtime", e);
+    }
+
+    // Fallback: calculate checksum at runtime if pre-calculated one is not available
+    LOGGER.debug("Calculating checksum at runtime");
+    try (InputStream server = ServerDeploymentBuilder.class.getResourceAsStream("/galvan-test-server.zip")) {
+      if (server == null) {
+        throw new IOException("galvan-test-server.zip not found in classpath");
+      }
+      MessageDigest md = MessageDigest.getInstance("SHA-256");
+      byte[] buffer = new byte[8192];
+      int read;
+      while ((read = server.read(buffer)) != -1) {
+        md.update(buffer, 0, read);
+      }
+      return bytesToHex(md.digest());
+    } catch (NoSuchAlgorithmException e) {
+      throw new RuntimeException("SHA-256 algorithm not available", e);
+    }
+  }
+
+  private String readStoredChecksum(Path installPath) {
+    Path checksumFile = installPath.resolve(CHECKSUM_FILE);
+    try {
+      if (Files.exists(checksumFile)) {
+        return Files.readString(checksumFile).trim();
+      }
+    } catch (IOException e) {
+      LOGGER.warn("Failed to read checksum file at {}", checksumFile, e);
+    }
+    return "";
+  }
+
+  private void writeChecksum(Path installPath, String checksum) throws IOException {
+    Files.writeString(installPath.resolve(CHECKSUM_FILE), checksum);
+  }
+
+  private static String bytesToHex(byte[] bytes) {
+    StringBuilder sb = new StringBuilder(bytes.length * 2);
+    for (byte b : bytes) {
+      sb.append(String.format("%02x", b));
+    }
+    return sb.toString();
   }
 
   public static void main(String[] args) {
