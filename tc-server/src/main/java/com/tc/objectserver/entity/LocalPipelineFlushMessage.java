@@ -28,9 +28,9 @@ import com.tc.object.tx.TransactionID;
 
 
 /**
- *  This message is use to flush the deferred entity queue.  It is placed in 
- *  at the end of and exclusive entity message execution to flush the deferred queue.  
- *  It runs the entire pipeline but is never scheduled on the request processor by 
+ *  This message is use to flush the deferred entity queue.  It is placed in
+ *  at the end of and exclusive entity message execution to flush the deferred queue.
+ *  It runs the entire pipeline but is never scheduled on the request processor by
  *  ManagedEntityImpl.
  */
 public class LocalPipelineFlushMessage implements VoltronEntityMessage, Runnable {
@@ -43,18 +43,23 @@ public class LocalPipelineFlushMessage implements VoltronEntityMessage, Runnable
     this.forDestroy = forDestroy;
     action = null;
   }
-  
+
   public LocalPipelineFlushMessage(EntityDescriptor descriptor, Runnable action) {
     this.descriptor = descriptor;
     this.forDestroy = false;
     this.action = action;
   }
-  
+
   @Override
   public void run() {
     if (action != null) {
       action.run();
     }
+  }
+
+  @Override
+  public boolean isServerRequest() {
+    return true;
   }
 
   @Override
@@ -86,7 +91,7 @@ public class LocalPipelineFlushMessage implements VoltronEntityMessage, Runnable
   public boolean doesRequestRetired() {
     return false;
   }
-  
+
   @Override
   public Type getVoltronType() {
     return (forDestroy) ? Type.LOCAL_ENTITY_GC : Type.LOCAL_PIPELINE_FLUSH;
