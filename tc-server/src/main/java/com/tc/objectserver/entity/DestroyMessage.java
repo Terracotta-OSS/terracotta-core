@@ -37,6 +37,11 @@ public class DestroyMessage implements VoltronEntityMessage {
   }
 
   @Override
+  public boolean isServerRequest() {
+    return true;
+  }
+
+  @Override
   public ClientID getSource() {
     return ClientID.NULL_ID;
   }
@@ -65,7 +70,7 @@ public class DestroyMessage implements VoltronEntityMessage {
   public boolean doesRequestRetired() {
     return false;
   }
-  
+
   @Override
   public VoltronEntityMessage.Type getVoltronType() {
     return Type.DESTROY_ENTITY;

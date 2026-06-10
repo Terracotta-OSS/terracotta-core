@@ -40,6 +40,11 @@ public class CreateMessage implements VoltronEntityMessage {
   }
 
   @Override
+  public boolean isServerRequest() {
+    return true;
+  }
+
+  @Override
   public ClientID getSource() {
     return ClientID.NULL_ID;
   }
@@ -68,7 +73,7 @@ public class CreateMessage implements VoltronEntityMessage {
   public boolean doesRequestRetired() {
     return false;
   }
-  
+
   @Override
   public VoltronEntityMessage.Type getVoltronType() {
     return Type.CREATE_ENTITY;

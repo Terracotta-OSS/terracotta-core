@@ -43,6 +43,10 @@ public class ClientDisconnectMessage implements VoltronEntityMessage, Runnable {
     this.disconnectException = exception;
   }
 
+  public boolean isServerRequest() {
+    return true;
+  }
+
   @Override
   public ClientID getSource() {
     return clientID;
@@ -72,7 +76,7 @@ public class ClientDisconnectMessage implements VoltronEntityMessage, Runnable {
   public boolean doesRequestRetired() {
     return false;
   }
-    
+
   @Override
   public VoltronEntityMessage.Type getVoltronType() {
     return Type.DISCONNECT_CLIENT;
@@ -104,13 +108,13 @@ public class ClientDisconnectMessage implements VoltronEntityMessage, Runnable {
       this.disconnectComplete.run();
     }
   }
-  
+
   public void disconnectException(Exception e) {
     if (this.disconnectException != null) {
       this.disconnectException.accept(e);
     }
   }
-  
+
   @Override
   public String toString() {
     return "ClientDisconnectMessage{" + "clientID=" + clientID + ", entityDescriptor=" + descriptor + '}';

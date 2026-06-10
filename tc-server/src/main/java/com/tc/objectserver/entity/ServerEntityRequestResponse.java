@@ -22,6 +22,7 @@ import com.tc.exception.ServerException;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.services.EntityMessengerService;
 import com.tc.util.Assert;
 
 import java.util.Optional;
@@ -37,22 +38,31 @@ import java.util.function.Supplier;
 public class ServerEntityRequestResponse extends AbstractServerEntityRequestResponse implements ResultCapture {
   protected final Supplier<Optional<MessageChannel>> returnChannel;
   // We only track whether this is replicated to know that we should reject retire acks.
-  private final boolean isReplicatedMessage;
-  
+  private final boolean isServerMessage;
+
   private Supplier<ActivePassiveAckWaiter> waiter;
 
-  public ServerEntityRequestResponse(ServerEntityRequest request, 
+  public ServerEntityRequestResponse(ServerEntityRequest request,
       Consumer<VoltronEntityResponse> sender,
-      Supplier<Optional<MessageChannel>> returnChannel, 
-      Consumer<byte[]> completion, Consumer<ServerException> exception, boolean isReplicatedMessage) {
+      Supplier<Optional<MessageChannel>> returnChannel,
+      Consumer<byte[]> completion, Consumer<ServerException> exception, boolean isServerRequest) {
     super(request, sender, completion, exception);
     this.returnChannel = returnChannel;
-    this.isReplicatedMessage = isReplicatedMessage;
+    this.isServerMessage = isServerRequest;
+  }
+
+  @Override
+  public boolean isServerRequest() {
+    return this.isServerMessage;
   }
 
   @Override
   public Optional<MessageChannel> getReturnChannel() {
-    return returnChannel.get();
+    if (!isServerMessage) {
+      return returnChannel.get();
+    } else {
+      return Optional.empty();
+    }
   }
 
   @Override
@@ -76,7 +86,7 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
     if (value == null) {
       super.complete();
     } else {
-      super.complete(value); 
+      super.complete(value);
     }
   }
 
@@ -89,13 +99,11 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
   @Override
   public synchronized void failure(ServerException e) {
     if (isComplete()) throw new AssertionError("Double-sending response " + this.getAction(), e);
-    super.failure(e); 
+    super.failure(e);
   }
- 
+
   @Override
   public synchronized CompletionStage<Void> retired() {
-    // Replicated messages are never retired.
-    Assert.assertFalse(this.isReplicatedMessage);
     // We can only send the retire, once.
     if (isRetired()) {
       throw new AssertionError("Double-sending retire " + this.getAction());

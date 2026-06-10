@@ -29,21 +29,28 @@ import java.util.Set;
 
 
 public class ServerEntityRequestImpl implements ServerEntityRequest {
-  
+
   private final ServerEntityAction action;
   private final ClientID node;
   private final TransactionID transaction;
   private final TransactionID oldest;
   private final boolean requiresReceived;
   private final ClientInstanceID cid;
+  private final boolean isServerRequest;
 
-  public ServerEntityRequestImpl(ClientInstanceID descriptor, ServerEntityAction action, ClientID node, TransactionID transaction, TransactionID oldest, boolean requiresReceived) {
+  public ServerEntityRequestImpl(ClientInstanceID descriptor, ServerEntityAction action, ClientID node, TransactionID transaction, TransactionID oldest, boolean requiresReceived, boolean isServer) {
     this.cid = descriptor;
     this.action = action;
     this.node = node;
     this.transaction = transaction;
     this.oldest = oldest;
     this.requiresReceived = requiresReceived;
+    this.isServerRequest = isServer;
+  }
+
+  @Override
+  public boolean isServerRequest() {
+    return this.isServerRequest;
   }
 
   @Override
@@ -75,7 +82,7 @@ public class ServerEntityRequestImpl implements ServerEntityRequest {
   public boolean requiresReceived() {
     return requiresReceived;
   }
- 
+
   @Override
   public Set<SessionID> replicateTo(Set<SessionID> passives) {
     // Note that we should be avoiding the decision to replicate messages at a higher-level so filter out any local-only

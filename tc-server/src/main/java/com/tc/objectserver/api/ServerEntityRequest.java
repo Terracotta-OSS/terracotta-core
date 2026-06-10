@@ -33,23 +33,25 @@ public interface ServerEntityRequest {
  * @return origin of the request
  */
   ClientID getNodeID();
-  
+
   TransactionID getTransaction();
-  
+
   TransactionID getOldestTransactionOnClient();
   /**
    * The descriptor referring to the specific client-side object instance which issued the request.
-   * @return 
+   * @return
    */
   ClientInstanceID getClientInstance();
-  
+
   boolean requiresReceived();
 /**
  * Provide the nodes which need to be replicated to for this request
  * @param passives current set of passive nodes
  * @return the passives that this request needs to be replicated to
- */  
+ */
   Set<SessionID> replicateTo(Set<SessionID> passives);
+
+  boolean isServerRequest();
 
   default String getTraceID() {
     return getNodeID().toLong() + ":" + getTransaction().toLong();

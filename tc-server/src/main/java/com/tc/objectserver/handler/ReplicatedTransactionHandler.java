@@ -144,6 +144,10 @@ public class ReplicatedTransactionHandler {
           return ServerEntityAction.FAILOVER_FLUSH;
         }
 
+        public boolean isServerRequest() {
+          return true;
+        }
+
         @Override
         public ClientID getNodeID() {
           return ClientID.NULL_ID;
@@ -723,6 +727,11 @@ public class ReplicatedTransactionHandler {
       this.instance = instance;
       this.transaction = transaction;
       this.oldest = oldest;
+    }
+
+    @Override
+    public boolean isServerRequest() {
+      return true;
     }
 
     @Override

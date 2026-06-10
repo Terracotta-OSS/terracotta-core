@@ -48,21 +48,21 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
   private final ServerEntityRequest request;
   private final Consumer<byte[]> complete;
   private final Consumer<ServerException> fail;
-  
+
   private final Consumer<VoltronEntityResponse> messageSender;
-    
+
   private boolean isComplete = false;
   private boolean isRetired = false;
 
   private volatile Future<Void> transactionOrderPersistenceFuture;
-  
+
   public AbstractServerEntityRequestResponse(ServerEntityRequest action, Consumer<VoltronEntityResponse> messageSender, Consumer<byte[]> complete, Consumer<ServerException> fail) {
     this.request = action;
     this.messageSender = messageSender;
     this.complete = complete;
     this.fail = fail;
   }
-  
+
   public abstract Optional<MessageChannel> getReturnChannel();
 
   @Override
@@ -74,12 +74,12 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
   public boolean requiresReceived() {
     return request.requiresReceived();
   }
-  
+
   @Override
   public TransactionID getTransaction() {
     return request.getTransaction();
   }
-  
+
   @Override
   public TransactionID getOldestTransactionOnClient() {
     return request.getOldestTransactionOnClient();
@@ -94,12 +94,12 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
   public String getTraceID() {
     return request.getTraceID();
   }
-    
+
   @Override
   public ClientID getNodeID() {
     return request.getNodeID();
   }
-      
+
   @Override
   public ServerEntityAction getAction() {
     return request.getAction();
@@ -107,7 +107,7 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
 
   @Override
   public void failure(ServerException e) {
-    if (!this.getNodeID().isNull()) {
+    if (!isServerRequest()) {
       getReturnChannel().ifPresent(channel -> {
         VoltronEntityAppliedResponse message = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
         message.setFailure(request.getTransaction(), e);
@@ -137,15 +137,15 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
       messageSender.accept(message);
     });
   }
-  
+
   @Override
   public void complete() {
-    if (!this.getNodeID().isNull()) {
+    if (!isServerRequest()) {
       getReturnChannel().ifPresent(channel -> {
         VoltronEntityAppliedResponse actionResponse = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
         switch (request.getAction()) {
           case DISCONNECT_CLIENT:
-            // do nothing, really shouldn't happen because this client is gone but maybe if there is 
+            // do nothing, really shouldn't happen because this client is gone but maybe if there is
             // some large delay in cleanup, this can occur
             break;
           case CREATE_ENTITY:
@@ -167,14 +167,14 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
       complete.accept(null);
     }
   }
-  
+
   @Override
   public void complete(byte[] value) {
-    if (!this.getNodeID().isNull()) {
+    if (!isServerRequest()) {
       getReturnChannel().ifPresent(channel -> {
         switch (request.getAction()) {
           case DISCONNECT_CLIENT:
-            // do nothing, really shouldn't happen because this client is gone but maybe if there is 
+            // do nothing, really shouldn't happen because this client is gone but maybe if there is
             // some large delay in cleanup, this can occur
             break;
           case INVOKE_ACTION:
@@ -198,26 +198,26 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
   public void setTransactionOrderPersistenceFuture(Future<Void> transactionOrderPersistenceFuture) {
     this.transactionOrderPersistenceFuture = transactionOrderPersistenceFuture;
   }
-  
+
   @Override
   public CompletionStage<Void> retired() {
     Assert.assertTrue("Double-retire", !isRetired());
-    
+
     getReturnChannel().ifPresent(channel -> {
       VoltronEntityRetiredResponse response = (VoltronEntityRetiredResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE);
       response.setTransactionID(request.getTransaction());
       messageSender.accept(response);
     });
     this.isRetired = true;
-    
+
     return CompletableFuture.completedFuture(null);
   }
-  
+
   protected boolean isComplete() {
     return this.isComplete;
-  }  
-  
+  }
+
   protected boolean isRetired() {
     return this.isRetired;
-  }  
+  }
 }

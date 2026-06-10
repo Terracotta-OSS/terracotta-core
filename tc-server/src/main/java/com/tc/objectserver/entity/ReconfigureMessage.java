@@ -35,6 +35,11 @@ public class ReconfigureMessage implements VoltronEntityMessage {
   }
 
   @Override
+  public boolean isServerRequest() {
+    return true;
+  }
+
+  @Override
   public ClientID getSource() {
     return ClientID.NULL_ID;
   }
