@@ -20,10 +20,10 @@ package com.tc.objectserver.entity;
 import com.tc.entity.VoltronEntityResponse;
 import com.tc.exception.ServerException;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.tcm.TCAction;
+import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.api.ServerEntityRequest;
-import com.tc.services.EntityMessengerService;
-import com.tc.util.Assert;
 
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
@@ -57,9 +57,9 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
   }
 
   @Override
-  public Optional<MessageChannel> getReturnChannel() {
+  public Optional<TCAction> createMessage(TCMessageType type) {
     if (!isServerMessage) {
-      return returnChannel.get();
+      return returnChannel.get().map(channel->channel.createMessage(type));
     } else {
       return Optional.empty();
     }
