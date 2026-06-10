@@ -368,8 +368,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     // if the client is valid and the transaction id is valid, then this came from a real client
     // and the client expects to be able to reconnect
     ServerEntityRequestImpl request = new ServerEntityRequestImpl(descriptor.getClientInstanceID(), action, sourceNodeID, transactionID, oldestTransactionOnClient, requiresReceived, isServerRequest);
-    if (sourceNodeID != null && !sourceNodeID.isNull() && transactionID.isValid()) {
-      Assert.assertTrue(oldestTransactionOnClient.isValid());
+    if (sourceNodeID != null && !sourceNodeID.isNull() && transactionID.isValid() && oldestTransactionOnClient.isValid()) {
       // This client still needs transaction order persistence.
       transactionOrderPersistenceFuture = this.persistor.getTransactionOrderPersistor().updateWithNewMessage(sourceNodeID, transactionID, oldestTransactionOnClient);
     }
@@ -729,8 +728,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
     }
 
     @Override
-    public Optional<MessageChannel> getReturnChannel() {
-      return safeGetChannel(getNodeID());
+    public Optional<TCAction> createMessage(TCMessageType type) {
+      return safeGetChannel(getNodeID()).map(channel->channel.createMessage(type));
     }
 
     @Override
@@ -880,8 +879,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
     }
 
     @Override
-    public Optional<MessageChannel> getReturnChannel() {
-      return safeGetChannel(getNodeID());
+    public Optional<TCAction> createMessage(TCMessageType type) {
+      return safeGetChannel(getNodeID()).map(channel->channel.createMessage(type));
     }
 
     @Override

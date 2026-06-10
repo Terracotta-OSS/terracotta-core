@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 /**
  *
  */
- 
+
 public class ResultCaptureImpl implements ResultCapture {
   private final Runnable received;
   private final Consumer<byte[]> result;
@@ -41,7 +41,7 @@ public class ResultCaptureImpl implements ResultCapture {
   private static final Logger LOGGER = LoggerFactory.getLogger(ResultCaptureImpl.class);
 
   Supplier<ActivePassiveAckWaiter> setOnce;
-  
+
   public ResultCaptureImpl(Runnable received, Consumer<byte[]> result, Consumer<byte[]> message, Consumer<ServerException> error) {
     this.received = received;
     this.result = result;
@@ -81,7 +81,7 @@ public class ResultCaptureImpl implements ResultCapture {
     if (result != null) {
       result.accept(null);
     }
-  }  
+  }
 
   @Override
   public void complete(byte[] value) {
@@ -108,7 +108,7 @@ public class ResultCaptureImpl implements ResultCapture {
       error.accept(ee);
     }
   }
-  
+
   @Override
   public void message(byte[] m) {
     message.accept(m);
@@ -116,7 +116,7 @@ public class ResultCaptureImpl implements ResultCapture {
 
   @Override
   public CompletionStage<Void> retired() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    throw new UnsupportedOperationException("Not supported yet.");
   }
-  
+
 }

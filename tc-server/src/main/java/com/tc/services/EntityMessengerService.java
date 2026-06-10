@@ -190,10 +190,12 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
 
       ServerEntityRequest parent = parentContext.get();
 
-      if (parent != null) {
+      if (false /*parent != null*/) {
         this.clientID = parent.getNodeID();
-        this.transactionID = parent.getTransaction();
-        this.oldestTransactionID = parent.getOldestTransactionOnClient();
+//        this.transactionID = parent.getTransaction();
+        this.transactionID = new TransactionID(NEXT_FAKE_TXN_ID.incrementAndGet());
+//        this.oldestTransactionID = parent.getOldestTransactionOnClient();
+        this.oldestTransactionID = TransactionID.NULL_ID;
       } else {
         this.clientID = ClientID.NULL_ID;
         this.transactionID = new TransactionID(NEXT_FAKE_TXN_ID.incrementAndGet());
