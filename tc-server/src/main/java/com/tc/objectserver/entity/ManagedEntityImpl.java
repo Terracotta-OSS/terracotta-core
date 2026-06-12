@@ -54,6 +54,7 @@ import com.tc.services.MappedStateCollector;
 import com.tc.spi.Guardian;
 import com.tc.tracing.Trace;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.SetOnceFlag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ActiveServerEntity;
@@ -906,9 +907,14 @@ public class ManagedEntityImpl implements ManagedEntity {
         throw new IllegalStateException("Actions on a non-existent entity. active:" + this.isActive() + " " + message.toString());
       } else {
         this.retirementManager.registerWithMessage(message, concurrencyKey, new Retiree() {
+          private final SetOnceFlag retired = new SetOnceFlag();
           @Override
           public CompletionStage<Void> retired() {
-            return response.retired();
+            if (retired.attemptSet()) {
+              return response.retired();
+            } else {
+              throw new IllegalStateException("already retired");
+            }
           }
 
           @Override
@@ -1193,7 +1199,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(passive);
 // wait for future is ok, occuring on sync executor thread
     BarrierCompletion syncStart = new BarrierCompletion();
-    this.executor.scheduleRequest(interop.isSyncing(), this.id, this.version, this.fetchID, new ServerEntityRequestImpl(ClientInstanceID.NULL_ID, ServerEntityAction.LOCAL_FLUSH_AND_SYNC, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, false, true), MessagePayload.emptyPayload(), (w)-> {
+    this.executor.scheduleRequest(interop.isSyncing(), this.id, this.version, this.fetchID, new ServerEntityRequestImpl(ClientInstanceID.NULL_ID, ServerEntityAction.LOCAL_FLUSH_AND_SYNC, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, false), MessagePayload.emptyPayload(), (w)-> {
         Assert.assertTrue(this.isInActiveState);
         if (!this.isDestroyed) {
           executor.scheduleSync(SyncReplicationActivity.createStartEntityMessage(id, version, fetchID, TCByteBufferFactory.wrap(constructorInfo), canDelete ? this.clientReferenceCount : ManagedEntity.UNDELETABLE_ENTITY), passive).waitForCompleted();
@@ -1302,11 +1308,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     public PassiveSyncServerEntityRequest(SessionID passive) {
       action = ServerEntityAction.REQUEST_SYNC_ENTITY;
       this.passive = passive;
-    }
-
-    @Override
-    public boolean isServerRequest() {
-      return true;
     }
 
     @Override

@@ -32,11 +32,9 @@ import com.tc.objectserver.api.ManagedEntity.LifecycleListener;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.entity.CreateMessage;
 import com.tc.objectserver.entity.DestroyMessage;
-import com.tc.objectserver.entity.ManagedEntityImpl;
 import com.tc.objectserver.entity.ReconfigureMessage;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.util.Assert;
-import java.util.Optional;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.ExplicitRetirementHandle;
 import org.terracotta.entity.IEntityMessenger;
@@ -190,12 +188,10 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
 
       ServerEntityRequest parent = parentContext.get();
 
-      if (false /*parent != null*/) {
+      if (parent != null) {
         this.clientID = parent.getNodeID();
-//        this.transactionID = parent.getTransaction();
-        this.transactionID = new TransactionID(NEXT_FAKE_TXN_ID.incrementAndGet());
-//        this.oldestTransactionID = parent.getOldestTransactionOnClient();
-        this.oldestTransactionID = TransactionID.NULL_ID;
+        this.transactionID = parent.getTransaction();
+        this.oldestTransactionID = parent.getOldestTransactionOnClient();
       } else {
         this.clientID = ClientID.NULL_ID;
         this.transactionID = new TransactionID(NEXT_FAKE_TXN_ID.incrementAndGet());
@@ -254,11 +250,6 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     }
 
     @Override
-    public boolean isServerRequest() {
-      return true;
-    }
-
-    @Override
     public Consumer<byte[]> getCompletionHandler() {
       return response == null ? null : (raw)->this.response.accept(new MessageResponse() {
         @Override
@@ -300,6 +291,11 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
           return null;
         }
       });
+    }
+
+    @Override
+    public boolean isServerRequest() {
+      return true;
     }
   }
 

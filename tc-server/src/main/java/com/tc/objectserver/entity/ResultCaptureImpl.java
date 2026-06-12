@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.tc.objectserver.api.ResultCapture;
 import com.tc.tracing.Trace;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -111,12 +112,13 @@ public class ResultCaptureImpl implements ResultCapture {
 
   @Override
   public void message(byte[] m) {
-    message.accept(m);
+    if (message != null) {
+      message.accept(m);
+    }
   }
 
   @Override
   public CompletionStage<Void> retired() {
-    throw new UnsupportedOperationException("Not supported yet.");
+    return CompletableFuture.completedFuture(null);
   }
-
 }

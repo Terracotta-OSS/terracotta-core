@@ -21,7 +21,6 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
-import com.tc.async.api.Stage;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.exception.ServerException;
@@ -36,8 +35,6 @@ import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
-import com.tc.net.groups.AbstractGroupMessage;
-import com.tc.net.groups.GroupManager;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
@@ -49,7 +46,6 @@ import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
-import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.entity.BarrierCompletion;
 import com.tc.objectserver.entity.NoopResultCapture;
 import com.tc.objectserver.entity.PassiveResultCapture;
@@ -142,10 +138,6 @@ public class ReplicatedTransactionHandler {
         @Override
         public ServerEntityAction getAction() {
           return ServerEntityAction.FAILOVER_FLUSH;
-        }
-
-        public boolean isServerRequest() {
-          return true;
         }
 
         @Override
@@ -727,11 +719,6 @@ public class ReplicatedTransactionHandler {
       this.instance = instance;
       this.transaction = transaction;
       this.oldest = oldest;
-    }
-
-    @Override
-    public boolean isServerRequest() {
-      return true;
     }
 
     @Override

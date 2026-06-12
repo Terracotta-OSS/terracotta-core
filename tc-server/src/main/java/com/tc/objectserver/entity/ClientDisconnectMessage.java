@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -41,10 +41,6 @@ public class ClientDisconnectMessage implements VoltronEntityMessage, Runnable {
     this.descriptor = entityID;
     this.disconnectComplete = completion;
     this.disconnectException = exception;
-  }
-
-  public boolean isServerRequest() {
-    return true;
   }
 
   @Override
@@ -102,6 +98,8 @@ public class ClientDisconnectMessage implements VoltronEntityMessage, Runnable {
     return null;
   }
 
+
+
   @Override
   public void run() {
     if (this.disconnectComplete != null) {
@@ -113,6 +111,11 @@ public class ClientDisconnectMessage implements VoltronEntityMessage, Runnable {
     if (this.disconnectException != null) {
       this.disconnectException.accept(e);
     }
+  }
+
+  @Override
+  public boolean isServerRequest() {
+    return true;
   }
 
   @Override

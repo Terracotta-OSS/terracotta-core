@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -40,11 +40,6 @@ public class CreateSystemEntityMessage implements VoltronEntityMessage {
     this.eid = eid;
     this.version = version;
     this.data = extended == null || extended.isReadOnly() ? extended : extended.asReadOnlyBuffer();
-  }
-
-  @Override
-  public boolean isServerRequest() {
-    return true;
   }
 
   @Override
@@ -95,5 +90,10 @@ public class CreateSystemEntityMessage implements VoltronEntityMessage {
   @Override
   public EntityMessage getEntityMessage() {
     return null;
+  }
+
+  @Override
+  public boolean isServerRequest() {
+    return true;
   }
 }
