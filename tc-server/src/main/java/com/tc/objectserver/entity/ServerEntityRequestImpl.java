@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,21 +36,14 @@ public class ServerEntityRequestImpl implements ServerEntityRequest {
   private final TransactionID oldest;
   private final boolean requiresReceived;
   private final ClientInstanceID cid;
-  private final boolean isServerRequest;
 
-  public ServerEntityRequestImpl(ClientInstanceID descriptor, ServerEntityAction action, ClientID node, TransactionID transaction, TransactionID oldest, boolean requiresReceived, boolean isServer) {
+  public ServerEntityRequestImpl(ClientInstanceID descriptor, ServerEntityAction action, ClientID node, TransactionID transaction, TransactionID oldest, boolean requiresReceived) {
     this.cid = descriptor;
     this.action = action;
     this.node = node;
     this.transaction = transaction;
     this.oldest = oldest;
     this.requiresReceived = requiresReceived;
-    this.isServerRequest = isServer;
-  }
-
-  @Override
-  public boolean isServerRequest() {
-    return this.isServerRequest;
   }
 
   @Override

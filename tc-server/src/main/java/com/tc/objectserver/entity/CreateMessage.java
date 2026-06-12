@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,11 +37,6 @@ public class CreateMessage implements VoltronEntityMessage {
   public CreateMessage(String type, String name, long version, byte[] config) {
     this.entityDescriptor = EntityDescriptor.createDescriptorForLifecycle(new EntityID(type, name), version);
     this.configuration = config;
-  }
-
-  @Override
-  public boolean isServerRequest() {
-    return true;
   }
 
   @Override
@@ -91,6 +86,11 @@ public class CreateMessage implements VoltronEntityMessage {
     // will return null, here, and define that to mean that the client is no longer requiring persistent ordering.
     // Note that it may be worth making this a more explicit case in case other unexpected null cases are found.
     return TransactionID.NULL_ID;
+  }
+
+  @Override
+  public boolean isServerRequest() {
+    return true;
   }
 
   @Override

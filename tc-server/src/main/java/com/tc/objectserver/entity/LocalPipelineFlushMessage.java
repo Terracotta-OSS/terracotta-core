@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -58,11 +58,6 @@ public class LocalPipelineFlushMessage implements VoltronEntityMessage, Runnable
   }
 
   @Override
-  public boolean isServerRequest() {
-    return true;
-  }
-
-  @Override
   public ClientID getSource() {
     return ClientID.NULL_ID;
   }
@@ -111,5 +106,10 @@ public class LocalPipelineFlushMessage implements VoltronEntityMessage, Runnable
   public EntityMessage getEntityMessage() {
     // No instance for this type.
     return null;
+  }
+
+  @Override
+  public boolean isServerRequest() {
+    return true;
   }
 }

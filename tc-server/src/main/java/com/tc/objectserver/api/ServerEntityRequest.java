@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -50,8 +50,6 @@ public interface ServerEntityRequest {
  * @return the passives that this request needs to be replicated to
  */
   Set<SessionID> replicateTo(Set<SessionID> passives);
-
-  boolean isServerRequest();
 
   default String getTraceID() {
     return getNodeID().toLong() + ":" + getTransaction().toLong();
