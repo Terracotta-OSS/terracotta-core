@@ -21,9 +21,7 @@ import com.tc.exception.ServerException;
 import com.tc.exception.ServerExceptionType;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.net.utils.L2Utils;
 import com.tc.object.EntityDescriptor;
-import com.tc.object.EntityID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.api.ServerEntityRequest;
@@ -31,8 +29,6 @@ import com.tc.objectserver.handler.EntityExistenceHelpers;
 import com.tc.objectserver.persistence.Persistor;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
@@ -52,15 +48,12 @@ public class LifecycleResultCapture implements ResultCapture {
     private final Function<ClientID, MessageChannel> channelManager;
 
     private Supplier<ActivePassiveAckWaiter> setOnce;
-    private final Future<Void> transactionOrderPersistenceFuture;
-
 
     public LifecycleResultCapture(EntityDescriptor descriptor,
             long consumerID,
             ServerEntityRequest request,
             byte[] config, Persistor persistor,
             EntityManager entityManager,
-            Future<Void> tnsOrderPersistor,
             Function<ClientID, MessageChannel> channelManager) {
       this.request = request;
       this.descriptor = descriptor;
@@ -69,7 +62,6 @@ public class LifecycleResultCapture implements ResultCapture {
       this.persistor = persistor;
       this.entityManager = entityManager;
       this.channelManager = channelManager;
-      this.transactionOrderPersistenceFuture = tnsOrderPersistor;
     }
 
     @Override
@@ -85,11 +77,6 @@ public class LifecycleResultCapture implements ResultCapture {
     @Override
     public void setWaitFor(Supplier<ActivePassiveAckWaiter> waiter) {
       this.setOnce = waiter;
-    }
-
-    @Override
-    public void waitForReceived() {
-      this.setOnce.get().waitForReceived();
     }
 
     @Override
@@ -162,15 +149,7 @@ public class LifecycleResultCapture implements ResultCapture {
 
   @Override
   public synchronized void received() {
-    if(transactionOrderPersistenceFuture != null) {
-      try {
-        transactionOrderPersistenceFuture.get();
-      } catch (InterruptedException ie) {
-        L2Utils.handleInterrupted(null, ie);
-      } catch (ExecutionException e) {
-        throw new RuntimeException("Caught exception while persisting transaction order", e);
-      }
-    }
+
   }
 
   private void disconnectClientDueToFailure(ClientID clientID, Exception exp) {

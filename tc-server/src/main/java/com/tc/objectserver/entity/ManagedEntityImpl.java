@@ -930,9 +930,6 @@ public class ManagedEntityImpl implements ManagedEntity {
         try {
           ExecutionStrategy.Location loc = this.executionStrategy.getExecutionLocation(message);
           if (loc.runOnActive()) {
-            if (wrappedRequest.requiresReceived()) {
-              response.waitForReceived(); // waits for received on passives
-            }
             if (response instanceof StatisticsCapture) {
               ((StatisticsCapture)response).beginInvoke();
             }

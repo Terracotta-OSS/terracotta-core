@@ -76,7 +76,7 @@ import org.terracotta.entity.EntityMessage;
 import com.tc.net.protocol.tcm.TCAction;
 import com.tc.objectserver.api.ServerEntityResponse;
 import com.tc.objectserver.entity.NetworkInvokeResponse;
-import com.tc.objectserver.entity.PersistenceResultCapture;
+import com.tc.objectserver.entity.WaitingResultCapture;
 import com.tc.objectserver.entity.NetworkServerEntityResponse;
 import com.tc.objectserver.entity.ResultCaptureImpl;
 import com.tc.objectserver.entity.LifecycleResultCapture;
@@ -248,7 +248,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
               ServerEntityAction.INVALID, client,
               TransactionID.NULL_ID,
               TransactionID.NULL_ID, false);
-      ResultCapture send = createInvokeResponse(req, null, false, true);
+      ResultCapture send = createInvokeResponse(req, false, false);
       send.message(payload);
     }
 
@@ -259,7 +259,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
               ServerEntityAction.INVALID, client,
               transaction,
               TransactionID.NULL_ID, false);
-      ResultCapture send = createInvokeResponse(req, null, false, true);
+      ResultCapture send = createInvokeResponse(req, false, false);
       send.message(payload);
     }
   };
@@ -302,11 +302,13 @@ public class ProcessTransactionHandler implements ReconnectListener {
     // capture new messages intended to be sent after this one.
     // only actions that were client generated need to be sent back to the client
     if (!msg.getDestinationNodeID().isNull()  && !msg.getTransactionID().isNull()) {
-      VoltronEntityMultiResponse vmr = invokeReturn.remove((ClientID)msg.getDestinationNodeID());
-      if (vmr != null) {
-        vmr.stopAdding();
-      }
-      multiSend.getSink().addToSink(new ResponseMessage(msg));
+      invokeReturn.compute((ClientID)msg.getDestinationNodeID(), (c,v)->{
+        if (v != null) {
+          v.stopAdding();
+        }
+        multiSend.getSink().addToSink(new ResponseMessage(msg));
+        return null;
+      });
     }
   }
 
@@ -316,7 +318,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
           Consumer<byte[]> chaincomplete, Consumer<ServerException> chainfail, boolean requiresReceived, boolean requiresRetired, boolean sendToClient) {
     // Version error or duplicate creation requests will manifest as exceptions here so catch them so we can send them back
     //  over the wire as an error in the request.
-    ResultCapture chain = new ResultCaptureImpl(null, chaincomplete, null, chainfail);
+    ResultCapture last = new ResultCaptureImpl(null, chaincomplete, null, chainfail);
     // In the general case, however, we need to pass this as a real ServerEntityRequest, into the entityProcessor.
     // Before we pass this on to the entity or complete it, directly, we can send the received() ACK, since we now know the message order.
     // Note that we only want to persist the messages with a true sourceNodeID.  Synthetic invocations and sync messages
@@ -330,6 +332,10 @@ public class ProcessTransactionHandler implements ReconnectListener {
       transactionOrderPersistenceFuture = this.persistor.getTransactionOrderPersistor().updateWithNewMessage(sourceNodeID, transactionID, oldestTransactionOnClient);
     }
 
+    ResultCapture first = createWaitingResponse(transactionOrderPersistenceFuture, request.requiresReceived());
+
+    ResultCapture complete;
+
     Trace trace = null;
     if (Trace.isTraceEnabled()) {
       trace = new Trace(request.getTraceID(), "ProcessTransactionHandler.AddMessage");
@@ -340,31 +346,38 @@ public class ProcessTransactionHandler implements ReconnectListener {
     if (ServerEntityAction.CREATE_ENTITY == action) {
       long consumerID = this.persistor.getEntityPersistor().getNextConsumerID();
       // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
-      ResultCapture capture = createLifecycleResponse(request,
-        descriptor, consumerID, entityMessage.getRawPayload(),
-        transactionOrderPersistenceFuture,
-        chain, sendToClient);
+      ResultCapture lifecycle = createLifecycleResponse(request, descriptor, consumerID, entityMessage.getRawPayload());
+      if (sendToClient) {
+        complete = ResultCapture.chain(first, lifecycle, createClientResponse(request), last);
+      } else {
+        complete = ResultCapture.chain(first, lifecycle, last);
+      }
       try {
         EntityID entityID = descriptor.getEntityID();
         ManagedEntity temp = entityManager.createEntity(entityID, descriptor.getClientSideVersion(), consumerID);
-        temp.addRequestMessage(request, entityMessage, capture);
+        temp.addRequestMessage(request, entityMessage, complete);
       } catch (ServerException ee) {
-        capture.failure(ee);
+        complete.failure(ee);
       }
     } else {
       // At this point, we can now look up the actual managed entity.
       Optional<ManagedEntity> optionalEntity = null;
+
+      if (sendToClient) {
+        complete = ResultCapture.chain(first, createClientResponse(request), last);
+      } else {
+        complete = ResultCapture.chain(first, last);
+      }
+
       try {
         optionalEntity = entityManager.getEntity(descriptor);
       } catch (ServerException ee) {
-        ServerEntityResponse rr = createClientResponse(request, chain, sendToClient);
-        rr.failure(ee);
+        complete.failure(ee);
         return;
       }
       if (!optionalEntity.isPresent()) {
         if (!descriptor.isIndexed()) {
-          ServerEntityResponse rr = createClientResponse(request, chain, sendToClient);
-          rr.failure(ServerException.createNotFoundException(descriptor.getEntityID()));
+          complete.failure(ServerException.createNotFoundException(descriptor.getEntityID()));
           return;
         } else {
           if (descriptor.getClientInstanceID() != ClientInstanceID.NULL_ID) {
@@ -379,11 +392,21 @@ public class ProcessTransactionHandler implements ReconnectListener {
       ManagedEntity entity = optionalEntity.get();
       // Note that it is possible to trigger an exception when decoding a message in addInvokeRequest.
       if (ServerEntityAction.INVOKE_ACTION == action) {
-        ResultCapture handler = createInvokeResponse(request, chain, requiresRetired, sendToClient);
+        if (sendToClient) {
+          boolean sendStats = safeGetChannel(sourceNodeID).map(c->{
+            Object attach = c.getAttachment("SendStats");
+            if (attach != null) {
+              return (boolean)attach;
+            } else {
+              return false;
+            }
+          }).orElse(false);
+          complete = ResultCapture.chain(first, createInvokeResponse(request, sendStats, requiresRetired), last);
+        }
         if(transactionOrderPersistenceFuture != null) {
           transactionOrderPersistenceFutures.put(transactionID, transactionOrderPersistenceFuture);
         }
-        entity.addRequestMessage(request, entityMessage, handler);
+        entity.addRequestMessage(request, entityMessage, complete);
       } else if (action.isLifecycle()) {
         EntityID eid;
         long version;
@@ -398,12 +421,16 @@ public class ProcessTransactionHandler implements ReconnectListener {
           consumerID = entity.getConsumerID();
         }
 
-        ResultCapture capture = createLifecycleResponse(request,
-                descriptor, consumerID, entityMessage.getRawPayload(),
-                transactionOrderPersistenceFuture,
-                chain, sendToClient);
+        ResultCapture lifecycle = createLifecycleResponse(request,
+                descriptor, consumerID, entityMessage.getRawPayload());
 
-        entity.addRequestMessage(request, entityMessage, capture);
+        if (sendToClient) {
+          complete = ResultCapture.chain(first, lifecycle, createClientResponse(request), last);
+        } else {
+          complete = ResultCapture.chain(first, lifecycle, last);
+        }
+
+        entity.addRequestMessage(request, entityMessage, complete);
       } else if (action == ServerEntityAction.MANAGED_ENTITY_GC && entity.isRemoveable()) {
         // MANAGED_ENTITY_GC may not be removeable if the entity was immediately recreated
         // after destroy.  If this is the case, just schedule the action and it will act like a flush
@@ -411,9 +438,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
         entityManager.removeDestroyed(descriptor.getFetchID());
         //  no need to schedule for an entity that is removed
       } else {
-        ResultCapture rr = createClientResponse(request, chain, sendToClient);
-        PersistenceResultCapture cap = new PersistenceResultCapture(rr, transactionOrderPersistenceFuture);
-        entity.addRequestMessage(request, entityMessage, cap);
+        entity.addRequestMessage(request, entityMessage, complete);
       }
       if (trace != null) {
         trace.end();
@@ -421,53 +446,37 @@ public class ProcessTransactionHandler implements ReconnectListener {
     }
   }
 
-  private ResultCapture createClientResponse(ServerEntityRequest request, ResultCapture chain, boolean network) {
-    if (chain == null) {
-      chain = ResultCapture.noop();
-    }
-    if (network) {
-        return ResultCapture.chain(new NetworkServerEntityResponse(request.getTransaction(),
-                (type)->safeGetChannel(request.getNodeID()).map(c->c.createMessage(type)).orElse(null),
-          this::insertMessageInStream), chain);
-    } else {
-        return chain;
-    }
+  private ResultCapture createWaitingResponse(Future<Void> transactionOrderPersistenceFuture, boolean requiresReceived) {
+    return  new WaitingResultCapture(transactionOrderPersistenceFuture, requiresReceived);
   }
 
-  private ResultCapture createLifecycleResponse(ServerEntityRequest request, EntityDescriptor descriptor, long consumerID, byte[] config, Future<Void> tnsOrderPersistor, ResultCapture chain, boolean network) {
-    if (chain == null) {
-      chain = ResultCapture.noop();
-    }
-    if (network) {
-      chain = createClientResponse(request, chain, network);
-    }
-    return ResultCapture.chain(new LifecycleResultCapture(
+  private ResultCapture createClientResponse(ServerEntityRequest request) {
+    return new NetworkServerEntityResponse(request.getTransaction(),
+            (type)->safeGetChannel(request.getNodeID()).map(c->c.createMessage(type)).orElse(null),
+      this::insertMessageInStream);
+  }
+
+  private ResultCapture createLifecycleResponse(ServerEntityRequest request, EntityDescriptor descriptor, long consumerID, byte[] config) {
+    return new LifecycleResultCapture(
             descriptor,
             consumerID, request,
             config,
             persistor,
             entityManager,
-            tnsOrderPersistor,
-            (node)->safeGetChannel(request.getNodeID()).orElse(null)), chain);
+            (node)->safeGetChannel(request.getNodeID()).orElse(null));
   }
 
-  private ResultCapture createInvokeResponse(ServerEntityRequest request, ResultCapture chain, boolean retiredRequired, boolean network) {
-    if (chain == null) {
-      chain = ResultCapture.noop();
-    }
-    if (network) {
-        return ResultCapture.chain(new NetworkInvokeResponse(
-            request.getNodeID(),
-            request.getClientInstance(),
-            request.getTransaction(),
-            (type)->safeGetChannel(request.getNodeID()).map(c->c.createMessage(type)).orElse(null),
-            invokeReturn,
-            multiSend,
-            request.requiresReceived(),
-            retiredRequired), chain);
-    } else {
-        return chain;
-    }
+  private ResultCapture createInvokeResponse(ServerEntityRequest request, boolean sendStats, boolean retiredRequired) {
+    return new NetworkInvokeResponse(
+        request.getNodeID(),
+        request.getClientInstance(),
+        request.getTransaction(),
+        (type)->safeGetChannel(request.getNodeID()).map(c->c.createMessage(type)).orElse(null),
+        invokeReturn,
+        multiSend,
+        request.requiresReceived(),
+        sendStats,
+        retiredRequired);
   }
 
   private void waitForTransactionOrderPersistenceFuture(TransactionID transactionID) {
@@ -553,7 +562,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       }
       if (cached) {
         ServerEntityRequest request = new ServerEntityRequestImpl(resentMessage.getEntityDescriptor().getClientInstanceID(), cachedType, resentMessage.getSource(), resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), true);
-        ResultCapture response = createClientResponse(request, null, true);
+        ResultCapture response = createClientResponse(request);
         response.received();
         if (result != null) {
           response.complete(result);
@@ -568,9 +577,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       }
     } catch (ServerException ee) {
       ServerEntityRequest request = new ServerEntityRequestImpl(resentMessage.getEntityDescriptor().getClientInstanceID(), cachedType, resentMessage.getSource(), resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), true);
-      ResultCapture response = createClientResponse(request, null, true);
-
-
+      ResultCapture response = createClientResponse(request);
       response.received();
       response.failure(ee);
       response.retired();

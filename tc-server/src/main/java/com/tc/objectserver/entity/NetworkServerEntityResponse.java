@@ -63,11 +63,6 @@ public class NetworkServerEntityResponse implements ResultCapture {
   }
 
   @Override
-  public void waitForReceived() {
-    throw new UnsupportedOperationException("Not supported yet.");
-  }
-
-  @Override
   public void complete() {
     complete(new byte[0]);
   }

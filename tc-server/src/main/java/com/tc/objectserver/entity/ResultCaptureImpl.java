@@ -57,14 +57,6 @@ public class ResultCaptureImpl implements ResultCapture {
   }
 
   @Override
-  public void waitForReceived() {
-    if (setOnce != null) {
-      ActivePassiveAckWaiter waiter = setOnce.get();
-      waiter.waitForReceived();
-    }
-  }
-
-  @Override
   public void received() {
     Trace.activeTrace().log("received ");
     this.receivedSent.set();

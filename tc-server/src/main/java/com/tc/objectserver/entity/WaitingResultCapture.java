@@ -20,6 +20,7 @@ package com.tc.objectserver.entity;
 import com.tc.exception.ServerException;
 import com.tc.net.utils.L2Utils;
 import com.tc.objectserver.api.ResultCapture;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -29,38 +30,44 @@ import java.util.function.Supplier;
  *
  * @author
  */
-public class PersistenceResultCapture implements ResultCapture {
-  private final ResultCapture base;
-  private volatile Supplier<ActivePassiveAckWaiter> waiter;
+public class WaitingResultCapture implements ResultCapture {
+  private volatile Supplier<ActivePassiveAckWaiter> setOnce;
   private final Future<Void> transactionOrderPersistenceFuture;
+  private final boolean receiveRequired;
 
-  public PersistenceResultCapture(ResultCapture base, Future<Void> transactionOrderPersistenceFuture) {
-    this.base = base;
+  public WaitingResultCapture(Future<Void> transactionOrderPersistenceFuture, boolean receiveRequired) {
     this.transactionOrderPersistenceFuture = transactionOrderPersistenceFuture;
+    this.receiveRequired = receiveRequired;
   }
 
   @Override
   public CompletionStage<Void> retired() {
-    return base.retired();
+    return CompletableFuture.completedFuture(null);
   }
 
   @Override
   public void complete() {
-    base.complete();
+
   }
 
   @Override
   public void complete(byte[] value) {
-    base.complete(value);
+
   }
 
   @Override
   public void failure(ServerException e) {
-    base.failure(e);
+    if (setOnce != null) {
+      ActivePassiveAckWaiter waiter = setOnce.get();
+      waiter.waitForCompleted();
+    }
   }
 
   @Override
   public void received() {
+    if (setOnce != null && this.receiveRequired) {
+      setOnce.get().waitForReceived();
+    }
     if(transactionOrderPersistenceFuture != null) {
       try {
         transactionOrderPersistenceFuture.get();
@@ -70,22 +77,16 @@ public class PersistenceResultCapture implements ResultCapture {
         throw new RuntimeException("Caught exception while persisting transaction order", e);
       }
     }
-    base.received();
   }
 
   @Override
   public void message(byte[] message) {
-    throw new UnsupportedOperationException("Not supported yet.");
+
   }
 
 
   @Override
   public void setWaitFor(Supplier<ActivePassiveAckWaiter> waiter) {
-    this.waiter = waiter;
-  }
-
-  @Override
-  public void waitForReceived() {
-    this.waiter.get().waitForReceived();
+    this.setOnce = waiter;
   }
 }

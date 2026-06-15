@@ -20,7 +20,9 @@ package com.tc.objectserver.entity;
 import com.tc.async.api.DirectExecutionMode;
 import com.tc.async.api.Stage;
 import com.tc.async.impl.MonitoringEventCreator;
+import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMultiResponse;
+import com.tc.entity.VoltronEntityResponse;
 import com.tc.exception.ServerException;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.TCAction;
@@ -29,7 +31,6 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.StatType;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ResultCapture;
-import com.tc.objectserver.api.ServerEntityResponse;
 import com.tc.objectserver.api.StatisticsCapture;
 import com.tc.objectserver.handler.ResponseMessage;
 import com.tc.util.Assert;
@@ -37,6 +38,7 @@ import com.tc.util.concurrent.SetOnceFlag;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -58,7 +60,9 @@ import org.slf4j.LoggerFactory;
     private Supplier<ActivePassiveAckWaiter> waiter;
     private final SetOnceFlag lastSent = new SetOnceFlag();
     private final boolean sendReceived;
+    private final boolean sendStats;
     private final boolean holdResultForRetired;
+
     private byte[] heldResult;
     private final long[] stats = new long[StatType.SERVER_RETIRED.serverSpot() + 1];
     private final ConcurrentHashMap<ClientID, VoltronEntityMultiResponse> invokeReturn;
@@ -73,6 +77,7 @@ import org.slf4j.LoggerFactory;
             ConcurrentHashMap<ClientID, VoltronEntityMultiResponse> invokeReturn,
             Stage<ResponseMessage> messageSender,
             boolean sendReceived,
+            boolean sendStats,
             boolean holdRetired) {
       this.clientID = node;
       this.instance = instance;
@@ -81,6 +86,7 @@ import org.slf4j.LoggerFactory;
       this.invokeReturn = invokeReturn;
       this.multiSend = messageSender;
       this.sendReceived = sendReceived;
+      this.sendStats = sendStats;
       this.holdResultForRetired = holdRetired;
     }
 
@@ -88,7 +94,7 @@ import org.slf4j.LoggerFactory;
     public void received() {
       stats[StatType.SERVER_RECEIVED.serverSpot()] = System.nanoTime();
       if (sendReceived) {
-        addSequentially(clientID, adder->adder.addReceived(transaction));
+        addSequentially(adder->adder.addReceived(transaction));
       }
     }
 
@@ -113,9 +119,9 @@ import org.slf4j.LoggerFactory;
     @Override
     public void message(byte[] msg) {
       if (transaction.isNull()) {
-        addSequentially(clientID, addTo->addTo.addServerMessage(instance, msg));
+        addSequentially(addTo->addTo.addServerMessage(instance, msg));
       } else {
-        addSequentially(clientID, addTo->addTo.addServerMessage(transaction, msg));
+        addSequentially(addTo->addTo.addServerMessage(transaction, msg));
       }
     }
 
@@ -124,15 +130,10 @@ import org.slf4j.LoggerFactory;
       this.waiter = waiter;
     }
 
-    @Override
-    public void waitForReceived() {
-      this.waiter.get().waitForReceived();
-    }
-
     private void sendResponse(byte[] result) {
       if (lastSent.attemptSet()) {
         if (!holdResultForRetired) {
-          addSequentially(clientID, addTo->addTo.addResult(transaction, result));
+          addSequentially(addTo->addTo.addResult(transaction, result));
         } else {
           heldResult = result;
         }
@@ -149,6 +150,16 @@ import org.slf4j.LoggerFactory;
           heldResult = null;
         }
       }
+
+      VoltronEntityAppliedResponse message = (VoltronEntityAppliedResponse)messageCreate.apply(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
+      if (message != null) {
+        message.setFailure(transaction, e);
+        invokeReturn.compute(clientID, (c,v)-> {
+          v.stopAdding();
+          multiSend.getSink().addToSink(new ResponseMessage(message));
+          return null;
+        });
+      }
       MonitoringEventCreator.finish();
     }
 
@@ -161,7 +172,7 @@ import org.slf4j.LoggerFactory;
       this.waiter.get().runWhenCompleted(()->{
         stats[StatType.SERVER_RETIRED.serverSpot()] = System.nanoTime();
         Assert.assertTrue(lastSent.isSet());
-        addSequentially(clientID, addTo -> {
+        addSequentially(addTo -> {
           if (heldResult != null) {
             return addTo.addResultAndRetire(transaction, heldResult);
           } else {
@@ -194,15 +205,18 @@ import org.slf4j.LoggerFactory;
       stats[StatType.SERVER_ENDINVOKE.serverSpot()] = System.nanoTime();
     }
 
-  private void addSequentially(ClientID target, Predicate<VoltronEntityMultiResponse> adder) {
+  private void addSequentially(Predicate<VoltronEntityMultiResponse> adder) {
     // don't bother if the client isNull, no where to send the message
     // if not, compute the result and schedule send if neccessary
-    while (!target.isNull()) {
+    while (!clientID.isNull()) {
       // get the vmr.  most cases, will be present but if not create one
-      VoltronEntityMultiResponse vmr = invokeReturn.computeIfAbsent(target, (client)-> {
+      VoltronEntityMultiResponse vmr = invokeReturn.computeIfAbsent(clientID, (client)-> {
         VoltronEntityMultiResponse msg = (VoltronEntityMultiResponse)messageCreate.apply(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
         if (msg == null) {
           return null;
+        }
+        if (sendStats) {
+          msg.addStats(transaction, stats);
         }
  //  use direct execution under map lock.  this makes sure there
  //  is only one for this client

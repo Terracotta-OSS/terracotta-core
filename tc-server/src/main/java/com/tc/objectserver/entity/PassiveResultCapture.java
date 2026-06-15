@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,14 +31,14 @@ import org.slf4j.LoggerFactory;
 /**
  *
  */
- 
+
 public class PassiveResultCapture implements ResultCapture {
   private final Runnable received;
   private final Consumer<byte[]> result;
   private final Consumer<ServerException> error;
   private final SetOnceFlag receivedSent = new SetOnceFlag();
   private static final Logger LOGGER = LoggerFactory.getLogger(PassiveResultCapture.class);
-  
+
   public PassiveResultCapture(Runnable received, Consumer<byte[]> result, Consumer<ServerException> error) {
     this.received = received;
     this.result = result;
@@ -47,11 +47,6 @@ public class PassiveResultCapture implements ResultCapture {
 
   @Override
   public void setWaitFor(Supplier<ActivePassiveAckWaiter> waitFor) {
-
-  }
-
-  @Override
-  public void waitForReceived() {
 
   }
 
@@ -73,7 +68,7 @@ public class PassiveResultCapture implements ResultCapture {
     if (result != null) {
       result.accept(null);
     }
-  }  
+  }
 
   @Override
   public void complete(byte[] value) {
@@ -100,16 +95,16 @@ public class PassiveResultCapture implements ResultCapture {
       error.accept(ee);
     }
   }
-  
+
   @Override
   public void message(byte[] message) {
-    
+
   }
 
   @Override
   public CompletionStage<Void> retired() {
     return CompletableFuture.completedFuture(null);
   }
-  
-  
+
+
 }
