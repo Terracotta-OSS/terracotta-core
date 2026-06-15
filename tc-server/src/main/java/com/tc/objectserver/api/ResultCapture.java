@@ -29,7 +29,6 @@ import java.util.function.Supplier;
 public interface ResultCapture extends ServerEntityResponse {
   void message(byte[] message);
   void setWaitFor(Supplier<ActivePassiveAckWaiter> waiter);
-  void waitForReceived();
   CompletionStage<Void> retired();
 
   static ResultCapture noop() {
@@ -39,13 +38,7 @@ public interface ResultCapture extends ServerEntityResponse {
 
       }
 
-      @Override
       public void setWaitFor(Supplier<ActivePassiveAckWaiter> waiter) {
-
-      }
-
-      @Override
-      public void waitForReceived() {
 
       }
 
@@ -85,17 +78,9 @@ public interface ResultCapture extends ServerEntityResponse {
         }
       }
 
-      @Override
       public void setWaitFor(Supplier<ActivePassiveAckWaiter> waiter) {
         for (ResultCapture r : list) {
           r.setWaitFor(waiter);
-        }
-      }
-
-      @Override
-      public void waitForReceived() {
-        for (ResultCapture r : list) {
-          r.waitForReceived();
         }
       }
 
