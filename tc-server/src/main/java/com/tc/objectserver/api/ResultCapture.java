@@ -19,6 +19,7 @@ package com.tc.objectserver.api;
 
 import com.tc.exception.ServerException;
 import com.tc.objectserver.entity.ActivePassiveAckWaiter;
+import com.tc.objectserver.entity.ResultCaptureImpl;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
@@ -31,56 +32,22 @@ public interface ResultCapture extends ServerEntityResponse {
   void setWaitFor(Supplier<ActivePassiveAckWaiter> waiter);
   CompletionStage<Void> retired();
 
-  static ResultCapture noop() {
-    return new ResultCapture() {
-      @Override
-      public void message(byte[] message) {
-
-      }
-
-      public void setWaitFor(Supplier<ActivePassiveAckWaiter> waiter) {
-
-      }
-
-      @Override
-      public CompletionStage<Void> retired() {
-        return CompletableFuture.completedFuture(null);
-      }
-
-      @Override
-      public void complete() {
-
-      }
-
-      @Override
-      public void complete(byte[] value) {
-
-      }
-
-      @Override
-      public void failure(ServerException e) {
-
-      }
-
-      @Override
-      public void received() {
-
-      }
-    };
-  }
-
   static ResultCapture chain(ResultCapture...list) {
     return new ResultCapture() {
       @Override
       public void message(byte[] message) {
         for (ResultCapture r : list) {
-          r.message(message);
+          if (r != null) {
+            r.message(message);
+          }
         }
       }
 
       public void setWaitFor(Supplier<ActivePassiveAckWaiter> waiter) {
         for (ResultCapture r : list) {
-          r.setWaitFor(waiter);
+          if (r != null) {
+            r.setWaitFor(waiter);
+          }
         }
       }
 
@@ -88,7 +55,9 @@ public interface ResultCapture extends ServerEntityResponse {
       public CompletionStage<Void> retired() {
         CompletionStage<Void> together = CompletableFuture.completedFuture(null);
         for (ResultCapture r : list) {
-          together = together.thenCompose((n)->r.retired());
+          if (r != null) {
+            together = together.thenCompose((n)->r.retired());
+          }
         }
         return together;
       }
@@ -96,28 +65,36 @@ public interface ResultCapture extends ServerEntityResponse {
       @Override
       public void complete() {
         for (ResultCapture r : list) {
-          r.complete();
+          if (r != null) {
+            r.complete();
+          }
         }
       }
 
       @Override
       public void complete(byte[] value) {
         for (ResultCapture r : list) {
-          r.complete(value);
+          if (r != null) {
+            r.complete(value);
+          }
         }
       }
 
       @Override
       public void failure(ServerException e) {
         for (ResultCapture r : list) {
-          r.failure(e);
+          if (r != null) {
+            r.failure(e);
+          }
         }
       }
 
       @Override
       public void received() {
         for (ResultCapture r : list) {
-          r.received();
+          if (r != null) {
+            r.received();
+          }
         }
       }
     };

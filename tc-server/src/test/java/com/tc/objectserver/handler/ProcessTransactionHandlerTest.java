@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ import org.terracotta.monitoring.IMonitoringProducer;
 
 public class ProcessTransactionHandlerTest {
   private static final String TEST_ENTITY_CLASS_NAME = "com.tc.objectserver.testentity.TestEntity";
-  
+
   private TerracottaServiceProviderRegistry terracottaServiceProviderRegistry;
   private EntityPersistor entityPersistor;
   private TransactionOrderPersistor transactionOrderPersistor;
@@ -92,8 +92,8 @@ public class ProcessTransactionHandlerTest {
   private ClientEntityStateManager clientEntityStateManager;
   private ManagementTopologyEventCollector eventCollector;
   private EntityManagerImpl entityManager;
-  
-  
+
+
   @SuppressWarnings({ "rawtypes", "unchecked" })
   @Before
   public void setUp() throws Exception {
@@ -105,9 +105,9 @@ public class ProcessTransactionHandlerTest {
     Persistor persistor = mock(Persistor.class);
     when(persistor.getEntityPersistor()).thenReturn(this.entityPersistor);
     when(persistor.getTransactionOrderPersistor()).thenReturn(this.transactionOrderPersistor);
-    
+
     this.source = mock(ClientID.class);
-    
+
     when(this.entityPersistor.getNextConsumerID()).thenReturn(1L);
     MessageChannel messageChannel = mock(MessageChannel.class);
     VoltronEntityAppliedResponse msg = when(mock(VoltronEntityAppliedResponse.class).getDestinationNodeID()).thenReturn(mock(ClientID.class)).getMock();
@@ -119,16 +119,16 @@ public class ProcessTransactionHandlerTest {
     VoltronEntityRetiredResponse retire = when(mock(VoltronEntityRetiredResponse.class).getDestinationNodeID()).thenReturn(mock(ClientID.class)).getMock();
     when(retire.getTransactionID()).thenReturn(TransactionID.NULL_ID);
     when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE)).thenReturn(retire);
-    
+
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     when(channelManager.getActiveChannel(this.source)).thenReturn(messageChannel);
     when(channelManager.getActiveChannel(eq(ClientID.NULL_ID))).thenThrow(new NoSuchChannelException());
-    
+
     StageManager stageManager = mock(StageManager.class);
     this.requestProcessorSink = new RunnableSink();
     Stage runnableStage = mock(Stage.class);
     when(runnableStage.getSink()).thenReturn(this.requestProcessorSink);
-    
+
     this.clientEntityStateManager = new ClientEntityStateManagerImpl();
     this.eventCollector = new ManagementTopologyEventCollector(mock(IMonitoringProducer.class));
     this.eventCollector.serverDidEnterState(StateManager.ACTIVE_COORDINATOR, 0);
@@ -164,16 +164,16 @@ public class ProcessTransactionHandlerTest {
     this.processTransactionHandler.reconnectComplete();
     Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
   }
-  
+
   private void sendNoop(EntityID eid, FetchID fetch, ServerEntityAction action) {
     loopbackSink.addToSink(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(fetch, ClientInstanceID.NULL_ID), (action == ServerEntityAction.DESTROY_ENTITY)));
   }
-  
+
   @After
   public void tearDown() throws Exception {
     this.processTransactionHandler.getVoltronMessageHandler().destroy();
   }
-  
+
   @Test
   public void testGetUnknownEntity() throws Exception {
     // Send in the GET as a simple request.
@@ -182,7 +182,7 @@ public class ProcessTransactionHandlerTest {
     NetworkVoltronEntityMessage request = createMockRequest(VoltronEntityMessage.Type.FETCH_ENTITY, entityID, new TransactionID(1));
     this.processTransactionHandler.getVoltronMessageHandler().handleEvent(request);
   }
-  
+
   @Test
   public void testLoadExisting() throws Exception {
     // Set up a believable collection of persistent entities.
@@ -193,11 +193,11 @@ public class ProcessTransactionHandlerTest {
     data.entityName = "foo";
     data.configuration = new byte[0];
     when(this.entityPersistor.loadEntityData()).thenReturn(Collections.singleton(data));
-    
+
     // Now, run the test - we don't expect any problems.
     this.processTransactionHandler.loadExistingEntities();
   }
-  
+
   @Test
   public void testFailOnLoadVersionMismatch() throws Exception {
     EntityData.Value data = new EntityData.Value();
@@ -207,7 +207,7 @@ public class ProcessTransactionHandlerTest {
     data.entityName = "foo";
     data.configuration = new byte[0];
     when(this.entityPersistor.loadEntityData()).thenReturn(Collections.singleton(data));
-    
+
     // Now, run the test - we expect an IllegalArgumentException.
     try {
       this.processTransactionHandler.loadExistingEntities();
@@ -217,7 +217,7 @@ public class ProcessTransactionHandlerTest {
       // Expected.
     }
   }
-  
+
   @Test
   public void testManagedEntityGC() throws Exception {
     // Send in the GET as a simple request.
@@ -232,10 +232,10 @@ public class ProcessTransactionHandlerTest {
     this.requestProcessorSink.runUntilEmpty();
     Assert.assertFalse(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(entityID, 1L)).isPresent());
   }
-    
+
 
   @Test
-  public void testChannelManagement() throws Exception {    
+  public void testChannelManagement() throws Exception {
     // Set up the channel.
     try {
     this.requestProcessorSink.runUntilEmpty();
@@ -264,12 +264,12 @@ public class ProcessTransactionHandlerTest {
     // Create the entity ID.
     String entityName = "foo";
     EntityID entityID = createMockEntity(entityName);
-    
+
     // We first need to create an entity we can invoke, later.
     NetworkVoltronEntityMessage createRequest = createMockRequest(VoltronEntityMessage.Type.CREATE_ENTITY, entityID, new TransactionID(1));
     this.processTransactionHandler.getVoltronMessageHandler().handleEvent(createRequest);
     this.requestProcessorSink.runUntilEmpty();
-    
+
     // Create the message with no sender.
     ClientID sender = new ClientID(-1);
     NetworkVoltronEntityMessage invokeRequest = createMockRequestWithSender(VoltronEntityMessage.Type.INVOKE_ACTION, entityID, new TransactionID(2), sender);
@@ -325,6 +325,11 @@ public class ProcessTransactionHandlerTest {
     when(request.getEntityDescriptor()).thenReturn(entityDescriptor);
     when(request.getTransactionID()).thenReturn(transactionID);
     when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(1));
+    if (sender.isNull()) {
+      when(request.isServerRequest()).thenReturn(Boolean.TRUE);
+    } else {
+      when(request.isServerRequest()).thenReturn(Boolean.FALSE);
+    }
     // Return an empty byte[], for now.
     when(request.getExtendedData()).thenReturn(TCByteBufferFactory.wrap(new byte[0]));
     return request;

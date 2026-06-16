@@ -47,6 +47,7 @@ import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.entity.BarrierCompletion;
+import com.tc.objectserver.entity.NoopResultCapture;
 import com.tc.objectserver.entity.PassiveResultCapture;
 import com.tc.objectserver.entity.PlatformEntity;
 import com.tc.objectserver.entity.ResultCaptureImpl;
@@ -365,7 +366,7 @@ public class ReplicatedTransactionHandler {
           case FAILOVER_FLUSH:
             // will cause a MGMT_KEY flush in the entity so any actions are through the system
             // before failing over to the passive
-            entityInstance.addRequestMessage(request, payload, ResultCapture.noop());
+            entityInstance.addRequestMessage(request, payload, NoopResultCapture.noop());
             break;
           case ORDER_PLACEHOLDER_ONLY:
             // go ahead and ack right away and don't schedule, no need, work is done
