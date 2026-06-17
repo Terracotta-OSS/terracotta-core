@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class ActiveTerracottaClusteredMap implements ActiveServerEntity<MapOpera
     this.root = root;
     this.map = root.computeIfAbsent(name, v->new CompoundMap<>(concurrency));
   }
-  
+
   @Override
   public void connected(ClientDescriptor clientDescriptor) {
   }
@@ -77,9 +77,9 @@ public class ActiveTerracottaClusteredMap implements ActiveServerEntity<MapOpera
   }
 
   @Override
-  public MapResponse invokeActive(ActiveInvokeContext<MapResponse> context, MapOperation input) {
+  public MapResponse invokeActive(ActiveInvokeContext<MapOperation, MapResponse> context, MapOperation input) {
     MapResponse response;
-    
+
     switch (input.operationType()) {
       case PUT: {
         PutOperation putOperation = (PutOperation) input;

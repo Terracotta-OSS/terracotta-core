@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,16 +56,16 @@ public class PassthroughServer implements PassthroughDumper {
   private String serverName;
   private int bindPort;
   private int groupPort;
-  
+
   private boolean isActive;
-    
+
   private PassthroughServerProcess serverProcess;
   private boolean hasStarted;
   private final List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?>> entityClientServices;
   private PassthroughMonitoringProducer monitoringProducer;
-  
+
   private IAsynchronousServerCrasher crasher;
-  
+
   // We also track various information for the restart case.
   private final List<EntityServerService<?, ?>> savedServerEntityServices;
   private final List<ServiceProviderAndConfiguration> savedServiceProviderData;
@@ -75,7 +75,7 @@ public class PassthroughServer implements PassthroughDumper {
 
   public PassthroughServer() {
     this.entityClientServices = new Vector<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?>>();
-    
+
     // Create the containers we will use for tracking the state we will need to repopulate on restart.
     this.savedServerEntityServices = new Vector<EntityServerService<?, ?>>();
     this.savedServiceProviderData = new Vector<ServiceProviderAndConfiguration>();
@@ -88,7 +88,7 @@ public class PassthroughServer implements PassthroughDumper {
     assertFalse(()->(this.crasher != null));
     this.crasher = crasher;
   }
-  
+
   public void assertFalse(Supplier<Boolean> p) {
     if (p.get()) {
       throw new RuntimeException("not false");
@@ -106,7 +106,7 @@ public class PassthroughServer implements PassthroughDumper {
   public void setGroupPort(int groupPort) {
     this.groupPort = groupPort;
   }
-   
+
   public void registerServerEntityService(EntityServerService<?, ?> service) {
     assertFalse(()->this.hasStarted);
     this.savedServerEntityServices.add(service);
@@ -151,11 +151,11 @@ public class PassthroughServer implements PassthroughDumper {
 
   public void start(boolean isActive, boolean shouldLoadStorage, Set<Long> savedClientConnections) {
     this.isActive = isActive;
-    
+
     this.hasStarted = true;
     bootstrapProcess(this.isActive);
     this.serverProcess.start(shouldLoadStorage, savedClientConnections);
-    
+
     // If we are active, tell the monitoring system.
     if (this.isActive) {
       if (!shouldLoadStorage) {
@@ -189,10 +189,10 @@ public class PassthroughServer implements PassthroughDumper {
     for (EntityServerService<?, ?> serverEntityService : this.savedServerEntityServices) {
       this.serverProcess.registerEntityService(serverEntityService);
     }
-    
+
     // Register built-in services.
     registerImplementationProvidedServices();
-    
+
     findClasspathBuiltinServices();
 
     // Install the user-created services.
@@ -241,7 +241,7 @@ public class PassthroughServer implements PassthroughDumper {
 
   /**
    *
-   * NOTE: this needs to be deprecated, it provides distinctly different semantics from the clustered version 
+   * NOTE: this needs to be deprecated, it provides distinctly different semantics from the clustered version
    * of the same
    */
   public void registerOverrideServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
@@ -300,7 +300,7 @@ public class PassthroughServer implements PassthroughDumper {
   private void internalRegisterServiceProviderAsOverride(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
     this.savedServiceProviderData.add(new ServiceProviderAndConfiguration(serviceProvider, providerConfiguration, true));
   }
-  
+
   @Override
   public void dump() {
     System.out.println("Connected passthrough clients:");
@@ -335,13 +335,13 @@ public class PassthroughServer implements PassthroughDumper {
     public final ServiceProvider serviceProvider;
     public final ServiceProviderConfiguration providerConfiguration;
     public final boolean override;
-    
+
     public ServiceProviderAndConfiguration(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
       this.serviceProvider = serviceProvider;
       this.providerConfiguration = providerConfiguration;
       this.override = false;
     }
-    
+
     public ServiceProviderAndConfiguration(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration, boolean override) {
       this.serviceProvider = serviceProvider;
       this.providerConfiguration = providerConfiguration;
@@ -352,14 +352,12 @@ public class PassthroughServer implements PassthroughDumper {
   private void registerImplementationProvidedServices() {
     PassthroughCommunicatorServiceProvider communicatorServiceProvider = new PassthroughCommunicatorServiceProvider();
     this.serverProcess.registerImplementationProvidedServiceProvider(communicatorServiceProvider, null);
-    PassthroughMessengerServiceProvider messengerServiceProvider = new PassthroughMessengerServiceProvider(this.serverProcess);
-    this.serverProcess.registerImplementationProvidedServiceProvider(messengerServiceProvider, null);
     PassthroughPlatformServiceProvider passthroughPlatformServiceProvider = new PassthroughPlatformServiceProvider(passthroughClusterControl, this);
     this.serverProcess.registerImplementationProvidedServiceProvider(passthroughPlatformServiceProvider, null);
     this.monitoringProducer = new PassthroughMonitoringProducer(this.serverProcess);
     this.serverProcess.registerImplementationProvidedServiceProvider(this.monitoringProducer, null);
   }
-  
+
   private void findClasspathBuiltinServices() {
     Map<String, Class<? extends ServiceProvider>> overrides = new HashMap<>();
     Map<String, ServiceProvider> providers = new HashMap<>();
@@ -368,7 +366,7 @@ public class PassthroughServer implements PassthroughDumper {
       if (!provider.getClass().isAnnotationPresent(BuiltinService.class)) {
         System.err.println("service:" + provider.getClass().getName() + " not annotated with @BuiltinService.  The service will not be included");
       } else {
-        // We want to initialize built-in providers with a null configuration only if the test 
+        // We want to initialize built-in providers with a null configuration only if the test
         // has not preinstalled an override provider with the existing types
         if (!hasConfigurationForServiceProvider(provider) && !hasOverrideProviderForTypes(provider)) {
           Class<? extends ServiceProvider> type = provider.getClass();
@@ -401,12 +399,12 @@ public class PassthroughServer implements PassthroughDumper {
         }
       }
     }
-    
+
     providers.values().forEach((p) -> {
       this.serverProcess.registerServiceProvider(p, null);
     });
   }
-  
+
   private boolean hasOverrideProviderForTypes(ServiceProvider provider) {
     Collection<Class<?>> types = provider.getProvidedServiceTypes();
     for (ServiceProviderAndConfiguration configuredServiceProvider : savedServiceProviderData) {

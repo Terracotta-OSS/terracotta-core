@@ -78,10 +78,9 @@ public class EntityMessengerServiceContextTest {
 
     when(parentRequest.getNodeID()).thenReturn(expectedClientID);
     when(parentRequest.getTransaction()).thenReturn(expectedTxnID);
-    when(entity.getCurrentRequestMessage()).thenReturn(parentRequest);
 
     // Create the service
-    service = new EntityMessengerService<>(sink, entity, false);
+    service = new EntityMessengerService<>(sink, entity, parentRequest, false);
     service.entityCreated(entity);
 
     // Send a message
@@ -103,10 +102,9 @@ public class EntityMessengerServiceContextTest {
   @Test
   public void testNullParentContextHandledGracefully() throws Exception {
     // Setup: No parent context available
-    when(entity.getCurrentRequestMessage()).thenReturn(null);
 
     // Create the service
-    service = new EntityMessengerService<>(sink, entity, false);
+    service = new EntityMessengerService<>(sink, entity, null, false);
     service.entityCreated(entity);
 
     // Send a message
@@ -123,69 +121,5 @@ public class EntityMessengerServiceContextTest {
     // Verify defaults are used when no parent context
     assertThat("ClientID should be NULL_ID", sentMessage.getSource(), is(ClientID.NULL_ID));
     assertThat("TransactionID should be generated", sentMessage.getTransactionID(), is(notNullValue()));
-  }
-
-  @Test
-  public void testParentContextChangesReflectedInSubsequentMessages() throws Exception {
-    // Setup: Start with one parent context
-    ServerEntityRequest firstParent = mock(ServerEntityRequest.class);
-    ClientID firstClientID = new ClientID(1);
-    TransactionID firstTxnID = new TransactionID(10);
-
-    when(firstParent.getNodeID()).thenReturn(firstClientID);
-    when(firstParent.getTransaction()).thenReturn(firstTxnID);
-    when(entity.getCurrentRequestMessage()).thenReturn(firstParent);
-
-    // Create the service
-    service = new EntityMessengerService<>(sink, entity, false);
-    service.entityCreated(entity);
-
-    // Send first message
-    EntityMessage message1 = mock(EntityMessage.class);
-    service.messageSelf(message1);
-
-    // Change the parent context
-    ServerEntityRequest secondParent = mock(ServerEntityRequest.class);
-    ClientID secondClientID = new ClientID(2);
-    TransactionID secondTxnID = new TransactionID(20);
-
-    when(secondParent.getNodeID()).thenReturn(secondClientID);
-    when(secondParent.getTransaction()).thenReturn(secondTxnID);
-    when(entity.getCurrentRequestMessage()).thenReturn(secondParent);
-
-    // Send second message
-    EntityMessage message2 = mock(EntityMessage.class);
-    service.messageSelf(message2);
-
-    // Verify both messages were sent
-    ArgumentCaptor<VoltronEntityMessage> captor = ArgumentCaptor.forClass(VoltronEntityMessage.class);
-    verify(sink, times(2)).addToSink(captor.capture());
-
-    // Get all captured messages
-    List<VoltronEntityMessage> capturedMessages = captor.getAllValues();
-    assertThat("Should have captured 2 messages", capturedMessages.size(), is(2));
-
-    // The second message should use the second parent context
-    VoltronEntityMessage lastMessage = capturedMessages.get(1);
-    assertThat("Second message ClientID should match second parent",
-               lastMessage.getSource(), is(secondClientID));
-    assertThat("Second message TransactionID should match second parent",
-               lastMessage.getTransactionID(), is(secondTxnID));
-  }
-
-  @Test
-  public void testManagedEntityGetCurrentRequestMessageReturnsCorrectValue() {
-    // This test verifies the new getCurrentRequestMessage() method exists and is callable
-    // The actual implementation testing would require more complex setup with
-    // GuardianContext and MessageChannel, which is beyond unit test scope
-
-    ManagedEntityImpl realEntity = mock(ManagedEntityImpl.class);
-    when(realEntity.getCurrentRequestMessage()).thenReturn(null);
-
-    ServerEntityRequest result = realEntity.getCurrentRequestMessage();
-
-    // Verify the method can be called and returns expected null in this mock scenario
-    assertThat("getCurrentRequestMessage should be callable", result, is((ServerEntityRequest) null));
-    verify(realEntity).getCurrentRequestMessage();
   }
 }

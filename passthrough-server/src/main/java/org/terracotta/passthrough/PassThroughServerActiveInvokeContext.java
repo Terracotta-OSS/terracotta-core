@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,11 @@
 package org.terracotta.passthrough;
 
 import java.util.Properties;
+import java.util.function.Consumer;
+import org.terracotta.entity.ActiveEntityManager;
 import org.terracotta.entity.ActiveInvokeChannel;
 import org.terracotta.entity.ActiveInvokeContext;
+import org.terracotta.entity.ActiveMessenger;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
@@ -28,7 +31,7 @@ import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityServerException;
 
 public class PassThroughServerActiveInvokeContext<M extends EntityMessage, R extends EntityResponse> extends PassThroughServerInvokeContext
-  implements ActiveInvokeContext<R> {
+  implements ActiveInvokeContext<M, R> {
   private final MessageCodec<M, R> codec;
   private final EntityMessage message;
   private final ClientDescriptor descriptor;
@@ -79,6 +82,16 @@ public class PassThroughServerActiveInvokeContext<M extends EntityMessage, R ext
         monitor.close();
       }
     };
+  }
+
+  @Override
+  public ActiveMessenger<M, R> createInvokeMessenger() {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
+  public ActiveEntityManager createEntityManager() {
+    throw new UnsupportedOperationException("Not supported yet.");
   }
 
   @Override

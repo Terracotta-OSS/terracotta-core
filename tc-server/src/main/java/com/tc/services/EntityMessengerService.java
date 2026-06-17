@@ -32,12 +32,11 @@ import com.tc.objectserver.api.ManagedEntity.LifecycleListener;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.entity.CreateMessage;
 import com.tc.objectserver.entity.DestroyMessage;
+import com.tc.objectserver.entity.MessageResponse;
 import com.tc.objectserver.entity.ReconfigureMessage;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.util.Assert;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.ExplicitRetirementHandle;
-import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 
@@ -52,7 +51,7 @@ import org.terracotta.entity.EntityResponse;
  * Implements the IEntityMessenger interface by maintaining a "fake" EntityDescriptor (as there is no actual reference from
  * a client) and using that to send "fake" VoltronEntityMessage instances into the server's message sink.
  */
-public class EntityMessengerService<M extends EntityMessage, R extends EntityResponse> implements IEntityMessenger<M, R>, LifecycleListener {
+public class EntityMessengerService<M extends EntityMessage, R extends EntityResponse> implements LifecycleListener {
   private final AtomicLong NEXT_FAKE_TXN_ID = new AtomicLong();
 
   private final Sink<VoltronEntityMessage> messageSink;
@@ -61,12 +60,12 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
   private final MessageCodec<M, R> codec;
   private final EntityDescriptor fakeDescriptor;
   private final EntityDescriptor lifecycleDescriptor;
-  private final ConcurrentHashMap<ExplicitRetirementHandle, Handle> retirementHandles = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<Handle, Handle> retirementHandles = new ConcurrentHashMap<>();
   private final Supplier<ServerEntityRequest> parentContext;
 
   @SuppressWarnings("unchecked")
   public EntityMessengerService(Sink<VoltronEntityMessage> messageSink,
-                                ManagedEntity owningEntity, boolean waitForReceived) {
+                                ManagedEntity owningEntity, ServerEntityRequest request, boolean waitForReceived) {
     Assert.assertNotNull(messageSink);
     Assert.assertNotNull(owningEntity);
 
@@ -83,37 +82,31 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
 
     this.fakeDescriptor = EntityDescriptor.createDescriptorForInvoke(new FetchID(owningEntity.getConsumerID()),ClientInstanceID.NULL_ID);
     this.lifecycleDescriptor = EntityDescriptor.createDescriptorForLifecycle(owningEntity.getID(), owningEntity.getVersion());
-    this.parentContext = ()->owningEntity.getCurrentRequestMessage();
+    this.parentContext = ()->request;
   }
 
-  @Override
   public void destroySelf() {
     this.messageSink.addToSink(new DestroyMessage(lifecycleDescriptor));
   }
 
-  @Override
   public void create(String type, String name, long version, byte[] configuration) {
     this.messageSink.addToSink(new CreateMessage(type, name, version, configuration));
   }
 
-  @Override
   public void reconfigureSelf(byte[] configuration) {
     this.messageSink.addToSink(new ReconfigureMessage(lifecycleDescriptor, configuration));
   }
 
-  @Override
   public void messageSelf(M message) throws MessageCodecException {
     this.messageSelf(message, null);
   }
 
-  @Override
   public void messageSelf(M message, Consumer<MessageResponse<R>> response) throws MessageCodecException {
     // Make sure we have started.
     scheduleMessage(message, response);
   }
 
-  @Override
-  public ExplicitRetirementHandle deferRetirement(String tag,
+  public Handle deferRetirement(String tag,
                                                   M originalMessageToDefer,
                                                   M futureMessage) {
     // defer, as normal
@@ -122,13 +115,11 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     return new Handle(tag, futureMessage);
   }
 
-  @Override
   public void messageSelfAndDeferRetirement(M originalMessageToDefer,
                                             M newMessageToSchedule) throws MessageCodecException {
     this.messageSelfAndDeferRetirement(originalMessageToDefer, newMessageToSchedule, null);
   }
 
-  @Override
   public void messageSelfAndDeferRetirement(M originalMessageToDefer,
                                             M newMessageToSchedule, Consumer<MessageResponse<R>> response) throws MessageCodecException {
     // This requires that we access the RetirementManager to change the retirement of the current message.
@@ -299,7 +290,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     }
   }
 
-  public class Handle implements ExplicitRetirementHandle {
+  public class Handle {
     private final String tag;
     private final M futureMessage;
     private final long nowTimeNS;
@@ -312,19 +303,16 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
       retirementHandles.put(this, this);
     }
 
-    @Override
     public String getTag() {
       return tag;
     }
 
-    @Override
     public void release() throws MessageCodecException {
       if (retirementHandles.remove(this) != null) {
         EntityMessengerService.this.messageSelf(futureMessage);
       }
     }
 
-    @Override
     public void release(Consumer consumer) throws MessageCodecException {
       if (retirementHandles.remove(this) != null) {
         EntityMessengerService.this.messageSelf(futureMessage, consumer);
