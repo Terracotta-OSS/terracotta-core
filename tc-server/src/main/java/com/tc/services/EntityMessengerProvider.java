@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ package com.tc.services;
 import java.util.Collection;
 import java.util.Collections;
 
-import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.StateDumpCollector;
@@ -54,12 +53,10 @@ public class EntityMessengerProvider implements ImplementationProvidedServicePro
     if (this.serverIsActive) {
       // TODO: consider making this configurable.  if false, the active will not wait for received on passive before invoke.
       boolean waitForReceived = true;
-      if (configuration instanceof EntityMessengerConfiguration) {
-        waitForReceived = ((EntityMessengerConfiguration) configuration).isWaitForReceived();
-      } else if (configuration instanceof Function) {
+      if (configuration instanceof Function) {
         waitForReceived = (Boolean)((Function)configuration).apply("PASSIVE_CONFIRMATION");
       }
-      EntityMessengerService es = new EntityMessengerService(this.messageSink, owningEntity, Optional.ofNullable(waitForReceived).orElse(false));
+      EntityMessengerService es = new EntityMessengerService(this.messageSink, owningEntity, null, Optional.ofNullable(waitForReceived).orElse(false));
       owningEntity.addLifecycleListener(es);
       service = configuration.getServiceType().cast(es);
     }
@@ -68,7 +65,7 @@ public class EntityMessengerProvider implements ImplementationProvidedServicePro
 
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
-    return Collections.singleton(IEntityMessenger.class);
+    return Collections.emptyList();
   }
 
   @Override
