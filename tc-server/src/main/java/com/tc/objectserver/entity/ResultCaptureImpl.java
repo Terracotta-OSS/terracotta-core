@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.tc.objectserver.api.ResultCapture;
 import com.tc.tracing.Trace;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -31,7 +32,7 @@ import org.slf4j.LoggerFactory;
 /**
  *
  */
- 
+
 public class ResultCaptureImpl implements ResultCapture {
   private final Runnable received;
   private final Consumer<byte[]> result;
@@ -41,7 +42,7 @@ public class ResultCaptureImpl implements ResultCapture {
   private static final Logger LOGGER = LoggerFactory.getLogger(ResultCaptureImpl.class);
 
   Supplier<ActivePassiveAckWaiter> setOnce;
-  
+
   public ResultCaptureImpl(Runnable received, Consumer<byte[]> result, Consumer<byte[]> message, Consumer<ServerException> error) {
     this.received = received;
     this.result = result;
@@ -53,14 +54,6 @@ public class ResultCaptureImpl implements ResultCapture {
   public void setWaitFor(Supplier<ActivePassiveAckWaiter> waitFor) {
     Assert.assertNull(setOnce);
     setOnce = waitFor;
-  }
-
-  @Override
-  public void waitForReceived() {
-    if (setOnce != null) {
-      ActivePassiveAckWaiter waiter = setOnce.get();
-      waiter.waitForReceived();
-    }
   }
 
   @Override
@@ -81,7 +74,7 @@ public class ResultCaptureImpl implements ResultCapture {
     if (result != null) {
       result.accept(null);
     }
-  }  
+  }
 
   @Override
   public void complete(byte[] value) {
@@ -108,15 +101,16 @@ public class ResultCaptureImpl implements ResultCapture {
       error.accept(ee);
     }
   }
-  
+
   @Override
   public void message(byte[] m) {
-    message.accept(m);
+    if (message != null) {
+      message.accept(m);
+    }
   }
 
   @Override
   public CompletionStage<Void> retired() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    return CompletableFuture.completedFuture(null);
   }
-  
 }

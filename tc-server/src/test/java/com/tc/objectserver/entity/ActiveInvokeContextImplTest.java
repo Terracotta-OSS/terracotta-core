@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ package com.tc.objectserver.entity;
 
 import com.tc.net.ClientID;
 import com.tc.object.ClientInstanceID;
+import com.tc.services.ClientMessageSender;
+import com.tc.services.EntityMessengerService;
 import java.util.function.Consumer;
 import org.junit.Assert;
 import org.junit.Test;
@@ -30,6 +32,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import org.terracotta.entity.ActiveInvokeChannel;
+import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 
 public class ActiveInvokeContextImplTest {
@@ -62,9 +65,10 @@ public class ActiveInvokeContextImplTest {
     Consumer response = mock(Consumer.class);
     Consumer exception = mock(Consumer.class);
     Runnable close = mock(Runnable.class);
-    
-    ActiveInvokeContextImpl ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(), 1, 1, 2, 
-        open, response, exception, close);
+    EntityMessengerService service = mock(EntityMessengerService.class);
+
+    ActiveInvokeContextImpl ctx = new ActiveInvokeContextImpl(mock(EntityMessage.class), new ClientDescriptorImpl(), 1, 1L, 2L,
+        open, response, exception, close, service);
     ActiveInvokeChannel chan = ctx.openInvokeChannel();
     verify(open).run();
     chan.sendResponse(mock(EntityResponse.class));
@@ -85,9 +89,10 @@ public class ActiveInvokeContextImplTest {
     Consumer response = mock(Consumer.class);
     Consumer exception = mock(Consumer.class);
     Runnable close = mock(Runnable.class);
-    
-    ActiveInvokeContextImpl ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(), 1, 1, 2, 
-        open, response, exception, close);
+    EntityMessengerService service = mock(EntityMessengerService.class);
+
+    ActiveInvokeContextImpl ctx = new ActiveInvokeContextImpl(mock(EntityMessage.class),new ClientDescriptorImpl(), 1, 1, 2,
+        open, response, exception, close, service);
     ActiveInvokeChannel chan1 = ctx.openInvokeChannel();
     verify(open).run();
     ActiveInvokeChannel chan2 = ctx.openInvokeChannel();
@@ -110,7 +115,7 @@ public class ActiveInvokeContextImplTest {
 // check still open
     chan2.sendResponse(mock(EntityResponse.class));
     verify(response, times(3)).accept(any(EntityResponse.class));
-    
+
     chan2.close();
     verify(close).run();
 

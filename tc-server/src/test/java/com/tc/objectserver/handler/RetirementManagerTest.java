@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class RetirementManagerTest {
     EntityMessage invokeMessage = mock(EntityMessage.class);
     int concurrencyKey = 1;
     registerWithMessage(request, invokeMessage, concurrencyKey);
-    
+
     List<Retiree> toRetire = this.retirementManager.testingRetireForCompletion(invokeMessage);
     Assert.assertEquals(1, toRetire.size());
     Assert.assertEquals(request, toRetire.get(0));
@@ -74,7 +74,7 @@ public class RetirementManagerTest {
     Assert.assertTrue(retirementManager.testingIsRetireable(msg));
   }
 
-  
+
   @Test
   public void testSequenceOfRetires() throws Exception {
     int concurrencyKey = 1;
@@ -87,7 +87,7 @@ public class RetirementManagerTest {
     Retiree request = makeResponse();
     EntityMessage invokeMessage = mock(EntityMessage.class);
     registerWithMessage(request, invokeMessage, concurrencyKey);
-    
+
     List<Retiree> toRetire = this.retirementManager.testingRetireForCompletion(invokeMessage);
     Assert.assertEquals(1, toRetire.size());
     Assert.assertEquals(request, toRetire.get(0));
@@ -99,16 +99,16 @@ public class RetirementManagerTest {
     EntityMessage invokeMessage = mock(EntityMessage.class);
     int concurrencyKey = 1;
     registerWithMessage(request, invokeMessage, concurrencyKey);
-    
+
     Retiree newRequest = makeResponse();
     EntityMessage newMessage = mock(EntityMessage.class);
     this.retirementManager.deferRetirement(invokeMessage, newMessage);
-    
+
     registerWithMessage(newRequest, newMessage, concurrencyKey);
 
     List<Retiree> toRetire = this.retirementManager.testingRetireForCompletion(invokeMessage);
     Assert.assertEquals(0, toRetire.size());
-    
+
     toRetire = this.retirementManager.testingRetireForCompletion(newMessage);
     Assert.assertEquals(2, toRetire.size());
   }
@@ -117,22 +117,22 @@ public class RetirementManagerTest {
   public void testSequenceAndDefer() throws Exception {
     int concurrencyKey = 1;
     sendNormalMessage(concurrencyKey);
-    
+
     Retiree request = makeResponse();
     EntityMessage invokeMessage = mock(EntityMessage.class);
     registerWithMessage(request, invokeMessage, concurrencyKey);
-    
+
     Retiree newRequest = makeResponse();
     EntityMessage newMessage = mock(EntityMessage.class);
     this.retirementManager.deferRetirement(invokeMessage, newMessage);
     registerWithMessage(newRequest, newMessage, concurrencyKey);
-    
+
     List<Retiree> toRetire = this.retirementManager.testingRetireForCompletion(invokeMessage);
     Assert.assertEquals(0, toRetire.size());
-    
+
     toRetire = this.retirementManager.testingRetireForCompletion(newMessage);
     Assert.assertEquals(2, toRetire.size());
-    
+
     sendNormalMessage(concurrencyKey);
     sendNormalMessage(concurrencyKey);
   }
@@ -143,28 +143,28 @@ public class RetirementManagerTest {
     EntityMessage invokeMessage = mock(EntityMessage.class);
     int concurrencyKey = 1;
     registerWithMessage(request, invokeMessage, concurrencyKey);
-    
+
     Retiree deferRequest = makeResponse();
     EntityMessage deferMessage = mock(EntityMessage.class);
     this.retirementManager.deferRetirement(invokeMessage, deferMessage);
     registerWithMessage(deferRequest, deferMessage, concurrencyKey);
-    
+
     List<Retiree> toRetire = this.retirementManager.testingRetireForCompletion(invokeMessage);
     Assert.assertEquals(0, toRetire.size());
-    
+
     // Run some other messages.
     Retiree request1 = makeResponse();
     EntityMessage message1 = mock(EntityMessage.class);
     registerWithMessage(request1, message1, concurrencyKey);
     toRetire = this.retirementManager.testingRetireForCompletion(message1);
     Assert.assertEquals(1, toRetire.size());
-    
+
     Retiree request2 = makeResponse();
     EntityMessage message2 = mock(EntityMessage.class);
     registerWithMessage(request2, message2, concurrencyKey);
     toRetire = this.retirementManager.testingRetireForCompletion(message2);
     Assert.assertEquals(1, toRetire.size());
-    
+
     // Now, run the message which should unblock us.
     toRetire = this.retirementManager.testingRetireForCompletion(deferMessage);
     Assert.assertEquals(2, toRetire.size());
@@ -334,44 +334,44 @@ public class RetirementManagerTest {
     toRetire = this.retirementManager.testingRetireForCompletion(deferMessage1);
     Assert.assertEquals(2, toRetire.size());
   }
-  
+
   @Test
   public void testChainedRetirement() throws Exception {
     Retiree invokeRequest1 = makeResponse();
-    EntityMessage invokeMessage1 = mock(EntityMessage.class);    
-    
+    EntityMessage invokeMessage1 = mock(EntityMessage.class);
+
     Retiree invokeRequest2 = makeResponse();
     EntityMessage invokeMessage2 = mock(EntityMessage.class);
 
     Retiree invokeRequest3 = makeResponse();
     EntityMessage invokeMessage3 = mock(EntityMessage.class);
-    
+
     registerWithMessage(invokeRequest1, invokeMessage1, 1);
-    
+
     this.retirementManager.deferRetirement(invokeMessage1, invokeMessage2);
-    
+
     registerWithMessage(invokeRequest2, invokeMessage2, 1);
 
     this.retirementManager.deferRetirement(invokeMessage2, invokeMessage3);
-    
+
     registerWithMessage(invokeRequest3, invokeMessage3, 1);
-    
+
     List<Retiree> retireList = this.retirementManager.testingRetireForCompletion(invokeMessage1);
-    
+
     Assert.assertTrue(retireList.isEmpty());
-    
+
     retireList = this.retirementManager.testingRetireForCompletion(invokeMessage2);
 
     Assert.assertTrue(retireList.isEmpty());
 
     retireList = this.retirementManager.testingRetireForCompletion(invokeMessage3);
-    
+
     Assert.assertEquals(3, retireList.size());
 
     retireList.forEach(r->r.retired());
   }
-  
-  
+
+
   @Test
   public void testChainedRetirementCompletionOrder() throws Exception {
     ExecutorService service = Executors.newCachedThreadPool();
@@ -407,7 +407,7 @@ public class RetirementManagerTest {
     for (Future m : waits) {
       m.get();
     }
-    
+
     //  decending order
     TransactionID check = null;
     for (TransactionID id : order) {
@@ -415,63 +415,63 @@ public class RetirementManagerTest {
       check = id;
     }
   }
-  
+
   @Test
   public void testCloseBeforeRetire() throws Exception {
     Retiree invokeRequest1 = makeResponse();
-    EntityMessage invokeMessage1 = mock(EntityMessage.class);    
-    
+    EntityMessage invokeMessage1 = mock(EntityMessage.class);
+
     registerWithMessage(invokeRequest1, invokeMessage1, 1);
-    
+
     this.retirementManager.holdMessage(invokeMessage1);
-    
+
     boolean readyForRetire = this.retirementManager.releaseMessage(invokeMessage1);
-    
+
     Assert.assertFalse(readyForRetire);
 
     List<Retiree> retireList = this.retirementManager.testingRetireForCompletion(invokeMessage1);
-    
+
     Assert.assertEquals(1, retireList.size());
 
     retireList.forEach(r->r.retired());
   }
-  
+
   @Test
   public void testChainedRetirementOnMultipleKeys() throws Exception {
     Retiree invokeRequest1 = makeResponse();
-    EntityMessage invokeMessage1 = mock(EntityMessage.class);    
-    
+    EntityMessage invokeMessage1 = mock(EntityMessage.class);
+
     Retiree invokeRequest2 = makeResponse();
     EntityMessage invokeMessage2 = mock(EntityMessage.class);
 
     Retiree invokeRequest3 = makeResponse();
     EntityMessage invokeMessage3 = mock(EntityMessage.class);
-    
+
     registerWithMessage(invokeRequest1, invokeMessage1, 1);
-    
+
     this.retirementManager.deferRetirement(invokeMessage1, invokeMessage2);
-    
+
     registerWithMessage(invokeRequest2, invokeMessage2, 2);
 
     this.retirementManager.deferRetirement(invokeMessage2, invokeMessage3);
-    
+
     registerWithMessage(invokeRequest3, invokeMessage3, 3);
-    
+
     List<Retiree> retireList = this.retirementManager.testingRetireForCompletion(invokeMessage1);
-    
+
     Assert.assertTrue(retireList.isEmpty());
-    
+
     retireList = this.retirementManager.testingRetireForCompletion(invokeMessage2);
 
     Assert.assertTrue(retireList.isEmpty());
 
     retireList = this.retirementManager.testingRetireForCompletion(invokeMessage3);
-    
+
     Assert.assertEquals(3, retireList.size());
 
     retireList.forEach(r->r.retired());
   }
-  
+
   @Test
   public void testRetirementWithUniversalKeys() throws Exception {
     final int concurrencyKeyOne = 1;
@@ -505,7 +505,7 @@ public class RetirementManagerTest {
     Assert.assertEquals(1, toRetire.size());
     Assert.assertThat(toRetire, IsIterableContainingInOrder.contains(invokeRequest1));
   }
-  
+
   @Test
   public void testSequentialRetire() throws Exception {
     Retiree invokeRequest1 = makeResponse();
@@ -513,8 +513,8 @@ public class RetirementManagerTest {
       System.out.println("first");
       return CompletableFuture.completedFuture(null);
     }).when(invokeRequest1).retired();
-    EntityMessage invokeMessage1 = mock(EntityMessage.class);    
-    
+    EntityMessage invokeMessage1 = mock(EntityMessage.class);
+
     Retiree invokeRequest2 = makeResponse();
     Mockito.doAnswer(invoke->{
       System.out.println("second");
@@ -528,28 +528,28 @@ public class RetirementManagerTest {
       return CompletableFuture.completedFuture(null);
     }).when(invokeRequest3).retired();
     EntityMessage invokeMessage3 = mock(EntityMessage.class);
-    
+
     registerWithMessage(invokeRequest1, invokeMessage1, 1);
-    
+
     this.retirementManager.deferRetirement(invokeMessage1, invokeMessage2);
-    
+
     registerWithMessage(invokeRequest2, invokeMessage2, 2);
 
-    this.retirementManager.deferRetirement(invokeMessage2, invokeMessage3);    
+    this.retirementManager.deferRetirement(invokeMessage2, invokeMessage3);
 
     registerWithMessage(invokeRequest3, invokeMessage3, 3);
-    
+
     this.retirementManager.retireMessage(invokeMessage1);
     this.retirementManager.retireMessage(invokeMessage2);
     this.retirementManager.retireMessage(invokeMessage3);
   }
-  
+
   private Retiree makeResponse() {
     Retiree request = mock(Retiree.class);
     return request;
   }
-  
-  
+
+
   private void registerWithMessage(Retiree resp, EntityMessage message, int concurrency) {
     try {
       this.retirementManager.registerWithMessage(message, concurrency, resp);
@@ -557,5 +557,5 @@ public class RetirementManagerTest {
       e.printStackTrace();
       throw new RuntimeException(e);
     }
-  }  
+  }
 }

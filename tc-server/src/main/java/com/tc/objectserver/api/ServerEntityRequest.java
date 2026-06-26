@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,22 +33,22 @@ public interface ServerEntityRequest {
  * @return origin of the request
  */
   ClientID getNodeID();
-  
+
   TransactionID getTransaction();
-  
+
   TransactionID getOldestTransactionOnClient();
   /**
    * The descriptor referring to the specific client-side object instance which issued the request.
-   * @return 
+   * @return
    */
   ClientInstanceID getClientInstance();
-  
+
   boolean requiresReceived();
 /**
  * Provide the nodes which need to be replicated to for this request
  * @param passives current set of passive nodes
  * @return the passives that this request needs to be replicated to
- */  
+ */
   Set<SessionID> replicateTo(Set<SessionID> passives);
 
   default String getTraceID() {

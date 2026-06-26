@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -63,45 +63,8 @@ public class ServerEntityRequestImplTest {
     nodeID = mock(ClientID.class);
   }
 
-  @Test
-  public void testCompleteInvoke() throws Exception {
-    ServerEntityRequestResponse serverEntityRequest = buildInvoke();
-    
-    byte[] value = new byte[0];
-    serverEntityRequest.complete(value);
-    serverEntityRequest.retired();
-    
-    verify(responseMessage).setSuccess(transactionID, value);
-    verify(responseMessage).send();
-  }
-
-  @Test
-  public void testCompleteCreate() throws Exception {
-    boolean requiresReplication = true;
-    boolean isReplicatedMessage = false;
-    ServerEntityRequest request = new ServerEntityRequestImpl(entityDescriptor.getClientInstanceID(), ServerEntityAction.CREATE_ENTITY, nodeID, transactionID, TransactionID.NULL_ID, requiresReplication);
-    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(request, this::send, ()->Optional.of(messageChannel), null, null, isReplicatedMessage);
-
-    serverEntityRequest.complete();
-    serverEntityRequest.retired();
-    
-    verify(responseMessage).setSuccess(transactionID, new byte[0]);
-    verify(responseMessage).send();
-  }
-  
   private void send(VoltronEntityResponse msg) {
     msg.send();
-  }
-
-  @Test
-  public void testRequestedAcks() throws Exception {
-    ServerEntityRequestResponse serverEntityRequest = buildInvoke();
-    
-    verify(requestAckMessage, never()).send();
-    serverEntityRequest.received();
-    
-    verify(requestAckMessage).setTransactionID(transactionID);
-    verify(requestAckMessage).send();
   }
 
   private static MessageChannel mockMessageChannel(VoltronEntityReceivedResponse requestAckMessage, VoltronEntityAppliedResponse responseMessage, VoltronEntityRetiredResponse retiredMessage) {
@@ -110,13 +73,5 @@ public class ServerEntityRequestImplTest {
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE)).thenReturn(responseMessage);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE)).thenReturn(retiredMessage);
     return channel;
-  }
-
-  private ServerEntityRequestResponse buildInvoke() {
-    boolean isReplicatedMessage = false;
-    boolean isReceivedRequested = false;
-    EntityDescriptor.createDescriptorForInvoke(new FetchID(1L), new ClientInstanceID(1));
-    ServerEntityRequest request = new ServerEntityRequestImpl(entityDescriptor.getClientInstanceID(), ServerEntityAction.INVOKE_ACTION, nodeID, transactionID, TransactionID.NULL_ID, isReceivedRequested);
-    return new ServerEntityRequestResponse(request, this::send, ()->Optional.of(messageChannel), null, null, isReplicatedMessage);
   }
 }

@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import java.util.Set;
 
 
 public class ServerEntityRequestImpl implements ServerEntityRequest {
-  
+
   private final ServerEntityAction action;
   private final ClientID node;
   private final TransactionID transaction;
@@ -75,7 +75,7 @@ public class ServerEntityRequestImpl implements ServerEntityRequest {
   public boolean requiresReceived() {
     return requiresReceived;
   }
- 
+
   @Override
   public Set<SessionID> replicateTo(Set<SessionID> passives) {
     // Note that we should be avoiding the decision to replicate messages at a higher-level so filter out any local-only

@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class ResendVoltronEntityMessage implements VoltronEntityMessage, TCSeria
     Assert.assertNotNull(this.transactionID);
     return this.transactionID;
   }
-  
+
   @Override
   public EntityDescriptor getEntityDescriptor() {
     Assert.assertNotNull(this.entityDescriptor);
@@ -89,13 +89,13 @@ public class ResendVoltronEntityMessage implements VoltronEntityMessage, TCSeria
 // if it's a resend, this already happened or it didn't
     return false;
   }
-  
+
   @Override
   public Type getVoltronType() {
     Assert.assertNotNull(this.type);
     return this.type;
   }
-  
+
   @Override
   public TCByteBuffer getExtendedData() {
     Assert.assertNotNull(this.extendedData);

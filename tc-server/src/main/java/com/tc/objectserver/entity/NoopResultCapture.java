@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package com.tc.objectserver.entity;
 
 import com.tc.exception.ServerException;
 import com.tc.objectserver.api.ResultCapture;
-import com.tc.tracing.Trace;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
@@ -27,56 +26,48 @@ import java.util.function.Supplier;
 /**
  *
  */
- 
+
 public class NoopResultCapture implements ResultCapture {
-  
-  public NoopResultCapture() {
+
+  private static final ResultCapture NOOP = new NoopResultCapture();
+
+  public static ResultCapture noop() {
+    return NOOP;
   }
 
   @Override
-  public void setWaitFor(Supplier<ActivePassiveAckWaiter> waitFor) {
+  public void message(byte[] message) {
 
   }
 
   @Override
-  public void waitForReceived() {
+  public void setWaitFor(Supplier<ActivePassiveAckWaiter> waiter) {
+
+  }
+
+  @Override
+  public CompletionStage<Void> retired() {
+    return CompletableFuture.completedFuture(null);
+  }
+
+  @Override
+  public void complete() {
+
+  }
+
+  @Override
+  public void complete(byte[] value) {
+
+  }
+
+  @Override
+  public void failure(ServerException e) {
 
   }
 
   @Override
   public void received() {
-    Trace.activeTrace().log("Received");
+
   }
 
-  @Override
-  public void complete() {
-    Trace.activeTrace().log("Completed without result ");
-  }  
-
-  @Override
-  public void complete(byte[] value) {
-    if (Trace.isTraceEnabled()) {
-      Trace.activeTrace().log("Completed with result of length " + value.length);
-    }
-  }
-
-  @Override
-  public void failure(ServerException ee) {
-    if (Trace.isTraceEnabled()) {
-      Trace.activeTrace().log("Failure - exception: " + ee.getLocalizedMessage());
-    }
-  }
-  
-  @Override
-  public void message(byte[] message) {
-    
-  }
-
-  @Override
-  public CompletionStage<Void> retired() {
-    Trace.activeTrace().log("Retired");
-    return CompletableFuture.completedFuture(null);
-  }
-  
-  
 }

@@ -49,11 +49,13 @@ import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.services.EntityMessengerService;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.services.MappedStateCollector;
 import com.tc.spi.Guardian;
 import com.tc.tracing.Trace;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.SetOnceFlag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ActiveServerEntity;
@@ -469,47 +471,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     return null;
   }
 
-  @Override
-  public ServerEntityRequest getCurrentRequestMessage() {
-    MessageChannel channel = GuardianContext.getCurrentMessageChannel();
-    if (channel == null) {
-      return null;
-    }
-    ThreadLocal<ServerEntityRequest> tl = (ThreadLocal<ServerEntityRequest>)channel.getAttachment(REQUEST_CONTEXT_KEY);
-    if (tl == null) {
-      return null;
-    }
-    return (ServerEntityRequest)tl.get();
-  }
-
-  private void setRequestContext(MessageChannel channel, ServerEntityRequest request) {
-    if (channel == null) {
-      return;
-    }
-
-    @SuppressWarnings("unchecked")
-    ThreadLocal<ServerEntityRequest> local = (ThreadLocal<ServerEntityRequest>) channel.getAttachment(REQUEST_CONTEXT_KEY);
-
-    if (local == null) {
-      channel.addAttachment(REQUEST_CONTEXT_KEY, new ThreadLocal<>(), false);
-      local = (ThreadLocal<ServerEntityRequest>) channel.getAttachment(REQUEST_CONTEXT_KEY);
-    }
-
-    local.set(request);
-  }
-
-  private void clearRequestContext(MessageChannel channel) {
-    if (channel == null) {
-      return;
-    }
-
-    @SuppressWarnings("unchecked")
-    ThreadLocal<ServerEntityRequest> local = (ThreadLocal<ServerEntityRequest>) channel.getAttachment(REQUEST_CONTEXT_KEY);
-    if (local != null) {
-      local.remove();
-    }
-  }
-
   private void invokeLifecycleOperation(final ServerEntityRequest request, MessagePayload payload, ResultCapture resp) {
     Trace trace = new Trace(request.getTraceID(), "ManagedEntityImpl.invokeLifecycleOperation");
     trace.start();
@@ -517,7 +478,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     logger.info("Client:" + request.getNodeID() + ":" + request.getClientInstance() + " Invoking lifecycle " + request.getAction() + " on " + getID() + ":" + this.fetchID);
     GuardianContext.setCurrentChannelID(request.getNodeID().getChannelID());
     MessageChannel channel = GuardianContext.getCurrentMessageChannel();
-    setRequestContext(channel, request);
     read.lock();
     try {
       switch (request.getAction()) {
@@ -591,7 +551,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     } finally {
       read.unlock();
       GuardianContext.clearCurrentChannelID(request.getNodeID().getChannelID());
-      clearRequestContext(channel);
       if (this.isInActiveState) {
         interop.finishLifecycle();
       }
@@ -625,7 +584,6 @@ public class ManagedEntityImpl implements ManagedEntity {
 
     GuardianContext.setCurrentChannelID(request.getNodeID().getChannelID());
     MessageChannel channel = GuardianContext.getCurrentMessageChannel();
-    setRequestContext(channel, request);
     Lock read = reconnectAccessLock.readLock();
     try {
       read.lock();
@@ -665,7 +623,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     } finally {
       read.unlock();
       GuardianContext.clearCurrentChannelID(request.getNodeID().getChannelID());
-      clearRequestContext(channel);
     }
     trace.end();
   }
@@ -906,9 +863,14 @@ public class ManagedEntityImpl implements ManagedEntity {
         throw new IllegalStateException("Actions on a non-existent entity. active:" + this.isActive() + " " + message.toString());
       } else {
         this.retirementManager.registerWithMessage(message, concurrencyKey, new Retiree() {
+          private final SetOnceFlag retired = new SetOnceFlag();
           @Override
           public CompletionStage<Void> retired() {
-            return response.retired();
+            if (retired.attemptSet()) {
+              return response.retired();
+            } else {
+              throw new IllegalStateException("already retired");
+            }
           }
 
           @Override
@@ -924,16 +886,16 @@ public class ManagedEntityImpl implements ManagedEntity {
         try {
           ExecutionStrategy.Location loc = this.executionStrategy.getExecutionLocation(message);
           if (loc.runOnActive()) {
-            if (wrappedRequest.requiresReceived()) {
-              response.waitForReceived(); // waits for received on passives
-            }
             if (response instanceof StatisticsCapture) {
               ((StatisticsCapture)response).beginInvoke();
             }
+
+            EntityMessengerService messenger = new EntityMessengerService(messageSelf, this, wrappedRequest, false);
+
             Trace trace = Trace.activeTrace().subTrace("invokeActive");
             trace.start();
             EntityResponse resp = this.activeServerEntity.invokeActive(
-              new ActiveInvokeContextImpl<>(clientDescriptor, concurrencyKey, oldestId, currentId,
+              new ActiveInvokeContextImpl<>(message, clientDescriptor, concurrencyKey, oldestId, currentId,
                   ()->retirementManager.holdMessage(message),
                   (r)->response.message(decodeResponse(r)),
                   (e)->response.failure(convertException(getID(), e)),
@@ -943,7 +905,8 @@ public class ManagedEntityImpl implements ManagedEntity {
                     if (retirementManager.releaseMessage(message)) {
                       retirementManager.retireMessage(message);
                     }
-                  }
+                  },
+                  messenger
               ), message);
             byte[] er = encodeResponse(resp, response);
             trace.end();
