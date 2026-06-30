@@ -73,11 +73,11 @@ public class DistributedObjectClientFactory {
 
     DistributedObjectClient client = ClientFactory.createClient(serverAddresses, builder, group, uuid, name);
     client.addShutdownHook(shutdown);
-    
-    //  weak reference to make sure threads associated with the client aren't preventing 
+
+    //  weak reference to make sure threads associated with the client aren't preventing
     //  garbage collection of the client
     Reference<DistributedObjectClient> ref = new WeakReference<>(client);
-    
+
     throwableHandler.addCallbackOnExitDefaultHandler(state->{
       DistributedObjectClient err = ref.get();
       LOGGER.error("FATAL error in the client", state.getThrowable());
@@ -86,7 +86,7 @@ public class DistributedObjectClientFactory {
         err.shutdown();
       }
     });
-    
+
     ProductID type = builder.getTypeOfClient();
     boolean noReconnect = !type.isReconnectEnabled();
     String timeout = properties.getProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "0");
