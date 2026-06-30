@@ -325,11 +325,7 @@ public class ProcessTransactionHandlerTest {
     when(request.getEntityDescriptor()).thenReturn(entityDescriptor);
     when(request.getTransactionID()).thenReturn(transactionID);
     when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(1));
-    if (sender.isNull()) {
-      when(request.isServerRequest()).thenReturn(Boolean.TRUE);
-    } else {
-      when(request.isServerRequest()).thenReturn(Boolean.FALSE);
-    }
+    when(request.isServerRequest()).thenReturn(sender.isNull());
     // Return an empty byte[], for now.
     when(request.getExtendedData()).thenReturn(TCByteBufferFactory.wrap(new byte[0]));
     return request;

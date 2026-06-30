@@ -19,7 +19,6 @@ package com.tc.objectserver.api;
 
 import com.tc.exception.ServerException;
 import com.tc.objectserver.entity.ActivePassiveAckWaiter;
-import com.tc.objectserver.entity.ResultCaptureImpl;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
@@ -37,64 +36,49 @@ public interface ResultCapture extends ServerEntityResponse {
       @Override
       public void message(byte[] message) {
         for (ResultCapture r : list) {
-          if (r != null) {
-            r.message(message);
-          }
+          r.message(message);
         }
       }
 
+      @Override
       public void setWaitFor(Supplier<ActivePassiveAckWaiter> waiter) {
         for (ResultCapture r : list) {
-          if (r != null) {
-            r.setWaitFor(waiter);
-          }
+          r.setWaitFor(waiter);
         }
       }
 
       @Override
       public CompletionStage<Void> retired() {
-        CompletionStage<Void> together = CompletableFuture.completedFuture(null);
-        for (ResultCapture r : list) {
-          if (r != null) {
-            together = together.thenCompose((n)->r.retired());
-          }
-        }
-        return together;
+        return java.util.Arrays.stream(list).map(ResultCapture::retired)
+            .reduce((a, b) -> a.thenCombine(b, (x, y) -> null))
+            .orElse(CompletableFuture.completedFuture(null));
       }
 
       @Override
       public void complete() {
         for (ResultCapture r : list) {
-          if (r != null) {
-            r.complete();
-          }
+          r.complete();
         }
       }
 
       @Override
       public void complete(byte[] value) {
         for (ResultCapture r : list) {
-          if (r != null) {
-            r.complete(value);
-          }
+          r.complete(value);
         }
       }
 
       @Override
       public void failure(ServerException e) {
         for (ResultCapture r : list) {
-          if (r != null) {
-            r.failure(e);
-          }
+          r.failure(e);
         }
       }
 
       @Override
       public void received() {
         for (ResultCapture r : list) {
-          if (r != null) {
-            r.received();
-          }
+          r.received();
         }
       }
     };

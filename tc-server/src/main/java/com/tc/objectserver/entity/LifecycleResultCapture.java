@@ -114,11 +114,6 @@ public class LifecycleResultCapture implements ResultCapture {
 
     @Override
     public void complete() {
-      complete(new byte[0]);
-    }
-
-    @Override
-    public void complete(byte[] value) {
       switch(request.getAction()) {
         case CREATE_ENTITY:
           if (!request.getNodeID().isNull()) {
@@ -146,6 +141,11 @@ public class LifecycleResultCapture implements ResultCapture {
         }
       }
     }
+
+  @Override
+  public void complete(byte[] raw) {
+    complete();
+  }
 
   @Override
   public synchronized void received() {

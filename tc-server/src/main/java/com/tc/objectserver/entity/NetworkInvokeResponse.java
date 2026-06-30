@@ -22,7 +22,6 @@ import com.tc.async.api.Stage;
 import com.tc.async.impl.MonitoringEventCreator;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMultiResponse;
-import com.tc.entity.VoltronEntityResponse;
 import com.tc.exception.ServerException;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.TCAction;
@@ -38,7 +37,6 @@ import com.tc.util.concurrent.SetOnceFlag;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -112,8 +110,7 @@ import org.slf4j.LoggerFactory;
 
     @Override
     public void complete() {
-      stats[StatType.SERVER_COMPLETE.serverSpot()] = System.nanoTime();
-      sendResponse(new byte[0]);
+      complete(new byte[0]);
     }
 
     @Override

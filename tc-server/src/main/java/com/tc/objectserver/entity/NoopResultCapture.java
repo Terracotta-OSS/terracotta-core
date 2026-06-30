@@ -30,6 +30,7 @@ import java.util.function.Supplier;
 public class NoopResultCapture implements ResultCapture {
 
   private static final ResultCapture NOOP = new NoopResultCapture();
+  private static final CompletionStage<Void> NOOP_RETIRED = CompletableFuture.completedFuture(null);
 
   public static ResultCapture noop() {
     return NOOP;
@@ -47,7 +48,7 @@ public class NoopResultCapture implements ResultCapture {
 
   @Override
   public CompletionStage<Void> retired() {
-    return CompletableFuture.completedFuture(null);
+    return NOOP_RETIRED;
   }
 
   @Override

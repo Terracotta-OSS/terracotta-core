@@ -134,10 +134,10 @@ public interface VoltronEntityMessage {
   }
 
   default Consumer<byte[]> getCompletionHandler() {
-    return null;
+    return value -> {};
   }
 
   default Consumer<ServerException> getExceptionHandler() {
-    return null;
+    return value -> {};
   }
 }
