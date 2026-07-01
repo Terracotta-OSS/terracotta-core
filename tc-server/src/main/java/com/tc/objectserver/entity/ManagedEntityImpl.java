@@ -54,6 +54,7 @@ import com.tc.services.MappedStateCollector;
 import com.tc.spi.Guardian;
 import com.tc.tracing.Trace;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.SetOnceFlag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ActiveServerEntity;
@@ -906,9 +907,14 @@ public class ManagedEntityImpl implements ManagedEntity {
         throw new IllegalStateException("Actions on a non-existent entity. active:" + this.isActive() + " " + message.toString());
       } else {
         this.retirementManager.registerWithMessage(message, concurrencyKey, new Retiree() {
+          private final SetOnceFlag retired = new SetOnceFlag();
           @Override
           public CompletionStage<Void> retired() {
-            return response.retired();
+            if (retired.attemptSet()) {
+              return response.retired();
+            } else {
+              throw new IllegalStateException("already retired");
+            }
           }
 
           @Override
@@ -924,9 +930,6 @@ public class ManagedEntityImpl implements ManagedEntity {
         try {
           ExecutionStrategy.Location loc = this.executionStrategy.getExecutionLocation(message);
           if (loc.runOnActive()) {
-            if (wrappedRequest.requiresReceived()) {
-              response.waitForReceived(); // waits for received on passives
-            }
             if (response instanceof StatisticsCapture) {
               ((StatisticsCapture)response).beginInvoke();
             }

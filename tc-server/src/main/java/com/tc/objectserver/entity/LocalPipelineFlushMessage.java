@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,9 +28,9 @@ import com.tc.object.tx.TransactionID;
 
 
 /**
- *  This message is use to flush the deferred entity queue.  It is placed in 
- *  at the end of and exclusive entity message execution to flush the deferred queue.  
- *  It runs the entire pipeline but is never scheduled on the request processor by 
+ *  This message is use to flush the deferred entity queue.  It is placed in
+ *  at the end of and exclusive entity message execution to flush the deferred queue.
+ *  It runs the entire pipeline but is never scheduled on the request processor by
  *  ManagedEntityImpl.
  */
 public class LocalPipelineFlushMessage implements VoltronEntityMessage, Runnable {
@@ -43,13 +43,13 @@ public class LocalPipelineFlushMessage implements VoltronEntityMessage, Runnable
     this.forDestroy = forDestroy;
     action = null;
   }
-  
+
   public LocalPipelineFlushMessage(EntityDescriptor descriptor, Runnable action) {
     this.descriptor = descriptor;
     this.forDestroy = false;
     this.action = action;
   }
-  
+
   @Override
   public void run() {
     if (action != null) {
@@ -86,7 +86,7 @@ public class LocalPipelineFlushMessage implements VoltronEntityMessage, Runnable
   public boolean doesRequestRetired() {
     return false;
   }
-  
+
   @Override
   public Type getVoltronType() {
     return (forDestroy) ? Type.LOCAL_ENTITY_GC : Type.LOCAL_PIPELINE_FLUSH;
@@ -106,5 +106,10 @@ public class LocalPipelineFlushMessage implements VoltronEntityMessage, Runnable
   public EntityMessage getEntityMessage() {
     // No instance for this type.
     return null;
+  }
+
+  @Override
+  public boolean isClientRequest() {
+    return false;
   }
 }

@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,18 +30,18 @@ import org.terracotta.entity.EntityMessage;
  *
  */
 public class CreateSystemEntityMessage implements VoltronEntityMessage {
-  
+
   private final EntityID eid;
   private final long version;
   private final TCByteBuffer data;
-  
+
   public CreateSystemEntityMessage(EntityID eid, int version, TCByteBuffer extended) {
     Assert.assertNotNull(extended);
     this.eid = eid;
     this.version = version;
     this.data = extended == null || extended.isReadOnly() ? extended : extended.asReadOnlyBuffer();
   }
-  
+
   @Override
   public ClientID getSource() {
     return ClientID.NULL_ID;
@@ -71,7 +71,7 @@ public class CreateSystemEntityMessage implements VoltronEntityMessage {
   public boolean doesRequestRetired() {
     return false;
   }
-  
+
   @Override
   public Type getVoltronType() {
     return VoltronEntityMessage.Type.CREATE_ENTITY;
@@ -90,5 +90,10 @@ public class CreateSystemEntityMessage implements VoltronEntityMessage {
   @Override
   public EntityMessage getEntityMessage() {
     return null;
+  }
+
+  @Override
+  public boolean isClientRequest() {
+    return false;
   }
 }

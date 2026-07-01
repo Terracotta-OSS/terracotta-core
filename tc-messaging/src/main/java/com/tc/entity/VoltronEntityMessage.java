@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,11 +18,13 @@
 package com.tc.entity;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.exception.ServerException;
 import org.terracotta.entity.EntityMessage;
 
 import com.tc.net.ClientID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
+import java.util.function.Consumer;
 
 
 public interface VoltronEntityMessage {
@@ -64,7 +66,7 @@ public interface VoltronEntityMessage {
      */
     DISCONNECT_CLIENT
   }
-  
+
   enum Acks {
     /**
      * Sent when the local client has determined that the message is now "in-flight".  This means that a reconnect during
@@ -90,23 +92,23 @@ public interface VoltronEntityMessage {
      */
     RETIRED,
   }
-  
+
   ClientID getSource();
-  
+
   TransactionID getTransactionID();
-  
+
   EntityDescriptor getEntityDescriptor();
 
   boolean doesRequireReplication();
-  
+
   boolean doesRequestReceived();
-  
+
   boolean doesRequestRetired();
-  
+
   Type getVoltronType();
-  
+
   TCByteBuffer getExtendedData();
-  
+
   /**
    * This represents the oldest transaction that the sending client still knows about, from a tracking perspective.  The
    * client will clear this once it gets the final APPLED response from the server but, in the meantime, the server must
@@ -114,12 +116,28 @@ public interface VoltronEntityMessage {
    * re-send order in the case of a restart or fail-over.
    */
   TransactionID getOldestTransactionOnClient();
-  
+
   /**
    * Provided for the cases where an entity message instance already exists.  Note that getExtendedData is expected to
    * return a serialized version of this message, if it isn't null.
-   * 
+   *
    * @return The EntityMessage instance or null, if there isn't one.
    */
   public EntityMessage getEntityMessage();
+  /**
+   * Server originated messages need to be handled differently from client initiated
+   * @return true if the message is from a server.
+   *
+   */
+  default boolean isClientRequest() {
+    return true;
+  }
+
+  default Consumer<byte[]> getCompletionHandler() {
+    return value -> {};
+  }
+
+  default Consumer<ServerException> getExceptionHandler() {
+    return value -> {};
+  }
 }

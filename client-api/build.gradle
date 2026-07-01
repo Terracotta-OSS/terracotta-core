@@ -26,7 +26,6 @@ version = "$apiVersion"
 dependencies {
     contentsApi project(':common-api')
     contentsApi project(':terracotta-apis:entity-client-api')
-    contentsApi project(':terracotta-apis:connection-api')
 }
 
 publishing {

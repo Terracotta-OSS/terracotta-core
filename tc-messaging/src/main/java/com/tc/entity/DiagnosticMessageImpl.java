@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class DiagnosticMessageImpl extends DSOMessageBase implements DiagnosticM
   public TransactionID getTransactionID() {
     return transactionID;
   }
-  
+
   @Override
   public EntityDescriptor getEntityDescriptor() {
     return EntityDescriptor.NULL_ID;
@@ -59,22 +59,27 @@ public class DiagnosticMessageImpl extends DSOMessageBase implements DiagnosticM
   public boolean doesRequireReplication() {
     return false;
   }
-  
+
   @Override
   public boolean doesRequestReceived() {
     return true;
   }
-  
+
   @Override
   public boolean doesRequestRetired() {
     return false;
   }
-  
+
+  @Override
+  public boolean isClientRequest() {
+    return false;
+  }
+
   @Override
   public Type getVoltronType() {
     return Type.LOCAL_PIPELINE_FLUSH;
   }
-  
+
   @Override
   public TCByteBuffer getExtendedData() {
     return TCByteBufferFactory.wrap(this.extendedData);
@@ -104,22 +109,22 @@ public class DiagnosticMessageImpl extends DSOMessageBase implements DiagnosticM
     TCByteBufferOutputStream outputStream = getOutputStream();
     // We don't want to use the NVpair stuff:  it is horrendously complicated, doesn't work well with all types, and doesn't buy us anything.
     putNVPair((byte)0, (byte)0);
-        
+
     outputStream.writeLong(this.transactionID.toLong());
-    
+
     outputStream.writeInt(extendedData.length);
     outputStream.write(extendedData);
   }
-  
+
   @Override
   protected boolean hydrateValue(byte name) throws IOException {
     Assert.assertTrue(0 == name);
     // Read our dummy byte.
     getByteValue();
-    
+
     this.transactionID = new TransactionID(getLongValue());
     this.extendedData = getBytesArray();
-    
+
     return true;
   }
 

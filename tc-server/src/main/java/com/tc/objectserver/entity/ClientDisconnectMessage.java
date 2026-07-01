@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public class ClientDisconnectMessage implements VoltronEntityMessage, Runnable {
   public boolean doesRequestRetired() {
     return false;
   }
-    
+
   @Override
   public VoltronEntityMessage.Type getVoltronType() {
     return Type.DISCONNECT_CLIENT;
@@ -98,19 +98,26 @@ public class ClientDisconnectMessage implements VoltronEntityMessage, Runnable {
     return null;
   }
 
+
+
   @Override
   public void run() {
     if (this.disconnectComplete != null) {
       this.disconnectComplete.run();
     }
   }
-  
+
   public void disconnectException(Exception e) {
     if (this.disconnectException != null) {
       this.disconnectException.accept(e);
     }
   }
-  
+
+  @Override
+  public boolean isClientRequest() {
+    return false;
+  }
+
   @Override
   public String toString() {
     return "ClientDisconnectMessage{" + "clientID=" + clientID + ", entityDescriptor=" + descriptor + '}';

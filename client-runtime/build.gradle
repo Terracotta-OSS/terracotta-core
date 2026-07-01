@@ -24,7 +24,6 @@ plugins {
 description = 'terracotta-core client-runtime'
 
 dependencies {
-    compileOnlyApi project(":terracotta-apis:connection-api")
     implementation  "org.slf4j:slf4j-api:$slf4jVersion"
 
     contentsApi project(":client-api")

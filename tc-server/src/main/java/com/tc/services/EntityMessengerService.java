@@ -32,7 +32,6 @@ import com.tc.objectserver.api.ManagedEntity.LifecycleListener;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.entity.CreateMessage;
 import com.tc.objectserver.entity.DestroyMessage;
-import com.tc.objectserver.entity.ManagedEntityImpl;
 import com.tc.objectserver.entity.ReconfigureMessage;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.util.Assert;
@@ -176,7 +175,8 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     private final Consumer<MessageResponse<R>> response;
     private final boolean waitForReceived;
     private final ClientID clientID;
-    private final ServerEntityRequest parent;
+    private final TransactionID transactionID;
+    private final TransactionID oldestTransactionID;
 
     public FakeEntityMessage(EntityDescriptor descriptor, EntityMessage identityMessage, TCByteBuffer message, Consumer<MessageResponse<R>> response, boolean waitForReceived) {
       Assert.assertNotNull(message);
@@ -185,23 +185,28 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
       this.message = message.asReadOnlyBuffer();
       this.response = response;
       this.waitForReceived = waitForReceived;
-      this.parent = parentContext.get();
+
+      ServerEntityRequest parent = parentContext.get();
 
       if (parent != null) {
         this.clientID = parent.getNodeID();
+        this.transactionID = parent.getTransaction();
+        this.oldestTransactionID = parent.getOldestTransactionOnClient();
       } else {
         this.clientID = ClientID.NULL_ID;
+        this.transactionID = new TransactionID(NEXT_FAKE_TXN_ID.incrementAndGet());
+        this.oldestTransactionID = TransactionID.NULL_ID;
       }
     }
 
     @Override
     public ClientID getSource() {
-      return clientID;
+      return this.clientID;
     }
 
     @Override
     public TransactionID getTransactionID() {
-      return this.parent == null ? new TransactionID(NEXT_FAKE_TXN_ID.incrementAndGet()) : parent.getTransaction();
+      return  this.transactionID;
     }
 
     @Override
@@ -236,7 +241,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
 
     @Override
     public TransactionID getOldestTransactionOnClient() {
-      return this.parent == null ? TransactionID.NULL_ID : parent.getOldestTransactionOnClient();
+      return this.oldestTransactionID;
     }
 
     @Override
@@ -244,6 +249,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
       return this.identityMessage;
     }
 
+    @Override
     public Consumer<byte[]> getCompletionHandler() {
       return response == null ? null : (raw)->this.response.accept(new MessageResponse() {
         @Override
@@ -267,6 +273,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
       });
     }
 
+    @Override
     public Consumer<ServerException> getExceptionHandler() {
       return response == null ? null : (exception)->this.response.accept(new MessageResponse() {
         @Override
@@ -284,6 +291,11 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
           return null;
         }
       });
+    }
+
+    @Override
+    public boolean isClientRequest() {
+      return false;
     }
   }
 

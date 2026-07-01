@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@
  */
 package com.tc.objectserver.api;
 
+import com.tc.exception.ServerException;
 import com.tc.objectserver.entity.ActivePassiveAckWaiter;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 
@@ -27,6 +29,58 @@ import java.util.function.Supplier;
 public interface ResultCapture extends ServerEntityResponse {
   void message(byte[] message);
   void setWaitFor(Supplier<ActivePassiveAckWaiter> waiter);
-  void waitForReceived();
   CompletionStage<Void> retired();
+
+  static ResultCapture chain(ResultCapture...list) {
+    return new ResultCapture() {
+      @Override
+      public void message(byte[] message) {
+        for (ResultCapture r : list) {
+          r.message(message);
+        }
+      }
+
+      @Override
+      public void setWaitFor(Supplier<ActivePassiveAckWaiter> waiter) {
+        for (ResultCapture r : list) {
+          r.setWaitFor(waiter);
+        }
+      }
+
+      @Override
+      public CompletionStage<Void> retired() {
+        return java.util.Arrays.stream(list).map(ResultCapture::retired)
+            .reduce((a, b) -> a.thenCombine(b, (x, y) -> null))
+            .orElse(CompletableFuture.completedFuture(null));
+      }
+
+      @Override
+      public void complete() {
+        for (ResultCapture r : list) {
+          r.complete();
+        }
+      }
+
+      @Override
+      public void complete(byte[] value) {
+        for (ResultCapture r : list) {
+          r.complete(value);
+        }
+      }
+
+      @Override
+      public void failure(ServerException e) {
+        for (ResultCapture r : list) {
+          r.failure(e);
+        }
+      }
+
+      @Override
+      public void received() {
+        for (ResultCapture r : list) {
+          r.received();
+        }
+      }
+    };
+  }
 }
