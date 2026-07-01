@@ -114,8 +114,8 @@ public class ClientDisconnectMessage implements VoltronEntityMessage, Runnable {
   }
 
   @Override
-  public boolean isServerRequest() {
-    return true;
+  public boolean isClientRequest() {
+    return false;
   }
 
   @Override

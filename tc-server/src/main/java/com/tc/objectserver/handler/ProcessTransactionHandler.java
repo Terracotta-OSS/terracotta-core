@@ -224,7 +224,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
           break;
       }
       MessagePayload payload =  MessagePayload.commonMessagePayload(extendedData, entityMessage, doesRequireReplication, canBeBusy);
-      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient, completion, exception, requestedReceived, requestedRetired, !message.isServerRequest());
+      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient, completion, exception, requestedReceived, requestedRetired, message.isClientRequest());
     }
 
     @Override
@@ -556,7 +556,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       }
       if (cached) {
         ServerEntityRequest request = new ServerEntityRequestImpl(resentMessage.getEntityDescriptor().getClientInstanceID(), cachedType, resentMessage.getSource(), resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), true);
-        ResultCapture response = createClientResponse(!resentMessage.isServerRequest(), request);
+        ResultCapture response = createClientResponse(resentMessage.isClientRequest(), request);
         response.received();
         if (result != null) {
           response.complete(result);
@@ -571,7 +571,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       }
     } catch (ServerException ee) {
       ServerEntityRequest request = new ServerEntityRequestImpl(resentMessage.getEntityDescriptor().getClientInstanceID(), cachedType, resentMessage.getSource(), resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), true);
-      ResultCapture response = createClientResponse(!resentMessage.isServerRequest(), request);
+      ResultCapture response = createClientResponse(resentMessage.isClientRequest(), request);
       response.received();
       response.failure(ee);
       response.retired();
@@ -668,7 +668,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     if (message instanceof Runnable) {
       completion = (r)->((Runnable)message).run();
     }
-    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient, completion, null, requestedReceived, requestedRetired, !message.isServerRequest());
+    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient, completion, null, requestedReceived, requestedRetired, message.isClientRequest());
   }
 
   private static ServerEntityAction decodeMessageType(VoltronEntityMessage.Type type) {

@@ -71,8 +71,8 @@ public class DiagnosticMessageImpl extends DSOMessageBase implements DiagnosticM
   }
 
   @Override
-  public boolean isServerRequest() {
-    return true;
+  public boolean isClientRequest() {
+    return false;
   }
 
   @Override

@@ -129,8 +129,8 @@ public interface VoltronEntityMessage {
    * @return true if the message is from a server.
    *
    */
-  default boolean isServerRequest() {
-    return false;
+  default boolean isClientRequest() {
+    return true;
   }
 
   default Consumer<byte[]> getCompletionHandler() {

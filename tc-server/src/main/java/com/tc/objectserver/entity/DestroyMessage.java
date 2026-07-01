@@ -92,7 +92,7 @@ public class DestroyMessage implements VoltronEntityMessage {
   }
 
   @Override
-  public boolean isServerRequest() {
-    return true;
+  public boolean isClientRequest() {
+    return false;
   }
 }

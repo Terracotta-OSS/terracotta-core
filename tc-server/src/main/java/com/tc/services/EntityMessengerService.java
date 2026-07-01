@@ -294,8 +294,8 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     }
 
     @Override
-    public boolean isServerRequest() {
-      return true;
+    public boolean isClientRequest() {
+      return false;
     }
   }
 

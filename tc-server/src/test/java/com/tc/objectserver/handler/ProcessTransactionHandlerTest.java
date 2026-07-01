@@ -326,7 +326,7 @@ public class ProcessTransactionHandlerTest {
     when(request.getTransactionID()).thenReturn(transactionID);
     when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(1));
     boolean isNull = sender.isNull();
-    when(request.isServerRequest()).thenReturn(isNull);
+    when(request.isClientRequest()).thenReturn(!isNull);
     // Return an empty byte[], for now.
     when(request.getExtendedData()).thenReturn(TCByteBufferFactory.wrap(new byte[0]));
     return request;
