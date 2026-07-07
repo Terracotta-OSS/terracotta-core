@@ -152,7 +152,9 @@ import org.slf4j.LoggerFactory;
       if (message != null) {
         message.setFailure(transaction, e);
         invokeReturn.compute(clientID, (c,v)-> {
-          v.stopAdding();
+          if (v != null) {
+            v.stopAdding();
+          }
           multiSend.getSink().addToSink(new ResponseMessage(message));
           return null;
         });

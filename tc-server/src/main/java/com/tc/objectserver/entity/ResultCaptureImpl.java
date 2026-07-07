@@ -52,7 +52,6 @@ public class ResultCaptureImpl implements ResultCapture {
 
   @Override
   public void setWaitFor(Supplier<ActivePassiveAckWaiter> waitFor) {
-    Assert.assertNull(setOnce);
     setOnce = waitFor;
   }
 
@@ -111,6 +110,8 @@ public class ResultCaptureImpl implements ResultCapture {
 
   @Override
   public CompletionStage<Void> retired() {
-    return CompletableFuture.completedFuture(null);
+    CompletableFuture<Void> complete = new CompletableFuture<>();
+    setOnce.get().runWhenCompleted(()->complete.complete(null));
+    return complete;
   }
 }

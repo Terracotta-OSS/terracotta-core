@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -77,13 +77,14 @@ public class ActivePassiveAckWaiter {
     abandoned = true;
     notifyAll();
   }
-  
+
   public void runWhenCompleted(Runnable r) {
     Runnable runInPlace = null;
     synchronized (this) {
       if (finalizer != null) {
+        Runnable local = finalizer;
         finalizer = ()->{
-          finalizer.run();
+          local.run();
           r.run();
         };
       } else {
@@ -93,7 +94,7 @@ public class ActivePassiveAckWaiter {
       if (this.completedPending.isEmpty()) {
         runInPlace = finalizer;
         finalizer = null;
-      } 
+      }
     }
     if (runInPlace != null) {
       runInPlace.run();
@@ -112,7 +113,7 @@ public class ActivePassiveAckWaiter {
       L2Utils.handleInterrupted(LOGGER, ie);
     }
   }
-  
+
   public boolean verifyLifecycleResult(boolean success) {
     if(results.entrySet().stream().anyMatch(e->e.getValue() == (success ? ReplicationResultCode.FAIL : ReplicationResultCode.SUCCESS))) {
       boolean zapped = false;
@@ -133,7 +134,7 @@ public class ActivePassiveAckWaiter {
   public synchronized boolean isCompleted() {
     return this.completedPending.isEmpty();
   }
-  
+
   private SessionID nodeToSession(ServerID node) {
     return this.session.getOrDefault(node, SessionID.NULL_ID);
   }
@@ -144,7 +145,7 @@ public class ActivePassiveAckWaiter {
     // We must have contained this passive in order to receive.
     if (!didContain) {
       Assert.assertTrue(onePassive + " " + toString(), this.receivedByComplete.contains(current));
-    }    
+    }
     // Wake everyone up if this changed something.
     if (this.receivedPending.isEmpty()) {
       notifyAll();
@@ -153,7 +154,7 @@ public class ActivePassiveAckWaiter {
 
   /**
    * Notifies the waiter that it is complete for the given node.
-   * 
+   *
    * @param onePassive The passive which has completed the replicated message
    * @param payload
    * @return True if this was the last outstanding completion required and the waiter is now done.
@@ -163,11 +164,11 @@ public class ActivePassiveAckWaiter {
     this.results.put(onePassive, payload);
     return runFinalizerOnComplete(updateCompletionFlags(nodeToSession(onePassive), true));
   }
-  
+
   public boolean failedToSendToPassive(SessionID session) {
     return runFinalizerOnComplete(updateCompletionFlags(session, false));
   }
-  
+
   private boolean runFinalizerOnComplete(boolean completed) {
     if (completed) {
       Runnable clear = clearFinalizer();
@@ -177,13 +178,13 @@ public class ActivePassiveAckWaiter {
     }
     return completed;
   }
-  
+
   private synchronized Runnable clearFinalizer() {
     Runnable f = finalizer;
     finalizer = null;
     return f;
   }
-  
+
   private synchronized boolean updateCompletionFlags(SessionID onePassive, boolean isNormal) {
     // Note that we will try to remove from the received set, but usually it will already have been removed.
     boolean didContainInReceived = this.receivedPending.remove(onePassive);
