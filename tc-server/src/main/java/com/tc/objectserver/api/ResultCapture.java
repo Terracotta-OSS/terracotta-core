@@ -50,7 +50,7 @@ public interface ResultCapture extends ServerEntityResponse {
       @Override
       public CompletionStage<Void> retired() {
         return java.util.Arrays.stream(list).map(ResultCapture::retired)
-            .reduce((a, b) -> a.thenCombine(b, (x, y) -> null))
+            .reduce((a, b) -> a.thenCompose(v->b))
             .orElse(CompletableFuture.completedFuture(null));
       }
 

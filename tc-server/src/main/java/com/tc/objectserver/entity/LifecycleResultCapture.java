@@ -66,7 +66,9 @@ public class LifecycleResultCapture implements ResultCapture {
 
     @Override
     public CompletionStage<Void> retired() {
-      return CompletableFuture.completedFuture(null);
+      CompletableFuture<Void> complete = new CompletableFuture<>();
+      setOnce.get().runWhenCompleted(()->complete.complete(null));
+      return complete;
     }
 
     @Override
