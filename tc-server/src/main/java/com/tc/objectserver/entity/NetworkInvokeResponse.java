@@ -65,7 +65,7 @@ import org.slf4j.LoggerFactory;
     private final long[] stats = new long[StatType.SERVER_RETIRED.serverSpot() + 1];
     private final ConcurrentHashMap<ClientID, VoltronEntityMultiResponse> invokeReturn;
 
-    private SetOnceFlag isRetired = new SetOnceFlag();
+    private final SetOnceFlag isRetired = new SetOnceFlag();
 
     public NetworkInvokeResponse(
             ClientID node,
@@ -230,17 +230,22 @@ import org.slf4j.LoggerFactory;
           return msg;
         }
       });
-      // enqueue if start adding returns true;  this means first to add
-      boolean enqueue = vmr.startAdding();
-      try {
-        if (adder.test(vmr)) {
-          // added the message, exit the loop
-          break;
+      if (vmr != null) {
+        // enqueue if start adding returns true;  this means first to add
+        boolean enqueue = vmr.startAdding();
+        try {
+          if (adder.test(vmr)) {
+            // added the message, exit the loop
+            break;
+          }
+        } finally {
+          if (enqueue) {
+            multiSend.getSink().addToSink(new ResponseMessage(vmr));
+          }
         }
-      } finally {
-        if (enqueue) {
-          multiSend.getSink().addToSink(new ResponseMessage(vmr));
-        }
+      } else {
+      // if vmr is null, we used direct
+        break;
       }
     }
   }
