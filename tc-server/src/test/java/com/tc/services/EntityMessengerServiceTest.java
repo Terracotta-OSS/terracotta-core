@@ -21,9 +21,9 @@ import com.tc.async.api.Sink;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.handler.RetirementManager;
+import com.tc.services.EntityMessengerService.Handle;
 import org.junit.Test;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.ExplicitRetirementHandle;
 import org.terracotta.entity.MessageCodec;
 
 import static org.mockito.Mockito.any;
@@ -31,7 +31,6 @@ import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.terracotta.entity.ActiveServerEntity;
 
 
 public class EntityMessengerServiceTest {
@@ -51,13 +50,13 @@ public class EntityMessengerServiceTest {
     when(entity.getCodec()).thenReturn(codec);
 
     // Create the service.
-    EntityMessengerService service = new EntityMessengerService(sink, entity, true);
+    EntityMessengerService service = new EntityMessengerService(sink, entity, null, true);
     when(entity.isDestroyed()).thenReturn(false);
     service.entityCreated(entity);
 
     EntityMessage deferrableMessage = mock(EntityMessage.class);
     EntityMessage futureMessage = mock(EntityMessage.class);
-    ExplicitRetirementHandle handle = service.deferRetirement("test", deferrableMessage, futureMessage);
+    Handle handle = service.deferRetirement("test", deferrableMessage, futureMessage);
 
     // verify it was deferred
     verify(retirementManager).deferRetirement(deferrableMessage, futureMessage);
@@ -81,7 +80,7 @@ public class EntityMessengerServiceTest {
     when(entity.getCodec()).thenReturn(codec);
 
     // Create the service.
-    EntityMessengerService service = new EntityMessengerService(sink, entity, true);
+    EntityMessengerService service = new EntityMessengerService(sink, entity, null, true);
     // now adding listener in provider so do it manually
     entity.addLifecycleListener(service);
     // Verify that the service was registered to be told when the entity activates.

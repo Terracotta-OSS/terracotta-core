@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,21 @@
 package org.terracotta.entity;
 
 import java.util.function.Consumer;
-import org.terracotta.entity.IEntityMessenger.MessageResponse;
 
-public interface ExplicitRetirementHandle<R extends EntityResponse> {
-  String getTag();
+public interface ActiveMessenger extends AutoCloseable {
 
-  void release() throws MessageCodecException;
+  void sendMessage(EntityMessage message);
 
-  void release(Consumer<MessageResponse<R>> consumer) throws MessageCodecException;
+  void sendMessage(EntityMessage message, Consumer<EntityResponse> result, Consumer<Exception> failure);
+
+  ReleaseHandle deferRetirement(String tag, EntityMessage message);
+
+  ReleaseHandle deferRetirement(String tag, EntityMessage message, Consumer<EntityResponse> result, Consumer<Exception> failure);
+
+  interface ReleaseHandle {
+    String tag();
+    void release();
+  }
+  @Override
+  void close();
 }
