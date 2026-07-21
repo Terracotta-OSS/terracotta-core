@@ -77,7 +77,7 @@ public class ActiveTerracottaClusteredMap implements ActiveServerEntity<MapOpera
   }
 
   @Override
-  public MapResponse invokeActive(ActiveInvokeContext<MapOperation, MapResponse> context, MapOperation input) {
+  public MapResponse invokeActive(ActiveInvokeContext<MapResponse> context, MapOperation input) {
     MapResponse response;
 
     switch (input.operationType()) {

@@ -17,7 +17,6 @@
 package org.terracotta.passthrough;
 
 import java.util.Properties;
-import java.util.function.Consumer;
 import org.terracotta.entity.ActiveEntityManager;
 import org.terracotta.entity.ActiveInvokeChannel;
 import org.terracotta.entity.ActiveInvokeContext;
@@ -31,7 +30,7 @@ import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityServerException;
 
 public class PassThroughServerActiveInvokeContext<M extends EntityMessage, R extends EntityResponse> extends PassThroughServerInvokeContext
-  implements ActiveInvokeContext<M, R> {
+  implements ActiveInvokeContext<R> {
   private final MessageCodec<M, R> codec;
   private final EntityMessage message;
   private final ClientDescriptor descriptor;
@@ -85,7 +84,7 @@ public class PassThroughServerActiveInvokeContext<M extends EntityMessage, R ext
   }
 
   @Override
-  public ActiveMessenger<M, R> createInvokeMessenger() {
+  public ActiveMessenger createInvokeMessenger() {
     throw new UnsupportedOperationException("Not supported yet.");
   }
 

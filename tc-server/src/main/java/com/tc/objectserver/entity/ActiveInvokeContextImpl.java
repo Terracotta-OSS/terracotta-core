@@ -32,16 +32,16 @@ import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodecException;
 
-public class ActiveInvokeContextImpl<M extends EntityMessage, R extends EntityResponse> extends InvokeContextImpl implements ActiveInvokeContext<M, R> {
+public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeContextImpl implements ActiveInvokeContext<R> {
   private static final Logger LOGGER = LoggerFactory.getLogger(ActiveInvokeContextImpl.class);
 
-  private final M requestContext;
+  private final EntityMessage requestContext;
   private final ClientDescriptorImpl clientDescriptor;
   private final Consumer<EntityResponse> messages;
   private final Consumer<Exception> exception;
   private final Runnable open;
   private final Runnable retire;
-  private final EntityMessengerService<M, R> messenger;
+  private final EntityMessengerService<EntityMessage, EntityResponse> messenger;
   private final Properties properties = GuardianContext.getCurrentChannelProperties();
   private ActiveInvokeChannelImpl channel;
 
@@ -49,8 +49,8 @@ public class ActiveInvokeContextImpl<M extends EntityMessage, R extends EntityRe
     this(null, descriptor, concurrencyKey, oldestid, currentId, null, null, null, null, null);
   }
 
-  public ActiveInvokeContextImpl(M request, ClientDescriptorImpl descriptor, int concurrencyKey, long oldestid, long currentId,
-      Runnable open, Consumer<EntityResponse> messages, Consumer<Exception> exception, Runnable retire, EntityMessengerService<M, R> messenger
+  public ActiveInvokeContextImpl(EntityMessage request, ClientDescriptorImpl descriptor, int concurrencyKey, long oldestid, long currentId,
+      Runnable open, Consumer<EntityResponse> messages, Consumer<Exception> exception, Runnable retire, EntityMessengerService<EntityMessage, EntityResponse> messenger
   ) {
     super(new ClientSourceIdImpl(descriptor.getNodeID().toLong()), concurrencyKey, oldestid, currentId);
     this.requestContext = request;
@@ -77,10 +77,10 @@ public class ActiveInvokeContextImpl<M extends EntityMessage, R extends EntityRe
   }
 
   @Override
-  public ActiveMessenger<M, R> createInvokeMessenger() {
-    return new ActiveMessenger<M, R>() {
+  public ActiveMessenger createInvokeMessenger() {
+    return new ActiveMessenger() {
       @Override
-      public void sendMessage(M message) {
+      public void sendMessage(EntityMessage message) {
         try {
           messenger.messageSelfAndDeferRetirement(requestContext, message);
         } catch (MessageCodecException codec) {
@@ -89,9 +89,9 @@ public class ActiveInvokeContextImpl<M extends EntityMessage, R extends EntityRe
       }
 
       @Override
-      public void sendMessage(M message, Consumer<R> result, Consumer<Exception> failure) {
+      public void sendMessage(EntityMessage message, Consumer<EntityResponse> result, Consumer<Exception> failure) {
         try {
-          messenger.messageSelfAndDeferRetirement(requestContext, message, (MessageResponse<R> t) -> {
+          messenger.messageSelfAndDeferRetirement(requestContext, message, (MessageResponse<EntityResponse> t) -> {
             if (t.wasExceptionThrown()) {
               failure.accept(t.getException());
             } else {
@@ -104,7 +104,7 @@ public class ActiveInvokeContextImpl<M extends EntityMessage, R extends EntityRe
       }
 
       @Override
-      public ActiveMessenger.ReleaseHandle deferRetirement(String tag, M message) {
+      public ActiveMessenger.ReleaseHandle deferRetirement(String tag, EntityMessage message) {
         return new ActiveMessenger.ReleaseHandle() {
           @Override
           public String tag() {
@@ -123,7 +123,7 @@ public class ActiveInvokeContextImpl<M extends EntityMessage, R extends EntityRe
       }
 
       @Override
-      public ActiveMessenger.ReleaseHandle deferRetirement(String tag, M message, Consumer<R> result, Consumer<Exception> failure) {
+      public ActiveMessenger.ReleaseHandle deferRetirement(String tag, EntityMessage message, Consumer<EntityResponse> result, Consumer<Exception> failure) {
         return new ActiveMessenger.ReleaseHandle() {
           @Override
           public String tag() {
@@ -133,7 +133,7 @@ public class ActiveInvokeContextImpl<M extends EntityMessage, R extends EntityRe
           @Override
           public void release() {
             try {
-              messenger.messageSelfAndDeferRetirement(requestContext, message, (MessageResponse<R> t) -> {
+              messenger.messageSelfAndDeferRetirement(requestContext, message, (MessageResponse<EntityResponse> t) -> {
                 if (t.wasExceptionThrown()) {
                   failure.accept(t.getException());
                 } else {

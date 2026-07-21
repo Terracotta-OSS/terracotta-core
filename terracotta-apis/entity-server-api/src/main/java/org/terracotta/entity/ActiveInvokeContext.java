@@ -18,7 +18,7 @@ package org.terracotta.entity;
 
 import java.util.Properties;
 
-public interface ActiveInvokeContext<M extends EntityMessage, R extends EntityResponse> extends InvokeContext {
+public interface ActiveInvokeContext<R extends EntityResponse> extends InvokeContext {
   /**
    * source instance from which the invocation originates.
    *
@@ -35,7 +35,7 @@ public interface ActiveInvokeContext<M extends EntityMessage, R extends EntityRe
    */
   ActiveInvokeChannel<R> openInvokeChannel();
 
-  ActiveMessenger<M, R> createInvokeMessenger();
+  ActiveMessenger createInvokeMessenger();
 
   ActiveEntityManager createEntityManager();
   /**

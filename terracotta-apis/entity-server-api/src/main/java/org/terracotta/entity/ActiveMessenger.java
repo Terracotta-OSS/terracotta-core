@@ -18,15 +18,15 @@ package org.terracotta.entity;
 
 import java.util.function.Consumer;
 
-public interface ActiveMessenger<M extends EntityMessage, R extends EntityResponse> extends AutoCloseable {
+public interface ActiveMessenger extends AutoCloseable {
 
-  void sendMessage(M message);
+  void sendMessage(EntityMessage message);
 
-  void sendMessage(M message, Consumer<R> result, Consumer<Exception> failure);
+  void sendMessage(EntityMessage message, Consumer<EntityResponse> result, Consumer<Exception> failure);
 
-  ReleaseHandle deferRetirement(String tag, M message);
+  ReleaseHandle deferRetirement(String tag, EntityMessage message);
 
-  ReleaseHandle deferRetirement(String tag, M message, Consumer<R> result, Consumer<Exception> failure);
+  ReleaseHandle deferRetirement(String tag, EntityMessage message, Consumer<EntityResponse> result, Consumer<Exception> failure);
 
   interface ReleaseHandle {
     String tag();
