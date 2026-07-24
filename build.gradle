@@ -37,6 +37,7 @@ allprojects {
     Git.getOrInstall(project)
     project.apply plugin: 'org.terracotta.build.convention.checkstyle'
     project.apply plugin: 'org.terracotta.build.copyright'
+    project.apply plugin: 'org.terracotta.build.convention.java-version'
 
     if (project.hasProperty('overrideVersion')) {
       project.version = project.overrideVersion
