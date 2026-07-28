@@ -17,5 +17,9 @@ gradlePlugin {
       id = 'org.terracotta.build.convention.checkstyle'
       implementationClass = 'org.terracotta.conventions.CheckstyleConvention'
     }
+    javaVersionConvention {
+      id = 'org.terracotta.build.convention.java-version'
+      implementationClass = 'org.terracotta.conventions.JavaVersionConvention'
+    }
   }
 }
