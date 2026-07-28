@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,20 +18,19 @@
 package com.tc.objectserver.entity;
 
 import com.tc.util.concurrent.SetOnceFlag;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import org.terracotta.entity.ActiveInvokeChannel;
 import org.terracotta.entity.EntityResponse;
 
 /**
  *
  */
-public class ActiveInvokeChannelImpl {
-  
+public class ActiveInvokeChannelImpl<R extends EntityResponse> implements ActiveInvokeChannel<R> {
+
   private final Consumer<EntityResponse> account;
   private final Consumer<Exception> exception;
   private final Runnable retirementTrigger;
   private final SetOnceFlag closed = new SetOnceFlag();
-  private final AtomicInteger references = new AtomicInteger(1);
 
   public ActiveInvokeChannelImpl(Consumer<EntityResponse> account, Consumer<Exception> exception, Runnable retirementTrigger) {
     this.account = account;
@@ -39,7 +38,8 @@ public class ActiveInvokeChannelImpl {
     this.retirementTrigger = retirementTrigger;
   }
 
-  public void sendResponse(EntityResponse response) {
+  @Override
+  public void sendResponse(R response) {
     if (!closed.isSet()) {
       account.accept(response);
     } else {
@@ -47,6 +47,7 @@ public class ActiveInvokeChannelImpl {
     }
   }
 
+  @Override
   public void sendException(Exception response) {
     if (closed.attemptSet()) {
       exception.accept(response);
@@ -55,17 +56,10 @@ public class ActiveInvokeChannelImpl {
     }
   }
 
+  @Override
   public void close() {
-    if (references.decrementAndGet() == 0) {
-      if (closed.attemptSet()) {
-        retirementTrigger.run();
-      }
-    } else {
-      
+    if (closed.attemptSet()) {
+      retirementTrigger.run();
     }
-  }
-  
-  public boolean reference() {
-    return (references.getAndIncrement() != 0);
   }
 }

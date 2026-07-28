@@ -81,7 +81,7 @@ public class EntityMessengerServiceContextTest {
     when(entity.getCurrentRequestMessage()).thenReturn(parentRequest);
 
     // Create the service
-    service = new EntityMessengerService<>(sink, entity, false);
+    service = new EntityMessengerService<>(sink, entity, ()->entity.getCurrentRequestMessage(), false);
     service.entityCreated(entity);
 
     // Send a message
@@ -106,7 +106,7 @@ public class EntityMessengerServiceContextTest {
     when(entity.getCurrentRequestMessage()).thenReturn(null);
 
     // Create the service
-    service = new EntityMessengerService<>(sink, entity, false);
+    service = new EntityMessengerService<>(sink, entity, ()->entity.getCurrentRequestMessage(), false);
     service.entityCreated(entity);
 
     // Send a message
@@ -137,7 +137,7 @@ public class EntityMessengerServiceContextTest {
     when(entity.getCurrentRequestMessage()).thenReturn(firstParent);
 
     // Create the service
-    service = new EntityMessengerService<>(sink, entity, false);
+    service = new EntityMessengerService<>(sink, entity, ()->entity.getCurrentRequestMessage(), false);
     service.entityCreated(entity);
 
     // Send first message

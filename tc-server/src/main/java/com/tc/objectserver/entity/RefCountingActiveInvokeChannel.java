@@ -17,42 +17,38 @@
  */
 package com.tc.objectserver.entity;
 
-import com.tc.util.concurrent.SetOnceFlag;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.terracotta.entity.ActiveInvokeChannel;
 import org.terracotta.entity.EntityResponse;
 
 /**
  *
  */
-public class CloseableActiveInvokeChannel<R extends EntityResponse> implements ActiveInvokeChannel<R> {
+public class RefCountingActiveInvokeChannel<R extends EntityResponse> implements ActiveInvokeChannel<R> {
   private final ActiveInvokeChannel<R> delegate;
-  private final SetOnceFlag closed = new SetOnceFlag();
+  private final AtomicInteger references = new AtomicInteger(1);
 
-  public CloseableActiveInvokeChannel(ActiveInvokeChannel<R> delegate) {
+  public RefCountingActiveInvokeChannel(ActiveInvokeChannel<R> delegate) {
     this.delegate = delegate;
+  }
+
+  public int reference() {
+    return references.getAndIncrement();
   }
 
   @Override
   public void sendResponse(R r) {
-    if (!closed.isSet()) {
-      delegate.sendResponse(r);
-    } else {
-      throw new IllegalStateException("already closed");
-    }
+    delegate.sendResponse(r);
   }
 
   @Override
   public void sendException(Exception excptn) {
-    if (!closed.isSet()) {
-      delegate.sendException(excptn);
-    } else {
-      throw new IllegalStateException("already closed");
-    }
+    delegate.sendException(excptn);
   }
 
   @Override
   public void close() {
-    if (closed.attemptSet()) {
+    if (references.decrementAndGet() == 0) {
       delegate.close();
     }
   }

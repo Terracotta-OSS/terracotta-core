@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,34 +18,45 @@
 package com.tc.objectserver.entity;
 
 import com.tc.objectserver.core.impl.GuardianContext;
+import com.tc.services.EntityMessengerService;
 import java.util.Properties;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.terracotta.entity.ActiveEntityManager;
 import org.terracotta.entity.ActiveInvokeChannel;
 import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.MessageCodecException;
+import org.terracotta.entity.ActiveServerMessenger;
 
 public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeContextImpl implements ActiveInvokeContext<R> {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ActiveInvokeContextImpl.class);
+
+  private final EntityMessage requestContext;
   private final ClientDescriptorImpl clientDescriptor;
-  private final Consumer<EntityResponse> messages;
-  private final Consumer<Exception> exception;
-  private final Runnable open;
-  private final Runnable retire;
-  private ActiveInvokeChannelImpl channel;
-  
+  private final Supplier<ActiveInvokeChannel> channelCreate;
+  private final EntityMessengerService<EntityMessage, EntityResponse> messenger;
+  private final Properties properties = GuardianContext.getCurrentChannelProperties();
+
+  private RefCountingActiveInvokeChannel<R> channel = null;
+
+
   public ActiveInvokeContextImpl(ClientDescriptorImpl descriptor, int concurrencyKey, long oldestid, long currentId) {
-    this(descriptor, concurrencyKey, oldestid, currentId, null, null, null, null);
+    this(null, descriptor, concurrencyKey, oldestid, currentId, null, null);
   }
-  
-  public ActiveInvokeContextImpl(ClientDescriptorImpl descriptor, int concurrencyKey, long oldestid, long currentId, 
-      Runnable open, Consumer<EntityResponse> messages, Consumer<Exception> exception, Runnable retire
+
+  public ActiveInvokeContextImpl(EntityMessage request, ClientDescriptorImpl descriptor, int concurrencyKey, long oldestid, long currentId,
+    Supplier<ActiveInvokeChannel> channelCreate, EntityMessengerService<EntityMessage, EntityResponse> messenger
   ) {
     super(new ClientSourceIdImpl(descriptor.getNodeID().toLong()), concurrencyKey, oldestid, currentId);
+    this.requestContext = request;
     this.clientDescriptor = descriptor;
-    this.open = open;
-    this.messages = messages;
-    this.exception = exception;
-    this.retire = retire;
+    this.channelCreate = channelCreate;
+    this.messenger = messenger;
   }
 
   @Override
@@ -55,23 +66,127 @@ public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeCon
 
   @Override
   public ActiveInvokeChannel<R> openInvokeChannel() {
-    if (open == null) {
+    if (channelCreate == null) {
       throw new UnsupportedOperationException("unable to create channel");
     } else {
       return getOrCreateInvokeChannel();
     }
   }
-  
+
+  @Override
+  public ActiveServerMessenger createServerMessenger() {
+    return new ActiveServerMessenger() {
+      @Override
+      public void sendMessage(EntityMessage message) {
+        try {
+          messenger.messageSelfAndDeferRetirement(requestContext, message);
+        } catch (MessageCodecException codec) {
+          LOGGER.warn("error encoding message", codec);
+        }
+      }
+
+      @Override
+      public void sendMessage(EntityMessage message, Consumer<EntityResponse> result, Consumer<Exception> failure) {
+        try {
+          messenger.messageSelfAndDeferRetirement(requestContext, message, t -> {
+            if (t.wasExceptionThrown()) {
+              failure.accept(t.getException());
+            } else {
+              result.accept(t.getResponse());
+            }
+          });
+        } catch (MessageCodecException codec) {
+          failure.accept(codec);
+        }
+      }
+
+      @Override
+      public ActiveServerMessenger.ReleaseHandle deferRetirement(String tag, EntityMessage message) {
+        return new ActiveServerMessenger.ReleaseHandle() {
+          @Override
+          public String tag() {
+            return tag;
+          }
+
+          @Override
+          public void release() {
+            try {
+              messenger.messageSelfAndDeferRetirement(requestContext, message);
+            } catch (MessageCodecException codec) {
+              LOGGER.warn("error encoding message", codec);
+            }
+          }
+        };
+      }
+
+      @Override
+      public ActiveServerMessenger.ReleaseHandle deferRetirement(String tag, EntityMessage message, Consumer<EntityResponse> result, Consumer<Exception> failure) {
+        return new ActiveServerMessenger.ReleaseHandle() {
+          @Override
+          public String tag() {
+            return tag;
+          }
+
+          @Override
+          public void release() {
+            try {
+              messenger.messageSelfAndDeferRetirement(requestContext, message, t -> {
+                if (t.wasExceptionThrown()) {
+                  failure.accept(t.getException());
+                } else {
+                  result.accept(t.getResponse());
+                }
+              });
+            } catch (MessageCodecException codec) {
+              failure.accept(codec);
+            }
+          }
+        };
+      }
+
+      @Override
+      public void close() {
+
+      }
+    };
+  }
+
+  @Override
+  public ActiveEntityManager createEntityManager() {
+    return new ActiveEntityManager() {
+      @Override
+      public void create(String type, String name, long version, byte[] configuration) {
+        messenger.create(type, name, version, configuration);
+      }
+
+      @Override
+      public void destroySelf() {
+        messenger.destroySelf();
+      }
+
+      @Override
+      public void reconfigureSelf(byte[] configuration) {
+        messenger.reconfigureSelf(configuration);
+      }
+
+      @Override
+      public void close() {
+
+      }
+    };
+  }
+
   private synchronized ActiveInvokeChannel<R> getOrCreateInvokeChannel() {
-    if (channel == null || !channel.reference()) {
-      open.run();
-      channel = new ActiveInvokeChannelImpl(messages, exception, retire);
+    // this is an optimization to not grind the retirement manager with a bunch of
+    // open and closes
+    if (channel == null || channel.reference() == 0) {
+      channel = new RefCountingActiveInvokeChannel<>(channelCreate.get());
     }
     return new CloseableActiveInvokeChannel<>(channel);
   }
-  
+
   @Override
   public Properties getClientSourceProperties() {
-    return GuardianContext.getCurrentChannelProperties();
+    return properties;
   }
 }

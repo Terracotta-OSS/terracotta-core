@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.PassiveSynchronizationChannel;
+import org.terracotta.entity.ReconnectRejectedException;
 
 
 public class TestEntityServer implements ActiveServerEntity<EntityMessage, EntityResponse> {
@@ -34,21 +35,12 @@ public class TestEntityServer implements ActiveServerEntity<EntityMessage, Entit
   }
 
   @Override
-  public ReconnectHandler startReconnect() {
-    return new ReconnectHandler() {
-      @Override
-      public void handleReconnect(ClientDescriptor clientDescriptor, byte[] extendedReconnectData) {
-        // Do nothing.
-      }
-
-      @Override
-      public void close() {
-
-      }
+  public ReconnectHandler startReconnect(ActiveInvokeContext<EntityResponse> reconnectContext) {
+    return (ReconnectChannel clientConnection, byte[] extendedReconnectData) -> {
     };
   }
 
-  
+
 
 
   @Override
