@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class EntityMessengerProvider implements ImplementationProvidedServicePro
       } else if (configuration instanceof Function) {
         waitForReceived = (Boolean)((Function)configuration).apply("PASSIVE_CONFIRMATION");
       }
-      EntityMessengerService es = new EntityMessengerService(this.messageSink, owningEntity, Optional.ofNullable(waitForReceived).orElse(false));
+      EntityMessengerService es = new EntityMessengerService(this.messageSink, owningEntity, ()->owningEntity.getCurrentRequestMessage(), Optional.ofNullable(waitForReceived).orElse(false));
       owningEntity.addLifecycleListener(es);
       service = configuration.getServiceType().cast(es);
     }

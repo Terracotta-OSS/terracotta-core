@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,12 +36,12 @@ import java.util.concurrent.ConcurrentMap;
 public class EntityClientCommunicatorService implements ClientCommunicator {
   private final ConcurrentMap<NodeID, ClientAccount> clientAccounts;
   private final ManagedEntity owningEntity;
-  
+
 
   public EntityClientCommunicatorService(ConcurrentMap<NodeID, ClientAccount> clientAccounts, ManagedEntity owningEntity) {
     Assert.assertNotNull(clientAccounts);
     Assert.assertNotNull(owningEntity);
-    
+
     this.clientAccounts = clientAccounts;
     this.owningEntity = owningEntity;
   }
@@ -58,17 +58,6 @@ public class EntityClientCommunicatorService implements ClientCommunicator {
     }
   }
 
-  public void sendInvokeMessage(ClientDescriptor clientDescriptor, long invokeID, EntityResponse message) throws MessageCodecException {
-    // We are in internal code so downcast the descriptor.
-    ClientDescriptorImpl rawDescriptor = (ClientDescriptorImpl)clientDescriptor;
-    ClientAccount clientAccount = clientAccounts.get(rawDescriptor.getNodeID());
-    if (clientAccount != null) {
-      TransactionID tid = new TransactionID(invokeID);
-      byte[] payload = serialize(this.owningEntity.getCodec(), message);
-      clientAccount.sendInvokeMessage(tid, payload);
-    }
-  }
-  
   @Override
   public void closeClientConnection(ClientDescriptor clientDescriptor) {
     ClientDescriptorImpl descriptor = (ClientDescriptorImpl)clientDescriptor;
@@ -78,7 +67,7 @@ public class EntityClientCommunicatorService implements ClientCommunicator {
   @SuppressWarnings("unchecked")
   private <R extends EntityResponse> byte[] serialize(MessageCodec<?, R> codec, EntityResponse response) throws MessageCodecException {
     // We do this downcast, inline, instead of asking the codec (since a safer cast is all it could do, anyway).
-    // This should be safe as we received this object from an entity using this codec. 
+    // This should be safe as we received this object from an entity using this codec.
     return codec.encodeResponse((R)response);
   }
 }

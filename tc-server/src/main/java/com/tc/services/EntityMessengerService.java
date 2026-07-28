@@ -66,7 +66,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
 
   @SuppressWarnings("unchecked")
   public EntityMessengerService(Sink<VoltronEntityMessage> messageSink,
-                                ManagedEntity owningEntity, boolean waitForReceived) {
+                                ManagedEntity owningEntity, Supplier<ServerEntityRequest> parentContext, boolean waitForReceived) {
     Assert.assertNotNull(messageSink);
     Assert.assertNotNull(owningEntity);
 
@@ -79,11 +79,10 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     // Note that the codec will actually expect to work on a sub-type of EntityMessage but this service isn't explicitly
     // given the actual type.  This means that incorrect usage will result in a runtime failure.
     this.codec = (MessageCodec<M, R>) owningEntity.getCodec();
-    Assert.assertNotNull(codec);
 
     this.fakeDescriptor = EntityDescriptor.createDescriptorForInvoke(new FetchID(owningEntity.getConsumerID()),ClientInstanceID.NULL_ID);
     this.lifecycleDescriptor = EntityDescriptor.createDescriptorForLifecycle(owningEntity.getID(), owningEntity.getVersion());
-    this.parentContext = ()->owningEntity.getCurrentRequestMessage();
+    this.parentContext = parentContext;
   }
 
   @Override
