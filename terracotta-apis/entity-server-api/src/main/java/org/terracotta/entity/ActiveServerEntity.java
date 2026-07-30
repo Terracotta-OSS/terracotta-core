@@ -56,25 +56,7 @@ public interface ActiveServerEntity<M extends EntityMessage, R extends EntityRes
    * @param message The message from a client
    * @return possible return value
    */
-  default R invokeActive(ActiveInvokeContext<R> context, M message) throws EntityUserException {
-    return invoke(context.getClientDescriptor(), message);
-  }
-
-  /**
-   * <p>Invoke a call on the given entity.</p>
-   * <p>Note that the thread used to make this call is determined by consulting the entity's ConcurrencyStrategy so it may be
-   *  called concurrently with other invokes.</p>
-   * <p>This is the legacy endpoint, and will not be called unless the other
-   * invoke call is not overridden as it should be. Here for legacy transition.</p>
-   *
-   * @param descriptor client descriptor this invoke is sourced from
-   * @param message The message from a client
-   * @return possible return value
-   */
-  @Deprecated
-  default R invoke(ClientDescriptor descriptor, M message) throws EntityUserException {
-    throw new UnsupportedOperationException();
-  }
+  R invokeActive(ActiveInvokeContext<R> context, M message) throws EntityUserException;
 
   /**
    * <p>Called when an entity was loaded from some persistent state and the entity is expected to already be known to the
