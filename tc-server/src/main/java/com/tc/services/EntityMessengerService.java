@@ -62,11 +62,11 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
   private final EntityDescriptor fakeDescriptor;
   private final EntityDescriptor lifecycleDescriptor;
   private final ConcurrentHashMap<ExplicitRetirementHandle, Handle> retirementHandles = new ConcurrentHashMap<>();
-  private final Supplier<ServerEntityRequest> parentContext;
+  private final ServerEntityRequest parent;
 
   @SuppressWarnings("unchecked")
   public EntityMessengerService(Sink<VoltronEntityMessage> messageSink,
-                                ManagedEntity owningEntity, Supplier<ServerEntityRequest> parentContext, boolean waitForReceived) {
+                                ManagedEntity owningEntity, ServerEntityRequest parent, boolean waitForReceived) {
     Assert.assertNotNull(messageSink);
     Assert.assertNotNull(owningEntity);
 
@@ -82,7 +82,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
 
     this.fakeDescriptor = EntityDescriptor.createDescriptorForInvoke(new FetchID(owningEntity.getConsumerID()),ClientInstanceID.NULL_ID);
     this.lifecycleDescriptor = EntityDescriptor.createDescriptorForLifecycle(owningEntity.getID(), owningEntity.getVersion());
-    this.parentContext = parentContext;
+    this.parent = parent;
   }
 
   @Override
@@ -111,7 +111,6 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     scheduleMessage(message, response);
   }
 
-  @Override
   public ExplicitRetirementHandle deferRetirement(String tag,
                                                   M originalMessageToDefer,
                                                   M futureMessage) {
@@ -121,13 +120,11 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     return new Handle(tag, futureMessage);
   }
 
-  @Override
   public void messageSelfAndDeferRetirement(M originalMessageToDefer,
                                             M newMessageToSchedule) throws MessageCodecException {
     this.messageSelfAndDeferRetirement(originalMessageToDefer, newMessageToSchedule, null);
   }
 
-  @Override
   public void messageSelfAndDeferRetirement(M originalMessageToDefer,
                                             M newMessageToSchedule, Consumer<MessageResponse<R>> response) throws MessageCodecException {
     // This requires that we access the RetirementManager to change the retirement of the current message.
@@ -184,8 +181,6 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
       this.message = message.asReadOnlyBuffer();
       this.response = response;
       this.waitForReceived = waitForReceived;
-
-      ServerEntityRequest parent = parentContext.get();
 
       if (parent != null) {
         this.clientID = parent.getNodeID();
