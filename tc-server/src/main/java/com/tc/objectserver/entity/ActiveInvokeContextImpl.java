@@ -19,12 +19,12 @@ package com.tc.objectserver.entity;
 
 import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.services.EntityMessengerService;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.entity.ActiveEntityManager;
 import org.terracotta.entity.ActiveInvokeChannel;
 import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ClientDescriptor;
@@ -44,16 +44,11 @@ public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeCon
 
   private RefCountingActiveInvokeChannel<R> channel = null;
 
-
-  public ActiveInvokeContextImpl(ClientDescriptorImpl descriptor, int concurrencyKey, long oldestid, long currentId) {
-    this(null, descriptor, concurrencyKey, oldestid, currentId, null, null);
-  }
-
   public ActiveInvokeContextImpl(EntityMessage request, ClientDescriptorImpl descriptor, int concurrencyKey, long oldestid, long currentId,
     Supplier<ActiveInvokeChannel> channelCreate, EntityMessengerService<EntityMessage, EntityResponse> messenger
   ) {
     super(new ClientSourceIdImpl(descriptor.getNodeID().toLong()), concurrencyKey, oldestid, currentId);
-    this.requestContext = request;
+    this.requestContext = Objects.requireNonNull(request);
     this.clientDescriptor = descriptor;
     this.channelCreate = channelCreate;
     this.messenger = messenger;
@@ -78,49 +73,44 @@ public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeCon
     return new ActiveServerMessenger() {
       @Override
       public void sendMessage(EntityMessage message) {
-        try {
-          messenger.messageSelfAndDeferRetirement(requestContext, message);
-        } catch (MessageCodecException codec) {
-          LOGGER.warn("error encoding message", codec);
-        }
+        sendMessage(message, null, null);
       }
 
       @Override
       public void sendMessage(EntityMessage message, Consumer<EntityResponse> result, Consumer<Exception> failure) {
         try {
+          if (message == requestContext) {
+            throw new AssertionError("message being sent is the same as the parent request.  Messages cnnot be scheduled twice");
+          }
           messenger.messageSelfAndDeferRetirement(requestContext, message, t -> {
             if (t.wasExceptionThrown()) {
-              failure.accept(t.getException());
+              if (failure != null) {
+                failure.accept(t.getException());
+              }
             } else {
-              result.accept(t.getResponse());
+              if (result != null) {
+                result.accept(t.getResponse());
+              }
             }
           });
         } catch (MessageCodecException codec) {
-          failure.accept(codec);
+          if (failure != null) {
+            failure.accept(codec);
+          }
         }
       }
 
       @Override
       public ActiveServerMessenger.ReleaseHandle deferRetirement(String tag, EntityMessage message) {
-        return new ActiveServerMessenger.ReleaseHandle() {
-          @Override
-          public String tag() {
-            return tag;
-          }
-
-          @Override
-          public void release() {
-            try {
-              messenger.messageSelfAndDeferRetirement(requestContext, message);
-            } catch (MessageCodecException codec) {
-              LOGGER.warn("error encoding message", codec);
-            }
-          }
-        };
+        return deferRetirement(tag, message, null, null);
       }
 
       @Override
       public ActiveServerMessenger.ReleaseHandle deferRetirement(String tag, EntityMessage message, Consumer<EntityResponse> result, Consumer<Exception> failure) {
+        if (message == requestContext) {
+          throw new AssertionError("message being sent is the same as the parent request.  Messages cnnot be scheduled twice");
+        }
+        EntityMessengerService.Handle handle = messenger.deferRetirement(tag, requestContext, message);
         return new ActiveServerMessenger.ReleaseHandle() {
           @Override
           public String tag() {
@@ -129,44 +119,9 @@ public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeCon
 
           @Override
           public void release() {
-            try {
-              messenger.messageSelfAndDeferRetirement(requestContext, message, t -> {
-                if (t.wasExceptionThrown()) {
-                  failure.accept(t.getException());
-                } else {
-                  result.accept(t.getResponse());
-                }
-              });
-            } catch (MessageCodecException codec) {
-              failure.accept(codec);
-            }
+            handle.release(result, failure);
           }
         };
-      }
-
-      @Override
-      public void close() {
-
-      }
-    };
-  }
-
-  @Override
-  public ActiveEntityManager createEntityManager() {
-    return new ActiveEntityManager() {
-      @Override
-      public void create(String type, String name, long version, byte[] configuration) {
-        messenger.create(type, name, version, configuration);
-      }
-
-      @Override
-      public void destroySelf() {
-        messenger.destroySelf();
-      }
-
-      @Override
-      public void reconfigureSelf(byte[] configuration) {
-        messenger.reconfigureSelf(configuration);
       }
 
       @Override

@@ -25,7 +25,6 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.PassiveSynchronizationChannel;
-import org.terracotta.entity.ReconnectRejectedException;
 
 
 public class TestEntityServer implements ActiveServerEntity<EntityMessage, EntityResponse> {
@@ -35,7 +34,7 @@ public class TestEntityServer implements ActiveServerEntity<EntityMessage, Entit
   }
 
   @Override
-  public ReconnectHandler startReconnect(ActiveInvokeContext<EntityResponse> reconnectContext) {
+  public ReconnectHandler startReconnect() {
     return (ReconnectChannel clientConnection, byte[] extendedReconnectData) -> {
     };
   }

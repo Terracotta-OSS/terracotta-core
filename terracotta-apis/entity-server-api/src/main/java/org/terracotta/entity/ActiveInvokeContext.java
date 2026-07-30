@@ -37,7 +37,6 @@ public interface ActiveInvokeContext<R extends EntityResponse> extends InvokeCon
 
   ActiveServerMessenger createServerMessenger();
 
-  ActiveEntityManager createEntityManager();
   /**
    * Returns a map of client source information provided by the implementation.  Examples
    * might be the remote IP address of the source or the type of connection used to issue

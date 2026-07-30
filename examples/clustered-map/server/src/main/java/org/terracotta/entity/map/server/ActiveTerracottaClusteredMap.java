@@ -66,7 +66,7 @@ public class ActiveTerracottaClusteredMap implements ActiveServerEntity<MapOpera
   }
 
   @Override
-  public ActiveServerEntity.ReconnectHandler startReconnect(ActiveInvokeContext<MapResponse> cxt) {
+  public ActiveServerEntity.ReconnectHandler startReconnect() {
     return (channel, extendedReconnectData)->{
     // Do nothing.
     };

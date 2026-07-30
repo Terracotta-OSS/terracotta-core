@@ -35,8 +35,9 @@ import com.tc.objectserver.entity.DestroyMessage;
 import com.tc.objectserver.entity.ReconfigureMessage;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.util.Assert;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.ExplicitRetirementHandle;
 import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
@@ -45,7 +46,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import org.terracotta.entity.EntityResponse;
 
 /**
@@ -61,7 +61,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
   private final MessageCodec<M, R> codec;
   private final EntityDescriptor fakeDescriptor;
   private final EntityDescriptor lifecycleDescriptor;
-  private final ConcurrentHashMap<ExplicitRetirementHandle, Handle> retirementHandles = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<Handle, Handle> retirementHandles = new ConcurrentHashMap<>();
   private final ServerEntityRequest parent;
 
   @SuppressWarnings("unchecked")
@@ -101,17 +101,17 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
   }
 
   @Override
-  public void messageSelf(M message) throws MessageCodecException {
+  public void messageSelf(M message) {
     this.messageSelf(message, null);
   }
 
   @Override
-  public void messageSelf(M message, Consumer<MessageResponse<R>> response) throws MessageCodecException {
+  public void messageSelf(M message, Consumer<MessageResponse<R>> response) {
     // Make sure we have started.
     scheduleMessage(message, response);
   }
 
-  public ExplicitRetirementHandle deferRetirement(String tag,
+  public Handle deferRetirement(String tag,
                                                   M originalMessageToDefer,
                                                   M futureMessage) {
     // defer, as normal
@@ -143,7 +143,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
 
   }
 
-  private void scheduleMessage(M message, Consumer<MessageResponse<R>> response) throws MessageCodecException {
+  private void scheduleMessage(M message, Consumer<MessageResponse<R>> response) {
     // We first serialize the message (note that this is partially so we can use the common message processor, which expects
     // to deserialize, but also because we may have to replicate the message to the passive).
     FakeEntityMessage interEntityMessage = encodeAsFake(message, response);
@@ -156,10 +156,14 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     this.messageSink.addToSink(interEntityMessage);
   }
 
-  private FakeEntityMessage encodeAsFake(M message, Consumer<MessageResponse<R>> response) throws MessageCodecException {
-    byte[] serializedMessage = this.codec.encodeMessage(message);
-    FakeEntityMessage interEntityMessage = new FakeEntityMessage(this.fakeDescriptor, message, TCByteBufferFactory.wrap(serializedMessage), response, waitForReceived);
-    return interEntityMessage;
+  private FakeEntityMessage encodeAsFake(M message, Consumer<MessageResponse<R>> response) {
+    try {
+      byte[] serializedMessage = this.codec.encodeMessage(message);
+      FakeEntityMessage interEntityMessage = new FakeEntityMessage(this.fakeDescriptor, message, TCByteBufferFactory.wrap(serializedMessage), response, waitForReceived);
+      return interEntityMessage;
+    } catch (MessageCodecException codecerr) {
+      throw new UncheckedIOException(new IOException(codecerr));
+    }
   }
   /**
    * We fake up a Voltron entity message to enqueue for the entity to process in the future.
@@ -293,7 +297,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     }
   }
 
-  public class Handle implements ExplicitRetirementHandle {
+  public class Handle {
     private final String tag;
     private final M futureMessage;
     private final long nowTimeNS;
@@ -306,22 +310,27 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
       retirementHandles.put(this, this);
     }
 
-    @Override
     public String getTag() {
       return tag;
     }
 
-    @Override
     public void release() throws MessageCodecException {
-      if (retirementHandles.remove(this) != null) {
-        EntityMessengerService.this.messageSelf(futureMessage);
-      }
+      release(null, null);
     }
 
-    @Override
-    public void release(Consumer consumer) throws MessageCodecException {
+    public void release(Consumer<EntityResponse> consumer, Consumer<Exception> exception) {
       if (retirementHandles.remove(this) != null) {
-        EntityMessengerService.this.messageSelf(futureMessage, consumer);
+        EntityMessengerService.this.messageSelf(futureMessage, t-> {
+          if (t.wasExceptionThrown()) {
+            if (exception != null) {
+              exception.accept(t.getException());
+            }
+          } else {
+            if (consumer != null) {
+              consumer.accept(t.getResponse());
+            }
+          }
+        });
       }
     }
 

@@ -21,9 +21,9 @@ import com.tc.async.api.Sink;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.handler.RetirementManager;
+import com.tc.services.EntityMessengerService.Handle;
 import org.junit.Test;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.ExplicitRetirementHandle;
 import org.terracotta.entity.MessageCodec;
 
 import static org.mockito.Mockito.any;
@@ -31,7 +31,6 @@ import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.terracotta.entity.ActiveServerEntity;
 
 
 public class EntityMessengerServiceTest {
@@ -57,7 +56,7 @@ public class EntityMessengerServiceTest {
 
     EntityMessage deferrableMessage = mock(EntityMessage.class);
     EntityMessage futureMessage = mock(EntityMessage.class);
-    ExplicitRetirementHandle handle = service.deferRetirement("test", deferrableMessage, futureMessage);
+    Handle handle = service.deferRetirement("test", deferrableMessage, futureMessage);
 
     // verify it was deferred
     verify(retirementManager).deferRetirement(deferrableMessage, futureMessage);

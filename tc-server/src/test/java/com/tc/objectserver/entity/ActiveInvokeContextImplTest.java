@@ -40,22 +40,23 @@ public class ActiveInvokeContextImplTest {
   @Test
   public void testValid() {
     ActiveInvokeContextImpl ctx = new ActiveInvokeContextImpl(
+      mock(EntityMessage.class),
       new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(2)),
       1,
       1,
-      2);
+      2, null, null);
     Assert.assertThat(ctx.isValidClientInformation(), is(true));
   }
 
   @Test
   public void testInvalid() {
-    ActiveInvokeContextImpl ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(), 1, 1, 2);
+    ActiveInvokeContextImpl ctx = new ActiveInvokeContextImpl(mock(EntityMessage.class),new ClientDescriptorImpl(), 1, 1, 2,null,null);
     Assert.assertThat(ctx.isValidClientInformation(), is(false));
-    ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(), 1, -1, -1);
+    ctx = new ActiveInvokeContextImpl(mock(EntityMessage.class),new ClientDescriptorImpl(), 1, -1, -1,null,null);
     Assert.assertThat(ctx.isValidClientInformation(), is(false));
-    ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(2)), 1, -1, 2);
+    ctx = new ActiveInvokeContextImpl(mock(EntityMessage.class),new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(2)), 1, -1, 2,null,null);
     Assert.assertThat(ctx.isValidClientInformation(), is(true));
-    ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(2)), 1, 1, -1);
+    ctx = new ActiveInvokeContextImpl(mock(EntityMessage.class),new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(2)), 1, 1, -1,null,null);
     Assert.assertThat(ctx.isValidClientInformation(), is(false));
   }
 

@@ -21,6 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.MessageCodec;
@@ -77,17 +78,25 @@ public class PassthroughMessengerService implements IEntityMessenger<EntityMessa
   }
 
   @Override
-  public void messageSelf(EntityMessage message) throws MessageCodecException {
+  public void messageSelf(EntityMessage message) {
     // Serialize the message.
-    PassthroughMessage passthroughMessage = makePassthroughMessage(message);
-    this.passthroughServerProcess.sendMessageToActiveFromInsideActive(message, passthroughMessage, null);
+    try {
+      PassthroughMessage passthroughMessage = makePassthroughMessage(message);
+      this.passthroughServerProcess.sendMessageToActiveFromInsideActive(message, passthroughMessage, null);
+    } catch (MessageCodecException codec) {
+      throw new UncheckedIOException(new IOException(codec));
+    }
   }
 
   @Override
-  public void messageSelf(EntityMessage message, Consumer<MessageResponse<EntityResponse>> response) throws MessageCodecException {
+  public void messageSelf(EntityMessage message, Consumer<MessageResponse<EntityResponse>> response) {
     // Serialize the message.
-    this.passthroughServerProcess.sendMessageToActiveFromInsideActive(message, makePassthroughMessage(message), queueForComplete(response));
-  }
+    try {
+      this.passthroughServerProcess.sendMessageToActiveFromInsideActive(message, makePassthroughMessage(message), queueForComplete(response));
+    } catch (MessageCodecException codec) {
+      throw new UncheckedIOException(new IOException(codec));
+    }
+}
 
   private Consumer<PassthroughMessage> queueForComplete(Consumer<MessageResponse<EntityResponse>> response) {
     if (response != null) {
