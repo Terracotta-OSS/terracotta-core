@@ -51,18 +51,16 @@ public interface IEntityMessenger<M extends EntityMessage, R extends EntityRespo
    * Same as the messageSelf will no callback.
    *
    * @param message
-   * @throws MessageCodecException
    */
-  void messageSelf(M message) throws MessageCodecException;
+  void messageSelf(M message);
   /**
    * Asynchronously send a message to the entity instance which looked up the service instance.
    *
    * @param message The message to send.
    * @param response A callback used when the result of the invoke is available.  NOTE: callback delivered
    * on the thread which the invoke occurs
-   * @throws MessageCodecException The message could not be serialized.
    */
-  void messageSelf(M message, Consumer<MessageResponse<R>> response) throws MessageCodecException;
+  void messageSelf(M message, Consumer<MessageResponse<R>> response);
   /**
    * If a response callback is registered, the response will take this form.
    * @param <T> type of the message response

@@ -1484,7 +1484,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       this.messageCodec = service.getMessageCodec();
       this.syncMessageCodec = service.getSyncMessageCodec();
       this.entityInstance = (isActive) ? service.createActiveEntity(registry, configuration) : service.createPassiveEntity(registry, configuration);
-      this.reconnect = (isActive) ? getActive().startReconnect(null) : null;
+      this.reconnect = (isActive) ? getActive().startReconnect() : null;
       this.concurrency = service.getConcurrencyStrategy(configuration);
       Objects.requireNonNull(this.concurrency);
       this.executionStrategy = service.getExecutionStrategy(configuration); //  cheating here.  notmally onlt the active knows about execution but, passthrough is going to check on both active and passive

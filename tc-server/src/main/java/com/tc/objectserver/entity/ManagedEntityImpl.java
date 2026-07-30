@@ -1163,15 +1163,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         // Fire the event that the entity was reloaded.
         this.eventCollector.entityWasReloaded(this.getID(), this.consumerID, true);
 
-        EntityMessengerService<EntityMessage, EntityResponse> messenger = new EntityMessengerService<>(messageSelf, this, null, false);
-        ActiveInvokeContext<EntityResponse> context = new ActiveInvokeContextImpl<>(null,
-                ClientDescriptorImpl.NULL_ID,
-                ConcurrencyStrategy.UNIVERSAL_KEY,
-                TransactionID.NULL_ID.toLong(), TransactionID.NULL_ID.toLong(),
-                null,
-                messenger);
-
-        reconnect = this.activeServerEntity.startReconnect(context);
+        reconnect = this.activeServerEntity.startReconnect();
         if (reconnect != null) {
           return ()->{
             if (reconnect != null) {

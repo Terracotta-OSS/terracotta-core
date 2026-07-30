@@ -17,7 +17,6 @@
 package org.terracotta.passthrough;
 
 import java.util.Properties;
-import org.terracotta.entity.ActiveEntityManager;
 import org.terracotta.entity.ActiveInvokeChannel;
 import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ActiveServerMessenger;
@@ -85,11 +84,6 @@ public class PassThroughServerActiveInvokeContext<M extends EntityMessage, R ext
 
   @Override
   public ActiveServerMessenger createServerMessenger() {
-    throw new UnsupportedOperationException("Not supported yet.");
-  }
-
-  @Override
-  public ActiveEntityManager createEntityManager() {
     throw new UnsupportedOperationException("Not supported yet.");
   }
 

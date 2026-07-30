@@ -56,36 +56,36 @@ public class RetirementManager {
     this.waitingForDeferredRegistration = new ConcurrentHashMap<>();
     this.inflightServerMessages = new ConcurrentHashMap<>();
   }
-  
+
   public void registerServerMessage(EntityMessage msg) {
     inflightServerMessages.put(id(msg), msg);
   }
-  
+
   public boolean hasServerInflightMessages() {
     return !this.inflightServerMessages.isEmpty() || !this.currentlyRunning.isEmpty() || !this.waitingForDeferredRegistration.isEmpty();
   }
-  
+
   public boolean isMessageRunning(EntityMessage invokeMessage) {
     return this.currentlyRunning.containsKey(id(invokeMessage));
   }
-  
+
   public void holdMessage(EntityMessage invokeMessage) {
     if (this.currentlyRunning.computeIfPresent(id(invokeMessage), (m, ls)->ls.hold()) == null) {
       throw new IllegalStateException("message already retired");
     }
   }
-  
+
   public boolean releaseMessage(EntityMessage invokeMessage) {
     // must be non-null so compute.  retireMessage
     // outside the synchronized block if the message is complete and heldCount is zero
     return this.currentlyRunning.get(id(invokeMessage)).release().isRetireable();
   }
-  
+
   private void removeMessage(EntityMessage invoke) {
     currentlyRunning.remove(id(invoke));
     waitingForDeferredRegistration.remove(id(invoke));
   }
-  
+
   public int size() {
     return currentlyRunning.size();
   }
@@ -102,7 +102,9 @@ public class RetirementManager {
     newWrapper.updateWithRetiree(retiree);
     LogicalSequence previous = messageIsRunning(invokeMessage, newWrapper);
     // We can't find something else there.
-    Assert.assertNull(previous);
+    if (previous != null) {
+      throw new AssertionError();
+    }
   }
 
   private void removeInflightServerMessage(EntityMessage msg) {
@@ -123,14 +125,14 @@ public class RetirementManager {
     if (ls.complete()) {
       toRetire.add(ls);
     }
-    
+
     return toRetire;
   }
-  
+
   boolean testingIsRetireable(EntityMessage msg) {
     return this.currentlyRunning.get(id(msg)).isRetireable();
   }
-  
+
   List<Retiree> testingRetireForCompletion(EntityMessage completedMessage) {
     LogicalSequence seq = this.currentlyRunning.get(id(completedMessage));
     return traverseDependencyGraph(retireForCompletion(completedMessage));
@@ -138,7 +140,7 @@ public class RetirementManager {
 
   private List<Retiree> traverseDependencyGraph(Deque<LogicalSequence> requestStack) {
     List<Retiree> toRetire = new LinkedList<>();
-//  it is assumed heere that any message that is completed 
+//  it is assumed heere that any message that is completed
 //  is not having new deferments added to it so synchronization is not needed
 
     while(!requestStack.isEmpty()) {
@@ -159,19 +161,19 @@ public class RetirementManager {
     }
     return toRetire;
   }
-  
+
   private LogicalSequence messageIsRunning(EntityMessage msg, LogicalSequence ls) {
     return this.currentlyRunning.put(id(msg), ls);
   }
-  
+
   private LogicalSequence getCurrentlyRunning(EntityMessage msg) {
     return this.currentlyRunning.get(id(msg));
   }
-  
+
   private EntityMessage setWaitingForDeferred(EntityMessage toDefer, EntityMessage deferring) {
     return this.waitingForDeferredRegistration.put(id(toDefer), deferring);
   }
-  
+
   private EntityMessage removeWaitingForDeferred(EntityMessage invoked) {
     return this.waitingForDeferredRegistration.remove(id(invoked));
   }
@@ -180,10 +182,10 @@ public class RetirementManager {
     if (Trace.isTraceEnabled()) {
       Trace.activeTrace().log("Deferring retirement for " + invokeMessageToDefer + " until " + laterMessage + " is finished");
     }
-    
+
     LogicalSequence myRequest = getCurrentlyRunning(invokeMessageToDefer);
     LogicalSequence laterRequest = getCurrentlyRunning(laterMessage);
-    
+
     if (laterRequest == null) {
       EntityMessage multiDefer = setWaitingForDeferred(laterMessage, invokeMessageToDefer);
       myRequest.retirementDeferredBy(laterMessage, null);
@@ -204,14 +206,14 @@ public class RetirementManager {
     //  recent LogicalSequence, per-key (just so they aren't explicitly life-cycled from outside).
     Assert.assertTrue(this.waitingForDeferredRegistration.isEmpty());
   }
-  
+
   public Map<String, Object> getState() {
     Map<String, Object> map = new LinkedHashMap<>();
     map.put("running", this.currentlyRunning.entrySet().stream().collect(Collectors.toMap(entry->entry.getKey().toString(), entry->entry.getKey().toString(), (one, two)->one, LinkedHashMap::new)));
     map.put("waitingForDeferredRegistration", this.waitingForDeferredRegistration.entrySet().stream().collect(Collectors.toMap(entry->entry.getKey().toString(), entry->entry.getKey().toString(), (one, two)->one, LinkedHashMap::new)));
     return map;
   }
-  
+
   public void retireMessage(EntityMessage message) {
     Deque<LogicalSequence> sequence = retireForCompletion(message);
     List<Retiree> readyToRetire = traverseDependencyGraph(sequence);
@@ -226,7 +228,7 @@ public class RetirementManager {
       }
     }
   }
-  
+
   private static class LogicalSequence {
     // Corresponding entity message
     public final EntityMessage entityMessage;
@@ -240,9 +242,9 @@ public class RetirementManager {
     private final SetOnceFlag isCompleted = new SetOnceFlag();
     // True if retirement is complete (only used when stitching in the key).
     private final SetOnceFlag isRetired = new SetOnceFlag();
-    
+
     private int heldCount = 0;
-        
+
     private final Map<EntityMessage,LogicalSequence> entityMessagesDeferringRetirement = new IdentityHashMap<>();
 
     public LogicalSequence(EntityMessage entityMessage, int concurrency) {
@@ -290,34 +292,34 @@ public class RetirementManager {
       Assert.assertTrue(heldCount >= 0);
       return this;
     }
-    
+
     public void retire() {
       isRetired.attemptSet();
     }
-    
+
     public boolean complete() {
       isCompleted.attemptSet();
       return !isWaitingForExplicitDefer();
     }
-    
+
     public boolean isRetireable() {
       return isCompleted.isSet() && !isWaitingForExplicitDefer();
     }
-    
+
     @Override
     public String toString() {
-      return "LogicalSequence{" + "response=" + response + ", entityMessage=" + 
-          entityMessage + ", deferNotify=" + deferNotify + ", isCompleted=" + 
-          isCompleted + ", isRetired=" + isRetired + ", entityMessagesDeferringRetirement=" + 
-          entityMessagesDeferringRetirement + ", heldCount=" + 
+      return "LogicalSequence{" + "response=" + response + ", entityMessage=" +
+          entityMessage + ", deferNotify=" + deferNotify + ", isCompleted=" +
+          isCompleted + ", isRetired=" + isRetired + ", entityMessagesDeferringRetirement=" +
+          entityMessagesDeferringRetirement + ", heldCount=" +
           heldCount + '}';
     }
   }
-  
+
   private static MessageIdentity id(EntityMessage target) {
     return new MessageIdentity(target);
   }
-  
+
   private static class MessageIdentity {
     private final EntityMessage target;
 

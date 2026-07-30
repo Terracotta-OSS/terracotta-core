@@ -100,7 +100,7 @@ public interface ActiveServerEntity<M extends EntityMessage, R extends EntityRes
    * @return a handler to receive arbitrary reconnect data from clients.  If null is returned, all reconnect attempts
    * will be rejected and the connection associated with this entity fetch will be rejected
    */
-  ReconnectHandler startReconnect(ActiveInvokeContext<R> cxt);
+  ReconnectHandler startReconnect();
 
   interface ReconnectHandler extends AutoCloseable {
     /**
