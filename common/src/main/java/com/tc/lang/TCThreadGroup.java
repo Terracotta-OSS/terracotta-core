@@ -100,9 +100,7 @@ public class TCThreadGroup extends ThreadGroup {
     if (complete) {
       LOGGER.debug("finished thread exiting in {} seconds", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - killStart));
     }
-    if (complete && activeCount() == 0) {
-      destroy();
-    }
+
     return complete;
   }
 
