@@ -144,11 +144,6 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
-  public ServerEntityRequest getCurrentRequestMessage() {
-    return null;
-  }
-
-  @Override
   public long getConsumerID() {
     // The platform uses the consumerID 0 constant.
     return ServiceProvider.PLATFORM_CONSUMER_ID;

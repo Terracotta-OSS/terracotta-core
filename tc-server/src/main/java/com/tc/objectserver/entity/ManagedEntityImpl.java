@@ -479,47 +479,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     return null;
   }
 
-  @Override
-  public ServerEntityRequest getCurrentRequestMessage() {
-    MessageChannel channel = GuardianContext.getCurrentMessageChannel();
-    if (channel == null) {
-      return null;
-    }
-    ThreadLocal<ServerEntityRequest> tl = (ThreadLocal<ServerEntityRequest>)channel.getAttachment(REQUEST_CONTEXT_KEY);
-    if (tl == null) {
-      return null;
-    }
-    return (ServerEntityRequest)tl.get();
-  }
-
-  private void setRequestContext(MessageChannel channel, ServerEntityRequest request) {
-    if (channel == null) {
-      return;
-    }
-
-    @SuppressWarnings("unchecked")
-    ThreadLocal<ServerEntityRequest> local = (ThreadLocal<ServerEntityRequest>) channel.getAttachment(REQUEST_CONTEXT_KEY);
-
-    if (local == null) {
-      channel.addAttachment(REQUEST_CONTEXT_KEY, new ThreadLocal<>(), false);
-      local = (ThreadLocal<ServerEntityRequest>) channel.getAttachment(REQUEST_CONTEXT_KEY);
-    }
-
-    local.set(request);
-  }
-
-  private void clearRequestContext(MessageChannel channel) {
-    if (channel == null) {
-      return;
-    }
-
-    @SuppressWarnings("unchecked")
-    ThreadLocal<ServerEntityRequest> local = (ThreadLocal<ServerEntityRequest>) channel.getAttachment(REQUEST_CONTEXT_KEY);
-    if (local != null) {
-      local.remove();
-    }
-  }
-
   private void invokeLifecycleOperation(final ServerEntityRequest request, MessagePayload payload, ResultCapture resp) {
     Trace trace = new Trace(request.getTraceID(), "ManagedEntityImpl.invokeLifecycleOperation");
     trace.start();
@@ -527,7 +486,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     logger.info("Client:" + request.getNodeID() + ":" + request.getClientInstance() + " Invoking lifecycle " + request.getAction() + " on " + getID() + ":" + this.fetchID);
     GuardianContext.setCurrentChannelID(request.getNodeID().getChannelID());
     MessageChannel channel = GuardianContext.getCurrentMessageChannel();
-    setRequestContext(channel, request);
+
     read.lock();
     try {
       switch (request.getAction()) {
@@ -601,7 +560,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     } finally {
       read.unlock();
       GuardianContext.clearCurrentChannelID(request.getNodeID().getChannelID());
-      clearRequestContext(channel);
       if (this.isInActiveState) {
         interop.finishLifecycle();
       }
@@ -635,7 +593,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
     GuardianContext.setCurrentChannelID(request.getNodeID().getChannelID());
     MessageChannel channel = GuardianContext.getCurrentMessageChannel();
-    setRequestContext(channel, request);
+//    setRequestContext(channel, request);
     Lock read = reconnectAccessLock.readLock();
     try {
       read.lock();
@@ -675,7 +633,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     } finally {
       read.unlock();
       GuardianContext.clearCurrentChannelID(request.getNodeID().getChannelID());
-      clearRequestContext(channel);
+//      clearRequestContext(channel);
     }
     trace.end();
   }
@@ -943,7 +901,7 @@ public class ManagedEntityImpl implements ManagedEntity {
               ((StatisticsCapture)response).beginInvoke();
             }
 
-            EntityMessengerService messenger = new EntityMessengerService(messageSelf, this, ()->wrappedRequest, false);
+            EntityMessengerService messenger = new EntityMessengerService(messageSelf, this, wrappedRequest, false);
 
             Trace trace = Trace.activeTrace().subTrace("invokeActive");
             trace.start();
@@ -1205,8 +1163,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         // Fire the event that the entity was reloaded.
         this.eventCollector.entityWasReloaded(this.getID(), this.consumerID, true);
 
-        ServerEntityRequest fakeRequest = new ServerEntityRequestImpl(ClientInstanceID.NULL_ID, ServerEntityAction.FAILOVER_FLUSH, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, false);
-        EntityMessengerService<EntityMessage, EntityResponse> messenger = new EntityMessengerService<>(messageSelf, this, ()->fakeRequest, false);
+        EntityMessengerService<EntityMessage, EntityResponse> messenger = new EntityMessengerService<>(messageSelf, this, null, false);
         ActiveInvokeContext<EntityResponse> context = new ActiveInvokeContextImpl<>(null,
                 ClientDescriptorImpl.NULL_ID,
                 ConcurrencyStrategy.UNIVERSAL_KEY,
