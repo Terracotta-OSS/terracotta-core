@@ -18,15 +18,19 @@ import org.gradle.api.plugins.jvm.internal.JvmPluginServices
  * limitations under the License.
  */
 plugins {
-  id 'java-platform'
+  id 'base'
+  id 'jvm-ecosystem'
   id 'maven-publish'
   id 'com.jfrog.artifactory'
 }
 
+def jvmPluginServices = (project as ProjectInternal).services.get(JvmPluginServices)
+def softwareComponentFactory = (project as ProjectInternal).services.get(SoftwareComponentFactory)
+
 def serverBucket = configurations.dependencyScope("server")
 def serverClasspath = configurations.resolvable("serverClasspath") {
     extendsFrom(serverBucket.get())
-    ((ProjectInternal) project).services.get(JvmPluginServices.class).configureAsRuntimeClasspath(it)
+    jvmPluginServices.configureAsRuntimeClasspath(it)
 }
 
 description = 'terracotta-core server-runtime'
@@ -43,33 +47,32 @@ def serverBundle = tasks.register('serverBundle', Zip) {
 }
 
 def serverElements = configurations.consumable("serverElements") {
-    ((ProjectInternal) project).services.get(JvmPluginServices.class).configureAsRuntimeElements(it)
+    jvmPluginServices.configureAsRuntimeElements(it)
+    dependencyConstraints.addAllLater(
+            serverClasspath.map {
+                it.resolvedConfiguration.resolvedArtifacts*.id*.componentIdentifier.findAll {
+                    !(it instanceof org.gradle.api.artifacts.component.ProjectComponentIdentifier)
+                }.collect {
+                    project.dependencies.constraints.create(it.getDisplayName())
+                }
+            }
+    )
 }
 
 artifacts {
     add(serverElements.name, serverBundle)
 }
 
-configurations.api {
-    dependencyConstraints.addAllLater(
-        serverClasspath.map {
-            it.resolvedConfiguration.resolvedArtifacts*.id*.componentIdentifier.findAll {
-                !(it instanceof org.gradle.api.artifacts.component.ProjectComponentIdentifier)
-            }.collect {
-                project.dependencies.constraints.create(it.getDisplayName())
-            }
-        }
-    )
+def serverRuntime = softwareComponentFactory.adhoc("serverRuntime");
+serverRuntime.addVariantsFromConfiguration(serverElements.get()) {
+    it.mapToMavenScope("runtime")
 }
-
-components.named('javaPlatform', AdhocComponentWithVariants) {
-    it.addVariantsFromConfiguration(serverElements.get()) {}
-}
+components.add(serverRuntime)
 
 publishing {
     publications {
         runtime(MavenPublication) {
-            from components.javaPlatform
+            from serverRuntime
             groupId = 'org.terracotta.internal'
             version = "$project.version"
             artifactId = "$project.name"
