@@ -97,7 +97,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.terracotta.entity.ActiveInvokeChannel;
-import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ActiveServerEntity.ReconnectHandler;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;

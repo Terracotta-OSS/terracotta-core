@@ -49,7 +49,7 @@ public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeCon
   ) {
     super(new ClientSourceIdImpl(descriptor.getNodeID().toLong()), concurrencyKey, oldestid, currentId);
     this.requestContext = Objects.requireNonNull(request);
-    this.clientDescriptor = descriptor;
+    this.clientDescriptor = Objects.requireNonNull(descriptor);
     this.channelCreate = channelCreate;
     this.messenger = messenger;
   }

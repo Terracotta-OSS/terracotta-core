@@ -482,7 +482,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     }
   }
 
-  public void sendMessageToActiveFromInsideActive(final EntityMessage newMessage, PassthroughMessage passthroughMessage, Consumer<PassthroughMessage> result) {
+  public void sendMessageToActiveFromInsideActive(final PassthroughClientDescriptor sender, final EntityMessage newMessage, PassthroughMessage passthroughMessage, Consumer<PassthroughMessage> result) {
 
     if (!running.isRaised()) {
       return;
@@ -516,13 +516,11 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         }
         @Override
         public PassthroughClientDescriptor clientDescriptorForID(long clientInstanceID) {
-          // This can't reasonably be asked.
-          return null;
+          return new PassthroughClientDescriptor(sender.server, null, clientInstanceID);
         }
         @Override
         public long getClientOriginID() {
-          // This can't reasonably be asked.
-          return -1;
+          return -1L;
         }
       };
       container.message = passthroughMessage.asSerializedBytes();
@@ -808,7 +806,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
 
   private <M extends EntityMessage, R extends EntityResponse> byte[] sendActiveInvocation(IMessageSenderWrapper sender, String className,
                                                                                           String entityName,
-                                                                                          ClientDescriptor clientDescriptor,
+                                                                                          PassthroughClientDescriptor clientDescriptor,
                                                                                           long transactionId,
                                                                                           long eldestTransactionId,
                                                                                           CreationData<M, R> data,
@@ -820,9 +818,9 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       try {
         int cKey = data.concurrency.concurrencyKey(msg);
         R response = entity.invokeActive(new PassThroughServerActiveInvokeContext<>(msg, clientDescriptor,
-                                                                                  cKey,
-                                                                                  transactionId,
-                                                                                  eldestTransactionId, sender, retirementManager, codec),
+              cKey,
+              transactionId,
+              eldestTransactionId, sender, retirementManager, codec, this, className, entityName),
                                          msg);
         return serializeResponse(className, entityName, codec, response);
       } catch (EntityUserException eu) {
