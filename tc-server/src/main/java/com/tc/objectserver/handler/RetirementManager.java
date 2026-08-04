@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -102,9 +102,7 @@ public class RetirementManager {
     newWrapper.updateWithRetiree(retiree);
     LogicalSequence previous = messageIsRunning(invokeMessage, newWrapper);
     // We can't find something else there.
-    if (previous != null) {
-      throw new AssertionError();
-    }
+    Assert.assertNull(previous);
   }
 
   private void removeInflightServerMessage(EntityMessage msg) {

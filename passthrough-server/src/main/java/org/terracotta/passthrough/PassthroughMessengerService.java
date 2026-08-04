@@ -82,7 +82,7 @@ public class PassthroughMessengerService implements IEntityMessenger<EntityMessa
     // Serialize the message.
     try {
       PassthroughMessage passthroughMessage = makePassthroughMessage(message);
-      this.passthroughServerProcess.sendMessageToActiveFromInsideActive(message, passthroughMessage, null);
+      this.passthroughServerProcess.sendMessageToActiveFromInsideActive(null, message, passthroughMessage, null);
     } catch (MessageCodecException codec) {
       throw new UncheckedIOException(new IOException(codec));
     }
@@ -92,7 +92,7 @@ public class PassthroughMessengerService implements IEntityMessenger<EntityMessa
   public void messageSelf(EntityMessage message, Consumer<MessageResponse<EntityResponse>> response) {
     // Serialize the message.
     try {
-      this.passthroughServerProcess.sendMessageToActiveFromInsideActive(message, makePassthroughMessage(message), queueForComplete(response));
+      this.passthroughServerProcess.sendMessageToActiveFromInsideActive(null, message, makePassthroughMessage(message), queueForComplete(response));
     } catch (MessageCodecException codec) {
       throw new UncheckedIOException(new IOException(codec));
     }
