@@ -50,7 +50,7 @@ public class EntityMessengerServiceTest {
     when(entity.getCodec()).thenReturn(codec);
 
     // Create the service.
-    EntityMessengerService service = new EntityMessengerService(sink, entity, null, true);
+    EntityMessengerService service = new EntityMessengerService(sink, entity, null);
     when(entity.isDestroyed()).thenReturn(false);
     service.entityCreated(entity);
 
@@ -80,7 +80,7 @@ public class EntityMessengerServiceTest {
     when(entity.getCodec()).thenReturn(codec);
 
     // Create the service.
-    EntityMessengerService service = new EntityMessengerService(sink, entity, null, true);
+    EntityMessengerService service = new EntityMessengerService(sink, entity, null);
     // now adding listener in provider so do it manually
     entity.addLifecycleListener(service);
     // Verify that the service was registered to be told when the entity activates.

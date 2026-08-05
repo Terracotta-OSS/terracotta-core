@@ -80,7 +80,7 @@ public class EntityMessengerServiceContextTest {
     when(parentRequest.getTransaction()).thenReturn(expectedTxnID);
 
     // Create the service
-    service = new EntityMessengerService<>(sink, entity, parentRequest, false);
+    service = new EntityMessengerService<>(sink, entity, parentRequest);
     service.entityCreated(entity);
 
     // Send a message
@@ -104,7 +104,7 @@ public class EntityMessengerServiceContextTest {
     // Setup: No parent context available
 
     // Create the service
-    service = new EntityMessengerService<>(sink, entity, null, false);
+    service = new EntityMessengerService<>(sink, entity, null);
     service.entityCreated(entity);
 
     // Send a message
