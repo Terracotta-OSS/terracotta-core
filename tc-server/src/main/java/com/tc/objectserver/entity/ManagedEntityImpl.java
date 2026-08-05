@@ -900,7 +900,7 @@ public class ManagedEntityImpl implements ManagedEntity {
               ((StatisticsCapture)response).beginInvoke();
             }
 
-            EntityMessengerService messenger = new EntityMessengerService(messageSelf, this, wrappedRequest, false);
+            EntityMessengerService messenger = new EntityMessengerService(messageSelf, this, wrappedRequest);
 
             Trace trace = Trace.activeTrace().subTrace("invokeActive");
             trace.start();

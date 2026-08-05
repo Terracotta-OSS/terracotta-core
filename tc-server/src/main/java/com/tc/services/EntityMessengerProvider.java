@@ -29,8 +29,6 @@ import com.tc.async.api.Sink;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.util.Assert;
-import java.util.Optional;
-import java.util.function.Function;
 
 
 /**
@@ -52,14 +50,7 @@ public class EntityMessengerProvider implements ImplementationProvidedServicePro
     Assert.assertNotNull(owningEntity);
     T service = null;
     if (this.serverIsActive) {
-      // TODO: consider making this configurable.  if false, the active will not wait for received on passive before invoke.
-      boolean waitForReceived = true;
-      if (configuration instanceof EntityMessengerConfiguration) {
-        waitForReceived = ((EntityMessengerConfiguration) configuration).isWaitForReceived();
-      } else if (configuration instanceof Function) {
-        waitForReceived = (Boolean)((Function)configuration).apply("PASSIVE_CONFIRMATION");
-      }
-      EntityMessengerService es = new EntityMessengerService(this.messageSink, owningEntity, null, Optional.ofNullable(waitForReceived).orElse(false));
+      EntityMessengerService es = new EntityMessengerService(this.messageSink, owningEntity, null);
       owningEntity.addLifecycleListener(es);
       service = configuration.getServiceType().cast(es);
     }
