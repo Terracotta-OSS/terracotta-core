@@ -46,6 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import org.terracotta.entity.ActiveServerMessenger.Response;
 import org.terracotta.entity.EntityResponse;
 
 /**
@@ -317,21 +318,22 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     }
 
     public void release() throws MessageCodecException {
-      release(null, null);
+      release(null);
     }
 
-    public void release(Consumer<EntityResponse> consumer, Consumer<Exception> exception) {
+    public void release(Consumer<Response<R>> consumer) {
       if (retirementHandles.remove(this) != null) {
         EntityMessengerService.this.messageSelf(futureMessage, t-> {
-          if (t.wasExceptionThrown()) {
-            if (exception != null) {
-              exception.accept(t.getException());
+          consumer.accept(new Response<>() {
+            @Override
+            public R getResponse() throws Exception {
+              if (t.wasExceptionThrown()) {
+                throw t.getException();
+              } else {
+                return t.getResponse();
+              }
             }
-          } else {
-            if (consumer != null) {
-              consumer.accept(t.getResponse());
-            }
-          }
+          });
         });
       }
     }

@@ -39,13 +39,13 @@ public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeCon
   private final EntityMessage requestContext;
   private final ClientDescriptorImpl clientDescriptor;
   private final Supplier<ActiveInvokeChannel> channelCreate;
-  private final EntityMessengerService<EntityMessage, EntityResponse> messenger;
+  private final EntityMessengerService<EntityMessage, R> messenger;
   private final Properties properties = GuardianContext.getCurrentChannelProperties();
 
   private RefCountingActiveInvokeChannel<R> channel = null;
 
   public ActiveInvokeContextImpl(EntityMessage request, ClientDescriptorImpl descriptor, int concurrencyKey, long oldestid, long currentId,
-    Supplier<ActiveInvokeChannel> channelCreate, EntityMessengerService<EntityMessage, EntityResponse> messenger
+    Supplier<ActiveInvokeChannel> channelCreate, EntityMessengerService<EntityMessage, R> messenger
   ) {
     super(new ClientSourceIdImpl(descriptor.getNodeID().toLong()), concurrencyKey, oldestid, currentId);
     this.requestContext = Objects.requireNonNull(request);
@@ -69,44 +69,43 @@ public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeCon
   }
 
   @Override
-  public ActiveServerMessenger createServerMessenger() {
-    return new ActiveServerMessenger() {
+  public ActiveServerMessenger<R> createServerMessenger() {
+    return new ActiveServerMessenger<>() {
       @Override
       public void sendMessage(EntityMessage message) {
-        sendMessage(message, null, null);
+        sendMessage(message, null);
       }
 
       @Override
-      public void sendMessage(EntityMessage message, Consumer<EntityResponse> result, Consumer<Exception> failure) {
+      public void sendMessage(EntityMessage message, Consumer<Response<R>> result) {
         try {
           if (message == requestContext) {
             throw new AssertionError("message being sent is the same as the parent request.  Messages cnnot be scheduled twice");
           }
           messenger.messageSelfAndDeferRetirement(requestContext, message, t -> {
-            if (t.wasExceptionThrown()) {
-              if (failure != null) {
-                failure.accept(t.getException());
+            result.accept(new Response<>() {
+              @Override
+              public R getResponse() throws Exception {
+                if (t.wasExceptionThrown()) {
+                  throw t.getException();
+                } else {
+                  return t.getResponse();
+                }
               }
-            } else {
-              if (result != null) {
-                result.accept(t.getResponse());
-              }
-            }
+            });
           });
         } catch (MessageCodecException codec) {
-          if (failure != null) {
-            failure.accept(codec);
-          }
+
         }
       }
 
       @Override
       public ActiveServerMessenger.ReleaseHandle deferRetirement(String tag, EntityMessage message) {
-        return deferRetirement(tag, message, null, null);
+        return deferRetirement(tag, message, null);
       }
 
       @Override
-      public ActiveServerMessenger.ReleaseHandle deferRetirement(String tag, EntityMessage message, Consumer<EntityResponse> result, Consumer<Exception> failure) {
+      public ActiveServerMessenger.ReleaseHandle deferRetirement(String tag, EntityMessage message, Consumer<Response<R>> result) {
         if (message == requestContext) {
           throw new AssertionError("message being sent is the same as the parent request.  Messages cnnot be scheduled twice");
         }
@@ -119,7 +118,7 @@ public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeCon
 
           @Override
           public void release() {
-            handle.release(result, failure);
+            handle.release(result);
           }
         };
       }

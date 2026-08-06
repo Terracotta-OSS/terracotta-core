@@ -18,37 +18,42 @@ package org.terracotta.entity;
 
 import java.util.function.Consumer;
 
-public interface ActiveServerMessenger extends AutoCloseable {
+public interface ActiveServerMessenger<R extends EntityResponse> extends AutoCloseable {
   /**
    * Sends a message on the server.  The parent message associated with this context
-   * has its retirement deferred until after this scheduled message has completed.
+   * has its retirement deferred until after this scheduled message has completed.  Server
+   * will not waitForReceived of the scheduled message based on the settings of the parent message
+   * in the context.
    *
    * @param message to enqueue on the server
    */
   void sendMessage(EntityMessage message);
   /**
-   * Same as {@link #sendMessage(org.terracotta.entity.EntityMessage)} with result consumers
+   * Same as {@link #sendMessage(org.terracotta.entity.EntityMessage)} with result consumers.
+   *
    * @param message to enqueue on the server
    * @param result consumer called with the response from the message
-   * @param failure consumer called in an error occurs with exception
    */
-  void sendMessage(EntityMessage message, Consumer<EntityResponse> result, Consumer<Exception> failure);
+  void sendMessage(EntityMessage message, Consumer<Response<R>> result);
   /**
-   * Defer retirement of the current context message using the message as the trigger
+   * Defer retirement of the current context message using the message as the trigger.
+   *
    * @param tag debugging tag for the handle
-   * @param message release trigger message
+   * @param message release trigger message.  It is not scheduled until the release handle
+   * is released
    * @return a release handle to release retirement of the current message
    */
   ReleaseHandle deferRetirement(String tag, EntityMessage message);
   /**
    * Same as {@link #deferRetirement(java.lang.String, org.terracotta.entity.EntityMessage)}
+   *
    * @param tag debugging tag for the handle
    * @param message release trigger message
-   * @param result consumer called with the response from the message
-   * @param failure consumer called in an error occurs with exception
+   * @param result consumer called with the response from the message the result is not returned until
+   * after the release handle is released
    * @return a release handle to release retirement of the current message
    */
-  ReleaseHandle deferRetirement(String tag, EntityMessage message, Consumer<EntityResponse> result, Consumer<Exception> failure);
+  ReleaseHandle deferRetirement(String tag, EntityMessage message, Consumer<Response<R>> result);
 
   /**
    * {@link AutoCloseable} without exception.
@@ -69,5 +74,15 @@ public interface ActiveServerMessenger extends AutoCloseable {
      * Release the deferred message for retirement.
      */
     void release();
+  }
+
+  interface Response<R> {
+    /**
+     *
+     * @return response from the execution of the message or null if the message was not run on the active
+     * @throws java.lang.Exception any exception that occurred in the execution of this message
+     */
+    R getResponse() throws Exception;
+
   }
 }
