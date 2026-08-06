@@ -48,13 +48,15 @@ public interface IEntityMessenger<M extends EntityMessage, R extends EntityRespo
    */
   void reconfigureSelf(byte[] configuration);
   /**
-   * Same as the messageSelf will no callback.
+   * Same as the messageSelf will no callback.  This is a fire and forget call that will not wait for the passives to
+   * receive the message before executing
    *
    * @param message
    */
   void messageSelf(M message);
   /**
-   * Asynchronously send a message to the entity instance which looked up the service instance.
+   * Asynchronously send a message to the entity instance which looked up the service instance.  This call will wit for the message
+   * to be received on passive before executing and reporting  result.
    *
    * @param message The message to send.
    * @param response A callback used when the result of the invoke is available.  NOTE: callback delivered

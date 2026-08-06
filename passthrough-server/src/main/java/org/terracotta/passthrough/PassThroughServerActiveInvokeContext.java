@@ -91,26 +91,26 @@ public class PassThroughServerActiveInvokeContext<M extends EntityMessage, R ext
   }
 
   @Override
-  public ActiveServerMessenger createServerMessenger() {
-    return new ActiveServerMessenger() {
+  public ActiveServerMessenger<R> createServerMessenger() {
+    return new ActiveServerMessenger<>() {
       @Override
       public void sendMessage(EntityMessage message) {
-        sendMessage(message, null, null);
+        sendMessage(message, null);
       }
 
       @Override
-      public void sendMessage(EntityMessage message, Consumer<EntityResponse> result, Consumer<Exception> failure) {
+      public void sendMessage(EntityMessage message, Consumer<Response<R>> result) {
         retirement.deferCurrentMessage(message);
-        sendServerMessage(message, result, failure);
+        sendServerMessage(message, result);
       }
 
       @Override
       public ActiveServerMessenger.ReleaseHandle deferRetirement(String tag, EntityMessage message) {
-        return deferRetirement(tag, message, null, null);
+        return deferRetirement(tag, message, null);
       }
 
       @Override
-      public ActiveServerMessenger.ReleaseHandle deferRetirement(String tag, EntityMessage message, Consumer<EntityResponse> result, Consumer<Exception> failure) {
+      public ActiveServerMessenger.ReleaseHandle deferRetirement(String tag, EntityMessage message, Consumer<Response<R>> result) {
         retirement.deferCurrentMessage(message);
         return new ReleaseHandle() {
           @Override
@@ -120,7 +120,7 @@ public class PassThroughServerActiveInvokeContext<M extends EntityMessage, R ext
 
           @Override
           public void release() {
-            sendServerMessage(message, result, failure);
+            sendServerMessage(message, result);
           }
         };
 
@@ -133,17 +133,26 @@ public class PassThroughServerActiveInvokeContext<M extends EntityMessage, R ext
     };
   }
 
-  private void sendServerMessage(EntityMessage message, Consumer<EntityResponse> result, Consumer<Exception> failure) {
+  private void sendServerMessage(EntityMessage message, Consumer<ActiveServerMessenger.Response<R>> result) {
     process.sendMessageToActiveFromInsideActive(descriptor, message, makePassthroughMessage(message), m-> {
       try {
         if (result != null) {
-          EntityResponse response = codec.decodeResponse(m.asSerializedBytes());
-          result.accept(response);
+          R response = codec.decodeResponse(m.asSerializedBytes());
+          result.accept(new ActiveServerMessenger.Response<>() {
+
+            @Override
+            public R getResponse() throws Exception {
+              return response;
+            }
+          });
         }
       } catch (MessageCodecException ce) {
-        if (failure != null) {
-          failure.accept(ce);
-        }
+        result.accept(new ActiveServerMessenger.Response<>() {
+            @Override
+            public R getResponse() throws Exception {
+              throw ce;
+            }
+          });
       }
     });
   }
