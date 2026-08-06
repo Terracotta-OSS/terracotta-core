@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,16 +90,16 @@ import org.terracotta.server.StopAction;
  */
 public class PassthroughServerProcess implements MessageHandler, PassthroughDumper {
   private static final String ENTITIES_FILE_NAME = "entities.map";
-  
+
   private static final Random BUILDID = new Random();
-  
+
   private final String serverName;
   private final int bindPort;
   private final int groupPort;
   private final PassthroughPlatformConfiguration platformConfiguration;
-  
+
   private static final AtomicInteger CLIENT_PORT = new AtomicInteger(49152);  //  current recommended start value of ephemeral ports
-  
+
   private final int processID;
   private final Flag running = new Flag();
   private final List<EntityServerService<?, ?>> entityServices;
@@ -129,13 +129,13 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   private final PassthroughRetirementManager retirementManager;
   private PassthroughTransactionOrderManager transactionOrderManager;
   private final IAsynchronousServerCrasher crasher;
-  
+
   private static final AtomicInteger processIdGen = new AtomicInteger(0);
-  
+
   // We need to hold onto any registered monitoring services to report client connection/disconnection events.
   private IMonitoringProducer serviceInterface;
   private PlatformServer serverInfo;
-  
+
   // Special flag used to change behavior when we are receiving re-sends:  we don't want to run them until we seem them all.
   private final Flag resending = new Flag();
 
@@ -163,7 +163,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   void setCrashHandler(Thread.UncaughtExceptionHandler handler) {
     this.crashHandler = handler;
   }
-  
+
   public boolean isServerThread() {
     return serverThread == Thread.currentThread();
   }
@@ -190,17 +190,17 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       nullPlatformStorageServiceProvider.initialize(config, this.platformConfiguration);
       this.serviceProviders.add(nullPlatformStorageServiceProvider);
     }
-    
+
     // We can now get the service registry for the platform.
     PassthroughServiceRegistry platformServiceRegistry = getNextServiceRegistry(null, null, null);
-    
+
     // Look up our persistence support (which might be in-memory-only).
     try {
       this.platformPersistence = platformServiceRegistry.getService(new BasicServiceConfiguration<>(IPlatformPersistence.class));
     } catch (ServiceException se) {
       throw new AssertionError(se);
     }
-    
+
     Assert.assertTrue(null != this.platformPersistence);
     // Note that we may want to persist the version, as well, but we currently have no way of exposing that difference,
     // within the passthrough system, and it would require the creation of an almost completely-redundant container class.
@@ -213,10 +213,10 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     if (null == this.persistedEntitiesByConsumerIDMap) {
       this.persistedEntitiesByConsumerIDMap = new LinkedHashMap<>();
     }
-    
+
     // Load the transaction order.
     this.transactionOrderManager = new PassthroughTransactionOrderManager(platformPersistence, shouldLoadStorage, savedClientConnections);
-    
+
     // Load the entities.
     for (long consumerID : this.persistedEntitiesByConsumerIDMap.keySet()) {
       // This is an entity consumer so we use the deferred container.
@@ -236,7 +236,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       // We know the codec, immediately, so pass that in.  We will need to register the entity instance after it is
       // created.
       container.codec = service.getMessageCodec();
-      
+
       PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityData.className, entityData.entityName);
       CommonServerEntity<?, ?> newEntity = null;
       try {
@@ -251,16 +251,16 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       if (newEntity instanceof ActiveServerEntity) {
         ((ActiveServerEntity<?, ?>)newEntity).loadExisting();
       }
-      
+
       // See if we need to bump up the next consumerID for future entities.
       if (consumerID >= this.nextConsumerID) {
         this.nextConsumerID = consumerID + 1;
       }
     }
-    
+
     // We want to create the tracking for life-cycle transactions, so that we correctly handle duplicated re-sends.
     this.lifeCycleMessageHandler = new PassthroughLifeCycleHandler(platformPersistence, shouldLoadStorage);
-    
+
     // Look up the service interface the platform will use to publish events.
     Collection<IMonitoringProducer> producers = platformServiceRegistry.getServices(new BasicServiceConfiguration<>(IMonitoringProducer.class));
     this.serviceInterface = new IMonitoringProducer() {
@@ -333,7 +333,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   private String getSafeServerName() {
     return serverName == null ? "server" + processID : serverName;
   }
-  
+
   private void setStateSynchronizing(IMonitoringProducer tracker) {
 // Set state.
     if (tracker != null) {
@@ -350,7 +350,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   public void registerEntityService(EntityServerService<?, ?> service) {
     this.entityServices.add(service);
   }
-  
+
   public void stop() {
     // Shutdown can't happen while handling resends.
     Assert.assertTrue(!this.resending.isRaised());
@@ -379,7 +379,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     //  background thread in PassthroughMessengerService might still be trying to enqueue events in a server which has
     //  already stopped).
     Assert.assertTrue(null != this.serverThread);
-    
+
     // Finally, see if any of the ServiceProvider instances are Closeable.
     // NOTE:  This is a SPECIAL behavior exposed by the passthrough server to allow any "open state" (file descriptors,
     //  etc) to be closed by a ServiceProvider implementation.  This is ONLY called by the passthrough server since the
@@ -421,7 +421,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         }
       }
     }
-    
+
     //  shutdown any extended configs needing shutdown
     this.platformConfiguration.close();
   }
@@ -482,7 +482,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     }
   }
 
-  public void sendMessageToActiveFromInsideActive(final EntityMessage newMessage, PassthroughMessage passthroughMessage, Consumer<PassthroughMessage> result) {
+  public void sendMessageToActiveFromInsideActive(final PassthroughClientDescriptor sender, final EntityMessage newMessage, PassthroughMessage passthroughMessage, Consumer<PassthroughMessage> result) {
 
     if (!running.isRaised()) {
       return;
@@ -496,7 +496,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       Assert.assertTrue(null != newMessage);
       // When handling re-sends, we are effectively paused so this shouldn't happen.
       Assert.assertTrue(!this.resending.isRaised());
-      
+
       PassthroughMessageContainer container = new PassthroughMessageContainer();
       container.sender = new IMessageSenderWrapper() {
         @Override
@@ -516,19 +516,17 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         }
         @Override
         public PassthroughClientDescriptor clientDescriptorForID(long clientInstanceID) {
-          // This can't reasonably be asked.
-          return null;
+          return new PassthroughClientDescriptor(sender.server, null, clientInstanceID);
         }
         @Override
         public long getClientOriginID() {
-          // This can't reasonably be asked.
-          return -1;
+          return -1L;
         }
       };
       container.message = passthroughMessage.asSerializedBytes();
       this.messageQueue.add(container);
   }
-  
+
   private void retireReadyItems(EntityMessage messageRun) {
     if (null != this.activeEntities) {
       List<PassthroughRetirementManager.RetirementTuple> messagesToRetire = retirementManager.retireableListAfterMessageDone(messageRun);
@@ -556,7 +554,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   public void sendMessageToServerFromActive(IMessageSenderWrapper senderCallback, byte[] message) {
     // Passives don't care whether a message is a re-send, or not.
     Assert.assertTrue(!resending.isRaised());
-    
+
     PassthroughMessageContainer container = new PassthroughMessageContainer();
     container.sender = senderCallback;
     container.message = message;
@@ -657,27 +655,27 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
 
       @Override
       public void dump() {
-        throw new UnsupportedOperationException("Not supported yet."); 
+        throw new UnsupportedOperationException("Not supported yet.");
       }
 
       @Override
       public String getClusterState() {
-        throw new UnsupportedOperationException("Not supported yet."); 
+        throw new UnsupportedOperationException("Not supported yet.");
       }
 
       @Override
       public String getConfiguration() {
-        throw new UnsupportedOperationException("Not supported yet."); 
+        throw new UnsupportedOperationException("Not supported yet.");
       }
 
       @Override
       public ClassLoader getServiceClassLoader(ClassLoader cl, Class<?>... types) {
-        throw new UnsupportedOperationException("Not supported yet."); 
+        throw new UnsupportedOperationException("Not supported yet.");
       }
 
       @Override
       public <T> List<Class<? extends T>> getImplementations(Class<T> type) {
-        throw new UnsupportedOperationException("Not supported yet."); 
+        throw new UnsupportedOperationException("Not supported yet.");
       }
 
       @Override
@@ -738,7 +736,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       toRun = getNextMessage();
     }
   }
-  
+
   private PassthroughMessageContainer getNextMessage() {
     try {
       if (running.isRaised()) {
@@ -751,7 +749,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     }
     return null;
   }
-  
+
   private void serverThreadHandleMessage(IMessageSenderWrapper sender, byte[] message) {
     // Called on the server thread to handle a message.
     PassthroughMessageCodec.Decoder<Void> decoder = new PassthroughServerMessageDecoder(this, this, this.transactionOrderManager, this.lifeCycleMessageHandler, this.downstreamPassives, sender, this.crasher, message);
@@ -808,7 +806,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
 
   private <M extends EntityMessage, R extends EntityResponse> byte[] sendActiveInvocation(IMessageSenderWrapper sender, String className,
                                                                                           String entityName,
-                                                                                          ClientDescriptor clientDescriptor,
+                                                                                          PassthroughClientDescriptor clientDescriptor,
                                                                                           long transactionId,
                                                                                           long eldestTransactionId,
                                                                                           CreationData<M, R> data,
@@ -820,9 +818,9 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       try {
         int cKey = data.concurrency.concurrencyKey(msg);
         R response = entity.invokeActive(new PassThroughServerActiveInvokeContext<>(msg, clientDescriptor,
-                                                                                  cKey,
-                                                                                  transactionId,
-                                                                                  eldestTransactionId, sender, retirementManager, codec),
+              cKey,
+              transactionId,
+              eldestTransactionId, sender, retirementManager, codec, this, className, entityName),
                                          msg);
         return serializeResponse(className, entityName, codec, response);
       } catch (EntityUserException eu) {
@@ -872,11 +870,11 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   private <M extends EntityMessage, R extends EntityResponse> M deserialize(String className, String entityName, final MessageCodec<M, R> codec, final byte[] payload) throws EntityException {
     return runWithHelper(className, entityName, () -> codec.decodeMessage(payload));
   }
-  
+
   private <M extends EntityMessage, R extends EntityResponse> M deserializeForSync(String className, String entityName, final SyncMessageCodec<M> codec, final int concurrencyKey, final byte[] payload) throws EntityException {
     return runWithHelper(className, entityName, () -> codec.decode(concurrencyKey, payload));
   }
-  
+
   private <M extends EntityMessage, R extends EntityResponse> byte[] serializeResponse(String className, String entityName, final MessageCodec<M, R> codec, final R response) throws EntityException {
     return runWithHelper(className, entityName, () -> codec.encodeResponse(response));
   }
@@ -933,7 +931,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
           String fetchIdentifier = fetchIdentifierForService(clientIdentifier, entityIdentifier);
           PassthroughServerProcess.this.serviceInterface.addNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier, record);
         }
-//  connected call must happen after a possible modification to monitoring tree.  
+//  connected call must happen after a possible modification to monitoring tree.
         entity.connected(clientDescriptor);
       } else {
         error = new EntityVersionMismatchException(entityClassName, entityName, expectedVersion, version);
@@ -945,7 +943,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     if (entityData != null && error != null) {
       entityData.release(clientDescriptor);
     }
-    
+
     onFetch.onFetchComplete(config, error);
   }
 
@@ -1001,7 +999,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     CommonServerEntity<?, ?> newEntity;
     try {
       newEntity = createAndStoreEntity(entityClassName, entityName, version, serializedConfiguration, entityTuple, service, registry, consumerID);
-      
+
       // Tell the entity to create itself as something new.
       newEntity.createNew();
     } catch (ConfigurationException e) {
@@ -1015,7 +1013,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       throw new EntityConfigurationException(entityClassName, entityName, e);
     }
     container.setEntity(newEntity);
-    
+
     // Store the tuple for this entity, so it can see itself via monitoring.
     if (null != this.serviceInterface) {
       // Record this new entity.
@@ -1024,7 +1022,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       String entityIdentifier = entityIdentifierForService(entityClassName, entityName);
       this.serviceInterface.addNode(PlatformMonitoringConstants.ENTITIES_PATH, entityIdentifier, record);
     }
-    
+
     // If we have a persistence layer, record this.
     EntityData data = new EntityData();
     data.className = entityClassName;
@@ -1038,19 +1036,19 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       Assert.unexpected(e);
     }
   }
-  
+
   @Override
   public byte[] reconfigure(String entityClassName, String entityName, long version, byte[] serializedConfiguration) throws EntityException {
     PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
     CreationData<?, ?> entityData = (this.activeEntities != null) ? this.activeEntities.get(entityTuple) : this.passiveEntities.get(entityTuple);
-    
+
     // Make sure that we update the node in monitoring.
     if (null != this.serviceInterface) {
       PlatformEntity record = new PlatformEntity(entityClassName, entityName, entityData.consumerID, entityData.isActive);
       String entityIdentifier = entityIdentifierForService(entityClassName, entityName);
       this.serviceInterface.addNode(PlatformMonitoringConstants.ENTITIES_PATH, entityIdentifier, record);
     }
-    
+
     try {
       byte[] reconfigured = entityData.reconfigure(serializedConfiguration);
       EntityData data = this.persistedEntitiesByConsumerIDMap.get(entityData.consumerID);
@@ -1067,7 +1065,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       throw new EntityConfigurationException(entityClassName, entityName, e);
     }
   }
-  
+
   @Override
   public synchronized boolean destroy(String entityClassName, String entityName) throws EntityException {
     PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
@@ -1139,7 +1137,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   public void syncEntityStart(IMessageSenderWrapper sender, String entityClassName, String entityName) throws EntityException {
     // Sync only makes sense on passive.
     Assert.assertTrue(null != this.passiveEntities);
-    
+
     final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
     CreationData<?, ?> data = this.passiveEntities.get(entityTuple);
     if (null != data) {
@@ -1154,7 +1152,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   public void syncEntityEnd(IMessageSenderWrapper sender, String entityClassName, String entityName) throws EntityException {
     // Sync only makes sense on passive.
     Assert.assertTrue(null != this.passiveEntities);
-    
+
     final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
     CreationData<?, ?> data = this.passiveEntities.get(entityTuple);
     if (null != data) {
@@ -1169,7 +1167,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   public void syncEntityKeyStart(IMessageSenderWrapper sender, String entityClassName, String entityName, int concurrencyKey) throws EntityException {
     // Sync only makes sense on passive.
     Assert.assertTrue(null != this.passiveEntities);
-    
+
     final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
     CreationData<?, ?> data = this.passiveEntities.get(entityTuple);
     if (null != data) {
@@ -1184,7 +1182,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   public void syncEntityKeyEnd(IMessageSenderWrapper sender, String entityClassName, String entityName, int concurrencyKey) throws EntityException {
     // Sync only makes sense on passive.
     Assert.assertTrue(null != this.passiveEntities);
-    
+
     final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
     CreationData<?, ?> data = this.passiveEntities.get(entityTuple);
     if (null != data) {
@@ -1199,7 +1197,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   public void syncPayload(IMessageSenderWrapper sender, String entityClassName, String entityName, int concurrencyKey, byte[] payload) throws EntityException {
     // Sync only makes sense on passive.
     Assert.assertTrue(null != this.passiveEntities);
-    
+
     final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
     CreationData<?, ?> data = this.passiveEntities.get(entityTuple);
     if (null != data) {
@@ -1309,7 +1307,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     // Make us active and promote all passive entities.
     this.downstreamPassives.clear();
     this.activeEntities = new HashMap<>();
-    
+
     // We need to create the entities as active but note that we would already have persisted this data so only create the
     // actual instances, don't go through the full creation path.
     for (Map.Entry<PassthroughEntityTuple, CreationData<?, ?>> entry : this.passiveEntities.entrySet()) {
@@ -1324,12 +1322,12 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       newData.getActive().loadExisting();
       this.activeEntities.put(entry.getKey(), newData);
     }
-//  show promotion in monitoring    
+//  show promotion in monitoring
     if (this.serviceInterface != null) {
       long timestamp = System.currentTimeMillis();
       this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(PlatformMonitoringConstants.SERVER_STATE_ACTIVE, timestamp, timestamp));
     }
-    
+
     // Clear our passives.
     this.passiveEntities = null;
   }
@@ -1341,7 +1339,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
 
   /**
    * Called when a new connection has been established to this server.
-   * 
+   *
    * @param connection The new connection object.
    * @param connectionID A unique ID for the connection.
    */
@@ -1367,7 +1365,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
 
   /**
    * Called when a connection to the server has closed.
-   * 
+   *
    * @param connection The closed connection object.
    * @param connectionID A unique ID for the connection.
    */
@@ -1401,7 +1399,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   /**
    * This is only used to support internal service implementations which are, themselves, built on top of external service implementations.
    * The internal IMonitoringProducer implementation works this way, consuming the externally-provided IStripeMonitoring implementation.
-   * 
+   *
    * @return A service registry for the described internal consumer.
    */
   public PassthroughServiceRegistry createServiceRegistryForInternalConsumer(String entityClassName, String entityName, long consumerID, DeferredEntityContainer container) {
@@ -1467,13 +1465,13 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     public ReconnectHandler reconnect;
     public final MessageCodec<M, R> messageCodec;
     public final SyncMessageCodec<M> syncMessageCodec;
-    public ConcurrencyStrategy<M> concurrency; 
+    public ConcurrencyStrategy<M> concurrency;
     public ExecutionStrategy<M> executionStrategy;
     public final boolean isActive;
     public final long consumerID;
     public boolean isDestroyed = false;
     public Map<ClientDescriptor, Integer> references = new HashMap<>();
-    
+
     public CreationData(String entityClassName, String entityName, long version, byte[] configuration, PassthroughServiceRegistry registry, EntityServerService<M, R> service, boolean isActive, long consumerID) throws ConfigurationException {
       this.entityClassName = entityClassName;
       this.entityName = entityName;
@@ -1491,7 +1489,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       this.isActive = isActive;
       this.consumerID = consumerID;
     }
-    
+
     synchronized boolean reference(ClientDescriptor cid) {
       Assert.assertTrue(isActive);
       if (!isDestroyed) {
@@ -1502,7 +1500,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       }
       return !isDestroyed;
     }
-    
+
     synchronized boolean release(ClientDescriptor cid) {
       Assert.assertTrue(isActive);
       Integer current = references.remove(cid);
@@ -1514,7 +1512,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         throw new AssertionError("makes no sense");
       }
     }
-    
+
     synchronized boolean destroy() {
       if (!isDestroyed && (!isActive || references.isEmpty())) {
           this.entityInstance.destroy();
@@ -1522,7 +1520,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       }
       return isDestroyed;
     }
-    
+
     byte[] reconfigure(byte[] data) throws ConfigurationException {
       try {
         this.entityInstance = service.reconfigureEntity(registry, this.entityInstance, data);
@@ -1539,7 +1537,17 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       this.reference(clientDescriptor);
       getActive().connected(clientDescriptor);
       if (reconnect != null) {
-        reconnect.handleReconnect(clientDescriptor, data);
+        reconnect.handleReconnect(new ActiveServerEntity.ReconnectChannel() {
+          @Override
+          public ClientDescriptor getClientDescriptor() {
+            return clientDescriptor;
+          }
+
+          @Override
+          public void sendResponse(EntityResponse responseMessage) {
+
+          }
+        }, data);
         reconnect.close();
       } else {
         throw new ReconnectRejectedException("no reconnect handler");
@@ -1554,12 +1562,12 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     @SuppressWarnings("unchecked")
     public PassiveServerEntity<M, R> getPassive() {
       return PassiveServerEntity.class.cast(entityInstance);
-    }    
-    
+    }
+
     public ConcurrencyStrategy<M> getConcurrency() {
       return concurrency;
     }
-    
+
     public void synchronizeToPassive(final PassthroughServerProcess passive, final int key) {
       getActive().prepareKeyForSynchronizeOnPassive(payload -> {
         PassthroughMessage payloadMessage = PassthroughMessageCodec.createSyncPayloadMessage(entityClassName, entityName, key, serialize(key, payload));
@@ -1574,7 +1582,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         wrapper.waitForComplete();
       }, key);
     }
-    
+
     private byte[] serialize(int key, M message) {
       try {
         return syncMessageCodec.encode(key, message);

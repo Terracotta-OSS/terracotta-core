@@ -49,12 +49,16 @@ import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.services.CommunicatorServiceConfiguration;
+import com.tc.services.EntityMessengerService;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.services.MappedStateCollector;
 import com.tc.spi.Guardian;
 import com.tc.tracing.Trace;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ActiveServerEntity;
@@ -90,8 +94,12 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import org.terracotta.entity.ActiveInvokeChannel;
 import org.terracotta.entity.ActiveServerEntity.ReconnectHandler;
+import org.terracotta.entity.ClientCommunicator;
+import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.tripwire.Event;
 import org.terracotta.tripwire.TripwireFactory;
 
@@ -470,47 +478,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     return null;
   }
 
-  @Override
-  public ServerEntityRequest getCurrentRequestMessage() {
-    MessageChannel channel = GuardianContext.getCurrentMessageChannel();
-    if (channel == null) {
-      return null;
-    }
-    ThreadLocal<ServerEntityRequest> tl = (ThreadLocal<ServerEntityRequest>)channel.getAttachment(REQUEST_CONTEXT_KEY);
-    if (tl == null) {
-      return null;
-    }
-    return (ServerEntityRequest)tl.get();
-  }
-
-  private void setRequestContext(MessageChannel channel, ServerEntityRequest request) {
-    if (channel == null) {
-      return;
-    }
-
-    @SuppressWarnings("unchecked")
-    ThreadLocal<ServerEntityRequest> local = (ThreadLocal<ServerEntityRequest>) channel.getAttachment(REQUEST_CONTEXT_KEY);
-
-    if (local == null) {
-      channel.addAttachment(REQUEST_CONTEXT_KEY, new ThreadLocal<>(), false);
-      local = (ThreadLocal<ServerEntityRequest>) channel.getAttachment(REQUEST_CONTEXT_KEY);
-    }
-
-    local.set(request);
-  }
-
-  private void clearRequestContext(MessageChannel channel) {
-    if (channel == null) {
-      return;
-    }
-
-    @SuppressWarnings("unchecked")
-    ThreadLocal<ServerEntityRequest> local = (ThreadLocal<ServerEntityRequest>) channel.getAttachment(REQUEST_CONTEXT_KEY);
-    if (local != null) {
-      local.remove();
-    }
-  }
-
   private void invokeLifecycleOperation(final ServerEntityRequest request, MessagePayload payload, ResultCapture resp) {
     Trace trace = new Trace(request.getTraceID(), "ManagedEntityImpl.invokeLifecycleOperation");
     trace.start();
@@ -518,7 +485,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     logger.info("Client:" + request.getNodeID() + ":" + request.getClientInstance() + " Invoking lifecycle " + request.getAction() + " on " + getID() + ":" + this.fetchID);
     GuardianContext.setCurrentChannelID(request.getNodeID().getChannelID());
     MessageChannel channel = GuardianContext.getCurrentMessageChannel();
-    setRequestContext(channel, request);
+
     read.lock();
     try {
       switch (request.getAction()) {
@@ -592,7 +559,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     } finally {
       read.unlock();
       GuardianContext.clearCurrentChannelID(request.getNodeID().getChannelID());
-      clearRequestContext(channel);
       if (this.isInActiveState) {
         interop.finishLifecycle();
       }
@@ -626,7 +592,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
     GuardianContext.setCurrentChannelID(request.getNodeID().getChannelID());
     MessageChannel channel = GuardianContext.getCurrentMessageChannel();
-    setRequestContext(channel, request);
+//    setRequestContext(channel, request);
     Lock read = reconnectAccessLock.readLock();
     try {
       read.lock();
@@ -666,7 +632,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     } finally {
       read.unlock();
       GuardianContext.clearCurrentChannelID(request.getNodeID().getChannelID());
-      clearRequestContext(channel);
+//      clearRequestContext(channel);
     }
     trace.end();
   }
@@ -933,20 +899,27 @@ public class ManagedEntityImpl implements ManagedEntity {
             if (response instanceof StatisticsCapture) {
               ((StatisticsCapture)response).beginInvoke();
             }
+
+            EntityMessengerService messenger = new EntityMessengerService(messageSelf, this, wrappedRequest);
+
             Trace trace = Trace.activeTrace().subTrace("invokeActive");
             trace.start();
-            EntityResponse resp = this.activeServerEntity.invokeActive(
-              new ActiveInvokeContextImpl<>(clientDescriptor, concurrencyKey, oldestId, currentId,
-                  ()->retirementManager.holdMessage(message),
-                  (r)->response.message(decodeResponse(r)),
-                  (e)->response.failure(convertException(getID(), e)),
-                  ()->{
+            Supplier<ActiveInvokeChannel> channelCreate = () -> {
+              retirementManager.holdMessage(message);
+              return new ActiveInvokeChannelImpl<>((r)->response.message(decodeResponse(r)),
+                (e)->response.failure(convertException(getID(), e)),
+                ()->{
                     // returns true of the message has been completed
                     // and held count is zero so the message should be retired
                     if (retirementManager.releaseMessage(message)) {
                       retirementManager.retireMessage(message);
                     }
-                  }
+                });
+            };
+            EntityResponse resp = this.activeServerEntity.invokeActive(
+              new ActiveInvokeContextImpl<>(message, clientDescriptor, concurrencyKey, oldestId, currentId,
+                  channelCreate,
+                  messenger
               ), message);
             byte[] er = encodeResponse(resp, response);
             trace.end();
@@ -1066,7 +1039,22 @@ public class ManagedEntityImpl implements ManagedEntity {
             if (handler == null) {
               throw new ReconnectRejectedException("no reconnect handler registered");
             } else {
-              handler.handleReconnect(descriptor, extendedData);
+              ClientCommunicator client = registry.getService(new CommunicatorServiceConfiguration());
+              handler.handleReconnect(new ActiveServerEntity.ReconnectChannel() {
+                @Override
+                public ClientDescriptor getClientDescriptor() {
+                  return descriptor;
+                }
+
+                @Override
+                public void sendResponse(EntityResponse responseMessage) {
+                  try {
+                    client.sendNoResponse(descriptor, responseMessage);
+                  } catch (MessageCodecException codec) {
+                    throw new UncheckedIOException(new IOException(codec));
+                  }
+                }
+              }, extendedData);
             }
           } catch (ReconnectRejectedException rejected) {
             Assert.assertTrue(clientEntityStateManager.removeReference(descriptor));

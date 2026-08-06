@@ -74,7 +74,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.EntityMessage;
 import com.tc.net.protocol.tcm.TCAction;
-import com.tc.objectserver.api.ServerEntityResponse;
 import com.tc.objectserver.entity.NetworkInvokeResponse;
 import com.tc.objectserver.entity.WaitingResultCapture;
 import com.tc.objectserver.entity.NetworkServerEntityResponse;

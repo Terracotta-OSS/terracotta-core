@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public interface IEntityMessenger<M extends EntityMessage, R extends EntityRespo
    */
   void create(String type, String name, long version, byte[] configuration);
   /**
-   * Sends a message to delete the entity.  This method should be called from the 
+   * Sends a message to delete the entity.  This method should be called from the
    * {@link org.terracotta.entity.ActiveServerEntity#disconnected(org.terracotta.entity.ClientDescriptor) disconnected}
    * body or it will fail due to client references still on the entity.
    */
@@ -48,62 +48,29 @@ public interface IEntityMessenger<M extends EntityMessage, R extends EntityRespo
    */
   void reconfigureSelf(byte[] configuration);
   /**
-   * Same as the messageSelf will no callback.
-   * 
+   * Same as the messageSelf will no callback.  This is a fire and forget call that will not wait for the passives to
+   * receive the message before executing
+   *
    * @param message
-   * @throws MessageCodecException 
    */
-  void messageSelf(M message) throws MessageCodecException;
+  void messageSelf(M message);
   /**
-   * Asynchronously send a message to the entity instance which looked up the service instance.
-   * 
+   * Asynchronously send a message to the entity instance which looked up the service instance.  This call will wit for the message
+   * to be received on passive before executing and reporting  result.
+   *
    * @param message The message to send.
    * @param response A callback used when the result of the invoke is available.  NOTE: callback delivered
    * on the thread which the invoke occurs
-   * @throws MessageCodecException The message could not be serialized.
-   */  
-  void messageSelf(M message, Consumer<MessageResponse<R>> response) throws MessageCodecException;
-
-  /**
-   * Defer a message based on another message, which will be sent in the future.
-   *
-   * @param tag String reason tag, mainly for debugging.
-   * @param originalMessageToDefer original message to defer
-   * @param futureMessage message to use to complete original message
-   * @return handle used to release the deferred message
    */
-  ExplicitRetirementHandle deferRetirement(String tag,
-                                           M originalMessageToDefer,
-                                           M futureMessage);
-
+  void messageSelf(M message, Consumer<MessageResponse<R>> response);
   /**
-   * Same as messageSelfAndDeferRetirement with no callback
-   * 
-   * @param originalMessageToDefer
-   * @param newMessageToSchedule
-   * @throws MessageCodecException 
-   */
-  void messageSelfAndDeferRetirement(M originalMessageToDefer, M newMessageToSchedule) throws MessageCodecException;
-  
-  /**
-   * Asynchronously send a message to the entity instance which looked up the service instance but also blocks the final
-   * retirement acknowledgment of originalMessageToDefer until newMessageToSchedule completes.
-   * 
-   * @param originalMessageToDefer The currently executing message whose retirement must be deferred.
-   * @param newMessageToSchedule The new message to send.
-   * @param response A callback used when the result of the invoke is available.  NOTE: callback delivered
-   * on the thread which the invoke occurs
-   * @throws MessageCodecException The message could not be serialized.
-   */
-  void messageSelfAndDeferRetirement(M originalMessageToDefer, M newMessageToSchedule, Consumer<MessageResponse<R>> response) throws MessageCodecException;
-  /**
-   * If a response callback is registered, the response will take this form.  
+   * If a response callback is registered, the response will take this form.
    * @param <T> type of the message response
    */
   public interface MessageResponse<T extends EntityResponse> {
     /**
      * Was an exception thrown in the execution of this message.
-     * 
+     *
      * @return true if a message resulted in an exception during invoke
      */
     boolean wasExceptionThrown();
@@ -113,7 +80,7 @@ public interface IEntityMessenger<M extends EntityMessage, R extends EntityRespo
      */
     Exception getException();
     /**
-     * @return the response of the invoke or null if an exception that occurred 
+     * @return the response of the invoke or null if an exception that occurred
      */
     T getResponse();
   }

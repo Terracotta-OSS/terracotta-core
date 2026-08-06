@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,20 +35,11 @@ public class TestEntityServer implements ActiveServerEntity<EntityMessage, Entit
 
   @Override
   public ReconnectHandler startReconnect() {
-    return new ReconnectHandler() {
-      @Override
-      public void handleReconnect(ClientDescriptor clientDescriptor, byte[] extendedReconnectData) {
-        // Do nothing.
-      }
-
-      @Override
-      public void close() {
-
-      }
+    return (ReconnectChannel clientConnection, byte[] extendedReconnectData) -> {
     };
   }
 
-  
+
 
 
   @Override

@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,25 +56,7 @@ public interface ActiveServerEntity<M extends EntityMessage, R extends EntityRes
    * @param message The message from a client
    * @return possible return value
    */
-  default R invokeActive(ActiveInvokeContext<R> context, M message) throws EntityUserException {
-    return invoke(context.getClientDescriptor(), message);
-  }
-
-  /**
-   * <p>Invoke a call on the given entity.</p>
-   * <p>Note that the thread used to make this call is determined by consulting the entity's ConcurrencyStrategy so it may be
-   *  called concurrently with other invokes.</p>
-   * <p>This is the legacy endpoint, and will not be called unless the other
-   * invoke call is not overridden as it should be. Here for legacy transition.</p>
-   *
-   * @param descriptor client descriptor this invoke is sourced from
-   * @param message The message from a client
-   * @return possible return value
-   */
-  @Deprecated
-  default R invoke(ClientDescriptor descriptor, M message) throws EntityUserException {
-    throw new UnsupportedOperationException();
-  }
+  R invokeActive(ActiveInvokeContext<R> context, M message) throws EntityUserException;
 
   /**
    * <p>Called when an entity was loaded from some persistent state and the entity is expected to already be known to the
@@ -85,26 +67,26 @@ public interface ActiveServerEntity<M extends EntityMessage, R extends EntityRes
    *  respect to all other messages enqueued for the entity.</p>
    */
   void loadExisting();
-  
+
   /**
    * <p>This method will be called in a nonblocking manner as a first step in synchronizing a key of a passive entity.</p>
-   * 
+   *
    * <p>Note: this method is called in a completely nonblocking manner.  All messages associated with this key can run concurrently
    * in invoke with this method call, however no other synchronization calls will run until this method completes.</p>
-   * 
+   *
    * @param syncChannel The output channel to the passive
    * @param concurrencyKey The key of the data to be synchronized
    */
   default void prepareKeyForSynchronizeOnPassive(PassiveSynchronizationChannel<M> syncChannel, int concurrencyKey) {
-    
+
   }
   /**
    * <p>Passes any information required to describe all entity data/state associated with the given concurrency key to a
    *  passive instance being synchronized to be consistent with the receiver.</p>
-   * 
+   *
    * <p>Note that this method is also run on the concurrencyKey specified, so it blocks other messages executed on that
    *  key.</p>
-   * 
+   *
    * @param syncChannel The output channel to the passive
    * @param concurrencyKey The key of the data to be synchronized
    */
@@ -112,12 +94,14 @@ public interface ActiveServerEntity<M extends EntityMessage, R extends EntityRes
   /**
    * Called at the start of reconnect of a new active entity.  The reconnect handler receives all reconnect data
    * from the clients during a fail-over event.
-   * 
-   * @return a handler to receive arbitrary reconnect data from clients.  If null is returned, all reconnect attempts 
+   *
+   * @param cxt context to send server messages if needed
+   *
+   * @return a handler to receive arbitrary reconnect data from clients.  If null is returned, all reconnect attempts
    * will be rejected and the connection associated with this entity fetch will be rejected
    */
   ReconnectHandler startReconnect();
-  
+
   interface ReconnectHandler extends AutoCloseable {
     /**
      * <p>Called during client reconnect to allow the client to pass arbitrary extra data to the server-side entity so it can
@@ -125,21 +109,34 @@ public interface ActiveServerEntity<M extends EntityMessage, R extends EntityRes
      * <p>Note that this is called AFTER connected() is called for this clientDescriptor.</p>
      * <p>Note that this call is made on the {@link ConcurrencyStrategy#MANAGEMENT_KEY}, meaning that it is serialized with
      *  respect to all other messages enqueued for the entity.</p>
-     * 
-     * @param clientDescriptor The client-side instance which reconnected
-     * @param extendedReconnectData Arbitrary data sent by the client-side instance to rebuild the server-side in-memory state 
+     *
+     * @param clientConnection Channel to send messages to the reconnecting client during reconnect
+     * @param extendedReconnectData Arbitrary data sent by the client-side instance to rebuild the server-side in-memory state
      * @throws ReconnectRejectedException When a reconnect by the client is not supported by the server, throwing this exception
      * forces the disconnect of the Connection associated with the entity attempting reconnect
-     * 
+     *
      */
-    void handleReconnect(ClientDescriptor clientDescriptor, byte[] extendedReconnectData) throws ReconnectRejectedException;
+    void handleReconnect(ReconnectChannel clientConnection, byte[] extendedReconnectData) throws ReconnectRejectedException;
     /**
      * called after all clients that have reconnected to the entity.  Empty default implementation provided so a functional
      * interface can be used if desired
      */
     @Override
     default void close() {
-      
+
     }
+  }
+
+  interface ReconnectChannel {
+    /**
+     * Id of the reconnecting client
+     * @return descriptor of reconnecting client
+     */
+    ClientDescriptor getClientDescriptor();
+    /**
+     * Send a response to the client reconnecting to rebuild state.
+     * @param responseMessage message sent to client during reconnect
+     */
+    void sendResponse(EntityResponse responseMessage);
   }
 }

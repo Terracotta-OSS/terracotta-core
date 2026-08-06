@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.ExplicitRetirementHandle;
 import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
@@ -39,7 +39,7 @@ public class PassthroughMessengerService implements IEntityMessenger<EntityMessa
   private final DeferredEntityContainer entityContainer;
   private final String entityClassName;
   private final String entityName;
-    
+
   public PassthroughMessengerService(PassthroughTimerThread timerThread, PassthroughServerProcess passthroughServerProcess, DeferredEntityContainer entityContainer, boolean chain, String entityClassName, String entityName) {
     this.passthroughServerProcess = passthroughServerProcess;
     this.retirementManager = passthroughServerProcess.getRetirementManager();
@@ -78,53 +78,26 @@ public class PassthroughMessengerService implements IEntityMessenger<EntityMessa
   }
 
   @Override
-  public void messageSelf(EntityMessage message) throws MessageCodecException {
+  public void messageSelf(EntityMessage message) {
     // Serialize the message.
-    PassthroughMessage passthroughMessage = makePassthroughMessage(message);
-    this.passthroughServerProcess.sendMessageToActiveFromInsideActive(message, passthroughMessage, null);
-  }
-
-  @Override
-  public ExplicitRetirementHandle deferRetirement(final String tag,
-                                                  EntityMessage originalMessageToDefer,
-                                                  final EntityMessage futureMessage) {
     try {
-      final PassthroughMessage futurePassThroughMessage = makePassthroughMessage(futureMessage);
-      retirementManager.deferCurrentMessage(futureMessage);
-      return new ExplicitRetirementHandle() {
-        @Override
-        public String getTag() {
-          return tag;
-        }
-
-        @Override
-        public void release(Consumer consumer) throws MessageCodecException {
-          passthroughServerProcess.sendMessageToActiveFromInsideActive(futureMessage, futurePassThroughMessage, null);
-        }
-
-        @Override
-        public void release() throws MessageCodecException {
-          passthroughServerProcess.sendMessageToActiveFromInsideActive(futureMessage, futurePassThroughMessage, null);
-        }
-      };
-    } catch (MessageCodecException e) {
-      System.err.println("Codec error in explicit retirement: " + e);
-      throw new RuntimeException(e);
+      PassthroughMessage passthroughMessage = makePassthroughMessage(message);
+      this.passthroughServerProcess.sendMessageToActiveFromInsideActive(null, message, passthroughMessage, null);
+    } catch (MessageCodecException codec) {
+      throw new UncheckedIOException(new IOException(codec));
     }
   }
 
   @Override
-  public void messageSelfAndDeferRetirement(EntityMessage originalMessageToDefer, EntityMessage newMessageToSchedule) throws MessageCodecException {
-    retirementManager.deferCurrentMessage(newMessageToSchedule);
-    this.passthroughServerProcess.sendMessageToActiveFromInsideActive(newMessageToSchedule, makePassthroughMessage(newMessageToSchedule), null);
-  }
-
-  @Override
-  public void messageSelf(EntityMessage message, Consumer<MessageResponse<EntityResponse>> response) throws MessageCodecException {
+  public void messageSelf(EntityMessage message, Consumer<MessageResponse<EntityResponse>> response) {
     // Serialize the message.
-    this.passthroughServerProcess.sendMessageToActiveFromInsideActive(message, makePassthroughMessage(message), queueForComplete(response));
-  }
-  
+    try {
+      this.passthroughServerProcess.sendMessageToActiveFromInsideActive(null, message, makePassthroughMessage(message), queueForComplete(response));
+    } catch (MessageCodecException codec) {
+      throw new UncheckedIOException(new IOException(codec));
+    }
+}
+
   private Consumer<PassthroughMessage> queueForComplete(Consumer<MessageResponse<EntityResponse>> response) {
     if (response != null) {
       return (msg)->{
@@ -136,7 +109,7 @@ public class PassthroughMessengerService implements IEntityMessenger<EntityMessa
           ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
           DataInputStream dis = new DataInputStream(bis);
           switch (msg.type) {
-          case MONITOR_MESSAGE: 
+          case MONITOR_MESSAGE:
           case MONITOR_EXCEPTION:
           case COMPLETE_FROM_SERVER:
           case EXCEPTION_FROM_SERVER:
@@ -168,21 +141,13 @@ public class PassthroughMessengerService implements IEntityMessenger<EntityMessa
           default:
           }
 
-          
+
         } catch (IOException io) {
           throw new RuntimeException(io);
         }
       };
     }
     return null;
-  }
-
-  @Override
-  @SuppressWarnings({ "unchecked" })
-  public void messageSelfAndDeferRetirement(EntityMessage originalMessageToDefer, EntityMessage newMessageToSchedule, Consumer response) throws MessageCodecException {
-    retirementManager.deferCurrentMessage(newMessageToSchedule);
-    PassthroughMessage passthroughMessage = makePassthroughMessage(newMessageToSchedule);
-    this.passthroughServerProcess.sendMessageToActiveFromInsideActive(newMessageToSchedule, passthroughMessage, queueForComplete(response));
   }
 
   private PassthroughMessage makePassthroughMessage(EntityMessage message) throws MessageCodecException {
