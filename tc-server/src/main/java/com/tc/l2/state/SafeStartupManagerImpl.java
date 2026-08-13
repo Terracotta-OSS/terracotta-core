@@ -36,10 +36,8 @@ import static com.tc.l2.state.ConsistencyMBean.CONSISTENCY_BEAN_NAME;
 
 import com.tc.objectserver.impl.Topology;
 import com.tc.util.concurrent.SetOnceFlag;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.terracotta.server.ServerEnv;
 
 public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsListener {
@@ -62,7 +60,7 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
     this.consistencyManager = consistencyManager;
     initMBean();
   }
-  
+
   @Override
   public Map<String, ?> getStateMap() {
     Map<String, Object> map = new LinkedHashMap<>();
@@ -74,7 +72,7 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
     map.put("delegate", consistencyManager.getStateMap());
     return map;
   }
-  
+
   private void initMBean() {
     try {
       ObjectName mbeanName = TerracottaManagement.createObjectName(null, CONSISTENCY_BEAN_NAME, TerracottaManagement.MBeanDomain.PUBLIC);
@@ -92,7 +90,7 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
       return false;
     }
   }
-  
+
   private synchronized boolean safeTransition(ServerMode mode, NodeID sourceNode, Topology topology, Transition newMode) throws IllegalStateException {
     if (newMode == Transition.CONNECT_TO_ACTIVE) {
       // disable this mode since we have already tried to connect to an existing active.

@@ -230,7 +230,6 @@ import java.net.InetSocketAddress;
 import java.util.stream.Collectors;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.concurrent.SetOnceFlag;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import org.terracotta.configuration.FailoverBehavior;
@@ -1050,6 +1049,10 @@ public class DistributedObjectServer {
     control.addStageToState(ServerMode.RELAY.getState(), ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
     control.addStageToState(ServerMode.RELAY.getState(), ServerConfigurationContext.PASSIVE_RELAY_STAGE);
     control.addStageToState(ServerMode.RELAY.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
+//  PASSIVE-RELAY-CONNECTED
+    control.addStageToState(ServerMode.RELAY_CONNECTED.getState(), ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
+    control.addStageToState(ServerMode.RELAY_CONNECTED.getState(), ServerConfigurationContext.PASSIVE_RELAY_STAGE);
+    control.addStageToState(ServerMode.RELAY_CONNECTED.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
 //  PASSIVE-UNINITIALIZED handle replicate messages right away.
     // NOTE:  PASSIVE_OUTGOING_RESPONSE_STAGE must be active whenever PASSIVE_REPLICATION_STAGE is.
     control.addStageToState(ServerMode.UNINITIALIZED.getState(), ServerConfigurationContext.PASSIVE_REPLICA_STAGE);

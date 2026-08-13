@@ -36,6 +36,7 @@ public interface StateManager extends PrettyPrintable {
   public final State       PASSIVE_SYNCING = new State("PASSIVE-SYNCING");
   public final State       PASSIVE_STANDBY      = new State("PASSIVE-STANDBY");
   public final State       PASSIVE_RELAY      = new State("PASSIVE-RELAY");
+  public final State       PASSIVE_RELAY_CONNECTED      = new State("PASSIVE-RELAY-CONNECTED");
   public final State       PASSIVE_REPLICA_START      = new State("PASSIVE-REPLICA-START");
   public final State       PASSIVE_REPLICA      = new State("PASSIVE-REPLICA");
   public final State       START_STATE          = new State("START-STATE");
@@ -62,6 +63,8 @@ public interface StateManager extends PrettyPrintable {
   public void moveToDiagnosticMode();
 
   public void moveToRelayMode();
+
+  public void moveToRelayConnectedMode();
 
   public void moveToReplicaMode();
 

@@ -24,6 +24,7 @@ import static com.tc.l2.state.StateManager.ACTIVE_COORDINATOR;
 import static com.tc.l2.state.StateManager.BOOTSTRAP_STATE;
 import static com.tc.l2.state.StateManager.DIAGNOSTIC_STATE;
 import static com.tc.l2.state.StateManager.PASSIVE_RELAY;
+import static com.tc.l2.state.StateManager.PASSIVE_RELAY_CONNECTED;
 import static com.tc.l2.state.StateManager.PASSIVE_REPLICA;
 import static com.tc.l2.state.StateManager.PASSIVE_REPLICA_START;
 import static com.tc.l2.state.StateManager.PASSIVE_STANDBY;
@@ -113,6 +114,32 @@ public enum ServerMode {
     @Override
     public boolean requiresElection() {
       return false;
+    }
+  },
+    RELAY_CONNECTED(PASSIVE_RELAY_CONNECTED) {
+    @Override
+    public boolean isStartup() {
+      return false;
+    }
+
+    @Override
+    public boolean canStartElection() {
+      return false;
+    }
+
+    @Override
+    public boolean containsData() {
+      return true;
+    }
+
+    @Override
+    public boolean canBeActive() {
+      return false;
+    }
+
+    @Override
+    public boolean requiresElection() {
+      return true;
     }
   },
   REPLICA_START(PASSIVE_REPLICA_START) {
@@ -215,5 +242,5 @@ public enum ServerMode {
   }
 
   public static final Set<ServerMode> VALID_STATES = EnumSet.allOf(ServerMode.class);
-  public static final Set<ServerMode> PASSIVE_STATES = EnumSet.of(UNINITIALIZED, PASSIVE, SYNCING, RELAY, REPLICA_START, REPLICA);
+  public static final Set<ServerMode> PASSIVE_STATES = EnumSet.of(UNINITIALIZED, PASSIVE, SYNCING, RELAY, RELAY_CONNECTED, REPLICA_START, REPLICA);
 };

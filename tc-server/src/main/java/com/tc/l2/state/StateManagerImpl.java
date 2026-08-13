@@ -356,7 +356,11 @@ public class StateManagerImpl implements StateManager {
     setActiveNodeID(active);
     if (startState == ServerMode.RELAY) {
       setActiveNodeID(active);
-      switchToState(ServerMode.RELAY, EnumSet.of(ServerMode.INITIAL, ServerMode.START, ServerMode.RELAY));
+      if (state == ServerMode.RELAY_CONNECTED) {
+        switchToState(ServerMode.RELAY_CONNECTED, EnumSet.of(ServerMode.INITIAL, ServerMode.START, ServerMode.RELAY, ServerMode.RELAY_CONNECTED));
+      } else {
+        switchToState(ServerMode.RELAY, EnumSet.of(ServerMode.INITIAL, ServerMode.START, ServerMode.RELAY, ServerMode.RELAY_CONNECTED));
+      }
     } else {
       logger.info("moving to passive " + state + " " + src + " " + active);
       logger.info("winning = {}", winningEnrollment);
@@ -423,7 +427,12 @@ public class StateManagerImpl implements StateManager {
 
   @Override
   public void moveToRelayMode() {
-      switchToState(ServerMode.RELAY, EnumSet.of(ServerMode.INITIAL, ServerMode.RELAY));
+      switchToState(ServerMode.RELAY, EnumSet.of(ServerMode.INITIAL, ServerMode.RELAY, ServerMode.RELAY_CONNECTED));
+  }
+
+  @Override
+  public void moveToRelayConnectedMode() {
+      switchToState(ServerMode.RELAY_CONNECTED, EnumSet.of(ServerMode.RELAY));
   }
 
   @Override

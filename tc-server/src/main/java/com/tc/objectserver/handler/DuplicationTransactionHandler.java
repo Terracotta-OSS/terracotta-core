@@ -43,7 +43,6 @@ import com.tc.util.Assert;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
@@ -76,6 +75,7 @@ public class DuplicationTransactionHandler {
                 groupManager.sendTo(nodeID, RelayMessage.createStartSync());
                 break;
               case REPLICA:
+                TCLogging.getConsoleLogger().info("requesting duplication resume from: {}", currentSequence);
                 groupManager.sendTo(nodeID, RelayMessage.createResumeMessage(currentSequence));
                 break;
               default:
@@ -91,7 +91,7 @@ public class DuplicationTransactionHandler {
 
       @Override
       public void nodeLeft(NodeID nodeID) {
-
+          TCLogging.getConsoleLogger().info("replica connection is down: {}", nodeID);
       }
     };
   }
@@ -145,6 +145,9 @@ public class DuplicationTransactionHandler {
           if (a.getActivityType() == SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN) {
             waitFors.put(a.getActivityID(), new CompletableFuture<>());
           }
+        }
+        if (currentSequence > 0 && currentSequence+1 != msg.getSequenceID()) {
+          LOGGER.warn("sequence skipped current: {} message: {}", currentSequence, msg.getSequenceID());
         }
         currentSequence = Long.max(currentSequence, msg.getSequenceID());
         sendToNext.getSink().addToSink(msg);

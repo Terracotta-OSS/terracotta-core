@@ -300,7 +300,9 @@ public class ElectionManagerImpl implements ElectionManager {
       Assert.assertEquals(msg.getMessageID(), response.inResponseTo());
       if (response.getType() == L2StateMessage.RESULT_AGREED) {
         Assert.assertEquals(e, response.getEnrollment());
-        if (StateManager.convert(response.getState()) == ServerMode.PASSIVE) {
+        if (StateManager.convert(response.getState()) == ServerMode.RELAY_CONNECTED) {
+          passives.add(response.messageFrom());
+        } else if (StateManager.convert(response.getState()) == ServerMode.PASSIVE) {
           passives.add(response.messageFrom());
         }
       } else if (response.getType() == L2StateMessage.RESULT_CONFLICT) {
