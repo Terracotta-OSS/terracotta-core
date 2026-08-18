@@ -82,7 +82,7 @@ public class StateManagerReplicaProtectionTest {
   @Test
   public void testReplicaDoesNotParticipateInElection() throws Exception {
     // Set up state manager in REPLICA mode
-    when(statePersistor.getInitialMode()).thenReturn(ServerMode.REPLICA);
+    when(statePersistor.getInitialMode()).thenReturn(ServerMode.REPLICA_START);
 
     stateManager = new StateManagerImpl(logger, (n) -> true, groupManager, stageController,
         mgmtController, stageManager, 5, weightGeneratorFactory, consistencyManager,

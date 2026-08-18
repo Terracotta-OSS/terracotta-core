@@ -426,7 +426,11 @@ public class StateManagerImpl implements StateManager {
 
   @Override
   public void moveToRelayMode() {
+    if (startState.containsData()) {
+      zapAndResyncLocalNode("replica contains data");
+    } else {
       switchToState(ServerMode.RELAY, EnumSet.of(ServerMode.INITIAL, ServerMode.RELAY, ServerMode.RELAY_CONNECTED));
+    }
   }
 
   @Override
@@ -436,7 +440,11 @@ public class StateManagerImpl implements StateManager {
 
   @Override
   public void moveToReplicaMode() {
+    if (startState.containsData()) {
+      zapAndResyncLocalNode("replica contains data");
+    } else {
       switchToState(ServerMode.REPLICA_START, EnumSet.of(ServerMode.INITIAL, ServerMode.RELAY));
+    }
   }
 
   @Override
@@ -673,7 +681,13 @@ public class StateManagerImpl implements StateManager {
     if (isActiveCoordinator()) {
       logger.info("split-brain detected");
     }
-    verifyActiveDeclarationAndRespond(clusterMsg);
+    ServerMode other = StateManager.convert(clusterMsg.getState());
+    if (other == ServerMode.REPLICA || other == ServerMode.REPLICA_START) {
+      logger.info("Replica designated in cluster.  No Election will be performed");
+      sendVerificationOKResponse(clusterMsg);
+    } else {
+      verifyActiveDeclarationAndRespond(clusterMsg);
+    }
   }
 
   private void verifyActiveDeclarationAndRespond(L2StateMessage clusterMsg) {
@@ -819,7 +833,7 @@ public class StateManagerImpl implements StateManager {
 
   private void sendVerificationNGResponse(L2StateMessage msg) {
     try {
-    Assert.assertTrue(msg.getType() != L2StateMessage.ELECTION_WON);
+      Assert.assertTrue(msg.getType() != L2StateMessage.ELECTION_WON);
       ServerMode sendState = state.isStartup() ? startState : state;
       groupManager.sendTo(msg.messageFrom(), L2StateMessage.createResultConflictMessage(msg, getVerificationEnrollment(), sendState.getState()));
     } catch (GroupException e) {

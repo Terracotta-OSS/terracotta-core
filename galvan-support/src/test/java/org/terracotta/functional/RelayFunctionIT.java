@@ -105,6 +105,118 @@ public class RelayFunctionIT {
     CLUSTER2.getClusterControl().waitForRunningPassivesInStandby();
  }
 
+
+  @Test
+  public void testRestartRelay() throws Exception {
+// start both clusters to solidfy config and set the source and dest
+    CLUSTER2.getClusterControl().waitForRunningPassivesInStandby();
+    CLUSTER1.getClusterControl().waitForRunningPassivesInStandby();
+//  shutdown both clusters and restart with relays
+    CLUSTER2.getClusterControl().terminateAllServers();
+    CLUSTER1.getClusterControl().terminateAllServers();
+//  start both clusters
+    CLUSTER2.getClusterControl().startAllServers();
+    CLUSTER1.getClusterControl().startAllServers();
+// shutdown the active of cluster 2
+    CLUSTER2.getClusterControl().waitForActive();
+    CLUSTER2.getClusterControl().terminateActive();
+
+    List<ServerInfo> servers = CLUSTER1.getClusterInfo().getServersInfo();
+    for (ServerInfo info : servers) {
+      try (Diagnostics d = DiagnosticsFactory.connect(info.getAddress(), null)) {
+        String state = d.getState();
+        if (state.equals("PASSIVE-RELAY-CONNECTED")) {
+          String val = d.restartServer();
+          while (state.equals("PASSIVE-RELAY-CONNECTED")) {
+            Thread.sleep(1000);
+            state = d.getState();
+          }
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+
+    boolean found = false;
+    while (!found) {
+      Thread.sleep(1000);
+      for (ServerInfo info : servers) {
+        try (Diagnostics d = DiagnosticsFactory.connect(info.getAddress(), null)) {
+          String state = d.getState();
+          if (state.equals("PASSIVE-RELAY-CONNECTED")) {
+            found = true;
+          }
+        }
+      }
+    }
+
+    try (Diagnostics d = DiagnosticsFactory.connect(CLUSTER2.getClusterInfo().getServersInfo().get(1).getAddress(), null)) {
+      String state = d.getState();
+      int turns = 0;
+      while (!state.equals("PASSIVE-REPLICA")) {
+        System.out.println("waiting for PASSIVE-REPLICA currently " + state);
+        TimeUnit.SECONDS.sleep(2);
+        state = d.getState();
+        if (turns++ > 60) {
+          LOGGER.warn(d.getClusterState());
+          throw new RuntimeException("timeout");
+        }
+      }
+    }
+  }
+
+  @Test
+  public void testRestartReplica() throws Exception {
+// start both clusters to solidfy config and set the source and dest
+    CLUSTER2.getClusterControl().waitForRunningPassivesInStandby();
+    CLUSTER1.getClusterControl().waitForRunningPassivesInStandby();
+//  shutdown both clusters and restart with relays
+    CLUSTER2.getClusterControl().terminateAllServers();
+    CLUSTER1.getClusterControl().terminateAllServers();
+//  start both clusters
+    CLUSTER2.getClusterControl().startAllServers();
+    CLUSTER1.getClusterControl().startAllServers();
+// shutdown the active of cluster 2
+    CLUSTER2.getClusterControl().waitForActive();
+    CLUSTER2.getClusterControl().terminateActive();
+
+    List<ServerInfo> servers = CLUSTER2.getClusterInfo().getServersInfo();
+    ServerInfo replica = null;
+    while (replica == null) {
+      for (ServerInfo info : servers) {
+        try (Diagnostics d = DiagnosticsFactory.connect(info.getAddress(), null)) {
+          String state = d.getState();
+          if (state.equals("PASSIVE-REPLICA")) {
+            String val = d.restartServer();
+            replica = info;
+            while (state.equals("PASSIVE-REPLICA")) {
+              Thread.sleep(1000);
+              state = d.getState();
+            }
+          }
+        } catch (Exception e) {
+          e.printStackTrace();
+          if (replica != null) {
+            break;
+          }
+        }
+      }
+    }
+
+    boolean found = false;
+    while (!found) {
+      Thread.sleep(1000);
+      try (Diagnostics d = DiagnosticsFactory.connect(replica.getAddress(), null)) {
+        String state = d.getState();
+        if (state.equals("PASSIVE-REPLICA")) {
+          found = true;
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
   private static class RelayStartupCommandBuilder extends DefaultStartupCommandBuilder {
 
     public RelayStartupCommandBuilder() {
