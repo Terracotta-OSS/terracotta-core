@@ -146,7 +146,7 @@ public class DuplicationTransactionHandler {
             waitFors.put(a.getActivityID(), new CompletableFuture<>());
           }
         }
-        if (currentSequence > 0 && currentSequence+1 != msg.getSequenceID()) {
+        if (currentSequence+1 != msg.getSequenceID()) {
           LOGGER.warn("sequence skipped current: {} message: {}", currentSequence, msg.getSequenceID());
         }
         currentSequence = Long.max(currentSequence, msg.getSequenceID());

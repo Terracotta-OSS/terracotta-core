@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,16 +34,16 @@ import java.util.function.Predicate;
 
 public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
   private static final Logger LOGGER = LoggerFactory.getLogger(GroupMessageBatchContext.class);
-  
+
   private static final long THRESHOLD = 16 * 1024 * 1024;
-  
+
   private final Function<E, M> messageFactory;
   private final GroupManager<AbstractGroupMessage> groupManager;
   private final ServerID target;
   private final int maximumBatchSize;
   private final int idealMessagesInFlight;
   private final Consumer<ServerID> networkDoneTarget;
-  
+
   private int messagesInFlight;
   private M cachedMessage;
   private long nextReplicationID;
@@ -61,18 +61,18 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
   /**
    * Called to send a new activity.  This might be added to an existing batch or used to create a new one.  In either
    *  case, this isn't sent now, but might be sent during the next call to flushBatch().
-   *  
+   *
    * @param activity The activity to batch.
    * @return True if this required creating a new batch (the message is batched, either way).
    */
   public synchronized boolean batchMessage(E activity) {
-    
+
     // See if we have an existing message we must batch.
     boolean didCreateNewBatch = false;
     try {
       while (this.cachedMessage != null && this.cachedMessage.getBatchSize() >= maximumBatchSize) {
         wait();
-      }      
+      }
     } catch (InterruptedException ie) {
       L2Utils.handleInterrupted(LOGGER, ie);
       throw new RuntimeException(ie);
@@ -93,20 +93,18 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
   /**
    * Called by a thread which is expected to do the message serialization to determine if the current batch is ready to
    *  be flushed to the network.
-   * 
+   *
    * @throws GroupException Something went wrong in the transmission (note that this same exception will be thrown on
    *  the next call to batchMessage).
    */
   public void flushBatch() throws GroupException {
     IBatchableGroupMessage<E> messageToSend = getMessageToSend();
-    
+
     // Note that we don't want to make this call to send the message under lock since it results in the message
     //  serialization, which is potentially slow and shouldn't block other attempts to batch.
     while (messageToSend != null) {
       try {
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("Sending batch id:{} count:{} size:{}", messageToSend.getSequenceID(), messageToSend.getBatchSize(), messageToSend.getPayloadSize());
-        }
+        LOGGER.debug("Sending batch id:{} count:{} size:{}", messageToSend.getSequenceID(), messageToSend.getBatchSize(), messageToSend.getPayloadSize());
         AbstractGroupMessage msg = messageToSend.asAbstractGroupMessage();
         this.groupManager.sendToWithSentCallback(this.target, msg, this::handleNetworkDone);
         if (messageToSend.getPayloadSize() > THRESHOLD) {
@@ -121,7 +119,7 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
       }
     }
   }
-  
+
   public boolean sendBatch(Predicate<GroupMessage> sendCheck) throws GroupException {
     IBatchableGroupMessage<E> messageToSend = getMessageToSend();
     if (messageToSend != null) {
@@ -131,7 +129,7 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
         }
         AbstractGroupMessage msg = messageToSend.asAbstractGroupMessage();
         if (sendCheck.test(msg)) {
-          this.groupManager.sendToWithSentCallback(this.target, msg, this::handleNetworkDone);        
+          this.groupManager.sendToWithSentCallback(this.target, msg, this::handleNetworkDone);
           if (messageToSend.getPayloadSize() > THRESHOLD) {
             waitForFlush();
           }
@@ -146,10 +144,10 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
         throw e;
       }
     } else {
-      return false;    
+      return false;
     }
   }
-  
+
   private synchronized IBatchableGroupMessage<E> getMessageToSend() {
     IBatchableGroupMessage<E> messageToSend = null;
       // See if we have a batched message and are ready to send one.
@@ -157,7 +155,7 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
     if (null != this.cachedMessage) {
       if ((0 == this.idealMessagesInFlight) ||
         (this.messagesInFlight < this.idealMessagesInFlight) ||
-        (this.cachedMessage.getBatchSize() >= this.maximumBatchSize) || 
+        (this.cachedMessage.getBatchSize() >= this.maximumBatchSize) ||
         (this.cachedMessage.getPayloadSize() > THRESHOLD)
       ) {
         // There is a batched message so send it.
@@ -169,7 +167,7 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
     }
     return messageToSend;
   }
-  
+
   private synchronized void waitForFlush() {
     try {
       while (messagesInFlight > 0) {
@@ -185,7 +183,7 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
       this.messagesInFlight -= 1;
       notifyAll();
     }
-    
+
     // Call the network done target so that our owner can decide how to enqueue the next flush.
     if (this.networkDoneTarget != null) {
       this.networkDoneTarget.accept(target);

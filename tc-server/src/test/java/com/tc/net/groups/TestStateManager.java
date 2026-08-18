@@ -103,6 +103,11 @@ public class TestStateManager implements StateManager {
   }
 
   @Override
+  public void moveToRelayConnectedMode() {
+
+  }
+
+  @Override
   public void moveToPassiveUnitialized() {
 
   }

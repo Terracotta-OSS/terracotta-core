@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.util.stream.StreamSupport;
  *
  */
 public class SimpleRingBuffer<T> implements Iterable<T> {
-  
+
   private final Object[] buffer;
   private int head = 0;
 
@@ -36,13 +36,22 @@ public class SimpleRingBuffer<T> implements Iterable<T> {
     buffer = new Object[size];
     head = 0;
   }
-  
+
+  public void clear() {
+    Arrays.setAll(buffer, (value) -> null);
+    head = 0;
+  }
+
+  public boolean isEmpty() {
+    return head == 0 && Arrays.stream(buffer).allMatch(Objects::isNull);
+  }
+
   public void put(T item) {
     Objects.requireNonNull(item);
     buffer[head++] = item;
     head = head % buffer.length;
   }
-  
+
   public Stream<T> stream() {
     return StreamSupport.stream(spliterator(), false);
   }

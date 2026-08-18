@@ -36,6 +36,7 @@ import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
 import java.io.IOException;
 import com.tc.l2.api.L2Coordinator;
+import com.tc.l2.state.ServerMode;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 
 import org.junit.Before;
@@ -45,6 +46,7 @@ import org.mockito.ArgumentCaptor;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.LongStream;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -181,7 +183,7 @@ public class RelayTransactionHandlerTest {
   @Test
   public void registerRelayConsumer_returnsFalse_whenNoActive() throws Exception {
     when(stateManager.getActiveNodeID()).thenReturn(ServerID.NULL_ID);
-
+    when(stateManager.getCurrentMode()).thenReturn(ServerMode.RELAY);
     boolean registered = handler.registerRelayConsumer(replicaNodeID);
 
     assertFalse("Should not register when there is no active node", registered);
@@ -189,6 +191,7 @@ public class RelayTransactionHandlerTest {
 
   @Test
   public void registerRelayConsumer_returnsTrue_andForwardsSubsequentMessages() throws Exception {
+    when(stateManager.getCurrentMode()).thenReturn(ServerMode.RELAY);
     boolean registered = handler.registerRelayConsumer(replicaNodeID);
     assertTrue("Should register when active node is known", registered);
 
@@ -201,6 +204,7 @@ public class RelayTransactionHandlerTest {
 
   @Test
   public void registerRelayConsumer_returnsFalse_whenAlreadyRegistered() throws Exception {
+    when(stateManager.getCurrentMode()).thenReturn(ServerMode.RELAY);
     handler.registerRelayConsumer(replicaNodeID);
 
     ServerID anotherReplica = new ServerID("replica2", "replica2".getBytes());
@@ -233,6 +237,8 @@ public class RelayTransactionHandlerTest {
 
   @Test
   public void nodeLeft_forDifferentNode_doesNotClearForward() throws Exception {
+    when(stateManager.getCurrentMode()).thenReturn(ServerMode.RELAY);
+
     handler.registerRelayConsumer(replicaNodeID);
 
     ServerID unrelated = new ServerID("other", "other".getBytes());
@@ -260,12 +266,14 @@ public class RelayTransactionHandlerTest {
 
   @Test
   public void resumeRelayConsumer_returnsTrue_andReplaysMessagesAfterLastSeen() throws Exception {
+    when(stateManager.getCurrentMode()).thenReturn(ServerMode.RELAY);
     handler.registerRelayConsumer(replicaNodeID);
 
+    List<ReplicationMessage> list = LongStream.of(1, 2, 3).mapToObj(this::makeMessage).toList();
     // Send messages seq 1..3.
-    handler.getEventHandler().handleEvent(makeMessage(1L));
-    handler.getEventHandler().handleEvent(makeMessage(2L));
-    handler.getEventHandler().handleEvent(makeMessage(3L));
+    for (ReplicationMessage m : list) {
+      handler.getEventHandler().handleEvent(m);
+    }
 
     // Disconnect.
     capturedListener.get().nodeLeft(replicaNodeID);
@@ -275,8 +283,9 @@ public class RelayTransactionHandlerTest {
     ArgumentCaptor<AbstractGroupMessage> msgCaptor =
         ArgumentCaptor.forClass(AbstractGroupMessage.class);
 
+    when(stateManager.getCurrentMode()).thenReturn(ServerMode.RELAY_CONNECTED);
     // Resume claiming last seen was seq=1; expects seq 2 and 3 to be replayed.
-    boolean resumed = handler.resumeRelayConsumer(replicaNodeID, 1L);
+    boolean resumed = handler.resumeRelayConsumer(replicaNodeID, list.get(0).getSequenceID());
 
     assertTrue("Resume must succeed when lastSeen is in history", resumed);
 
@@ -304,6 +313,7 @@ public class RelayTransactionHandlerTest {
     // Make groupManager throw on send (sendToWithSentCallback is void — use doThrow).
     doAnswer(inv -> { throw new GroupException("simulated network failure"); })
         .when(groupManager).sendToWithSentCallback(any(), any(), any());
+    when(stateManager.getCurrentMode()).thenReturn(ServerMode.RELAY);
 
     handler.registerRelayConsumer(replicaNodeID);
 
@@ -320,17 +330,20 @@ public class RelayTransactionHandlerTest {
 
   @Test
   public void multipleMessages_areAllBufferedInHistory_forLaterResume() throws Exception {
+    when(stateManager.getCurrentMode()).thenReturn(ServerMode.RELAY);
+
     handler.registerRelayConsumer(replicaNodeID);
 
     List<Long> seqs = List.of(10L, 20L, 30L, 40L, 50L);
-    for (long s : seqs) {
-      handler.getEventHandler().handleEvent(makeMessage(s));
+    List<ReplicationMessage> result = seqs.stream().map(this::makeMessage).toList();
+    for (ReplicationMessage s : result) {
+      handler.getEventHandler().handleEvent(s);
     }
 
     capturedListener.get().nodeLeft(replicaNodeID);
-
+    when(stateManager.getCurrentMode()).thenReturn(ServerMode.RELAY_CONNECTED);
     // Resume from seq=20 → should replay 30, 40, 50
-    boolean resumed = handler.resumeRelayConsumer(replicaNodeID, 20L);
+    boolean resumed = handler.resumeRelayConsumer(replicaNodeID, result.get(2).getSequenceID());
     assertTrue(resumed);
 
     // 5 original sends (10,20,30,40,50) + 1 replay flush (30,40,50 batched) = 6

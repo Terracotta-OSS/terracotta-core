@@ -355,7 +355,6 @@ public class StateManagerImpl implements StateManager {
     Enrollment verify = getVerificationEnrollment();
     setActiveNodeID(active);
     if (startState == ServerMode.RELAY) {
-      setActiveNodeID(active);
       if (state == ServerMode.RELAY_CONNECTED) {
         switchToState(ServerMode.RELAY_CONNECTED, EnumSet.of(ServerMode.INITIAL, ServerMode.START, ServerMode.RELAY, ServerMode.RELAY_CONNECTED));
       } else {
@@ -630,7 +629,7 @@ public class StateManagerImpl implements StateManager {
         break;
       }
     }
-    peerWins |= winningEnrollment.wins(verify);
+    peerWins |= winningEnrollment.equals(verify) || winningEnrollment.wins(verify);
     logger.info("verifying election won results isActive:{} remote:{} local:{} remoteWins:{}", isActiveCoordinator(), winningEnrollment, verify, peerWins);
     return peerWins;
   }
@@ -697,6 +696,13 @@ public class StateManagerImpl implements StateManager {
       info("Forcing Abort Election for " + msg + " with " + abortMsg);
       L2StateMessage response = (L2StateMessage)groupManager.sendToAndWaitForResponse(msg.messageFrom(), abortMsg);
       validatePeerResponseToActiveDelaration(response);
+    } else if (getCurrentMode() == ServerMode.REPLICA || getCurrentMode() == ServerMode.REPLICA_START) {
+      // This is a server in the same stripe that should not be up
+      Enrollment verify = createVerificationEnrollment();
+      AbstractGroupMessage abortMsg = L2StateMessage.createAbortElectionMessage(msg, verify, state.getState());
+      info("Forcing Abort Election for " + msg + " with " + abortMsg);
+      L2StateMessage response = (L2StateMessage)groupManager.sendToAndWaitForResponse(msg.messageFrom(), abortMsg);
+      validatePeerResponseToReplicaDelaration(response);
     } else {
       if (!electionMgr.handleStartElectionRequest(msg, state.getState())) {
 //  another server started an election.  Unclear which server is now active, clear the active and run our own election
@@ -714,6 +720,19 @@ public class StateManagerImpl implements StateManager {
     AbstractGroupMessage msg = L2StateMessage.createElectionWonAlreadyMessage(verify, state.getState());
     L2StateMessage response = (L2StateMessage) groupManager.sendToAndWaitForResponse(nodeID, msg);
     validatePeerResponseToActiveDelaration(response);
+  }
+
+  private void validatePeerResponseToReplicaDelaration(L2StateMessage response) throws GroupException {
+    if (response != null) {
+      NodeID nodeID = response.messageFrom();
+      ServerMode peerState = StateManager.convert(response.getState());
+      if (response.getType() != L2StateMessage.RESULT_AGREED) {
+        String error = "Recd wrong response from : " + nodeID + " : msg = " + response + " while publishing Replica State";
+        logger.info(error);
+      } else {
+        // result agreed, do nothing
+      }
+    }
   }
 
   private void validatePeerResponseToActiveDelaration(L2StateMessage response) throws GroupException {

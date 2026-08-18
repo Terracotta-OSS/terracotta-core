@@ -28,6 +28,7 @@ import com.tc.objectserver.entity.MessagePayload;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.l2.msg.SyncReplicationActivity;
+import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
@@ -53,6 +54,8 @@ public class RelayTransactionHandler {
   private final Stage<Runnable> relaySender;
   private StateManager stateMgr;
   private ServerID endTarget = ServerID.NULL_ID;
+  private ServerID activeID = ServerID.NULL_ID;
+  private long generationOffset = 1L;
   private volatile GroupMessageBatchContext<RelayMessage, ReplicationMessage> forward;
 
   private final SimpleRingBuffer<ReplicationMessage> history = new SimpleRingBuffer<>(5000);
@@ -71,6 +74,8 @@ public class RelayTransactionHandler {
       public void nodeLeft(NodeID nodeID) {
         if (nodeID.equals(endTarget)) {
           clearForward();
+        } else if (nodeID.equals(activeID)) {
+          clearHistory();
         }
       }
     });
@@ -104,7 +109,7 @@ public class RelayTransactionHandler {
   public boolean resumeRelayConsumer(ServerID node, long lastSeen) {
     NodeID active = stateMgr.getActiveNodeID();
     TCLogging.getConsoleLogger().info("remote node connected for resumption of duplication {}", node);
-    if (!active.isNull() && endTarget.equals(node)) {
+    if (stateMgr.getCurrentMode() == ServerMode.RELAY_CONNECTED && !active.isNull() && endTarget.equals(node)) {
       return replayHistory(new GroupMessageBatchContext<>(RelayTransactionHandler::createRelayMessage, groupManager, node, Integer.MAX_VALUE, 1, n->sendToRelayTarget(getBatch())), lastSeen);
     } else {
       return false;
@@ -114,10 +119,12 @@ public class RelayTransactionHandler {
   public boolean registerRelayConsumer(ServerID node) {
     NodeID active = stateMgr.getActiveNodeID();
     TCLogging.getConsoleLogger().info("remote node connected for duplication {}", node);
-    if (!active.isNull() && endTarget.isNull()) {
-      ackSender.requestPassiveSync(stateMgr.getActiveNodeID());
+    if (stateMgr.getCurrentMode() == ServerMode.RELAY && !active.isNull() && endTarget.isNull()) {
+      ackSender.requestPassiveSync(active);
       endTarget = node;
-      this.forward = new GroupMessageBatchContext<>(RelayTransactionHandler::createRelayMessage, groupManager, node, Integer.MAX_VALUE, 1, n->sendToRelayTarget(getBatch()));
+      // starting fresh
+      boolean replayed = replayHistory(new GroupMessageBatchContext<>(RelayTransactionHandler::createRelayMessage, groupManager, node, Integer.MAX_VALUE, 1, n->sendToRelayTarget(getBatch())), 0L);
+      Assert.assertFalse(replayed);
       stateMgr.moveToRelayConnectedMode();
       return true;
     } else {
@@ -152,18 +159,27 @@ public class RelayTransactionHandler {
 
   private synchronized void addToHistory(ReplicationMessage msg) {
     history.put(msg);
+    msg.setSequenceID(generationOffset + msg.getSequenceID());
   }
 
   private synchronized boolean replayHistory(GroupMessageBatchContext<RelayMessage, ReplicationMessage> batcher, long lastSeen) {
     boolean valid = history.stream().filter(m->m.getSequenceID() == lastSeen).findFirst().isPresent();
+    if (lastSeen == 0) {
+      Assert.assertTrue(history.isEmpty());
+    }
     if (valid) {
       history.stream().filter(m->m.getSequenceID() > lastSeen).forEach(batcher::batchMessage);
       sendToRelayTarget(batcher);
-      this.forward = batcher;
-      return true;
-    } else {
-      return false;
     }
+    this.forward = batcher;
+    this.activeID = (ServerID)stateMgr.getActiveNodeID();
+    return valid;
+  }
+
+  private synchronized void clearHistory() {
+    this.activeID = null;
+    generationOffset = this.history.stream().mapToLong(ReplicationMessage::getSequenceID).max().orElse(0L);
+    this.history.clear();
   }
 
   private synchronized void clearForward() {
