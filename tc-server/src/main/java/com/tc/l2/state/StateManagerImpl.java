@@ -33,6 +33,7 @@ import com.tc.async.api.EventHandler;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.StageController;
+import com.tc.exception.TCShutdownServerException;
 import com.tc.exception.ZapDirtyDbServerNodeException;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
@@ -427,7 +428,7 @@ public class StateManagerImpl implements StateManager {
   @Override
   public void moveToRelayMode() {
     if (startState.containsData()) {
-      zapAndResyncLocalNode("replica contains data");
+      zapAndResyncLocalNode("relay contains data");
     } else {
       switchToState(ServerMode.RELAY, EnumSet.of(ServerMode.INITIAL, ServerMode.RELAY, ServerMode.RELAY_CONNECTED));
     }
@@ -435,16 +436,16 @@ public class StateManagerImpl implements StateManager {
 
   @Override
   public void moveToRelayConnectedMode() {
+    if (startState.containsData()) {
+      zapAndResyncLocalNode("replica contains data");
+    } else {
       switchToState(ServerMode.RELAY_CONNECTED, EnumSet.of(ServerMode.RELAY));
+    }
   }
 
   @Override
   public void moveToReplicaMode() {
-    if (startState.containsData()) {
-      zapAndResyncLocalNode("replica contains data");
-    } else {
-      switchToState(ServerMode.REPLICA_START, EnumSet.of(ServerMode.INITIAL, ServerMode.RELAY));
-    }
+    switchToState(ServerMode.REPLICA_START, EnumSet.of(ServerMode.INITIAL, ServerMode.RELAY));
   }
 
   @Override
@@ -683,21 +684,32 @@ public class StateManagerImpl implements StateManager {
     }
     ServerMode other = StateManager.convert(clusterMsg.getState());
     if (other == ServerMode.REPLICA || other == ServerMode.REPLICA_START) {
-      logger.info("Replica designated in cluster.  No Election will be performed");
+      consoleLogger.info("Replica designated in cluster.  No Election will be performed");
       sendVerificationOKResponse(clusterMsg);
+      setActiveNodeID(clusterMsg.messageFrom());
+ //     throw new TCShutdownServerException("There is a REPLICA member of this stripe.  Shutting down.");
     } else {
       verifyActiveDeclarationAndRespond(clusterMsg);
     }
   }
 
   private void verifyActiveDeclarationAndRespond(L2StateMessage clusterMsg) {
-    boolean verify = checkIfPeerWinsVerificationElection(clusterMsg) && !isActiveCoordinator() && getCurrentMode() != ServerMode.REPLICA;
-    boolean transition = verify && availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE);
+    ServerMode current = getCurrentMode();
+    if (current == ServerMode.REPLICA_START) {
+      sendVerificationNGResponse(clusterMsg);
+      throw new TCShutdownServerException("there is an active in the stripe, no replica is allowed on the stripe");
+    } else if (!isActiveCoordinator()) {
+      boolean transition = checkIfPeerWinsVerificationElection(clusterMsg)
+        && availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE);
 
-    if (transition) {
-      sendVerificationOKResponse(clusterMsg);
-      moveToPassiveReady(clusterMsg);
+      if (transition) {
+        sendVerificationOKResponse(clusterMsg);
+        moveToPassiveReady(clusterMsg);
+      } else {
+        sendVerificationNGResponse(clusterMsg);
+      }
     } else {
+      //  not in a state to accept an active
       sendVerificationNGResponse(clusterMsg);
     }
   }

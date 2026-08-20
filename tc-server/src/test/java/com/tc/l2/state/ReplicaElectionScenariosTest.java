@@ -23,6 +23,7 @@ import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.StageController;
 import com.tc.exception.TCServerRestartException;
+import com.tc.exception.TCShutdownServerException;
 import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
@@ -516,5 +517,133 @@ public class ReplicaElectionScenariosTest {
 
     assertTrue("REMOVE_PASSIVE must be allowed when not blocked",
         cm.requestTransition(ServerMode.ACTIVE, peer1, ConsistencyManager.Transition.REMOVE_PASSIVE));
+  }
+
+  // =========================================================================
+  // SECTION 11 — REPLICA_START refuses to start when an active already exists
+  //
+  // Goal: if a server is in replica mode and an active is already running in
+  // the stripe, the replica must refuse to start — sending a rejection message
+  // and throwing TCShutdownServerException so the server process exits.
+  // =========================================================================
+
+  /**
+   * A server in REPLICA_START mode that receives ABORT_ELECTION from a normal
+   * active peer must refuse to join the cluster and throw TCShutdownServerException.
+   *
+   * Call path: handleClusterStateMessage → handleElectionAbort →
+   *   (sender is not REPLICA/REPLICA_START) → verifyActiveDeclarationAndRespond →
+   *   current==REPLICA_START → sendVerificationNGResponse + throw TCShutdownServerException.
+   */
+  @Test(timeout = 10_000)
+  public void testReplicaStartRefusesWhenActiveAlreadyExists_viaAbortElection() throws Exception {
+    StateManagerImpl mgr = replicaStartManagerWithGatePrimed();
+    assertEquals(ServerMode.REPLICA_START, mgr.getCurrentMode());
+
+    ServerID activeNode = new ServerID("active", "active".getBytes());
+    Enrollment winning = EnrollmentFactory.createTrumpEnrollment(activeNode, weightsFactory);
+
+    L2StateMessage abortMsg = mock(L2StateMessage.class);
+    when(abortMsg.getType()).thenReturn(L2StateMessage.ABORT_ELECTION);
+    when(abortMsg.getState()).thenReturn(StateManager.ACTIVE_COORDINATOR);  // sender is ACTIVE
+    when(abortMsg.getEnrollment()).thenReturn(winning);
+    when(abortMsg.messageFrom()).thenReturn(activeNode);
+    when(abortMsg.getMessageID()).thenReturn(com.tc.net.groups.MessageID.NULL_ID);
+    when(abortMsg.inResponseTo()).thenReturn(com.tc.net.groups.MessageID.NULL_ID);
+
+    try {
+      mgr.handleClusterStateMessage(abortMsg);
+      fail("Expected TCShutdownServerException — replica must refuse to coexist with active");
+    } catch (TCShutdownServerException expected) {
+      assertTrue("Shutdown message must mention active/replica coexistence",
+          expected.getMessage().contains("active") || expected.getMessage().contains("replica"));
+    }
+
+    // Must have sent a rejection (NG) before shutting down
+    verify(groupManager).sendTo(eq(activeNode),
+        argThat(msg -> msg instanceof L2StateMessage
+            && ((L2StateMessage) msg).getType() == L2StateMessage.RESULT_CONFLICT));
+  }
+
+  /**
+   * A server in REPLICA_START mode that receives ELECTION_WON_ALREADY (sent by
+   * an active that just learned of this new node via publishActiveState) must
+   * refuse to join and throw TCShutdownServerException.
+   *
+   * Call path: handleClusterStateMessage → handleElectionAlreadyWonMessage →
+   *   verifyActiveDeclarationAndRespond → current==REPLICA_START →
+   *   sendVerificationNGResponse + throw TCShutdownServerException.
+   */
+  @Test(timeout = 10_000)
+  public void testReplicaStartRefusesWhenActiveAlreadyExists_viaElectionWonAlready() throws Exception {
+    StateManagerImpl mgr = replicaStartManagerWithGatePrimed();
+    assertEquals(ServerMode.REPLICA_START, mgr.getCurrentMode());
+
+    ServerID activeNode = new ServerID("active", "active".getBytes());
+    Enrollment winning = EnrollmentFactory.createTrumpEnrollment(activeNode, weightsFactory);
+
+    L2StateMessage wonAlreadyMsg = mock(L2StateMessage.class);
+    when(wonAlreadyMsg.getType()).thenReturn(L2StateMessage.ELECTION_WON_ALREADY);
+    when(wonAlreadyMsg.getState()).thenReturn(StateManager.ACTIVE_COORDINATOR);
+    when(wonAlreadyMsg.getEnrollment()).thenReturn(winning);
+    when(wonAlreadyMsg.messageFrom()).thenReturn(activeNode);
+    when(wonAlreadyMsg.getMessageID()).thenReturn(com.tc.net.groups.MessageID.NULL_ID);
+    when(wonAlreadyMsg.inResponseTo()).thenReturn(com.tc.net.groups.MessageID.NULL_ID);
+
+    try {
+      mgr.handleClusterStateMessage(wonAlreadyMsg);
+      fail("Expected TCShutdownServerException — replica must not accept an already-active node");
+    } catch (TCShutdownServerException expected) {
+      assertTrue("Shutdown message must mention active/replica coexistence",
+          expected.getMessage().contains("active") || expected.getMessage().contains("replica"));
+    }
+
+    // Must have rejected the active with RESULT_CONFLICT
+    verify(groupManager).sendTo(eq(activeNode),
+        argThat(msg -> msg instanceof L2StateMessage
+            && ((L2StateMessage) msg).getType() == L2StateMessage.RESULT_CONFLICT));
+  }
+
+  /**
+   * A server in REPLICA_START mode that receives START_ELECTION from a peer must
+   * send ABORT_ELECTION *and* the peer's response to that abort must be checked.
+   * When the peer responds RESULT_AGREED the replica stays in REPLICA_START (not shutdown).
+   * This verifies the complete round-trip: replica kills the peer's election, peer agrees.
+   */
+  @Test(timeout = 10_000)
+  public void testReplicaStartAbortsElectionAndPeerAgreesRoundTrip() throws Exception {
+    StateManagerImpl mgr = replicaStartManagerWithGatePrimed();
+    assertEquals(ServerMode.REPLICA_START, mgr.getCurrentMode());
+
+    ServerID peer = new ServerID("peer", "peer".getBytes());
+    Enrollment peerEnrollment = EnrollmentFactory.createEnrollment(peer, true, weightsFactory);
+
+    L2StateMessage startElection = mock(L2StateMessage.class);
+    when(startElection.getType()).thenReturn(L2StateMessage.START_ELECTION);
+    when(startElection.getEnrollment()).thenReturn(peerEnrollment);
+    when(startElection.getState()).thenReturn(StateManager.PASSIVE_UNINITIALIZED);
+    when(startElection.messageFrom()).thenReturn(peer);
+    when(startElection.getMessageID()).thenReturn(com.tc.net.groups.MessageID.NULL_ID);
+    when(startElection.inResponseTo()).thenReturn(com.tc.net.groups.MessageID.NULL_ID);
+
+    // Peer responds RESULT_AGREED to our ABORT_ELECTION
+    L2StateMessage agreedResponse = mock(L2StateMessage.class);
+    when(agreedResponse.getType()).thenReturn(L2StateMessage.RESULT_AGREED);
+    when(agreedResponse.getEnrollment()).thenReturn(peerEnrollment);
+    when(agreedResponse.getState()).thenReturn(StateManager.PASSIVE_UNINITIALIZED);
+    when(agreedResponse.messageFrom()).thenReturn(peer);
+    when(groupManager.sendToAndWaitForResponse(eq(peer), any(AbstractGroupMessage.class)))
+        .thenReturn(agreedResponse);
+
+    mgr.handleClusterStateMessage(startElection);
+
+    // Replica must stay in REPLICA_START — it did not shut down
+    assertEquals("Replica must remain REPLICA_START after telling peer to abort",
+        ServerMode.REPLICA_START, mgr.getCurrentMode());
+
+    // Must have sent ABORT_ELECTION to the peer
+    verify(groupManager).sendToAndWaitForResponse(eq(peer),
+        argThat(msg -> msg instanceof L2StateMessage
+            && ((L2StateMessage) msg).getType() == L2StateMessage.ABORT_ELECTION));
   }
 }

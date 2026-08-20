@@ -1408,7 +1408,15 @@ public class DistributedObjectServer {
   }
 
   private PassiveMessageResultCollector routeRelayMessages(StateManager stateMgr, ServerConfigurationManager config) {
-    DuplicationTransactionHandler handler = new DuplicationTransactionHandler(stateMgr, n->config.isRelayDestination(), groupCommManager);
+    DuplicationTransactionHandler handler = new DuplicationTransactionHandler(stateMgr, n->{
+        if (config.isRelayDestination()) {
+          ServerID sn = (ServerID)n;
+          String name = sn.getName();
+          String peer = config.getRelayPeerGroupPort().getHostString() + ":" + config.getRelayPeerGroupPort().getPort();
+          return name.equals(peer);
+        }
+        return false;
+      }, groupCommManager);
     Stage<RelayMessage> relays = this.seda.getStageManager().createStage(ServerConfigurationContext.PASSIVE_REPLICA_STAGE, RelayMessage.class, handler.getEventHandler(), 1);
     this.groupCommManager.routeMessages(RelayMessage.class, relays.getSink());
     return new PassiveMessageResultCollector() {

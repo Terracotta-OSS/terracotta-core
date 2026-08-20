@@ -81,8 +81,6 @@ public class DuplicationTransactionHandler {
               default:
                 throw new ZapDirtyDbServerNodeException("invalid state for duplication " + stateMgr.getCurrentMode());
             }
-          } else {
-            throw new ZapDirtyDbServerNodeException("resyncing duplicate");
           }
         } catch (GroupException ge) {
 
@@ -94,6 +92,7 @@ public class DuplicationTransactionHandler {
           TCLogging.getConsoleLogger().info("replica connection is down: {}", nodeID);
       }
     };
+    this.groupManager.registerForGroupEvents(listener);
   }
 
   private final EventHandler<RelayMessage> eventHandler = new AbstractEventHandler<RelayMessage>() {
@@ -122,7 +121,6 @@ public class DuplicationTransactionHandler {
     protected void initialize(ConfigurationContext context) {
       super.initialize(context);
       sendToNext = context.getStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class);
-      groupManager.registerForGroupEvents(listener);
     }
 
     @Override

@@ -48,9 +48,7 @@ public class GroupConfiguration {
     for (ServerConfiguration s : servers) {
       base.put(s.getName(), configToNode(s));
     }
-    if (relayGroupPort != 0) {
-      base.entrySet().removeIf(s->!s.getKey().equals(serverName));
-    }
+
     if (relayHost != null) {
       base.put(relayGroupPort != 0 ? "__hidden_relay-source" : "__hidden_relay-destination", addressToNode(relayHost, relayPort, relayGroupPort));
     }
@@ -69,7 +67,7 @@ public class GroupConfiguration {
   public Node getCurrentNode() {
     return nodes.get(serverName);
   }
-  
+
   private static Node configToNode(ServerConfiguration sc) {
     String bindAddress = sc.getTsaPort().getHostName();
       if (TCSocketAddress.isWildcardAddress(bindAddress)) {
@@ -79,7 +77,7 @@ public class GroupConfiguration {
                            sc.getTsaPort().getPort(),
                            sc.getGroupPort().getPort());
   }
-  
+
   private static Node addressToNode(String host, int port, int grpPort) {
     return new Node(host, port, grpPort);
   }
