@@ -95,7 +95,6 @@ public interface ActiveServerEntity<M extends EntityMessage, R extends EntityRes
    * Called at the start of reconnect of a new active entity.  The reconnect handler receives all reconnect data
    * from the clients during a fail-over event.
    *
-   * @param cxt context to send server messages if needed
    *
    * @return a handler to receive arbitrary reconnect data from clients.  If null is returned, all reconnect attempts
    * will be rejected and the connection associated with this entity fetch will be rejected

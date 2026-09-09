@@ -38,36 +38,32 @@ public interface MessageCodec<M extends EntityMessage, R extends EntityResponse>
    *
    * @param message The request object to be encoded
    * @return The encoded data which can be passed over the wire
-   * @throws MessageCodecException The message could not be serialized or was considered invalid.
    */
-  byte[] encodeMessage(M message) throws MessageCodecException;
+  byte[] encodeMessage(M message);
 
   /**
    * Decodes a given payload into a high-level {@link EntityMessage} instance
-   * 
+   *
    * @param payload The byte array containing the raw wire message
    * @return A high-level message instance
-   * @throws MessageCodecException The message could not be deserialized or was considered invalid.
    */
-  M decodeMessage(byte[] payload) throws MessageCodecException;
+  M decodeMessage(byte[] payload);
 
   /**
    * Encodes a given {@link EntityResponse} object into a byte[] which can be passed over the wire
    *
    * @param response The response object to be encoded
    * @return The raw data which can be passed over the wire
-   * @throws MessageCodecException The message could not be serialized or was considered invalid.
    */
-  byte[] encodeResponse(R response) throws MessageCodecException;
+  byte[] encodeResponse(R response);
 
   /**
    * Decodes a given payload into a high-level {@link EntityResponse} instance
    *
    * @param payload The byte array containing the raw wire message
    * @return A high-level message instance
-   * @throws MessageCodecException The message could not be deserialized or was considered invalid.
    */
-  R decodeResponse(byte[] payload) throws MessageCodecException;
+  R decodeResponse(byte[] payload);
 
 
 }

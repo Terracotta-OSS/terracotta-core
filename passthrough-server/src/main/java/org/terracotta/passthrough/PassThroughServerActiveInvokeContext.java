@@ -26,7 +26,6 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityServerException;
 
@@ -65,14 +64,10 @@ public class PassThroughServerActiveInvokeContext<M extends EntityMessage, R ext
     return new ActiveInvokeChannel<R>() {
       @Override
       public void sendResponse(R response) {
-        try {
           byte[] r = codec.encodeResponse(response);
           PassthroughMessage msg = PassthroughMessageCodec.createMonitorMessage(r, null);
           msg.setTransactionTracking(PassThroughServerActiveInvokeContext.this.getCurrentTransactionId(),PassThroughServerActiveInvokeContext.this.getOldestTransactionId());
           monitor.sendComplete(msg, false);
-        } catch (MessageCodecException codec) {
-          throw new RuntimeException(codec);
-        }
       }
 
       @Override
@@ -135,7 +130,6 @@ public class PassThroughServerActiveInvokeContext<M extends EntityMessage, R ext
 
   private void sendServerMessage(EntityMessage message, Consumer<ActiveServerMessenger.Response<R>> result) {
     process.sendMessageToActiveFromInsideActive(descriptor, message, makePassthroughMessage(message), m-> {
-      try {
         if (result != null) {
           R response = codec.decodeResponse(m.asSerializedBytes());
           result.accept(new ActiveServerMessenger.Response<>() {
@@ -146,29 +140,17 @@ public class PassThroughServerActiveInvokeContext<M extends EntityMessage, R ext
             }
           });
         }
-      } catch (MessageCodecException ce) {
-        result.accept(new ActiveServerMessenger.Response<>() {
-            @Override
-            public R getResponse() throws Exception {
-              throw ce;
-            }
-          });
-      }
     });
   }
 
   private PassthroughMessage makePassthroughMessage(EntityMessage message) {
     @SuppressWarnings("unchecked")
     MessageCodec<EntityMessage, ?> codec = (MessageCodec<EntityMessage, ?>) this.codec;
-    try {
       byte[] serializedMessage = codec.encodeMessage(message);
       long clientInstanceID = ((PassthroughClientDescriptor)descriptor).clientInstanceID;
       boolean shouldReplicateToPassives = true;
       PassthroughMessage passthroughMessage = PassthroughMessageCodec.createInvokeMessage(this.entityClass, this.entityName, clientInstanceID, serializedMessage, shouldReplicateToPassives);
       return passthroughMessage;
-    } catch (MessageCodecException ce) {
-      throw new RuntimeException(ce);
-    }
   }
 
   @Override

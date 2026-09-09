@@ -18,7 +18,6 @@
 package org.terracotta.entity.map.server;
 
 
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.entity.map.common.MapOperation;
 
@@ -29,13 +28,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.Map;
 
 
 class ClusteredMapSyncCodec implements SyncMessageCodec<MapOperation> {
     @Override
-    public byte[] encode(int concurrencyKey, MapOperation message) throws MessageCodecException {
+    public byte[] encode(int concurrencyKey, MapOperation message) {
         // Note that we only expect that a sync will operate on SYNC operations.
         if (MapOperation.Type.SYNC_OP != message.operationType()) {
             throw new AssertionError("Invalid message type for SYNC_OP: " + message.operationType());
@@ -54,12 +54,12 @@ class ClusteredMapSyncCodec implements SyncMessageCodec<MapOperation> {
             byte[] bytes = raw.toByteArray();
             return bytes;
         } catch (IOException ioe) {
-            throw new MessageCodecException("io error", ioe);
+            throw new UncheckedIOException("io error", ioe);
         }
     }
 
     @Override
-    public MapOperation decode(int concurrencyKey, byte[] payload) throws MessageCodecException {
+    public MapOperation decode(int concurrencyKey, byte[] payload) {
         try {
             InputStream is = new ByteArrayInputStream(payload);
             ObjectInputStream dis = new ObjectInputStream(is);
@@ -77,7 +77,7 @@ class ClusteredMapSyncCodec implements SyncMessageCodec<MapOperation> {
           throw new RuntimeException(e);
         }
     }
-    
+
     private Object readKey(ObjectInputStream objectInputStream) throws ClassNotFoundException, IOException {
         Object key = null;
         try {

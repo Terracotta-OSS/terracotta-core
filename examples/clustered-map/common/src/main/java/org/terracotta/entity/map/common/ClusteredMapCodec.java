@@ -18,46 +18,46 @@
 package org.terracotta.entity.map.common;
 
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 
 public class ClusteredMapCodec implements MessageCodec<MapOperation, MapResponse> {
 
   @Override
-  public byte[] encodeMessage(MapOperation message) throws MessageCodecException {
+  public byte[] encodeMessage(MapOperation message) {
     try {
       return OperationCodec.encode(message);
     } catch (IOException e) {
-      throw new MessageCodecException("something wrong happend", e);
+      throw new UncheckedIOException("something wrong happend", e);
     }
   }
 
   @Override
-  public MapOperation decodeMessage(byte[] payload) throws MessageCodecException {
+  public MapOperation decodeMessage(byte[] payload) {
     try {
       return OperationCodec.decode(payload);
     } catch (IOException e) {
-      throw new MessageCodecException("something wrong happend", e);
+      throw new UncheckedIOException("something wrong happend", e);
     }
   }
 
   @Override
-  public byte[] encodeResponse(MapResponse response) throws MessageCodecException {
+  public byte[] encodeResponse(MapResponse response) {
     try {
       return ResponseCodec.encode(response);
     } catch (IOException e) {
-      throw new MessageCodecException("something wrong happend", e);
+      throw new UncheckedIOException("something wrong happend", e);
     }
   }
 
   @Override
-  public MapResponse decodeResponse(byte[] payload) throws MessageCodecException {
+  public MapResponse decodeResponse(byte[] payload) {
     try {
       return ResponseCodec.decode(payload);
     } catch (IOException e) {
-      throw new MessageCodecException("something wrong happend", e);
+      throw new UncheckedIOException("something wrong happend", e);
     }
   }
 }

@@ -21,7 +21,6 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.MessageCodecException;
 
 public class MessagePayload {
   public static final MessagePayload emptyPayload() {
@@ -59,13 +58,13 @@ public class MessagePayload {
 
   private final TCByteBuffer raw;
   private EntityMessage message;
-  private MessageCodecException exception;
+  private RuntimeException exception;
   private final int concurrency;
   private final int referenceCount;
   private final boolean replicate;
   private final boolean canBeBusy;
   private String debugId;
-  
+
   // NOTE:  ReferenceCount is a special-case for synchronizing the creation of an existing entity.
   private MessagePayload(TCByteBuffer raw, EntityMessage message, int concurrency, int referenceCount, boolean replicate, boolean canBeBusy) {
     this.raw = raw == null || raw.isReadOnly() ? raw : raw.asReadOnlyBuffer();
@@ -76,35 +75,35 @@ public class MessagePayload {
     this.replicate = replicate;
     this.canBeBusy = canBeBusy;
   }
-  
+
   private byte[] convertRawToBytes() {
     return TCByteBufferFactory.unwrap(raw);
   }
-  
+
   public byte[] getRawPayload() {
     return convertRawToBytes();
   }
-  
+
   public TCByteBuffer getByteBufferPayload() {
     return this.raw.duplicate();
   }
-  
+
   public void setDebugId(String debugId) {
     this.debugId = debugId;
   }
-  
+
   public String getDebugId() {
     if (debugId == null && this.message != null) {
       debugId = message.toString();
     }
     return debugId;
   }
-  
+
   public boolean canBeBusy() {
     return canBeBusy;
   }
 
-  public EntityMessage decodeMessage(MessageDecoder codec) throws MessageCodecException {
+  public EntityMessage decodeMessage(MessageDecoder codec) {
     if (exception != null) {
       throw exception;
     }
@@ -113,31 +112,28 @@ public class MessagePayload {
         message = codec.decode(convertRawToBytes());
       }
       return message;
-    } catch (MessageCodecException ce) {
-      exception = ce;
-      throw exception;
-    } catch (Exception e) {
-      exception = new MessageCodecException("error decoding message", e);
+    } catch (RuntimeException e) {
+      exception = e;
       throw exception;
     }
   }
-  
+
   public int getConcurrency() {
     return concurrency;
   }
-  
+
   public int getReferenceCount() {
     return this.referenceCount;
   }
-  
+
   public Class<?> getType() {
     return (message != null) ? message.getClass() : null;
   }
-  
+
   public boolean shouldReplicate() {
     return replicate;
   }
-  
+
   @Override
   public String toString() {
     return "MessagePayload{" + "debugId=" + getDebugId() + '}';

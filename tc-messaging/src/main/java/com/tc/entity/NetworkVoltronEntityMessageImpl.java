@@ -41,7 +41,6 @@ import java.util.Set;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 
 
 public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements NetworkVoltronEntityMessage {
@@ -83,23 +82,23 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   public boolean doesRequireReplication() {
     return this.requiresReplication;
   }
-  
+
   @Override
   public boolean doesRequestReceived() {
     return this.requestedAcks.contains(Acks.RECEIVED);
   }
-  
+
   @Override
   public boolean doesRequestRetired() {
     return this.requestedAcks.contains(Acks.RETIRED);
   }
-  
+
   @Override
   public Type getVoltronType() {
     Assert.assertNotNull(this.type);
     return this.type;
   }
-  
+
   @Override
   public TCByteBuffer getExtendedData() {
     Assert.assertNotNull(this.extendedData);
@@ -115,9 +114,9 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   public Set<Acks> getRequestedAcks() {
     return requestedAcks;
   }
-  
+
   @Override
-  public void setContents(ClientID clientID, TransactionID transactionID, EntityID eid, EntityDescriptor entityDescriptor, 
+  public void setContents(ClientID clientID, TransactionID transactionID, EntityID eid, EntityDescriptor entityDescriptor,
           Type type, boolean requiresReplication, TCByteBuffer extendedData, TransactionID oldestTransactionPending, Set<VoltronEntityMessage.Acks> acks) {
     // Make sure that this wasn't called twice.
     Assert.assertNull(this.type);
@@ -164,35 +163,35 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     TCByteBufferOutputStream outputStream = getOutputStream();
     // We don't want to use the NVpair stuff:  it is horrendously complicated, doesn't work well with all types, and doesn't buy us anything.
     putNVPair((byte)0, (byte)0);
-    
+
     this.clientID.serializeTo(outputStream);
-    
+
     outputStream.writeLong(this.transactionID.toLong());
-    
+
     this.entityDescriptor.serializeTo(outputStream);
-    
+
     outputStream.writeInt(type.ordinal());
-    
+
     outputStream.writeInt(extendedData.remaining());
     outputStream.write(extendedData.duplicate());
-    
+
     outputStream.writeBoolean(requiresReplication);
-    
+
     outputStream.writeLong(this.oldestTransactionPending.toLong());
-    
+
     outputStream.writeByte(requestedAcks.size());
     for (VoltronEntityMessage.Acks ack : this.requestedAcks) {
       outputStream.writeByte(ack.ordinal());
     }
   }
-  
+
   @Override
   protected boolean hydrateValue(byte name) throws IOException {
     Assert.assertTrue(0 == name);
     Assert.assertTrue(null == this.clientID);
     // Read our dummy byte.
     getByteValue();
-    
+
     this.clientID = ClientID.readFrom(getInputStream());
     this.transactionID = new TransactionID(getLongValue());
     this.entityDescriptor = EntityDescriptor.readFrom(getInputStream());
@@ -200,7 +199,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     this.extendedData = getByteBuffer();
     this.requiresReplication = getBooleanValue();
     this.oldestTransactionPending = new TransactionID(getLongValue());
-    
+
     int ac = getByteValue();
     if (ac == 0) {
       this.requestedAcks = EnumSet.noneOf(Acks.class);
@@ -217,18 +216,12 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
       }
     }
 
-    try {
-      if (this.type == Type.INVOKE_ACTION) {
-        MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec = supplier.getMessageCodec(this.entityDescriptor);
-        this.message = codec.decodeMessage(TCByteBufferFactory.unwrap(extendedData));
-      }
-    } catch (MessageCodecException exception) {
-/*  swallow it - this is an optimzation which does not handle the failure case.  
-    If this invocation does not succeed, a later stage will try and decode the message 
-    again.  When that fails the exception is handled and sent back to the client.
-      */
+    if (this.type == Type.INVOKE_ACTION) {
+      MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec = supplier.getMessageCodec(this.entityDescriptor);
+      this.message = codec.decodeMessage(TCByteBufferFactory.unwrap(extendedData));
     }
-    
+
+
     return true;
   }
 

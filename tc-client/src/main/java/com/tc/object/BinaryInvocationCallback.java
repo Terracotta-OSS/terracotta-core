@@ -19,7 +19,6 @@ package com.tc.object;
 
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 
 public class BinaryInvocationCallback<R extends EntityResponse> implements SafeInvocationCallback<byte[]> {
   private final MessageCodec<?, R> codec;
@@ -42,11 +41,7 @@ public class BinaryInvocationCallback<R extends EntityResponse> implements SafeI
 
   @Override
   public void result(byte[] response) {
-    try {
-      callback.result(codec.decodeResponse(response));
-    } catch (MessageCodecException e) {
-      callback.failure(e);
-    }
+    callback.result(codec.decodeResponse(response));
   }
 
   @Override

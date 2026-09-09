@@ -30,7 +30,6 @@ import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.ActiveServerMessenger;
 
 public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeContextImpl implements ActiveInvokeContext<R> {
@@ -78,7 +77,6 @@ public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeCon
 
       @Override
       public void sendMessage(EntityMessage message, Consumer<Response<R>> result) {
-        try {
           if (message == requestContext) {
             throw new AssertionError("message being sent is the same as the parent request.  Messages cnnot be scheduled twice");
           }
@@ -94,9 +92,6 @@ public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeCon
               }
             });
           });
-        } catch (MessageCodecException codec) {
-
-        }
       }
 
       @Override

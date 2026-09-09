@@ -18,11 +18,10 @@
 package com.tc.objectserver.entity;
 
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.MessageCodecException;
 
 /**
  *
  */
 public interface MessageDecoder {
-  EntityMessage decode(byte[] raw) throws MessageCodecException;
+  EntityMessage decode(byte[] raw);
 }

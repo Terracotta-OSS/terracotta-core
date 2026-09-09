@@ -19,7 +19,6 @@ package com.tc.services;
 
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
-import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.entity.ClientDescriptorImpl;
 import com.tc.util.Assert;
@@ -28,7 +27,6 @@ import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 
 import java.util.concurrent.ConcurrentMap;
 
@@ -47,7 +45,7 @@ public class EntityClientCommunicatorService implements ClientCommunicator {
   }
 
   @Override
-  public void sendNoResponse(ClientDescriptor clientDescriptor, EntityResponse message) throws MessageCodecException {
+  public void sendNoResponse(ClientDescriptor clientDescriptor, EntityResponse message) {
     // We are in internal code so downcast the descriptor.
     ClientDescriptorImpl rawDescriptor = (ClientDescriptorImpl)clientDescriptor;
     ClientAccount clientAccount = clientAccounts.get(rawDescriptor.getNodeID());
@@ -65,7 +63,7 @@ public class EntityClientCommunicatorService implements ClientCommunicator {
   }
 
   @SuppressWarnings("unchecked")
-  private <R extends EntityResponse> byte[] serialize(MessageCodec<?, R> codec, EntityResponse response) throws MessageCodecException {
+  private <R extends EntityResponse> byte[] serialize(MessageCodec<?, R> codec, EntityResponse response) {
     // We do this downcast, inline, instead of asking the codec (since a safer cast is all it could do, anyway).
     // This should be safe as we received this object from an entity using this codec.
     return codec.encodeResponse((R)response);

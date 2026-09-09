@@ -36,9 +36,8 @@ public interface SyncMessageCodec<M extends EntityMessage> {
      * @param concurrencyKey The concurrency key where the message must be run (so it can be described in the message type)
      * @param response The response object to be encoded
      * @return The encoded data which can be passed over the wire
-     * @throws MessageCodecException The message could not be deserialized or was considered invalid.
      */
-    byte[] encode(int concurrencyKey, M response) throws MessageCodecException;
+    byte[] encode(int concurrencyKey, M response);
 
     /**
      * Decodes a given message payload into a high-level {@link EntityMessage} type
@@ -46,9 +45,8 @@ public interface SyncMessageCodec<M extends EntityMessage> {
      * @param concurrencyKey The concurrency key where the message must be run (so it can be described in the message type)
      * @param payload The byte array containing the raw wire message
      * @return A high-level message instance
-     * @throws MessageCodecException The message could not be deserialized or was considered invalid.
      */
-    M decode(int concurrencyKey, byte[] payload) throws MessageCodecException;
+    M decode(int concurrencyKey, byte[] payload);
 
 
 }

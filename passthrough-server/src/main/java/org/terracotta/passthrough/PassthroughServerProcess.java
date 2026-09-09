@@ -28,7 +28,6 @@ import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.ExecutionStrategy;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ReconnectRejectedException;
 import org.terracotta.entity.ServiceException;
@@ -890,18 +889,15 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   }
 
   private interface CodecHelper<R> {
-    R run() throws MessageCodecException;
+    R run();
   }
   private <R> R runWithHelper(String className, String entityName, CodecHelper<R> helper) throws EntityException {
     R message;
     try {
       message = helper.run();
-    } catch (MessageCodecException deserializationException) {
-      throw new EntityServerException(className, entityName, deserializationException.getLocalizedMessage(), deserializationException);
     } catch (RuntimeException e) {
       // We first want to wrap this in a codec exception to convey the meaning of where this happened.
-      MessageCodecException deserializationException = new MessageCodecException("Runtime exception in deserializer", e);
-      throw new EntityServerException(className, entityName, deserializationException.getLocalizedMessage(), deserializationException);
+      throw new EntityServerException(className, entityName, e.getLocalizedMessage(), e);
     }
     return message;
   }
@@ -1584,11 +1580,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     }
 
     private byte[] serialize(int key, M message) {
-      try {
-        return syncMessageCodec.encode(key, message);
-      } catch (MessageCodecException me) {
-        throw new RuntimeException(me);
-      }
+      return syncMessageCodec.encode(key, message);
     }
   }
 

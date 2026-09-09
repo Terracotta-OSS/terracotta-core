@@ -23,7 +23,6 @@ import org.terracotta.entity.InvocationCallback;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 
 
 /**
@@ -53,7 +52,7 @@ public class PassthroughInvocation<M extends EntityMessage, R extends EntityResp
     final PassthroughMessage message;
     try {
       message = PassthroughMessageCodec.createInvokeMessage(this.entityClassName, this.entityName, this.clientInstanceID, messageCodec.encodeMessage(this.request), true);
-    } catch (MessageCodecException e) {
+    } catch (Exception e) {
       callback.failure(e);
       callback.complete();
       callback.retired();
@@ -76,7 +75,7 @@ public class PassthroughInvocation<M extends EntityMessage, R extends EntityResp
       public void result(byte[] response) {
         try {
           callback.result(messageCodec.decodeResponse(response));
-        } catch (MessageCodecException e) {
+        } catch (Exception e) {
           callback.failure(e);
         }
       }

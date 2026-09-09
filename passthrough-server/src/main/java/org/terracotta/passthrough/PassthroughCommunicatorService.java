@@ -23,7 +23,6 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.passthrough.PassthroughImplementationProvidedServiceProvider.DeferredEntityContainer;
 
 
@@ -49,16 +48,16 @@ public class PassthroughCommunicatorService implements ClientCommunicator {
   }
 
   @Override
-  public void sendNoResponse(ClientDescriptor clientDescriptor, EntityResponse message) throws MessageCodecException {
+  public void sendNoResponse(ClientDescriptor clientDescriptor, EntityResponse message) {
     prepareAndSendMessage(clientDescriptor, message);
   }
 
-  private Future<Void> prepareAndSendMessage(ClientDescriptor clientDescriptor, EntityResponse entityMessage) throws MessageCodecException {
+  private Future<Void> prepareAndSendMessage(ClientDescriptor clientDescriptor, EntityResponse entityMessage) {
     PassthroughClientDescriptor rawDescriptor = (PassthroughClientDescriptor) clientDescriptor;
     PassthroughConnection connection = rawDescriptor.sender;
     long clientInstanceID = rawDescriptor.clientInstanceID;
     Future<Void> waiter = connection.createClientResponseFuture();
-    
+
     // We know that the entity better exist, by this point, to use the service.
     CommonServerEntity<?, ?> entity = this.container.getEntity();
     Assert.assertTrue(null != entity);
@@ -69,7 +68,7 @@ public class PassthroughCommunicatorService implements ClientCommunicator {
   }
 
   @SuppressWarnings("unchecked")
-  private <R extends EntityResponse> byte[] serialize(MessageCodec<?, R> codec, EntityResponse message) throws MessageCodecException {
+  private <R extends EntityResponse> byte[] serialize(MessageCodec<?, R> codec, EntityResponse message) {
     // Cast should be safe as message and codec are from the same implementation.
     return codec.encodeResponse((R)message);
   }

@@ -35,7 +35,6 @@ import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 
 import static org.terracotta.entity.Invocation.synchronouslyGet;
@@ -118,7 +117,7 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
     }
     );
   }
-  
+
   private static <R, T extends Throwable> R uninterruptiblyGet(Future<R> future, long timeout, TimeUnit units, Class<T> propagate) throws T, TimeoutException {
     boolean interrupted = Thread.interrupted();
     try {
@@ -135,7 +134,7 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
       }
     }
   }
-  
+
   private Properties getRequestProperties(Object props) {
     if (props instanceof Properties) {
       return (Properties) props;
@@ -159,12 +158,12 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
 
     return new MessageCodec<EntityMessage, EntityResponse>() {
       @Override
-      public byte[] encodeMessage(EntityMessage m) throws MessageCodecException {
+      public byte[] encodeMessage(EntityMessage m) {
         return m.toString().getBytes(charset);
       }
 
       @Override
-      public EntityMessage decodeMessage(final byte[] bytes) throws MessageCodecException {
+      public EntityMessage decodeMessage(final byte[] bytes) {
         return new EntityMessage() {
           @Override
           public String toString() {
@@ -174,12 +173,12 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
       }
 
       @Override
-      public byte[] encodeResponse(EntityResponse r) throws MessageCodecException {
+      public byte[] encodeResponse(EntityResponse r) {
         return r.toString().getBytes(charset);
       }
 
       @Override
-      public EntityResponse decodeResponse(final byte[] bytes) throws MessageCodecException {
+      public EntityResponse decodeResponse(final byte[] bytes) {
         return new EntityResponse() {
           @Override
           public String toString() {

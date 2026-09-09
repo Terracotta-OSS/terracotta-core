@@ -40,7 +40,6 @@ import java.io.UncheckedIOException;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -120,12 +119,12 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
   }
 
   public void messageSelfAndDeferRetirement(M originalMessageToDefer,
-                                            M newMessageToSchedule) throws MessageCodecException {
+                                            M newMessageToSchedule) {
     this.messageSelfAndDeferRetirement(originalMessageToDefer, newMessageToSchedule, null);
   }
 
   public void messageSelfAndDeferRetirement(M originalMessageToDefer,
-                                            M newMessageToSchedule, Consumer<MessageResponse<R>> response) throws MessageCodecException {
+                                            M newMessageToSchedule, Consumer<MessageResponse<R>> response) {
     // This requires that we access the RetirementManager to change the retirement of the current message.
     this.retirementManager.deferRetirement(originalMessageToDefer, newMessageToSchedule);
     // Schedule the message, as per normal.
@@ -156,13 +155,9 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
   }
 
   private FakeEntityMessage encodeAsFake(M message, boolean waitForReceived, Consumer<MessageResponse<R>> response) {
-    try {
       byte[] serializedMessage = this.codec.encodeMessage(message);
       FakeEntityMessage interEntityMessage = new FakeEntityMessage(this.fakeDescriptor, message, TCByteBufferFactory.wrap(serializedMessage), response, waitForReceived);
       return interEntityMessage;
-    } catch (MessageCodecException codecerr) {
-      throw new UncheckedIOException(new IOException(codecerr));
-    }
   }
   /**
    * We fake up a Voltron entity message to enqueue for the entity to process in the future.
@@ -261,15 +256,11 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
 
         @Override
         public EntityResponse getResponse() {
-          try {
             if (raw == null || raw.length == 0) {
               return null;
             } else {
               return codec.decodeResponse(raw);
             }
-          } catch (MessageCodecException codec) {
-            throw new RuntimeException(codec);
-          }
         }
       });
     }
@@ -317,7 +308,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
       return tag;
     }
 
-    public void release() throws MessageCodecException {
+    public void release() {
       release(null);
     }
 

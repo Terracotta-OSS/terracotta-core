@@ -25,7 +25,6 @@ import java.io.UncheckedIOException;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.passthrough.PassthroughImplementationProvidedServiceProvider.DeferredEntityContainer;
 
 import java.util.function.Consumer;
@@ -80,22 +79,14 @@ public class PassthroughMessengerService implements IEntityMessenger<EntityMessa
   @Override
   public void messageSelf(EntityMessage message) {
     // Serialize the message.
-    try {
-      PassthroughMessage passthroughMessage = makePassthroughMessage(message);
-      this.passthroughServerProcess.sendMessageToActiveFromInsideActive(null, message, passthroughMessage, null);
-    } catch (MessageCodecException codec) {
-      throw new UncheckedIOException(new IOException(codec));
-    }
+    PassthroughMessage passthroughMessage = makePassthroughMessage(message);
+    this.passthroughServerProcess.sendMessageToActiveFromInsideActive(null, message, passthroughMessage, null);
   }
 
   @Override
   public void messageSelf(EntityMessage message, Consumer<MessageResponse<EntityResponse>> response) {
     // Serialize the message.
-    try {
-      this.passthroughServerProcess.sendMessageToActiveFromInsideActive(null, message, makePassthroughMessage(message), queueForComplete(response));
-    } catch (MessageCodecException codec) {
-      throw new UncheckedIOException(new IOException(codec));
-    }
+    this.passthroughServerProcess.sendMessageToActiveFromInsideActive(null, message, makePassthroughMessage(message), queueForComplete(response));
 }
 
   private Consumer<PassthroughMessage> queueForComplete(Consumer<MessageResponse<EntityResponse>> response) {
@@ -130,11 +121,7 @@ public class PassthroughMessengerService implements IEntityMessenger<EntityMessa
 
               @Override
               public EntityResponse getResponse() {
-                try {
-                  return (success) ? entityContainer.codec.decodeResponse(data) : null;
-                } catch (MessageCodecException io) {
-                  throw new RuntimeException(io);
-                }
+                return (success) ? entityContainer.codec.decodeResponse(data) : null;
             }
             });
           break;
@@ -150,7 +137,7 @@ public class PassthroughMessengerService implements IEntityMessenger<EntityMessa
     return null;
   }
 
-  private PassthroughMessage makePassthroughMessage(EntityMessage message) throws MessageCodecException {
+  private PassthroughMessage makePassthroughMessage(EntityMessage message) {
     @SuppressWarnings("unchecked")
     MessageCodec<EntityMessage, ?> codec = (MessageCodec<EntityMessage, ?>) this.entityContainer.codec;
     byte[] serializedMessage = codec.encodeMessage(message);

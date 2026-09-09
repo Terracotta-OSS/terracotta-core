@@ -19,7 +19,6 @@ package org.terracotta.passthrough;
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.Invocation;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
@@ -45,7 +44,7 @@ public class PassthroughEntityClientEndpoint<M extends EntityMessage, R extends 
   private final Runnable onClose;
   private EndpointDelegate<R> delegate;
   private boolean isOpen;
-  
+
   @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
     value="EI_EXPOSE_REP2")
   public PassthroughEntityClientEndpoint(PassthroughConnection passthroughConnection, Class<?> entityClass, String entityName, long clientInstanceID, byte[] config, MessageCodec<M, R> messageCodec, Runnable onClose) {
@@ -114,7 +113,7 @@ public class PassthroughEntityClientEndpoint<M extends EntityMessage, R extends 
     }
   }
 
-  public void handleMessageFromServer(byte[] payload) throws MessageCodecException {
+  public void handleMessageFromServer(byte[] payload) {
     if (null != this.delegate) {
       R fromServer = this.messageCodec.decodeResponse(payload);
       this.delegate.handleMessage(fromServer);
@@ -142,7 +141,7 @@ public class PassthroughEntityClientEndpoint<M extends EntityMessage, R extends 
   /**
    * This is called by the PassthroughConnection, when it is unexpectedly closed, to get the message which describes which
    * connection to break, to the server.
-   * 
+   *
    * @return The message which can be sent to the server.
    */
   public PassthroughMessage createUnexpectedReleaseMessage() {

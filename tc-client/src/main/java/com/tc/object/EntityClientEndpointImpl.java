@@ -24,7 +24,6 @@ import org.terracotta.entity.InvocationCallback;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.MessageCodecException;
 
 import com.tc.util.Assert;
 
@@ -38,7 +37,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.tc.object.SafeInvocationCallback.safe;
-import org.terracotta.exception.EntityException;
 
 
 public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityResponse> implements EntityClientEndpoint<M, R> {
@@ -77,20 +75,20 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     // We start in the open state.
     this.isOpen = true;
   }
-  
+
   EntityID getEntityID() {
     return this.entityID;
   }
-  
+
   long getVersion() {
     return this.version;
   }
-  
+
   EntityDescriptor getEntityDescriptor() {
     return this.invokeDescriptor;
   }
-  
-  
+
+
 
   @Override
   public byte[] getEntityConfiguration() {
@@ -106,8 +104,8 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     Assert.assertNull(this.delegate);
     this.delegate = delegate;
   }
-  
-  public void handleMessage(byte[] message) throws MessageCodecException {
+
+  public void handleMessage(byte[] message) {
     // We technically allow messages to come back from the server, after we are closed, simple because it means that the
     // server hasn't yet handled the close.
     if (null != this.delegate) {
@@ -115,11 +113,11 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
       this.delegate.handleMessage(messageFromServer);
     }
   }
-    
+
   public InFlightStats getStatistics() {
     return stats;
   }
-    
+
   @Override
   public Invocation<R> message(M message) {
     // We can't create new invocations when the endpoint is closed.
@@ -144,7 +142,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
       SafeInvocationCallback<byte[]> binaryCallback = new BinaryInvocationCallback<>(codec, safe(callback));
       try {
         return invocationHandler.invokeAction(entityID, invokeDescriptor, callbacks, binaryCallback, true, codec.encodeMessage(request));
-      } catch (MessageCodecException e) {
+      } catch (Exception e) {
         binaryCallback.failure(e);
         binaryCallback.complete();
         binaryCallback.retired();

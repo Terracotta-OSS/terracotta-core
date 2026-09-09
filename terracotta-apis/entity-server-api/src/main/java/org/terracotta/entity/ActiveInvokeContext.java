@@ -35,7 +35,7 @@ public interface ActiveInvokeContext<R extends EntityResponse> extends InvokeCon
    */
   ActiveInvokeChannel<R> openInvokeChannel();
 
-  ActiveServerMessenger createServerMessenger();
+  ActiveServerMessenger<R> createServerMessenger();
 
   /**
    * Returns a map of client source information provided by the implementation.  Examples

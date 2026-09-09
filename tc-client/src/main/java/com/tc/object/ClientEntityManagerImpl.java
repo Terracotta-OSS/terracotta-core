@@ -20,7 +20,6 @@ package com.tc.object;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.exception.EntityBusyException;
 import com.tc.exception.EntityReferencedException;
-import com.tc.exception.WrappedEntityException;
 import com.tc.util.Throwables;
 
 import org.slf4j.Logger;
@@ -31,7 +30,6 @@ import org.terracotta.entity.InvocationCallback;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityException;
 
@@ -74,7 +72,6 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 
 import org.terracotta.exception.EntityNotFoundException;
-import org.terracotta.exception.EntityServerUncaughtException;
 
 import static com.tc.object.EntityDescriptor.createDescriptorForLifecycle;
 import static com.tc.object.SafeInvocationCallback.safe;
@@ -151,7 +148,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       }
     }
   }
-  
+
   @Override
   public void handleMessage(ClientInstanceID clientInstance, byte[] message) {
     EntityClientEndpoint<?, ?> endpoint = this.objectStoreMap.get(clientInstance);
@@ -161,16 +158,10 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       logger.info("Instance " + clientInstance + " not found. Ignoring message.");
     }
   }
-  
+
   private void deliverInboundMessage(EntityClientEndpoint endpoint, byte[] msg) {
     EntityClientEndpointImpl<?, ?> endpointImpl = (EntityClientEndpointImpl<?, ?>) endpoint;
-    try {
-        endpointImpl.handleMessage(msg);
-    } catch (MessageCodecException e) {
-      // For now (at least), we will fail on this codec exception since it indicates a serious bug in the entity
-      // implementation.
-      Assert.fail(e.getLocalizedMessage());
-    }
+    endpointImpl.handleMessage(msg);
   }
 
   @Override
@@ -364,7 +355,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       ClientEntityReferenceContext context = new ClientEntityReferenceContext(entityID, entityVersion, descriptor.getClientInstanceID(), extendedReconnectData);
       handshakeMessage.addReconnectReference(context);
     }
-    
+
     // Walk the inFlightMessages, adding them all to the handshake, since we need them to be replayed.
     for (InFlightMessage inFlight : this.inFlightMessages.values()) {
       if (inFlight.commit()) {
@@ -411,7 +402,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
     this.objectStoreMap.clear();
   }
-  
+
   private void throwClosedExceptionOnMessage(InFlightMessage msg, String description) {
     msg.received();
     // Synthesize the disconnect runtime exception for this message.
@@ -430,7 +421,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     // make sure release is only ever called once
     Callable<Void> closeCall = new Callable<Void>() {
       boolean released = false;
-      
+
       @Override
       public synchronized Void call() throws Exception {
         if (!released) {
@@ -440,7 +431,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         return null;
       }
     };
-    
+
     try {
       byte[] raw = internalRetrieve(fetchDescriptor);
       ByteBuffer br = ByteBuffer.wrap(raw);
@@ -452,7 +443,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       Assert.assertTrue(null != raw);
 
       resolvedEndpoint = new EntityClientEndpointImpl<>(entity, version, EntityDescriptor.createDescriptorForInvoke(fetch, instance), this, config, codec, closeCall, this.endpointCloser);
-      
+
       if (this.objectStoreMap.putIfAbsent(instance, resolvedEndpoint) != null) {
         throw Assert.failure("Attempt to add an object that already exists: Object of class " + resolvedEndpoint.getClass()
                              + " [Identity Hashcode : 0x" + Integer.toHexString(System.identityHashCode(resolvedEndpoint)) + "] ");
@@ -497,7 +488,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       logger.debug("Releasing " + ref.getEntityID() + "=" + print.toString());
     }
   }
-  
+
   private byte[] internalRetrieve(EntityDescriptor entityDescriptor) throws EntityException {
     // We need to provide fully blocking semantics with this call so we will wait for the "COMPLETED" ack.
     return lifecycleAndComplete(entityDescriptor.getEntityID(), entityDescriptor, VoltronEntityMessage.Type.FETCH_ENTITY);
@@ -562,7 +553,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   private static class FlushResponse implements VoltronEntityResponse, VoltronEntityMultiResponse {
     private boolean accessed = false;
-    
+
     @Override
     public synchronized TransactionID getTransactionID() {
       notifyAll();
@@ -591,7 +582,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       accessed = true;
       return 0;
     }
-    
+
     @Override
     public NetworkRecall send() {
       return null;
