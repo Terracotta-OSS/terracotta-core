@@ -889,11 +889,15 @@ public class ManagedEntityImpl implements ManagedEntity {
             Trace trace = Trace.activeTrace().subTrace("invokeActive");
             trace.start();
             Supplier<ActiveInvokeChannel> channelCreate = () -> {
-              retirementManager.holdMessage(message);
-              return new ActiveInvokeChannelImpl<>((r)->response.message(decodeResponse(r)),
-                (e)->response.failure(convertException(getID(), e)),
-                ()->retirementManager.releaseMessage(message)
-              );
+              if (retirementManager.isMessageRunning(message)) {
+                retirementManager.holdMessage(message);
+                return new ActiveInvokeChannelImpl<>((r)->response.message(decodeResponse(r)),
+                  (e)->response.failure(convertException(getID(), e)),
+                  ()->retirementManager.releaseMessage(message)
+                );
+              } else {
+                return null;
+              }
             };
             EntityResponse resp = this.activeServerEntity.invokeActive(
               new ActiveInvokeContextImpl<>(message, clientDescriptor, concurrencyKey, oldestId, currentId,

@@ -30,6 +30,9 @@ public class RefCountingActiveInvokeChannel<R extends EntityResponse> implements
 
   public RefCountingActiveInvokeChannel(ActiveInvokeChannel<R> delegate) {
     this.delegate = delegate;
+    if (delegate == null) {
+      throw new IllegalStateException("current message context is no longer valid");
+    }
   }
 
   public int reference() {

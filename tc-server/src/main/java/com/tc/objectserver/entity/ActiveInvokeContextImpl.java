@@ -20,6 +20,7 @@ package com.tc.objectserver.entity;
 import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.services.EntityMessengerService;
 import com.tc.util.concurrent.SetOnceFlag;
+import java.io.UncheckedIOException;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.function.Consumer;
@@ -71,6 +72,9 @@ public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeCon
   @Override
   public ActiveServerMessenger<R> createServerMessenger() {
     Runnable closeHandle = messenger.deferRetirement(requestContext);
+    if (closeHandle == null) {
+      throw new IllegalStateException("current message is not running");
+    }
 
     return new ActiveServerMessenger<>() {
       private final SetOnceFlag closed = new SetOnceFlag();
@@ -82,6 +86,10 @@ public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeCon
 
       @Override
       public void sendMessage(EntityMessage message, Consumer<Response<R>> result) {
+          if (closed.isSet()) {
+            throw new RuntimeException("messenger has already been closed");
+            // this is just convenience. Code can still race but that is an abuse of the API
+          }
           if (message == requestContext) {
             throw new AssertionError("message being sent is the same as the parent request.  Messages cnnot be scheduled twice");
           }
@@ -106,7 +114,11 @@ public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeCon
 
       @Override
       public ActiveServerMessenger.ReleaseHandle deferRetirement(String tag, EntityMessage message, Consumer<Response<R>> result) {
-        if (message == requestContext) {
+          if (closed.isSet()) {
+            throw new RuntimeException("messenger has already been closed");
+            // this is just convenience. Code can still race but that is an abuse of the API
+          }
+          if (message == requestContext) {
           throw new AssertionError("message being sent is the same as the parent request.  Messages cnnot be scheduled twice");
         }
         EntityMessengerService.Handle handle = messenger.deferRetirement(tag, requestContext, message);

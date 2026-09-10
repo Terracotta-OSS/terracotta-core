@@ -112,8 +112,12 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
   }
 
   public Runnable deferRetirement(M originalMessageToDefer) {
-    retirementManager.holdMessage(originalMessageToDefer);
-    return ()->retirementManager.releaseMessage(originalMessageToDefer);
+    if (retirementManager.isMessageRunning(originalMessageToDefer)) {
+      retirementManager.holdMessage(originalMessageToDefer);
+      return ()->retirementManager.releaseMessage(originalMessageToDefer);
+    } else {
+      return null;
+    }
   }
 
   public Handle deferRetirement(String tag,
