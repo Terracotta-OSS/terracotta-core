@@ -35,8 +35,6 @@ import com.tc.objectserver.entity.DestroyMessage;
 import com.tc.objectserver.entity.ReconfigureMessage;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.util.Assert;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.MessageCodec;
@@ -45,6 +43,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ActiveServerMessenger.Response;
 import org.terracotta.entity.EntityResponse;
 
@@ -53,6 +53,8 @@ import org.terracotta.entity.EntityResponse;
  * a client) and using that to send "fake" VoltronEntityMessage instances into the server's message sink.
  */
 public class EntityMessengerService<M extends EntityMessage, R extends EntityResponse> implements IEntityMessenger<M, R>, LifecycleListener {
+  private final Logger LOGGER = LoggerFactory.getLogger(EntityMessengerService.class);
+
   private final AtomicLong NEXT_FAKE_TXN_ID = new AtomicLong();
 
   private final Sink<VoltronEntityMessage> messageSink;
@@ -109,13 +111,22 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     scheduleMessage(message, true, response);
   }
 
+  public Runnable deferRetirement(M originalMessageToDefer) {
+    retirementManager.holdMessage(originalMessageToDefer);
+    return ()->retirementManager.releaseMessage(originalMessageToDefer);
+  }
+
   public Handle deferRetirement(String tag,
                                                   M originalMessageToDefer,
                                                   M futureMessage) {
     // defer, as normal
-    retirementManager.deferRetirement(originalMessageToDefer, futureMessage);
-    // return handle
-    return new Handle(tag, futureMessage);
+    if (!retirementManager.deferRetirement(originalMessageToDefer, futureMessage)) {
+      // return handle
+      LOGGER.warn("unable to defer retirement on originating message {}", originalMessageToDefer);
+      return null;
+    } else {
+      return new Handle(tag, futureMessage);
+    }
   }
 
   public void messageSelfAndDeferRetirement(M originalMessageToDefer,
@@ -126,7 +137,9 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
   public void messageSelfAndDeferRetirement(M originalMessageToDefer,
                                             M newMessageToSchedule, Consumer<MessageResponse<R>> response) {
     // This requires that we access the RetirementManager to change the retirement of the current message.
-    this.retirementManager.deferRetirement(originalMessageToDefer, newMessageToSchedule);
+    if (!this.retirementManager.deferRetirement(originalMessageToDefer, newMessageToSchedule)) {
+      LOGGER.warn("unable to defer retirement on originating message {}", originalMessageToDefer);
+    }
     // Schedule the message, as per normal.
     scheduleMessage(newMessageToSchedule, parent.requiresReceived(), response);
   }

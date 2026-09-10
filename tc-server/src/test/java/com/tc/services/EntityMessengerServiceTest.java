@@ -44,6 +44,7 @@ public class EntityMessengerServiceTest {
     ManagedEntity entity = mock(ManagedEntity.class);
     when(entity.isDestroyed()).thenReturn(true);
     RetirementManager retirementManager = mock(RetirementManager.class);
+    when(retirementManager.deferRetirement(any(), any())).thenReturn(true);
     when(entity.getRetirementManager()).thenReturn(retirementManager);
     @SuppressWarnings("rawtypes") MessageCodec codec = mock(MessageCodec.class);
     when(codec.encodeMessage(any())).thenReturn(new byte[0]);

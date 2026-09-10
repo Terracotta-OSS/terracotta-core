@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,28 +23,27 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.terracotta.entity.MessageCodecException;
 
 /**
  *
  */
 public class MessagePayloadTest {
-    
+
     public MessagePayloadTest() {
     }
-    
+
     @BeforeClass
     public static void setUpClass() {
     }
-    
+
     @AfterClass
     public static void tearDownClass() {
     }
-    
+
     @Before
     public void setUp() {
     }
-    
+
     @After
     public void tearDown() {
     }
@@ -58,7 +57,7 @@ public class MessagePayloadTest {
         try {
             payload.decodeMessage(b->{throw new RuntimeException();});
             fail("Exception should have been thrown by now");
-        } catch (MessageCodecException codex) {
+        } catch (Exception codex) {
             // expected
         }
     }

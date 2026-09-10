@@ -75,10 +75,12 @@ public class RetirementManager {
     }
   }
 
-  public boolean releaseMessage(EntityMessage invokeMessage) {
+  public void releaseMessage(EntityMessage invokeMessage) {
     // must be non-null so compute.  retireMessage
     // outside the synchronized block if the message is complete and heldCount is zero
-    return this.currentlyRunning.get(id(invokeMessage)).release().isRetireable();
+    if (this.currentlyRunning.get(id(invokeMessage)).release().isRetireable()) {
+      retireMessage(invokeMessage);
+    }
   }
 
   private void removeMessage(EntityMessage invoke) {
@@ -176,13 +178,17 @@ public class RetirementManager {
     return this.waitingForDeferredRegistration.remove(id(invoked));
   }
 
-  public void deferRetirement(EntityMessage invokeMessageToDefer, EntityMessage laterMessage) {
+  public boolean deferRetirement(EntityMessage invokeMessageToDefer, EntityMessage laterMessage) {
     if (Trace.isTraceEnabled()) {
       Trace.activeTrace().log("Deferring retirement for " + invokeMessageToDefer + " until " + laterMessage + " is finished");
     }
 
     LogicalSequence myRequest = getCurrentlyRunning(invokeMessageToDefer);
     LogicalSequence laterRequest = getCurrentlyRunning(laterMessage);
+
+    if (myRequest == null || myRequest.isRetireable()) {
+      return false;
+    }
 
     if (laterRequest == null) {
       EntityMessage multiDefer = setWaitingForDeferred(laterMessage, invokeMessageToDefer);
@@ -192,6 +198,8 @@ public class RetirementManager {
     } else {
       myRequest.retirementDeferredBy(laterMessage, laterRequest);
     }
+
+    return true;
   }
 
   /**

@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 package org.terracotta.entity.map;
 
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import org.terracotta.connection.entity.Entity;
@@ -32,6 +33,8 @@ public interface ConcurrentClusteredMap<K, V> extends ConcurrentMap<K, V>, Entit
    * @param valueClass the value class
    */
   void setTypes(Class<K> keyClass, Class<V> valueClass);
-  
+
   Future<?> insert(K key, V value);
+
+  public void putMultiple(Map<? extends K, ? extends V> m);
 }

@@ -892,13 +892,8 @@ public class ManagedEntityImpl implements ManagedEntity {
               retirementManager.holdMessage(message);
               return new ActiveInvokeChannelImpl<>((r)->response.message(decodeResponse(r)),
                 (e)->response.failure(convertException(getID(), e)),
-                ()->{
-                    // returns true of the message has been completed
-                    // and held count is zero so the message should be retired
-                    if (retirementManager.releaseMessage(message)) {
-                      retirementManager.retireMessage(message);
-                    }
-                });
+                ()->retirementManager.releaseMessage(message)
+              );
             };
             EntityResponse resp = this.activeServerEntity.invokeActive(
               new ActiveInvokeContextImpl<>(message, clientDescriptor, concurrencyKey, oldestId, currentId,

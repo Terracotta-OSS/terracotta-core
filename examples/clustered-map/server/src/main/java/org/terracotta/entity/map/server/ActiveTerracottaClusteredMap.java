@@ -47,6 +47,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.terracotta.entity.ActiveServerMessenger;
+import org.terracotta.entity.map.common.PutMultipleOperation;
 
 
 public class ActiveTerracottaClusteredMap implements ActiveServerEntity<MapOperation, MapResponse>  {
@@ -165,6 +167,14 @@ public class ActiveTerracottaClusteredMap implements ActiveServerEntity<MapOpera
       case CONDITIONAL_REPLACE: {
         ConditionalReplaceOperation operation = (ConditionalReplaceOperation) input;
         response = new BooleanResponse(map.replace(operation.getKey(), operation.getOldValue(), operation.getNewValue()));
+        break;
+      }
+      case PUT_MULTIPLE: {
+        try (ActiveServerMessenger<MapResponse> msg = context.createServerMessenger()) {
+          Map<Object, Object> newValues = (Map<Object, Object>) ((PutMultipleOperation)input).getMap();
+          msg.sendMessage(new PutAllOperation(newValues));
+        }
+        response = new NullResponse();
         break;
       }
       default:

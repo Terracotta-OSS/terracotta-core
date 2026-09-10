@@ -19,6 +19,7 @@ package com.tc.objectserver.entity;
 
 import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.services.EntityMessengerService;
+import com.tc.util.concurrent.SetOnceFlag;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.function.Consumer;
@@ -69,7 +70,11 @@ public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeCon
 
   @Override
   public ActiveServerMessenger<R> createServerMessenger() {
+    Runnable closeHandle = messenger.deferRetirement(requestContext);
+
     return new ActiveServerMessenger<>() {
+      private final SetOnceFlag closed = new SetOnceFlag();
+
       @Override
       public void sendMessage(EntityMessage message) {
         sendMessage(message, null);
@@ -120,7 +125,9 @@ public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeCon
 
       @Override
       public void close() {
-
+        if (closed.attemptSet()) {
+          closeHandle.run();
+        }
       }
     };
   }

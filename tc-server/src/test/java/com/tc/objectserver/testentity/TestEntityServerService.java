@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.NoConcurrencyStrategy;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.EntityServerService;
@@ -60,20 +59,20 @@ public class TestEntityServerService implements EntityServerService<EntityMessag
     // We need to return a non-null codec but we have no notion of what to do with the messages (since we don't use real types).
     return new MessageCodec<EntityMessage, EntityResponse>() {
       @Override
-      public byte[] encodeMessage(EntityMessage message) throws MessageCodecException {
+      public byte[] encodeMessage(EntityMessage message) {
         return new byte[((TestElement)message).length];
       }
       @Override
-      public EntityMessage decodeMessage(byte[] payload) throws MessageCodecException {
+      public EntityMessage decodeMessage(byte[] payload) {
         return new TestElement(payload.length);
       }
       @Override
-      public byte[] encodeResponse(EntityResponse response) throws MessageCodecException {
+      public byte[] encodeResponse(EntityResponse response) {
         // NOTE:  We always return null so just return an empty array.
         return new byte[0];
       }
       @Override
-      public EntityResponse decodeResponse(byte[] payload) throws MessageCodecException {
+      public EntityResponse decodeResponse(byte[] payload) {
         return new TestElement(payload.length);
       }};
   }
@@ -88,12 +87,12 @@ public class TestEntityServerService implements EntityServerService<EntityMessag
   public SyncMessageCodec<EntityMessage> getSyncMessageCodec() {
     return new SyncMessageCodec<EntityMessage>() {
       @Override
-      public byte[] encode(int concurrencyKey, EntityMessage message) throws MessageCodecException {
+      public byte[] encode(int concurrencyKey, EntityMessage message) {
         throw new UnsupportedOperationException("Not supported");
       }
 
       @Override
-      public EntityMessage decode(int concurrencyKey, byte[] payload) throws MessageCodecException {
+      public EntityMessage decode(int concurrencyKey, byte[] payload) {
         throw new UnsupportedOperationException("Not supported");
       }
     };

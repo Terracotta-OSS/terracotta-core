@@ -57,7 +57,6 @@ import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.ExecutionStrategy;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
@@ -228,22 +227,22 @@ public class ManagedEntityImplTest {
     });
     when(entityService.getMessageCodec()).thenReturn(new MessageCodec<EntityMessage, EntityResponse>() {
       @Override
-      public byte[] encodeMessage(EntityMessage message) throws MessageCodecException {
+      public byte[] encodeMessage(EntityMessage message) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
       }
 
       @Override
-      public EntityMessage decodeMessage(byte[] payload) throws MessageCodecException {
+      public EntityMessage decodeMessage(byte[] payload) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
       }
 
       @Override
-      public byte[] encodeResponse(EntityResponse response) throws MessageCodecException {
+      public byte[] encodeResponse(EntityResponse response) {
         return new byte[0];
       }
 
       @Override
-      public EntityResponse decodeResponse(byte[] payload) throws MessageCodecException {
+      public EntityResponse decodeResponse(byte[] payload) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
       }
     });
@@ -498,23 +497,23 @@ public class ManagedEntityImplTest {
       }
 
       @Override
-      public byte[] encodeMessage(EntityMessage message) throws MessageCodecException {
+      public byte[] encodeMessage(EntityMessage message) {
         return new byte[0];
       }
 
       @Override
-      public EntityResponse decodeResponse(byte[] payload) throws MessageCodecException {
+      public EntityResponse decodeResponse(byte[] payload) {
         return new EntityResponse() {};
       }
     });
     when(serverEntityService.getSyncMessageCodec()).thenReturn(new SyncMessageCodec<EntityMessage>(){
       @Override
-      public byte[] encode(int concurrencyKey, EntityMessage message) throws MessageCodecException {
+      public byte[] encode(int concurrencyKey, EntityMessage message) {
         throw new UnsupportedOperationException("not supported!");
       }
 
       @Override
-      public EntityMessage decode(int concurrencyKey, byte[] payload) throws MessageCodecException {
+      public EntityMessage decode(int concurrencyKey, byte[] payload) {
         throw new UnsupportedOperationException("not supported!");
       }
     });
@@ -563,23 +562,23 @@ public class ManagedEntityImplTest {
       }
 
       @Override
-      public byte[] encodeMessage(EntityMessage message) throws MessageCodecException {
+      public byte[] encodeMessage(EntityMessage message) {
         return new byte[0];
       }
 
       @Override
-      public EntityResponse decodeResponse(byte[] payload) throws MessageCodecException {
+      public EntityResponse decodeResponse(byte[] payload) {
         return new EntityResponse() {};
       }
     });
     when(serverEntityService.getSyncMessageCodec()).thenReturn(new SyncMessageCodec<EntityMessage>(){
       @Override
-      public byte[] encode(int concurrencyKey, EntityMessage message) throws MessageCodecException {
+      public byte[] encode(int concurrencyKey, EntityMessage message) {
         throw new UnsupportedOperationException("not supported!");
       }
 
       @Override
-      public EntityMessage decode(int concurrencyKey, byte[] payload) throws MessageCodecException {
+      public EntityMessage decode(int concurrencyKey, byte[] payload) {
         throw new UnsupportedOperationException("not supported!");
       }
     });
@@ -644,24 +643,24 @@ public class ManagedEntityImplTest {
       }
 
       @Override
-      public byte[] encodeMessage(EntityMessage message) throws MessageCodecException {
+      public byte[] encodeMessage(EntityMessage message) {
         return new byte[0];
       }
 
       @Override
-      public EntityResponse decodeResponse(byte[] payload) throws MessageCodecException {
+      public EntityResponse decodeResponse(byte[] payload) {
         return new EntityResponse() {
         };
       }
     };
     when(serverEntityService.getSyncMessageCodec()).thenReturn(new SyncMessageCodec<EntityMessage>(){
       @Override
-      public byte[] encode(int concurrencyKey, EntityMessage message) throws MessageCodecException {
+      public byte[] encode(int concurrencyKey, EntityMessage message) {
         throw new UnsupportedOperationException("not supported!");
       }
 
       @Override
-      public EntityMessage decode(int concurrencyKey, byte[] payload) throws MessageCodecException {
+      public EntityMessage decode(int concurrencyKey, byte[] payload) {
         throw new UnsupportedOperationException("not supported!");
       }
     });
@@ -749,7 +748,7 @@ public class ManagedEntityImplTest {
   @Test (expected = EntityUserException.class)
   public void testCodecException() throws Exception {
 // this test is no longer relevant, decode is done in the hydrate stage or process/replicated transaction handler
-    throw new EntityUserException("fake", new MessageCodecException("fake", new IOException()));
+    throw new EntityUserException("fake", new IOException());
   }
 
   @Test
