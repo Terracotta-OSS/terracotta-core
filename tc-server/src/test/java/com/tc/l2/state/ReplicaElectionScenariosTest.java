@@ -199,7 +199,6 @@ public class ReplicaElectionScenariosTest {
    */
   private StateManagerImpl replicaStartManagerWithGatePrimed() throws InterruptedException {
     StateManagerImpl mgr = freshManager();
-    mgr.moveToRelayMode();
     mgr.moveToReplicaMode();
     mgr.initializeAndStartElection();
     mgr.waitForElectionsToFinish();

@@ -445,7 +445,7 @@ public class StateManagerImpl implements StateManager {
 
   @Override
   public void moveToReplicaMode() {
-    switchToState(ServerMode.REPLICA_START, EnumSet.of(ServerMode.INITIAL, ServerMode.RELAY));
+    switchToState(ServerMode.REPLICA_START, EnumSet.of(ServerMode.INITIAL));
   }
 
   @Override
@@ -687,7 +687,7 @@ public class StateManagerImpl implements StateManager {
       consoleLogger.info("Replica designated in cluster.  No Election will be performed");
       sendVerificationOKResponse(clusterMsg);
       setActiveNodeID(clusterMsg.messageFrom());
- //     throw new TCShutdownServerException("There is a REPLICA member of this stripe.  Shutting down.");
+      throw new TCShutdownServerException("There is a REPLICA member of this stripe.  Shutting down.");
     } else {
       verifyActiveDeclarationAndRespond(clusterMsg);
     }

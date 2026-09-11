@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -48,7 +48,9 @@ public class GroupConfiguration {
     for (ServerConfiguration s : servers) {
       base.put(s.getName(), configToNode(s));
     }
-
+    if (relayGroupPort != 0) {
+      base.entrySet().removeIf(s->!s.getKey().equals(serverName));
+    }
     if (relayHost != null) {
       base.put(relayGroupPort != 0 ? "__hidden_relay-source" : "__hidden_relay-destination", addressToNode(relayHost, relayPort, relayGroupPort));
     }

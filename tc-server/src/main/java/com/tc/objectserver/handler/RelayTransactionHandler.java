@@ -50,6 +50,7 @@ public class RelayTransactionHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(RelayTransactionHandler.class);
 
   private final GroupManager<AbstractGroupMessage> groupManager;
+  private final GroupEventsListener listener;
   private final PassiveAckSender ackSender;
   private final Stage<Runnable> relaySender;
   private StateManager stateMgr;
@@ -64,7 +65,7 @@ public class RelayTransactionHandler {
     this.groupManager = groupManager;
     this.ackSender = new PassiveAckSender(groupManager, m->true, sendToActive.getSink());
     this.relaySender = sendToActive;
-    this.groupManager.registerForGroupEvents(new GroupEventsListener() {
+    this.listener = new GroupEventsListener() {
       @Override
       public void nodeJoined(NodeID nodeID) {
 
@@ -78,7 +79,8 @@ public class RelayTransactionHandler {
           clearHistory();
         }
       }
-    });
+    };
+    this.groupManager.registerForGroupEvents(this.listener);
   }
 
   private static RelayMessage createRelayMessage(ReplicationMessage first) {
@@ -104,6 +106,11 @@ public class RelayTransactionHandler {
       ServerConfigurationContext scxt = (ServerConfigurationContext)context;
       stateMgr = scxt.getL2Coordinator().getStateManager();
     }
+
+    @Override
+    public void destroy() {
+      groupManager.unregisterForGroupEvents(listener);
+    }
   };
 
   public boolean resumeRelayConsumer(ServerID node, long lastSeen) {
@@ -120,11 +127,11 @@ public class RelayTransactionHandler {
     NodeID active = stateMgr.getActiveNodeID();
     TCLogging.getConsoleLogger().info("remote node connected for duplication {}", node);
     if (stateMgr.getCurrentMode() == ServerMode.RELAY && !active.isNull() && endTarget.isNull()) {
+      boolean replayed = replayHistory(new GroupMessageBatchContext<>(RelayTransactionHandler::createRelayMessage, groupManager, node, Integer.MAX_VALUE, 1, n->sendToRelayTarget(getBatch())), 0L);
+      Assert.assertFalse(replayed);
       ackSender.requestPassiveSync(active);
       endTarget = node;
       // starting fresh
-      boolean replayed = replayHistory(new GroupMessageBatchContext<>(RelayTransactionHandler::createRelayMessage, groupManager, node, Integer.MAX_VALUE, 1, n->sendToRelayTarget(getBatch())), 0L);
-      Assert.assertFalse(replayed);
       stateMgr.moveToRelayConnectedMode();
       return true;
     } else {
