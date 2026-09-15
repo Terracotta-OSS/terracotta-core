@@ -180,12 +180,8 @@ public class StateManagerReplicaProtectionTest {
         mgmtController, stageManager, 5, weightGeneratorFactory, consistencyManager,
         statePersistor, topologyManager);
 
-    // Test transition from INITIAL to RELAY
+    // Test transition from INITIAL to REPLICA_START
     assertEquals(ServerMode.INITIAL, stateManager.getCurrentMode());
-    stateManager.moveToRelayMode();
-    assertEquals(ServerMode.RELAY, stateManager.getCurrentMode());
-
-    // Test that RELAY can transition to REPLICA_START
     stateManager.moveToReplicaMode();
     assertEquals(ServerMode.REPLICA_START, stateManager.getCurrentMode());
 

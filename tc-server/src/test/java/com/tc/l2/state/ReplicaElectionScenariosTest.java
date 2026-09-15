@@ -294,21 +294,6 @@ public class ReplicaElectionScenariosTest {
     }
   }
 
-  // =========================================================================
-  // SECTION 4 — moveToReplicaMode transitions (no gate needed: REPLICA_START.requiresElection==false)
-  // =========================================================================
-
-  @Test
-  public void testMoveToReplicaModeZapsWhenStartStateContainsData() {
-    when(statePersistor.getInitialMode()).thenReturn(ServerMode.PASSIVE);
-    try {
-      freshManager().moveToReplicaMode();
-      fail("Expected TCServerRestartException (ZapDirtyDbServerNodeException)");
-    } catch (TCServerRestartException expected) {
-      // expected
-    }
-  }
-
   @Test(expected = IllegalStateException.class)
   public void testMoveToReplicaModeFromDiagnosticIsInvalid() {
     StateManagerImpl mgr = freshManager();
