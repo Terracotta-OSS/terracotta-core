@@ -20,13 +20,10 @@ package com.tc.objectserver.entity;
 import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.services.EntityMessengerService;
 import com.tc.util.concurrent.SetOnceFlag;
-import java.io.UncheckedIOException;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ActiveInvokeChannel;
 import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ClientDescriptor;
@@ -35,8 +32,6 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.ActiveServerMessenger;
 
 public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeContextImpl implements ActiveInvokeContext<R> {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ActiveInvokeContextImpl.class);
-
   private final EntityMessage requestContext;
   private final ClientDescriptorImpl clientDescriptor;
   private final Supplier<ActiveInvokeChannel> channelCreate;
@@ -94,16 +89,18 @@ public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeCon
             throw new AssertionError("message being sent is the same as the parent request.  Messages cnnot be scheduled twice");
           }
           messenger.messageSelfAndDeferRetirement(requestContext, message, t -> {
-            result.accept(new Response<>() {
-              @Override
-              public R getResponse() throws Exception {
-                if (t.wasExceptionThrown()) {
-                  throw t.getException();
-                } else {
-                  return t.getResponse();
+            if (result != null) {
+              result.accept(new Response<>() {
+                @Override
+                public R getResponse() throws Exception {
+                  if (t.wasExceptionThrown()) {
+                    throw t.getException();
+                  } else {
+                    return t.getResponse();
+                  }
                 }
-              }
-            });
+              });
+            }
           });
       }
 

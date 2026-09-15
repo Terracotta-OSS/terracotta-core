@@ -32,7 +32,6 @@ import org.terracotta.exception.EntityServerException;
 public class PassThroughServerActiveInvokeContext<M extends EntityMessage, R extends EntityResponse> extends PassThroughServerInvokeContext
   implements ActiveInvokeContext<R> {
   private final MessageCodec<M, R> codec;
-  private final EntityMessage parent;
   private final PassthroughClientDescriptor descriptor;
   private final IMessageSenderWrapper monitor;
   private final PassthroughRetirementManager retirement;
@@ -40,10 +39,9 @@ public class PassThroughServerActiveInvokeContext<M extends EntityMessage, R ext
   private final String entityClass;
   private final String entityName;
 
-  public PassThroughServerActiveInvokeContext(M message, PassthroughClientDescriptor descriptor, int concurrencyKey, long current, long
+  public PassThroughServerActiveInvokeContext(PassthroughClientDescriptor descriptor, int concurrencyKey, long current, long
     oldest, IMessageSenderWrapper monitor, PassthroughRetirementManager retirement, MessageCodec<M, R> codec, PassthroughServerProcess process, String entityClass, String entityName) {
     super(descriptor == null ? null : descriptor.getSourceId(), concurrencyKey, current, oldest);
-    this.parent = Objects.requireNonNull(message);
     this.descriptor = Objects.requireNonNull(descriptor);
     this.monitor = monitor;
     this.retirement = retirement;

@@ -816,7 +816,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     if (data.executionStrategy.getExecutionLocation(msg).runOnActive()) {
       try {
         int cKey = data.concurrency.concurrencyKey(msg);
-        R response = entity.invokeActive(new PassThroughServerActiveInvokeContext<>(msg, clientDescriptor,
+        R response = entity.invokeActive(new PassThroughServerActiveInvokeContext<>(clientDescriptor,
               cKey,
               transactionId,
               eldestTransactionId, sender, retirementManager, codec, this, className, entityName),

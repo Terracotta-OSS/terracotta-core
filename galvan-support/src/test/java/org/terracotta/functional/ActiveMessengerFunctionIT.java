@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2026
+ *  Copyright IBM Corp. 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,10 @@ package org.terracotta.functional;
 
 
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.connection.Connection;
@@ -47,6 +51,13 @@ public class ActiveMessengerFunctionIT {
     EntityRef<ConcurrentClusteredMap, MapConfig, Void>  ref = connection.getEntityRef(ConcurrentClusteredMap.class, 1L, "ROOT");
     ref.create(new MapConfig(1, "ROOT"));
     ConcurrentClusteredMap map = ref.fetchEntity(null);
-    map.putMultiple(new HashMap<>());
+    map.setTypes(String.class, String.class);
+    Map<String, String> data = new HashMap<>();
+    data.put("test", "test");
+    map.putMultiple(data);
+    Set<String> keys = map.keySet();
+    assertTrue(keys.size() == 1);
+    assertEquals(keys.iterator().next(), "test");
+    assertEquals(map.get("test"), "test");
   }
 }

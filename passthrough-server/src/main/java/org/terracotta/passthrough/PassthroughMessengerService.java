@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2026
+ * Copyright IBM Corp. 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.MessageCodec;
@@ -34,14 +33,12 @@ import org.terracotta.exception.EntityException;
 
 public class PassthroughMessengerService implements IEntityMessenger<EntityMessage, EntityResponse> {
   private final PassthroughServerProcess passthroughServerProcess;
-  private final PassthroughRetirementManager retirementManager;
   private final DeferredEntityContainer entityContainer;
   private final String entityClassName;
   private final String entityName;
 
-  public PassthroughMessengerService(PassthroughTimerThread timerThread, PassthroughServerProcess passthroughServerProcess, DeferredEntityContainer entityContainer, boolean chain, String entityClassName, String entityName) {
+  public PassthroughMessengerService(PassthroughServerProcess passthroughServerProcess, DeferredEntityContainer entityContainer, String entityClassName, String entityName) {
     this.passthroughServerProcess = passthroughServerProcess;
-    this.retirementManager = passthroughServerProcess.getRetirementManager();
     // Note that we hold the entity container to get the codec but this container is deferred so we hold onto it, instead of
     // the codec (which probably isn't set yet).
     this.entityContainer = entityContainer;
