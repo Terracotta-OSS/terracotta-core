@@ -63,10 +63,10 @@ public class ActiveInvokeContextImplTest {
   @Test
   public void testSendOnClosed() {
     Runnable open = mock(Runnable.class);
-    Consumer response = mock(Consumer.class);
-    Consumer exception = mock(Consumer.class);
+    Consumer<EntityResponse> response = mock(Consumer.class);
+    Consumer<Exception> exception = mock(Consumer.class);
     Runnable close = mock(Runnable.class);
-    EntityMessengerService service = mock(EntityMessengerService.class);
+    EntityMessengerService<EntityMessage, EntityResponse> service = mock(EntityMessengerService.class);
     Supplier<ActiveInvokeChannel> createChannel = ()-> {
       open.run();
       return new ActiveInvokeChannelImpl(response, exception, close);
@@ -90,10 +90,10 @@ public class ActiveInvokeContextImplTest {
   @Test
   public void testMultipleActiveInvokeChannels() {
     Runnable open = mock(Runnable.class);
-    Consumer response = mock(Consumer.class);
-    Consumer exception = mock(Consumer.class);
+    Consumer<EntityResponse> response = mock(Consumer.class);
+    Consumer<Exception> exception = mock(Consumer.class);
     Runnable close = mock(Runnable.class);
-    EntityMessengerService service = mock(EntityMessengerService.class);
+    EntityMessengerService<EntityMessage, EntityResponse> service = mock(EntityMessengerService.class);
     Supplier<ActiveInvokeChannel> createChannel = ()-> {
       open.run();
       return new ActiveInvokeChannelImpl(response, exception, close);

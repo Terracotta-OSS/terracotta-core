@@ -30,7 +30,6 @@ import org.mockito.ArgumentCaptor;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.MessageCodec;
 
-import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -38,9 +37,9 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.terracotta.entity.EntityResponse;
 
 /**
  * Tests for EntityMessengerService parent context propagation.
@@ -52,8 +51,7 @@ public class EntityMessengerServiceContextTest {
   private Sink<VoltronEntityMessage> sink;
   private ManagedEntityImpl entity;
   private RetirementManager retirementManager;
-  @SuppressWarnings("rawtypes")
-  private MessageCodec codec;
+  private MessageCodec<EntityMessage, EntityResponse> codec;
   private EntityMessengerService<EntityMessage, ?> service;
 
   @Before

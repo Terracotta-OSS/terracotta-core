@@ -57,8 +57,6 @@ import com.tc.spi.Guardian;
 import com.tc.tracing.Trace;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ActiveServerEntity;
@@ -884,7 +882,7 @@ public class ManagedEntityImpl implements ManagedEntity {
               ((StatisticsCapture)response).beginInvoke();
             }
 
-            EntityMessengerService messenger = new EntityMessengerService(messageSelf, this, wrappedRequest);
+            EntityMessengerService<EntityMessage, EntityResponse> messenger = new EntityMessengerService<>(messageSelf, this, wrappedRequest);
 
             Trace trace = Trace.activeTrace().subTrace("invokeActive");
             trace.start();

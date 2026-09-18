@@ -31,6 +31,7 @@ import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.terracotta.entity.EntityResponse;
 
 
 public class EntityMessengerServiceTest {
@@ -51,7 +52,7 @@ public class EntityMessengerServiceTest {
     when(entity.getCodec()).thenReturn(codec);
 
     // Create the service.
-    EntityMessengerService service = new EntityMessengerService(sink, entity, null);
+    EntityMessengerService<EntityMessage, EntityResponse> service = new EntityMessengerService<>(sink, entity, null);
     when(entity.isDestroyed()).thenReturn(false);
     service.entityCreated(entity);
 
@@ -81,7 +82,7 @@ public class EntityMessengerServiceTest {
     when(entity.getCodec()).thenReturn(codec);
 
     // Create the service.
-    EntityMessengerService service = new EntityMessengerService(sink, entity, null);
+    EntityMessengerService<EntityMessage, EntityResponse> service = new EntityMessengerService<>(sink, entity, null);
     // now adding listener in provider so do it manually
     entity.addLifecycleListener(service);
     // Verify that the service was registered to be told when the entity activates.

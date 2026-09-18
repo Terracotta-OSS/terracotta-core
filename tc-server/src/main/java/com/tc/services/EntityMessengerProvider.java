@@ -29,6 +29,8 @@ import com.tc.async.api.Sink;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.util.Assert;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 
 
 /**
@@ -50,7 +52,7 @@ public class EntityMessengerProvider implements ImplementationProvidedServicePro
     Assert.assertNotNull(owningEntity);
     T service = null;
     if (this.serverIsActive) {
-      EntityMessengerService es = new EntityMessengerService(this.messageSink, owningEntity, null);
+      EntityMessengerService<EntityMessage, EntityResponse> es = new EntityMessengerService<>(this.messageSink, owningEntity, null);
       owningEntity.addLifecycleListener(es);
       service = configuration.getServiceType().cast(es);
     }

@@ -47,7 +47,7 @@ public class TestEntityServer implements ActiveServerEntity<EntityMessage, Entit
   }
 
   @Override
-  public EntityResponse invokeActive(ActiveInvokeContext context,
+  public EntityResponse invokeActive(ActiveInvokeContext<EntityResponse> context,
                                      EntityMessage message) throws EntityUserException {
     return null;
   }
