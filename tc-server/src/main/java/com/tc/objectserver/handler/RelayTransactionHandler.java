@@ -185,7 +185,7 @@ public class RelayTransactionHandler {
 
   private synchronized void clearHistory() {
     this.activeID = null;
-    generationOffset = this.history.stream().mapToLong(ReplicationMessage::getSequenceID).max().orElse(0L);
+    generationOffset = this.history.stream().mapToLong(ReplicationMessage::getSequenceID).max().orElse(1L);
     this.history.clear();
   }
 

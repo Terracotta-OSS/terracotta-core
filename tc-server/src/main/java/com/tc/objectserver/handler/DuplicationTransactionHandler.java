@@ -145,7 +145,7 @@ public class DuplicationTransactionHandler {
           }
         }
         if (currentSequence+1 != msg.getSequenceID()) {
-          LOGGER.warn("sequence skipped current: {} message: {}", currentSequence, msg.getSequenceID());
+          throw new ZapDirtyDbServerNodeException("sequence mismatch occured current: " + currentSequence + " incoming: " + msg.getSequenceID());
         }
         currentSequence = Long.max(currentSequence, msg.getSequenceID());
         sendToNext.getSink().addToSink(msg);

@@ -38,7 +38,7 @@ public class SimpleRingBuffer<T> implements Iterable<T> {
   }
 
   public void clear() {
-    Arrays.setAll(buffer, (value) -> null);
+    Arrays.fill(buffer, null);
     head = 0;
   }
 

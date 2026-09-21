@@ -43,11 +43,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.LongStream;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -348,5 +350,133 @@ public class RelayTransactionHandlerTest {
 
     // 5 original sends (10,20,30,40,50) + 1 replay flush (30,40,50 batched) = 6
     verify(groupManager, times(6)).sendToWithSentCallback(eq(replicaNodeID), any(), any());
+  }
+
+  // ── generationOffset tests ────────────────────────────────────────────────
+
+  /**
+   * The initial generationOffset is 1, so the first message with rid=N arrives and is
+   * stamped with sequenceID = 1 + N.  Verify the stamped value by collecting messages
+   * that arrive at the relay replica and reading their sequence IDs.
+   */
+  @Test
+  public void generationOffset_initialValue_stampsMessagesWithOffsetPlusRid() throws Exception {
+    when(stateManager.getCurrentMode()).thenReturn(ServerMode.RELAY);
+    handler.registerRelayConsumer(replicaNodeID);
+
+    // makeMessage(rid) builds a message whose pre-addToHistory sequenceID == rid.
+    // After addToHistory the handler adds generationOffset (initial value = 1).
+    ReplicationMessage msg = makeMessage(5L);
+    handler.getEventHandler().handleEvent(msg);
+
+    // addToHistory mutates the message in place: sequenceID becomes 1 + 5 = 6.
+    assertEquals("Initial generationOffset=1 must produce sequenceID == rid + 1", 6L, msg.getSequenceID());
+  }
+
+  /**
+   * After the active node disconnects ({@code nodeLeft(activeID)}), {@code clearHistory}
+   * advances {@code generationOffset} to the maximum sequenceID seen in the current
+   * generation.  Messages from the next active therefore get IDs strictly greater than
+   * all IDs from the previous generation.
+   *
+   * <p>The relay server remains connected to the same downstream replica across the active
+   * failover; new active messages arrive while the forward batch context is still live.
+   */
+  @Test
+  public void generationOffset_advancesAfterActiveLeavesAndClearsHistory() throws Exception {
+    when(stateManager.getCurrentMode()).thenReturn(ServerMode.RELAY);
+    handler.registerRelayConsumer(replicaNodeID);
+
+    // Generation 1: messages rid=1,2,3 → stamped as 1+1=2, 1+2=3, 1+3=4 (initial offset=1).
+    List<ReplicationMessage> gen1 = new ArrayList<>();
+    for (long rid = 1; rid <= 3; rid++) {
+      ReplicationMessage m = makeMessage(rid);
+      handler.getEventHandler().handleEvent(m);
+      gen1.add(m);
+    }
+    long maxGen1SeqID = gen1.stream().mapToLong(ReplicationMessage::getSequenceID).max().getAsLong();
+    // maxGen1SeqID == 4 (offset 1 + rid 3)
+
+    // Active leaves — clearHistory() fires, advancing generationOffset to maxGen1SeqID (4).
+    capturedListener.get().nodeLeft(activeNodeID);
+
+    // New active takes over; relay remains connected to the same downstream.
+    // A new message from the replacement active starts its rids from 1 again.
+    ReplicationMessage gen2msg = makeMessage(1L);
+    handler.getEventHandler().handleEvent(gen2msg);
+
+    // New offset = 4, so stamped sequenceID = 4 + 1 = 5 > maxGen1SeqID (4).
+    assertTrue(
+        "Generation-2 message sequenceID must exceed the max of generation 1",
+        gen2msg.getSequenceID() == maxGen1SeqID + 1
+    );
+  }
+
+  /**
+   * After an active failover the relay server's generationOffset is the highest stamped
+   * sequence ID from the previous generation.  The first message of the new generation
+   * (whose rid starts at 1 again) therefore receives an ID strictly greater than every
+   * ID from the previous generation — guaranteeing monotonically increasing sequence IDs
+   * as seen by the downstream replica.
+   */
+  @Test
+  public void generationOffset_newGenerationIDsDoNotOverlapPreviousGeneration() throws Exception {
+    when(stateManager.getCurrentMode()).thenReturn(ServerMode.RELAY);
+    handler.registerRelayConsumer(replicaNodeID);
+
+    // Generation 1: rids 1..5, stamped as offset(1)+rid = 2,3,4,5,6.
+    List<Long> gen1StampedIDs = new ArrayList<>();
+    for (long rid = 1; rid <= 5; rid++) {
+      ReplicationMessage m = makeMessage(rid);
+      handler.getEventHandler().handleEvent(m);
+      gen1StampedIDs.add(m.getSequenceID());
+    }
+    long maxGen1 = gen1StampedIDs.stream().mapToLong(Long::longValue).max().getAsLong();
+    // maxGen1 == 6
+
+    // Active 1 leaves → clearHistory sets generationOffset = 6.
+    capturedListener.get().nodeLeft(activeNodeID);
+
+    // Generation 2: new active restarts its own rid sequence from 1.
+    // Expected stamped IDs: 6+1=7, 6+2=8, 6+3=9, 6+4=10, 6+5=11.
+    List<Long> gen2StampedIDs = new ArrayList<>();
+    for (long rid = 1; rid <= 5; rid++) {
+      ReplicationMessage m = makeMessage(rid);
+      handler.getEventHandler().handleEvent(m);
+      gen2StampedIDs.add(m.getSequenceID());
+    }
+    long minGen2 = gen2StampedIDs.stream().mapToLong(Long::longValue).min().getAsLong();
+
+    assertTrue(
+        "Every gen-2 stamped ID must be strictly greater than the max gen-1 ID",
+        minGen2 > maxGen1
+    );
+  }
+
+  /**
+   * {@code clearHistory} with an empty ring buffer (no messages ever processed) must not
+   * crash and must leave generationOffset at the initial value of 1, so the first message
+   * of the next generation is still stamped as 1 + rid.
+   *
+   * <p>The active node must first be tracked (via {@code registerRelayConsumer} which calls
+   * {@code replayHistory} and sets {@code activeID}) before a {@code nodeLeft(activeID)}
+   * can trigger {@code clearHistory}.
+   */
+  @Test
+  public void generationOffset_clearHistoryOnEmptyBuffer_keepsInitialOffset() throws Exception {
+    // Register a consumer so that activeID is set inside replayHistory.
+    when(stateManager.getCurrentMode()).thenReturn(ServerMode.RELAY);
+    handler.registerRelayConsumer(replicaNodeID);
+
+    // No messages sent yet — history is empty.
+    // Active leaves: clearHistory fires but history.stream().max() is empty → orElse(1L) keeps offset at 1.
+    capturedListener.get().nodeLeft(activeNodeID);
+
+    // A message from the new active with rid=10 must still be stamped as 1 + 10 = 11.
+    ReplicationMessage msg = makeMessage(10L);
+    handler.getEventHandler().handleEvent(msg);
+
+    assertEquals("After empty-buffer clearHistory the offset must remain 1",
+        11L, msg.getSequenceID());
   }
 }
