@@ -356,11 +356,7 @@ public class StateManagerImpl implements StateManager {
     Enrollment verify = getVerificationEnrollment();
     setActiveNodeID(active);
     if (startState == ServerMode.RELAY) {
-      if (state == ServerMode.RELAY_CONNECTED) {
-        switchToState(ServerMode.RELAY_CONNECTED, EnumSet.of(ServerMode.INITIAL, ServerMode.START, ServerMode.RELAY, ServerMode.RELAY_CONNECTED));
-      } else {
-        switchToState(ServerMode.RELAY, EnumSet.of(ServerMode.INITIAL, ServerMode.START, ServerMode.RELAY, ServerMode.RELAY_CONNECTED));
-      }
+      // relays are always passive ready
     } else {
       logger.info("moving to passive " + state + " " + src + " " + active);
       logger.info("winning = {}", winningEnrollment);
@@ -427,20 +423,12 @@ public class StateManagerImpl implements StateManager {
 
   @Override
   public void moveToRelayMode() {
-    if (startState.containsData()) {
-      zapAndResyncLocalNode("relay contains data");
-    } else {
-      switchToState(ServerMode.RELAY, EnumSet.of(ServerMode.INITIAL, ServerMode.RELAY, ServerMode.RELAY_CONNECTED));
-    }
+    switchToState(ServerMode.RELAY, EnumSet.of(ServerMode.INITIAL, ServerMode.RELAY, ServerMode.RELAY_CONNECTED));
   }
 
   @Override
   public void moveToRelayConnectedMode() {
-    if (startState.containsData()) {
-      zapAndResyncLocalNode("replica contains data");
-    } else {
-      switchToState(ServerMode.RELAY_CONNECTED, EnumSet.of(ServerMode.RELAY));
-    }
+    switchToState(ServerMode.RELAY_CONNECTED, EnumSet.of(ServerMode.RELAY));
   }
 
   @Override

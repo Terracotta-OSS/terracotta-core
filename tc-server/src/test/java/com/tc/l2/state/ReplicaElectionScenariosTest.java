@@ -283,17 +283,6 @@ public class ReplicaElectionScenariosTest {
     assertEquals(ServerMode.RELAY, mgr.getCurrentMode());
   }
 
-  @Test
-  public void testMoveToRelayModeZapsWhenStartStateContainsData() {
-    when(statePersistor.getInitialMode()).thenReturn(ServerMode.PASSIVE);
-    try {
-      freshManager().moveToRelayMode();
-      fail("Expected TCServerRestartException (ZapDirtyDbServerNodeException)");
-    } catch (TCServerRestartException expected) {
-      // ZapDirtyDbServerNodeException extends TCServerRestartException
-    }
-  }
-
   @Test(expected = IllegalStateException.class)
   public void testMoveToReplicaModeFromDiagnosticIsInvalid() {
     StateManagerImpl mgr = freshManager();
