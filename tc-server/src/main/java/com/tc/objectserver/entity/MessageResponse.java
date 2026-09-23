@@ -15,26 +15,28 @@
  *  limitations under the License.
  *
  */
-package org.terracotta.entity.map;
+package com.tc.objectserver.entity;
 
+import org.terracotta.entity.EntityResponse;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
-import org.terracotta.connection.entity.Entity;
-
-public interface ConcurrentClusteredMap<K, V> extends ConcurrentMap<K, V>, Entity {
-  long VERSION = 1;
-
+/**
+ *
+ * @author myronscott
+ */
+public interface MessageResponse<T extends EntityResponse> {
   /**
-   * Records the key and value classes to enable optimizations.
+   * Was an exception thrown in the execution of this message.
    *
-   * @param keyClass the key class
-   * @param valueClass the value class
+   * @return true if a message resulted in an exception during invoke
    */
-  void setTypes(Class<K> keyClass, Class<V> valueClass);
-
-  Future<?> insert(K key, V value);
-
-  public void putMultiple(Map<? extends K, ? extends V> m);
+  boolean wasExceptionThrown();
+  /**
+   * An exception thrown during execution of the message on the active server.
+   * @return null if no exception, else the exception that was thrown during invoke
+   */
+  Exception getException();
+  /**
+   * @return the response of the invoke or null if an exception that occurred
+   */
+  T getResponse();
 }

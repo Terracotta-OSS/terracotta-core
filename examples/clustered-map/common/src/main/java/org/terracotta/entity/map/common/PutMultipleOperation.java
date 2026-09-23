@@ -17,34 +17,34 @@
  */
 package org.terracotta.entity.map.common;
 
-import org.terracotta.entity.EntityMessage;
-
+import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Map;
 
+public class PutMultipleOperation implements MapOperation {
+  private final Map<Object, Object> map;
 
-public interface MapOperation extends EntityMessage {
-  enum Type {
-    GET,
-    PUT,
-    REMOVE,
-    SIZE,
-    CONTAINS_KEY,
-    CONTAINS_VALUE,
-    CLEAR,
-    PUT_ALL,
-    KEY_SET,
-    VALUES,
-    ENTRY_SET,
-    SYNC_OP,
-    PUT_IF_ABSENT,
-    PUT_IF_PRESENT,
-    CONDITIONAL_REMOVE,
-    CONDITIONAL_REPLACE,
-    PUT_MULTIPLE;
+  public PutMultipleOperation(Map<Object, Object> map) {
+    this.map = map;
   }
 
-  Type operationType();
+  public Object getMap() {
+    return map;
+  }
 
-  void writeTo(DataOutput output) throws IOException;
+  @Override
+  public Type operationType() {
+    return Type.PUT_MULTIPLE;
+  }
+
+  @Override
+  public void writeTo(DataOutput output) throws IOException {
+    PrimitiveCodec.writeTo(output, map);
+  }
+
+  @SuppressWarnings("unchecked")
+  static PutMultipleOperation readFrom(DataInput input) throws IOException {
+    return new PutMultipleOperation((Map<Object, Object>) PrimitiveCodec.readFrom(input));
+  }
 }

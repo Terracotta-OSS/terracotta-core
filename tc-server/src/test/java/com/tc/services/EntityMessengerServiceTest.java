@@ -21,9 +21,9 @@ import com.tc.async.api.Sink;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.handler.RetirementManager;
+import com.tc.services.EntityMessengerService.Handle;
 import org.junit.Test;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.ExplicitRetirementHandle;
 import org.terracotta.entity.MessageCodec;
 
 import static org.mockito.Mockito.any;
@@ -31,7 +31,7 @@ import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.terracotta.entity.ActiveServerEntity;
+import org.terracotta.entity.EntityResponse;
 
 
 public class EntityMessengerServiceTest {
@@ -45,19 +45,20 @@ public class EntityMessengerServiceTest {
     ManagedEntity entity = mock(ManagedEntity.class);
     when(entity.isDestroyed()).thenReturn(true);
     RetirementManager retirementManager = mock(RetirementManager.class);
+    when(retirementManager.deferRetirement(any(), any())).thenReturn(true);
     when(entity.getRetirementManager()).thenReturn(retirementManager);
     @SuppressWarnings("rawtypes") MessageCodec codec = mock(MessageCodec.class);
     when(codec.encodeMessage(any())).thenReturn(new byte[0]);
     when(entity.getCodec()).thenReturn(codec);
 
     // Create the service.
-    EntityMessengerService service = new EntityMessengerService(sink, entity, true);
+    EntityMessengerService<EntityMessage, EntityResponse> service = new EntityMessengerService<>(sink, entity, null);
     when(entity.isDestroyed()).thenReturn(false);
     service.entityCreated(entity);
 
     EntityMessage deferrableMessage = mock(EntityMessage.class);
     EntityMessage futureMessage = mock(EntityMessage.class);
-    ExplicitRetirementHandle handle = service.deferRetirement("test", deferrableMessage, futureMessage);
+    Handle handle = service.deferRetirement("test", deferrableMessage, futureMessage);
 
     // verify it was deferred
     verify(retirementManager).deferRetirement(deferrableMessage, futureMessage);
@@ -81,7 +82,7 @@ public class EntityMessengerServiceTest {
     when(entity.getCodec()).thenReturn(codec);
 
     // Create the service.
-    EntityMessengerService service = new EntityMessengerService(sink, entity, true);
+    EntityMessengerService<EntityMessage, EntityResponse> service = new EntityMessengerService<>(sink, entity, null);
     // now adding listener in provider so do it manually
     entity.addLifecycleListener(service);
     // Verify that the service was registered to be told when the entity activates.

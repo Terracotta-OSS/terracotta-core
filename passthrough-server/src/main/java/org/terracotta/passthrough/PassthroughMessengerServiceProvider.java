@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Supplier;
-
 import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.ServiceConfiguration;
 
@@ -30,11 +28,11 @@ import org.terracotta.entity.ServiceConfiguration;
 public class PassthroughMessengerServiceProvider implements PassthroughImplementationProvidedServiceProvider, Closeable {
   private final PassthroughTimerThread timerThread;
   private final PassthroughServerProcess passthroughServerProcess;
-  
+
   public PassthroughMessengerServiceProvider(PassthroughServerProcess passthroughServerProcess) {
     this.timerThread = new PassthroughTimerThread();
     this.passthroughServerProcess = passthroughServerProcess;
-    
+
     this.timerThread.setName("PassthroughTimerThread");
     this.timerThread.start();
   }
@@ -42,11 +40,7 @@ public class PassthroughMessengerServiceProvider implements PassthroughImplement
   @Override
   @SuppressWarnings({ "unchecked" })
   public <T> T getService(String entityClassName, String entityName, long consumerID, DeferredEntityContainer container, ServiceConfiguration<T> configuration) {
-    boolean chain = false;
-    if (configuration instanceof Supplier) {
-      chain = ((Supplier<Boolean>)configuration).get();
-    }
-    return configuration.getServiceType().cast(new PassthroughMessengerService(this.timerThread, this.passthroughServerProcess, container, chain, entityClassName, entityName));
+    return configuration.getServiceType().cast(new PassthroughMessengerService(this.passthroughServerProcess, container, entityClassName, entityName));
   }
 
   @Override

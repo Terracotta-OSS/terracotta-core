@@ -49,6 +49,8 @@ import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.services.CommunicatorServiceConfiguration;
+import com.tc.services.EntityMessengerService;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.services.MappedStateCollector;
 import com.tc.spi.Guardian;
@@ -67,7 +69,6 @@ import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.ExecutionStrategy;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.ReconnectRejectedException;
@@ -90,8 +91,12 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import org.terracotta.entity.ActiveInvokeChannel;
 import org.terracotta.entity.ActiveServerEntity.ReconnectHandler;
+import org.terracotta.entity.ClientCommunicator;
+import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.tripwire.Event;
 import org.terracotta.tripwire.TripwireFactory;
 
@@ -365,12 +370,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private void processInvokeRequest(final ServerEntityRequest request, ResultCapture response, MessagePayload message, int key) {
     Trace.activeTrace().log("ManagedEntityImpl.processInvokeRequest");
     if (isInActiveState) {
-      try {
-        key = this.concurrencyStrategy.concurrencyKey(message.decodeMessage(raw->this.codec.decodeMessage(raw)));
-      } catch (MessageCodecException codec) {
-        // use the universal key because this is going to result in error downstream
-        key = ConcurrencyStrategy.UNIVERSAL_KEY;
-      }
+      key = this.concurrencyStrategy.concurrencyKey(message.decodeMessage(raw->this.codec.decodeMessage(raw)));
     }
     int locked = key;
     if (response instanceof StatisticsCapture) {
@@ -453,62 +453,11 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   private byte[] encodeResponse(EntityResponse payload, ResultCapture capture) {
-    try {
-      return payload == null ? new byte[0] : codec.encodeResponse(payload);
-    } catch (MessageCodecException ce) {
-      capture.failure(ServerException.createMessageCodecException(id, ce));
-    }
-    return null;
+    return payload == null ? new byte[0] : codec.encodeResponse(payload);
   }
 
   private EntityMessage decodeMessage(MessagePayload payload, ResultCapture capture) {
-    try {
-      return payload.decodeMessage(r->codec.decodeMessage(r));
-    } catch (MessageCodecException ce) {
-      capture.failure(ServerException.createMessageCodecException(id, ce));
-    }
-    return null;
-  }
-
-  @Override
-  public ServerEntityRequest getCurrentRequestMessage() {
-    MessageChannel channel = GuardianContext.getCurrentMessageChannel();
-    if (channel == null) {
-      return null;
-    }
-    ThreadLocal<ServerEntityRequest> tl = (ThreadLocal<ServerEntityRequest>)channel.getAttachment(REQUEST_CONTEXT_KEY);
-    if (tl == null) {
-      return null;
-    }
-    return (ServerEntityRequest)tl.get();
-  }
-
-  private void setRequestContext(MessageChannel channel, ServerEntityRequest request) {
-    if (channel == null) {
-      return;
-    }
-
-    @SuppressWarnings("unchecked")
-    ThreadLocal<ServerEntityRequest> local = (ThreadLocal<ServerEntityRequest>) channel.getAttachment(REQUEST_CONTEXT_KEY);
-
-    if (local == null) {
-      channel.addAttachment(REQUEST_CONTEXT_KEY, new ThreadLocal<>(), false);
-      local = (ThreadLocal<ServerEntityRequest>) channel.getAttachment(REQUEST_CONTEXT_KEY);
-    }
-
-    local.set(request);
-  }
-
-  private void clearRequestContext(MessageChannel channel) {
-    if (channel == null) {
-      return;
-    }
-
-    @SuppressWarnings("unchecked")
-    ThreadLocal<ServerEntityRequest> local = (ThreadLocal<ServerEntityRequest>) channel.getAttachment(REQUEST_CONTEXT_KEY);
-    if (local != null) {
-      local.remove();
-    }
+    return payload.decodeMessage(r->codec.decodeMessage(r));
   }
 
   private void invokeLifecycleOperation(final ServerEntityRequest request, MessagePayload payload, ResultCapture resp) {
@@ -518,7 +467,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     logger.info("Client:" + request.getNodeID() + ":" + request.getClientInstance() + " Invoking lifecycle " + request.getAction() + " on " + getID() + ":" + this.fetchID);
     GuardianContext.setCurrentChannelID(request.getNodeID().getChannelID());
     MessageChannel channel = GuardianContext.getCurrentMessageChannel();
-    setRequestContext(channel, request);
+
     read.lock();
     try {
       switch (request.getAction()) {
@@ -592,7 +541,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     } finally {
       read.unlock();
       GuardianContext.clearCurrentChannelID(request.getNodeID().getChannelID());
-      clearRequestContext(channel);
       if (this.isInActiveState) {
         interop.finishLifecycle();
       }
@@ -626,7 +574,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
     GuardianContext.setCurrentChannelID(request.getNodeID().getChannelID());
     MessageChannel channel = GuardianContext.getCurrentMessageChannel();
-    setRequestContext(channel, request);
+//    setRequestContext(channel, request);
     Lock read = reconnectAccessLock.readLock();
     try {
       read.lock();
@@ -666,7 +614,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     } finally {
       read.unlock();
       GuardianContext.clearCurrentChannelID(request.getNodeID().getChannelID());
-      clearRequestContext(channel);
+//      clearRequestContext(channel);
     }
     trace.end();
   }
@@ -724,7 +672,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       this.passiveServerEntity.invokePassive(new InvokeContextImpl(message.getConcurrency()),
                                              message.decodeMessage(raw -> syncCodec.decode(message.getConcurrency(),
                                                                                               raw)));
-    } catch (EntityUserException | MessageCodecException e) {
+    } catch (EntityUserException e) {
       logger.error("Caught EntityUserException during sync invoke", e);
       throw new RuntimeException("Caught EntityUserException during sync invoke", e);
     }
@@ -933,20 +881,26 @@ public class ManagedEntityImpl implements ManagedEntity {
             if (response instanceof StatisticsCapture) {
               ((StatisticsCapture)response).beginInvoke();
             }
+
+            EntityMessengerService<EntityMessage, EntityResponse> messenger = new EntityMessengerService<>(messageSelf, this, wrappedRequest);
+
             Trace trace = Trace.activeTrace().subTrace("invokeActive");
             trace.start();
-            EntityResponse resp = this.activeServerEntity.invokeActive(
-              new ActiveInvokeContextImpl<>(clientDescriptor, concurrencyKey, oldestId, currentId,
-                  ()->retirementManager.holdMessage(message),
-                  (r)->response.message(decodeResponse(r)),
+            Supplier<ActiveInvokeChannel> channelCreate = () -> {
+              if (retirementManager.isMessageRunning(message)) {
+                retirementManager.holdMessage(message);
+                return new ActiveInvokeChannelImpl<>((r)->response.message(decodeResponse(r)),
                   (e)->response.failure(convertException(getID(), e)),
-                  ()->{
-                    // returns true of the message has been completed
-                    // and held count is zero so the message should be retired
-                    if (retirementManager.releaseMessage(message)) {
-                      retirementManager.retireMessage(message);
-                    }
-                  }
+                  ()->retirementManager.releaseMessage(message)
+                );
+              } else {
+                return null;
+              }
+            };
+            EntityResponse resp = this.activeServerEntity.invokeActive(
+              new ActiveInvokeContextImpl<>(message, clientDescriptor, concurrencyKey, oldestId, currentId,
+                  channelCreate,
+                  messenger
               ), message);
             byte[] er = encodeResponse(resp, response);
             trace.end();
@@ -1012,11 +966,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   private byte[] decodeResponse(EntityResponse response) {
-    try {
-      return codec.encodeResponse(response);
-    } catch (MessageCodecException ce) {
-      throw new RuntimeException(ce);
-    }
+    return codec.encodeResponse(response);
   }
 
   @Override
@@ -1066,7 +1016,18 @@ public class ManagedEntityImpl implements ManagedEntity {
             if (handler == null) {
               throw new ReconnectRejectedException("no reconnect handler registered");
             } else {
-              handler.handleReconnect(descriptor, extendedData);
+              ClientCommunicator client = registry.getService(new CommunicatorServiceConfiguration());
+              handler.handleReconnect(new ActiveServerEntity.ReconnectChannel() {
+                @Override
+                public ClientDescriptor getClientDescriptor() {
+                  return descriptor;
+                }
+
+                @Override
+                public void sendResponse(EntityResponse responseMessage) {
+                  client.sendNoResponse(descriptor, responseMessage);
+                }
+              }, extendedData);
             }
           } catch (ReconnectRejectedException rejected) {
             Assert.assertTrue(clientEntityStateManager.removeReference(descriptor));
@@ -1369,12 +1330,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     private void start() {
       if (concurrency == ConcurrencyStrategy.MANAGEMENT_KEY) {
         if (logger.isDebugEnabled()) {
-          try {
-            if (request.getAction() == ServerEntityAction.INVOKE_ACTION) {
-              payload.decodeMessage(raw->codec.decodeMessage(raw));
-            }
-          } catch (MessageCodecException codec) {
-
+          if (request.getAction() == ServerEntityAction.INVOKE_ACTION) {
+            payload.decodeMessage(raw->codec.decodeMessage(raw));
           }
           logger.debug("deferring actions in {} based on {} as a {}", getID(), payload.getDebugId(), request.getAction());
         }
@@ -1396,13 +1353,9 @@ public class ManagedEntityImpl implements ManagedEntity {
           break;
       }
       if (isActive() && request.getAction() == ServerEntityAction.INVOKE_ACTION) {
-        try {
-          ExecutionStrategy.Location loc = executionStrategy.getExecutionLocation(payload.decodeMessage(raw->codec.decodeMessage(raw)));
-          if (loc != ExecutionStrategy.Location.IGNORE) {
-            replicate = loc.runOnPassive();
-          }
-        } catch (MessageCodecException codec) {
-          replicate = false;
+        ExecutionStrategy.Location loc = executionStrategy.getExecutionLocation(payload.decodeMessage(raw->codec.decodeMessage(raw)));
+        if (loc != ExecutionStrategy.Location.IGNORE) {
+          replicate = loc.runOnPassive();
         }
       }
       executor.scheduleRequest(interop.isSyncing(), id, version, fetchID, request, payload, this, replicate, concurrency);
@@ -1559,15 +1512,11 @@ public class ManagedEntityImpl implements ManagedEntity {
 //  TODO:  what should be done about exception handling?
     public void synchronizeToPassive(EntityMessage payload) {
       for (SessionID passive : passives) {
-        try {
           byte[] message = syncCodec.encode(concurrencyKey, payload);
           ActivePassiveAckWaiter waiter = executor.scheduleSync(SyncReplicationActivity.createPayloadMessage(id, version, fetchID,
                                              concurrencyKey, TCByteBufferFactory.wrap(message), ""), passive);
           //  wait for the passive to receive before sending the next
           waiter.waitForReceived();
-        } catch (MessageCodecException ce) {
-          throw new RuntimeException(ce);
-        }
       }
     }
 

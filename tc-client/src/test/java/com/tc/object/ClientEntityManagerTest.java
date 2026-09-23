@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvocationCallback;
 import org.terracotta.entity.InvocationCallback.Types;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
@@ -82,7 +81,7 @@ import com.tc.net.protocol.tcm.TCAction;
 public class ClientEntityManagerTest extends TestCase {
   private ClientMessageChannel channel;
   private ClientEntityManager manager;
-  
+
   private EntityID entityID;
   private ClientInstanceID instance;
   private EntityDescriptor descriptor;
@@ -93,23 +92,23 @@ public class ClientEntityManagerTest extends TestCase {
     this.channel = mock(ClientMessageChannel.class);
     when(this.channel.getProductID()).thenReturn(ProductID.STRIPE);
     this.manager = new ClientEntityManagerImpl(this.channel);
-    
+
     String entityClassName = "Class Name";
     String entityInstanceName = "Instance Name";
     this.entityID = new EntityID(entityClassName, entityInstanceName);
     this.instance = new ClientInstanceID(1);
     this.descriptor = EntityDescriptor.createDescriptorForInvoke(new FetchID(1), instance);
   }
- 
+
   public void testResponseSinkFlush() throws Exception {
-    
+
   }
 
   // Test that a simple lookup will succeed.
   public void testSimpleLookupSuccess() throws Exception {
     // We will create a runnable which will attempt to fetch the entity.
     TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
-    
+
     // Set the target for success.
     final byte[] resultObject = new byte[8];
     ByteBuffer.wrap(resultObject).putLong(1L);
@@ -119,16 +118,16 @@ public class ClientEntityManagerTest extends TestCase {
       public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, resultObject, resultException, true);
       }
-    });    
+    });
     // Now we can start the lookup thread.
     fetcher.start();
     // Join on the thread.
     fetcher.join();
-    
+
     // We expect that we found the entity.
     assertTrue(didFindEndpoint(fetcher));
   }
-  
+
   // Test to make sure we can still receive items without error after close, needed due to shutdown sequence
   public void testReceiveAfterClose() throws Exception {
     TransactionID tid = new TransactionID(1L);
@@ -138,13 +137,13 @@ public class ClientEntityManagerTest extends TestCase {
     manager.received(tid);
     manager.retired(tid);
     // nothing should throw exception
-  }  
+  }
 
   // Test that a simple lookup can fail.
   public void testSimpleLookupFailure() throws Exception {
     // We will create a runnable which will attempt to fetch the entity.
     TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
-    
+
     // Set the target for failure.
     final byte[] resultObject = null;
     final EntityException resultException = new EntityNotFoundException(null, null);
@@ -153,12 +152,12 @@ public class ClientEntityManagerTest extends TestCase {
       public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, resultObject, resultException, true);
       }
-    });       
+    });
     // Now we can start the lookup thread.
     fetcher.start();
     // Join on the thread.
     fetcher.join();
-    
+
     // We expect that we couldn't find the entity.
     assertFalse(didFindEndpoint(fetcher));
   }
@@ -171,10 +170,10 @@ public class ClientEntityManagerTest extends TestCase {
       public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, null, resultException, true);
       }
-    });    
+    });
     // We will create a runnable which will attempt to fetch the entity.
     TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
-    
+
     // Pause the manager before we start anything.
     this.manager.pause();
     // Now we can start the lookup thread as we expect it to stall on the paused state.
@@ -187,16 +186,16 @@ public class ClientEntityManagerTest extends TestCase {
     this.manager.unpause();
     // Join on the thread.
     fetcher.join();
-    
+
     // We expect that we couldn't find the entity.
     assertFalse(didFindEndpoint(fetcher));
   }
-  
+
   // Test fetch+release on success.
   public void testFetchReleaseOnSuccess() throws Exception {
     // We will create a runnable which will attempt to fetch the entity.
     TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
-    
+
     // Set the target for success.
     final byte[] resultObject = new byte[8];
     ByteBuffer.wrap(resultObject).putLong(1L);
@@ -206,12 +205,12 @@ public class ClientEntityManagerTest extends TestCase {
       public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, resultObject, resultException, true);
       }
-    });       
+    });
     // Now we can start the lookup thread.
     fetcher.start();
     // Join on the thread.
     fetcher.join();
-    
+
     // We expect that we found the entity.
     assertTrue(didFindEndpoint(fetcher));
   }
@@ -220,7 +219,7 @@ public class ClientEntityManagerTest extends TestCase {
   public void testFetchReleaseOnFailure() throws Exception {
     // We will create a runnable which will attempt to fetch the entity.
     TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
-    
+
     // Set the target for failure.
     final byte[] resultObject = null;
     final EntityException resultException = new EntityNotFoundException(null, null);
@@ -229,15 +228,15 @@ public class ClientEntityManagerTest extends TestCase {
       public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, resultObject, resultException, true);
       }
-    });       
+    });
     // Now we can start the lookup thread.
     fetcher.start();
     // Join on the thread.
     fetcher.join();
-    
+
     // We expect that we couldn't find the entity.
     assertFalse(didFindEndpoint(fetcher));
-    
+
     // Now, release it and expect to see the exception thrown, directly (since we are accessing the manager, directly).
     boolean didRelease = false;
     try {
@@ -252,7 +251,7 @@ public class ClientEntityManagerTest extends TestCase {
   public void testFetchandAsyncRelease() throws Exception {
     // We will create a runnable which will attempt to fetch the entity.
     TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
-    
+
     // Set the target for success.
     final byte[] resultObject = new byte[8];
     ByteBuffer.wrap(resultObject).putLong(1L);
@@ -262,18 +261,18 @@ public class ClientEntityManagerTest extends TestCase {
       public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, resultObject, resultException, true);
       }
-    });   
+    });
     // Now we can start the lookup thread.
     fetcher.start();
     // Join on the thread.
     fetcher.join();
-    
+
     try {
       EntityClientEndpoint endpoint = fetcher.getResult();
     } catch (EntityNotFoundException not) {
       Assert.fail();
     }
-    
+
     // Now, release it and expect to see the exception thrown, directly (since we are accessing the manager, directly).
     boolean didRelease = false;
     try {
@@ -285,12 +284,12 @@ public class ClientEntityManagerTest extends TestCase {
     }
     assertTrue(didRelease);
   }
-  
-  
+
+
   public void testShutdownCausesReleaseException() throws Exception {
     // We will create a runnable which will attempt to fetch the entity.
     TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
-    
+
     // Set the target for success.
     final byte[] resultObject = new byte[8];
     ByteBuffer.wrap(resultObject).putLong(1L);
@@ -300,18 +299,18 @@ public class ClientEntityManagerTest extends TestCase {
       public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, resultObject, resultException, true);
       }
-    });   
+    });
     // Now we can start the lookup thread.
     fetcher.start();
     // Join on the thread.
     fetcher.join();
-    
+
     try {
       EntityClientEndpoint endpoint = fetcher.getResult();
     } catch (EntityNotFoundException not) {
       Assert.fail();
     }
-    
+
     // Now, release it and expect to see the exception thrown, directly (since we are accessing the manager, directly).
     boolean didRelease;
     this.manager.shutdown();
@@ -325,7 +324,7 @@ public class ClientEntityManagerTest extends TestCase {
     }
     assertTrue(didRelease);
   }
-  
+
   // That that we can shut down while in a paused state without locking up.
   public void testShutdownWhilePaused() throws Exception {
     // We will create a runnable which will attempt to fetch the entity (and we will get this stuck in "WAITING" on pause).
@@ -347,12 +346,12 @@ public class ClientEntityManagerTest extends TestCase {
     while (fetcher.isAlive() && fetcher.getState() != Thread.State.WAITING) {
       ThreadUtil.reallySleep(1000);
     }
-    
+
     // Now, shut down the manager.
     this.manager.shutdown();
     // Join on the waiter thread since the shutdown should have released it to fail in the expected way.
     fetcher.join();
-    
+
     // We are expecting a TCNotRunningException.
     try {
       fetcher.getResult();
@@ -479,7 +478,7 @@ public class ClientEntityManagerTest extends TestCase {
       public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, resultObject, resultException, true);
       }
-    });       
+    });
     TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
     fetcher.interruptAtStart();
     fetcher.start();
@@ -505,7 +504,7 @@ public class ClientEntityManagerTest extends TestCase {
         return new TestRequestBatchMessage(manager, resultObject, resultException, true);
       }
     });
-    
+
     TestFetcher fetcher1 = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
     TestFetcher fetcher2 = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
     fetcher1.start();
@@ -535,7 +534,7 @@ public class ClientEntityManagerTest extends TestCase {
       // expected assertion
     }
   }
-  
+
   @Test
   public void testSingleInvoke() throws Exception {
     byte[] resultObject = new byte[0];
@@ -591,7 +590,7 @@ public class ClientEntityManagerTest extends TestCase {
       assertThat(System.currentTimeMillis() - start, Matchers.greaterThanOrEqualTo(2000L));
       //  expected
     }
-  }  
+  }
 
   @Test
   public void testCreate() throws Exception {
@@ -628,7 +627,7 @@ public class ClientEntityManagerTest extends TestCase {
     private final MessageCodec codec;
     private EntityClientEndpoint<EntityMessage, EntityResponse> result;
     private Exception exception;
-    
+
     public TestFetcher(ClientEntityManager manager, EntityID entity, long version, ClientInstanceID instance) {
       this(manager, entity, version, instance, mock(MessageCodec.class));
     }
@@ -661,21 +660,21 @@ public class ClientEntityManagerTest extends TestCase {
       }
       return this.result;
     }
-    
+
     public void interruptAtStart() {
       interrupt = true;
     }
-    
+
     public void close() {
       result.close();
     }
-    
+
     public Future<Void> release() {
       return result.release();
     }
   }
-  
-  
+
+
   private static class TestRequestBatchMessage implements NetworkVoltronEntityMessage {
     private final ClientEntityManager clientEntityManager;
     private final byte[] resultObject;
@@ -687,7 +686,7 @@ public class ClientEntityManagerTest extends TestCase {
     private TCByteBuffer extendedData;
     private boolean requiresReplication;
     private Type type;
-    
+
     public TestRequestBatchMessage(ClientEntityManager clientEntityManager, byte[] resultObject, EntityException resultException, boolean autoComplete) {
       this.clientEntityManager = clientEntityManager;
       this.resultObject = resultObject;
@@ -730,7 +729,7 @@ public class ClientEntityManagerTest extends TestCase {
     public boolean doesRequestRetired() {
       return false;
     }
-    
+
     @Override
     public TCMessageType getMessageType() {
       throw new UnsupportedOperationException();
@@ -802,7 +801,7 @@ public class ClientEntityManagerTest extends TestCase {
       throw new UnsupportedOperationException();
     }
     @Override
-    public void setContents(ClientID clientID, TransactionID transactionID, EntityID eid, EntityDescriptor entityDescriptor, 
+    public void setContents(ClientID clientID, TransactionID transactionID, EntityID eid, EntityDescriptor entityDescriptor,
             Type type, boolean requiresReplication, TCByteBuffer extendedData, TransactionID oldestTransactionPending, Set<Acks> acks) {
       this.transactionID = transactionID;
       Assert.assertNotNull(eid);
@@ -823,9 +822,9 @@ public class ClientEntityManagerTest extends TestCase {
       throw new UnsupportedOperationException();
     }
   }
-  
+
   private static class FakeSink implements Sink<Object> {
-    
+
     private final EventHandler<Object> handle;
 
     public FakeSink(EventHandler<Object> handle) {
@@ -845,19 +844,19 @@ public class ClientEntityManagerTest extends TestCase {
 
   static class ByteArrayMessageCodec implements MessageCodec {
     @Override
-    public byte[] encodeMessage(EntityMessage message) throws MessageCodecException {
+    public byte[] encodeMessage(EntityMessage message) {
       return ((ByteArrayEntityMessage) message).getMessage();
     }
     @Override
-    public EntityMessage decodeMessage(byte[] payload) throws MessageCodecException {
+    public EntityMessage decodeMessage(byte[] payload) {
       return new ByteArrayEntityMessage(payload);
     }
     @Override
-    public byte[] encodeResponse(EntityResponse response) throws MessageCodecException {
+    public byte[] encodeResponse(EntityResponse response) {
       return ((ByteArrayEntityResponse) response).getResponse();
     }
     @Override
-    public EntityResponse decodeResponse(byte[] payload) throws MessageCodecException {
+    public EntityResponse decodeResponse(byte[] payload) {
       return new ByteArrayEntityResponse(payload);
     }
   }

@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.terracotta.entity.InvocationCallback;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 
 
 /**
@@ -53,7 +52,7 @@ public class PassthroughInvocation<M extends EntityMessage, R extends EntityResp
     final PassthroughMessage message;
     try {
       message = PassthroughMessageCodec.createInvokeMessage(this.entityClassName, this.entityName, this.clientInstanceID, messageCodec.encodeMessage(this.request), true);
-    } catch (MessageCodecException e) {
+    } catch (Exception e) {
       callback.failure(e);
       callback.complete();
       callback.retired();
@@ -76,7 +75,7 @@ public class PassthroughInvocation<M extends EntityMessage, R extends EntityResp
       public void result(byte[] response) {
         try {
           callback.result(messageCodec.decodeResponse(response));
-        } catch (MessageCodecException e) {
+        } catch (Exception e) {
           callback.failure(e);
         }
       }

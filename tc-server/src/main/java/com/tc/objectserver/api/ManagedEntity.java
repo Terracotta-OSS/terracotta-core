@@ -101,13 +101,6 @@ public interface ManagedEntity {
   public RetirementManager getRetirementManager();
 
   /**
-   *
-   * @return the current active request message
-   *
-   */
-  public ServerEntityRequest getCurrentRequestMessage();
-
-  /**
    * Called in cases where the entities need to be sorted, for example.
    *
    * @return The unique ID associated with the receiver.

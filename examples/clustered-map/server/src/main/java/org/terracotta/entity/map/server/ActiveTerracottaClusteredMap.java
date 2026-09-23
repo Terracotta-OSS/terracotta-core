@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,6 +47,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.terracotta.entity.ActiveServerMessenger;
+import org.terracotta.entity.map.common.PutMultipleOperation;
 
 
 public class ActiveTerracottaClusteredMap implements ActiveServerEntity<MapOperation, MapResponse>  {
@@ -60,14 +62,14 @@ public class ActiveTerracottaClusteredMap implements ActiveServerEntity<MapOpera
     this.root = root;
     this.map = root.computeIfAbsent(name, v->new CompoundMap<>(concurrency));
   }
-  
+
   @Override
   public void connected(ClientDescriptor clientDescriptor) {
   }
 
   @Override
   public ActiveServerEntity.ReconnectHandler startReconnect() {
-    return (ClientDescriptor clientDescriptor, byte[] extendedReconnectData)->{
+    return (channel, extendedReconnectData)->{
     // Do nothing.
     };
   }
@@ -79,7 +81,7 @@ public class ActiveTerracottaClusteredMap implements ActiveServerEntity<MapOpera
   @Override
   public MapResponse invokeActive(ActiveInvokeContext<MapResponse> context, MapOperation input) {
     MapResponse response;
-    
+
     switch (input.operationType()) {
       case PUT: {
         PutOperation putOperation = (PutOperation) input;
@@ -165,6 +167,14 @@ public class ActiveTerracottaClusteredMap implements ActiveServerEntity<MapOpera
       case CONDITIONAL_REPLACE: {
         ConditionalReplaceOperation operation = (ConditionalReplaceOperation) input;
         response = new BooleanResponse(map.replace(operation.getKey(), operation.getOldValue(), operation.getNewValue()));
+        break;
+      }
+      case PUT_MULTIPLE: {
+        try (ActiveServerMessenger<MapResponse> msg = context.createServerMessenger()) {
+          Map<Object, Object> newValues = (Map<Object, Object>) ((PutMultipleOperation)input).getMap();
+          msg.sendMessage(new PutAllOperation(newValues));
+        }
+        response = new NullResponse();
         break;
       }
       default:

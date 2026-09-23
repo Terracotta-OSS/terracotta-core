@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ import java.util.concurrent.Future;
 import org.terracotta.entity.InvocationCallback;
 
 import static org.terracotta.entity.map.ValueCodecFactory.getCodecForClass;
+import org.terracotta.entity.map.common.PutMultipleOperation;
 
 @SuppressWarnings("unchecked")
 public class TerracottaClusteredMap<K, V> implements ConcurrentClusteredMap<K, V> {
@@ -128,7 +129,7 @@ public class TerracottaClusteredMap<K, V> implements ConcurrentClusteredMap<K, V
     MapValueResponse response = (MapValueResponse) invokeWithReturn(new PutOperation(keyValueCodec.encode(key), valueValueCodec.encode(value)));
     return valueValueCodec.decode(response.getValue());
   }
-  
+
   @Override
   public Future<?> insert(K key, V value) {
     return fireAndForget(new PutOperation(keyValueCodec.encode(key), valueValueCodec.encode(value)));
@@ -142,7 +143,7 @@ public class TerracottaClusteredMap<K, V> implements ConcurrentClusteredMap<K, V
     MapValueResponse mapValueResponse = (MapValueResponse) invokeWithReturn(new RemoveOperation(keyValueCodec.encode((K) key)));
     return valueValueCodec.decode(mapValueResponse.getValue());
   }
-  
+
   private Future<?> fireAndForget(MapOperation operation) {
     try {
       return endpoint.message(operation)
@@ -169,6 +170,15 @@ public class TerracottaClusteredMap<K, V> implements ConcurrentClusteredMap<K, V
       input.put(keyValueCodec.encode(entry.getKey()), valueValueCodec.encode(entry.getValue()));
     }
     invokeWithReturn(new PutAllOperation(input));
+  }
+
+  @Override
+  public void putMultiple(Map<? extends K, ? extends V> m) {
+    HashMap<Object, Object> input = new HashMap<Object, Object>();
+    for (Entry<? extends K, ? extends V> entry : m.entrySet()) {
+      input.put(keyValueCodec.encode(entry.getKey()), valueValueCodec.encode(entry.getValue()));
+    }
+    invokeWithReturn(new PutMultipleOperation(input));
   }
 
   @Override
