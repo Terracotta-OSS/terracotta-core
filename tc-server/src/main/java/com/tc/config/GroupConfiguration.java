@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public class GroupConfiguration {
   public Node getCurrentNode() {
     return nodes.get(serverName);
   }
-  
+
   private static Node configToNode(ServerConfiguration sc) {
     String bindAddress = sc.getTsaPort().getHostName();
       if (TCSocketAddress.isWildcardAddress(bindAddress)) {
@@ -79,7 +79,7 @@ public class GroupConfiguration {
                            sc.getTsaPort().getPort(),
                            sc.getGroupPort().getPort());
   }
-  
+
   private static Node addressToNode(String host, int port, int grpPort) {
     return new Node(host, port, grpPort);
   }

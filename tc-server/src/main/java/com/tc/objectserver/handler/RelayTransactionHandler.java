@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,11 +28,13 @@ import com.tc.objectserver.entity.MessagePayload;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.l2.msg.SyncReplicationActivity;
+import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
+import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -48,20 +50,39 @@ public class RelayTransactionHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(RelayTransactionHandler.class);
 
   private final GroupManager<AbstractGroupMessage> groupManager;
+  private final GroupEventsListener listener;
   private final PassiveAckSender ackSender;
   private final Stage<Runnable> relaySender;
   private StateManager stateMgr;
   private ServerID endTarget = ServerID.NULL_ID;
+  private ServerID activeID = ServerID.NULL_ID;
+  private long generationOffset = 1L;
   private volatile GroupMessageBatchContext<RelayMessage, ReplicationMessage> forward;
-  
+
   private final SimpleRingBuffer<ReplicationMessage> history = new SimpleRingBuffer<>(5000);
-  
+
   public RelayTransactionHandler(Stage<Runnable> sendToActive, GroupManager<AbstractGroupMessage> groupManager) {
     this.groupManager = groupManager;
     this.ackSender = new PassiveAckSender(groupManager, m->true, sendToActive.getSink());
     this.relaySender = sendToActive;
+    this.listener = new GroupEventsListener() {
+      @Override
+      public void nodeJoined(NodeID nodeID) {
+
+      }
+
+      @Override
+      public void nodeLeft(NodeID nodeID) {
+        if (nodeID.equals(endTarget)) {
+          clearForward();
+        } else if (nodeID.equals(activeID)) {
+          clearHistory();
+        }
+      }
+    };
+    this.groupManager.registerForGroupEvents(this.listener);
   }
-  
+
   private static RelayMessage createRelayMessage(ReplicationMessage first) {
     RelayMessage msg = RelayMessage.createRelayBatch();
     msg.addToBatch(first);
@@ -84,32 +105,40 @@ public class RelayTransactionHandler {
     protected void initialize(ConfigurationContext context) {
       ServerConfigurationContext scxt = (ServerConfigurationContext)context;
       stateMgr = scxt.getL2Coordinator().getStateManager();
-    } 
+    }
+
+    @Override
+    public void destroy() {
+      groupManager.unregisterForGroupEvents(listener);
+    }
   };
-  
+
   public boolean resumeRelayConsumer(ServerID node, long lastSeen) {
     NodeID active = stateMgr.getActiveNodeID();
     TCLogging.getConsoleLogger().info("remote node connected for resumption of duplication {}", node);
-    if (!active.isNull() && endTarget.equals(node)) {
-      return replayHistory(new GroupMessageBatchContext<>(RelayTransactionHandler::createRelayMessage, groupManager, node, Integer.MAX_VALUE, 1, n->sendToRelayTarget()), lastSeen);
+    if (stateMgr.getCurrentMode() == ServerMode.RELAY_CONNECTED && !active.isNull() && endTarget.equals(node)) {
+      return replayHistory(new GroupMessageBatchContext<>(RelayTransactionHandler::createRelayMessage, groupManager, node, Integer.MAX_VALUE, 1, n->sendToRelayTarget(getBatch())), lastSeen);
     } else {
       return false;
     }
   }
-  
+
   public boolean registerRelayConsumer(ServerID node) {
     NodeID active = stateMgr.getActiveNodeID();
     TCLogging.getConsoleLogger().info("remote node connected for duplication {}", node);
-    if (!active.isNull() && endTarget.isNull()) {
-      ackSender.requestPassiveSync(stateMgr.getActiveNodeID());
+    if (stateMgr.getCurrentMode() == ServerMode.RELAY && !active.isNull() && endTarget.isNull()) {
+      boolean replayed = replayHistory(new GroupMessageBatchContext<>(RelayTransactionHandler::createRelayMessage, groupManager, node, Integer.MAX_VALUE, 1, n->sendToRelayTarget(getBatch())), 0L);
+      Assert.assertFalse(replayed);
+      ackSender.requestPassiveSync(active);
       endTarget = node;
-      this.forward = new GroupMessageBatchContext<>(RelayTransactionHandler::createRelayMessage, groupManager, node, Integer.MAX_VALUE, 1, n->sendToRelayTarget());
+      // starting fresh
+      stateMgr.moveToRelayConnectedMode();
       return true;
     } else {
       return false;
     }
   }
-  
+
   public EventHandler<ReplicationMessage> getEventHandler() {
     return eventHorizon;
   }
@@ -126,36 +155,59 @@ public class RelayTransactionHandler {
       ackSender.acknowledge(activeSender, activity, ReplicationResultCode.NONE);
     }
     addToHistory(rep);
-    
-    if (this.forward.batchMessage(rep)) {
-      sendToRelayTarget();
+
+    GroupMessageBatchContext<RelayMessage, ReplicationMessage> batch = getBatch();
+    if (batch != null) {
+      if (batch.batchMessage(rep)) {
+        sendToRelayTarget(batch);
+      }
     }
   }
-  
+
   private synchronized void addToHistory(ReplicationMessage msg) {
     history.put(msg);
+    msg.setSequenceID(generationOffset + msg.getSequenceID());
   }
-  
+
   private synchronized boolean replayHistory(GroupMessageBatchContext<RelayMessage, ReplicationMessage> batcher, long lastSeen) {
     boolean valid = history.stream().filter(m->m.getSequenceID() == lastSeen).findFirst().isPresent();
-    if (valid) {
-      history.stream().filter(m->m.getSequenceID() > lastSeen).peek(m->System.out.println("replaying:" + m)).forEach(batcher::batchMessage);
-      sendToRelayTarget();
-      this.forward = batcher;
-      return true;
-    } else {
-      return false;
+    if (lastSeen == 0) {
+      Assert.assertTrue(history.isEmpty());
     }
+    if (valid) {
+      history.stream().filter(m->m.getSequenceID() > lastSeen).forEach(batcher::batchMessage);
+      sendToRelayTarget(batcher);
+    }
+    this.forward = batcher;
+    this.activeID = (ServerID)stateMgr.getActiveNodeID();
+    return valid;
   }
-  
-  private void sendToRelayTarget() {
+
+  private synchronized void clearHistory() {
+    this.activeID = null;
+    generationOffset = this.history.stream().mapToLong(ReplicationMessage::getSequenceID).max().orElse(1L);
+    this.history.clear();
+  }
+
+  private synchronized void clearForward() {
+    this.forward = null;
+  }
+
+  private synchronized GroupMessageBatchContext<RelayMessage, ReplicationMessage> getBatch() {
+    return this.forward;
+  }
+
+  private void sendToRelayTarget(GroupMessageBatchContext<RelayMessage, ReplicationMessage> batch) {
     // If we created this message, enqueue the decision to flush it (the other case where we may flush is network
     //  available).
     this.relaySender.getSink().addToSink(() -> {
       try {
-        this.forward.flushBatch();
+        if (batch != null) {
+          batch.flushBatch();
+        }
       } catch (GroupException group) {
-       
+        LOGGER.info("error sending relay message", group);
+        clearForward();
       }
     });
   }

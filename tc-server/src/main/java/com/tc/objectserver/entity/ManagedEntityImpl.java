@@ -752,7 +752,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   public boolean canDelete() { return this.canDelete; }
 
   private void destroyEntity(ServerEntityRequest request, ResultCapture response) throws ConfigurationException {
-    CommonServerEntity<EntityMessage, EntityResponse> commonServerEntity = this.isInActiveState
+    CommonServerEntity<EntityMessage, EntityResponse> commonServerEntity = isActive()
         ? activeServerEntity
         : passiveServerEntity;
     EntityDescriptor entityDescriptor = EntityDescriptor.createDescriptorForLifecycle(id, version);
@@ -764,7 +764,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         Assert.assertTrue(clientReferenceCount < 0);
         response.failure(ServerException.createPermanentException(id));
       } else if (clientReferenceCount == 0 && !retirementManager.hasServerInflightMessages()) {
-        Assert.assertTrue(!isInActiveState || clientEntityStateManager.verifyNoEntityReferences(this.fetchID));
+        Assert.assertTrue(!isActive() || clientEntityStateManager.verifyNoEntityReferences(this.fetchID));
         Assert.assertFalse(this.isDestroyed);
         try {
           commonServerEntity.destroy();
@@ -775,7 +775,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         }
         this.retirementManager.entityWasDestroyed();
         notifyEntityDestroyed();
-        if (this.isInActiveState) {
+        if (isActive()) {
           this.activeServerEntity = null;
         } else {
           this.passiveServerEntity = null;
@@ -784,7 +784,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         eventCollector.entityWasDestroyed(id, consumerID);
         response.complete();
       } else {
-        if (isInActiveState) {
+        if (isActive()) {
           Assert.assertTrue("retirementManager:" + retirementManager.hasServerInflightMessages() +
                   " references:" + clientEntityStateManager.verifyNoEntityReferences(this.fetchID),
                   clientReferenceCount > 0 || retirementManager.hasServerInflightMessages() || !clientEntityStateManager.verifyNoEntityReferences(this.fetchID));
@@ -1031,7 +1031,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       // The FETCH can only come directly from a client so we can down-cast.
       ClientID clientID = getEntityRequest.getNodeID();
       ClientDescriptorImpl descriptor = new ClientDescriptorImpl(clientID, getEntityRequest.getClientInstance());
-      boolean added = clientEntityStateManager.addReference(descriptor, this.fetchID);
+      boolean added = isActive() ? clientEntityStateManager.addReference(descriptor, this.fetchID) : true;
 
       if (canDelete) {
         if (added) {
@@ -1043,7 +1043,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         }
       }
 
-      if (this.isInActiveState) {
+      if (isActive()) {
         if (!added) {
           //  Exception the client.  Don't crash the server
           response.failure(ServerException.createReferencedException(id));
@@ -1104,7 +1104,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     } else {
       ClientID clientID = request.getNodeID();
       ClientDescriptorImpl clientInstance = new ClientDescriptorImpl(clientID, request.getClientInstance());
-      boolean removed = clientEntityStateManager.removeReference(clientInstance);
+      boolean removed = isActive() ? clientEntityStateManager.removeReference(clientInstance) : true;
 
       if (canDelete) {
         if (removed) {
@@ -1116,7 +1116,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         }
       }
 
-      if (this.isInActiveState) {
+      if (isActive()) {
         if (!removed) {
           //  Exception the client.  don't crash the server
           response.failure(ServerException.createNotFoundException(id));

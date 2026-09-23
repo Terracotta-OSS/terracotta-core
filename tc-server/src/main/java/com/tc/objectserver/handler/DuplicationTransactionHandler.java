@@ -43,7 +43,6 @@ import com.tc.util.Assert;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
@@ -76,13 +75,12 @@ public class DuplicationTransactionHandler {
                 groupManager.sendTo(nodeID, RelayMessage.createStartSync());
                 break;
               case REPLICA:
+                TCLogging.getConsoleLogger().info("requesting duplication resume from: {}", currentSequence);
                 groupManager.sendTo(nodeID, RelayMessage.createResumeMessage(currentSequence));
                 break;
               default:
                 throw new ZapDirtyDbServerNodeException("invalid state for duplication " + stateMgr.getCurrentMode());
             }
-          } else {
-            throw new ZapDirtyDbServerNodeException("resyncing duplicate");
           }
         } catch (GroupException ge) {
 
@@ -91,9 +89,10 @@ public class DuplicationTransactionHandler {
 
       @Override
       public void nodeLeft(NodeID nodeID) {
-
+          TCLogging.getConsoleLogger().info("replica connection is down: {}", nodeID);
       }
     };
+    this.groupManager.registerForGroupEvents(listener);
   }
 
   private final EventHandler<RelayMessage> eventHandler = new AbstractEventHandler<RelayMessage>() {
@@ -122,7 +121,6 @@ public class DuplicationTransactionHandler {
     protected void initialize(ConfigurationContext context) {
       super.initialize(context);
       sendToNext = context.getStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class);
-      groupManager.registerForGroupEvents(listener);
     }
 
     @Override
@@ -146,7 +144,11 @@ public class DuplicationTransactionHandler {
             waitFors.put(a.getActivityID(), new CompletableFuture<>());
           }
         }
-        currentSequence = Long.max(currentSequence, msg.getSequenceID());
+        if (currentSequence+1 != msg.getSequenceID()) {
+          throw new ZapDirtyDbServerNodeException("sequence mismatch occured current: " + currentSequence + " incoming: " + msg.getSequenceID());
+        } else {
+          currentSequence += 1;
+        }
         sendToNext.getSink().addToSink(msg);
 
         for (ActivityID a : waitFors.keySet()) {

@@ -33,6 +33,7 @@ import com.tc.async.api.EventHandler;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.StageController;
+import com.tc.exception.TCShutdownServerException;
 import com.tc.exception.ZapDirtyDbServerNodeException;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
@@ -355,8 +356,7 @@ public class StateManagerImpl implements StateManager {
     Enrollment verify = getVerificationEnrollment();
     setActiveNodeID(active);
     if (startState == ServerMode.RELAY) {
-      setActiveNodeID(active);
-      switchToState(ServerMode.RELAY, EnumSet.of(ServerMode.INITIAL, ServerMode.START, ServerMode.RELAY));
+      // relays are always passive ready
     } else {
       logger.info("moving to passive " + state + " " + src + " " + active);
       logger.info("winning = {}", winningEnrollment);
@@ -423,12 +423,17 @@ public class StateManagerImpl implements StateManager {
 
   @Override
   public void moveToRelayMode() {
-      switchToState(ServerMode.RELAY, EnumSet.of(ServerMode.INITIAL, ServerMode.RELAY));
+    switchToState(ServerMode.RELAY, EnumSet.of(ServerMode.INITIAL, ServerMode.RELAY, ServerMode.RELAY_CONNECTED));
+  }
+
+  @Override
+  public void moveToRelayConnectedMode() {
+    switchToState(ServerMode.RELAY_CONNECTED, EnumSet.of(ServerMode.RELAY));
   }
 
   @Override
   public void moveToReplicaMode() {
-      switchToState(ServerMode.REPLICA_START, EnumSet.of(ServerMode.INITIAL, ServerMode.RELAY));
+    switchToState(ServerMode.REPLICA_START, EnumSet.of(ServerMode.INITIAL));
   }
 
   @Override
@@ -621,7 +626,7 @@ public class StateManagerImpl implements StateManager {
         break;
       }
     }
-    peerWins |= winningEnrollment.wins(verify);
+    peerWins |= winningEnrollment.equals(verify) || winningEnrollment.wins(verify);
     logger.info("verifying election won results isActive:{} remote:{} local:{} remoteWins:{}", isActiveCoordinator(), winningEnrollment, verify, peerWins);
     return peerWins;
   }
@@ -665,17 +670,34 @@ public class StateManagerImpl implements StateManager {
     if (isActiveCoordinator()) {
       logger.info("split-brain detected");
     }
-    verifyActiveDeclarationAndRespond(clusterMsg);
+    ServerMode other = StateManager.convert(clusterMsg.getState());
+    if (other == ServerMode.REPLICA || other == ServerMode.REPLICA_START) {
+      consoleLogger.info("Replica designated in cluster.  No Election will be performed");
+      sendVerificationOKResponse(clusterMsg);
+      setActiveNodeID(clusterMsg.messageFrom());
+      throw new TCShutdownServerException("There is a REPLICA member of this stripe.  Shutting down.");
+    } else {
+      verifyActiveDeclarationAndRespond(clusterMsg);
+    }
   }
 
   private void verifyActiveDeclarationAndRespond(L2StateMessage clusterMsg) {
-    boolean verify = checkIfPeerWinsVerificationElection(clusterMsg) && !isActiveCoordinator() && getCurrentMode() != ServerMode.REPLICA;
-    boolean transition = verify && availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE);
+    ServerMode current = getCurrentMode();
+    if (current == ServerMode.REPLICA_START) {
+      sendVerificationNGResponse(clusterMsg);
+      throw new TCShutdownServerException("there is an active in the stripe, no replica is allowed on the stripe");
+    } else if (!isActiveCoordinator()) {
+      boolean transition = checkIfPeerWinsVerificationElection(clusterMsg)
+        && availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE);
 
-    if (transition) {
-      sendVerificationOKResponse(clusterMsg);
-      moveToPassiveReady(clusterMsg);
+      if (transition) {
+        sendVerificationOKResponse(clusterMsg);
+        moveToPassiveReady(clusterMsg);
+      } else {
+        sendVerificationNGResponse(clusterMsg);
+      }
     } else {
+      //  not in a state to accept an active
       sendVerificationNGResponse(clusterMsg);
     }
   }
@@ -688,6 +710,13 @@ public class StateManagerImpl implements StateManager {
       info("Forcing Abort Election for " + msg + " with " + abortMsg);
       L2StateMessage response = (L2StateMessage)groupManager.sendToAndWaitForResponse(msg.messageFrom(), abortMsg);
       validatePeerResponseToActiveDelaration(response);
+    } else if (getCurrentMode() == ServerMode.REPLICA || getCurrentMode() == ServerMode.REPLICA_START) {
+      // This is a server in the same stripe that should not be up
+      Enrollment verify = createVerificationEnrollment();
+      AbstractGroupMessage abortMsg = L2StateMessage.createAbortElectionMessage(msg, verify, state.getState());
+      info("Forcing Abort Election for " + msg + " with " + abortMsg);
+      L2StateMessage response = (L2StateMessage)groupManager.sendToAndWaitForResponse(msg.messageFrom(), abortMsg);
+      validatePeerResponseToReplicaDelaration(response);
     } else {
       if (!electionMgr.handleStartElectionRequest(msg, state.getState())) {
 //  another server started an election.  Unclear which server is now active, clear the active and run our own election
@@ -705,6 +734,19 @@ public class StateManagerImpl implements StateManager {
     AbstractGroupMessage msg = L2StateMessage.createElectionWonAlreadyMessage(verify, state.getState());
     L2StateMessage response = (L2StateMessage) groupManager.sendToAndWaitForResponse(nodeID, msg);
     validatePeerResponseToActiveDelaration(response);
+  }
+
+  private void validatePeerResponseToReplicaDelaration(L2StateMessage response) throws GroupException {
+    if (response != null) {
+      NodeID nodeID = response.messageFrom();
+      ServerMode peerState = StateManager.convert(response.getState());
+      if (response.getType() != L2StateMessage.RESULT_AGREED) {
+        String error = "Recd wrong response from : " + nodeID + " : msg = " + response + " while publishing Replica State";
+        logger.info(error);
+      } else {
+        // result agreed, do nothing
+      }
+    }
   }
 
   private void validatePeerResponseToActiveDelaration(L2StateMessage response) throws GroupException {
@@ -791,7 +833,7 @@ public class StateManagerImpl implements StateManager {
 
   private void sendVerificationNGResponse(L2StateMessage msg) {
     try {
-    Assert.assertTrue(msg.getType() != L2StateMessage.ELECTION_WON);
+      Assert.assertTrue(msg.getType() != L2StateMessage.ELECTION_WON);
       ServerMode sendState = state.isStartup() ? startState : state;
       groupManager.sendTo(msg.messageFrom(), L2StateMessage.createResultConflictMessage(msg, getVerificationEnrollment(), sendState.getState()));
     } catch (GroupException e) {
