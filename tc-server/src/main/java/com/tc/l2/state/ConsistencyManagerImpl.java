@@ -112,75 +112,79 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   }
 
   @Override
-  public boolean requestTransition(ServerMode mode, NodeID sourceNode, Topology topology, Transition newMode) throws IllegalStateException {
-    if (topology == null) {
-      topology = this.topologyManager.getTopology();
+  public boolean requestTransition(ServerMode mode, NodeID sourceNode, Topology newTopology, Transition newMode) throws IllegalStateException {
+    Supplier<Topology> topology;
+    if (newTopology == null) {
+      topology = this.topologyManager::getTopology;
+    } else {
+      topology = () -> newTopology;
     }
+
+    switch (newMode) {
+      case ADD_PASSIVE:
+        passives.add(sourceNode);
+        Assert.assertEquals(mode, ServerMode.ACTIVE);
+        //  adding a passive to an active is always OK
+        CONSOLE.info("Action:{} is always allowed", newMode);
+        return true;
+      case CONNECT_TO_ACTIVE:
+        endVoting(true, newMode, topology);
+        CONSOLE.info("Action:{} is always allowed", newMode);
+        return true;
+      case REMOVE_PASSIVE:
+        passives.remove(sourceNode);
+        Assert.assertEquals(mode, ServerMode.ACTIVE);
+
+    }
+
     if (this.topologyManager.isAvailability()) {
       // availability mode
       return true;
-    }
-
-    if (newMode == Transition.ADD_PASSIVE) {
-      passives.add(sourceNode);
-      Assert.assertEquals(mode, ServerMode.ACTIVE);
-      //  adding a passive to an active is always OK
-      CONSOLE.info("Action:{} is always allowed", newMode);
-      return true;
-    }
-    if (newMode == Transition.CONNECT_TO_ACTIVE) {
-      endVoting(true, newMode, topology);
-      CONSOLE.info("Action:{} is always allowed", newMode);
-      return true;
-    }
-    if (newMode == Transition.REMOVE_PASSIVE) {
-      passives.remove(sourceNode);
-      Assert.assertEquals(mode, ServerMode.ACTIVE);
-    }
-    if (!newMode.isStateTransition()) {
+    } else if (!newMode.isStateTransition()) {
       //  only reject a non-state transition if blocked on some other transition
       return !isBlocked();
-    }
-    boolean allow = false;
+    } else {
+      Topology electorate = topology.get();
+      // activate voting to lock the voting members and return the number of server votes
+      int serverVotes = activateVoting(mode, newMode, () -> electorate);
+      int peerServers = electorate.getServers().size() - 1;
 
-    // activate voting to lock the voting members and return the number of server votes
-    int serverVotes = activateVoting(mode, newMode, topology);
-    int peerServers = topology.getServers().size() - 1;
-
-    int threshold = voteThreshold(mode, peerServers);
-    if (serverVotes >= threshold || serverVotes == peerServers) {
-    // if the threshold is achieved with just servers or all the servers are visible, transition is granted
-      CONSOLE.info("Action:{} allowed because enough servers are connected", newMode);
-      endVoting(true, newMode, topology);
-      return true;
-    }
-    if (voter.overrideVoteReceived()) {
-      CONSOLE.info("Action:{} allowed because override received", newMode);
-      endVoting(true, newMode, topology);
-      return true;
-    }
-
-    long start = System.currentTimeMillis();
-    try {
-      if (voter.getRegisteredVoters() + serverVotes < threshold) {
-        CONSOLE.warn("Not enough registered voters.  Require override intervention or {} members of the stripe to be connected for action {}", peerServers + 1 > threshold ? threshold : "all", newMode);
-      } else while (!allow && System.currentTimeMillis() - start < ServerVoterManagerImpl.VOTEBEAT_TIMEOUT) {
-        try {
-          //  servers connected + votes received
-          if (serverVotes + voter.getVoteCount() < threshold) {
-            TimeUnit.MILLISECONDS.sleep(100);
-          } else {
-            allow = true;
-          }
-        } catch (InterruptedException ie) {
-          L2Utils.handleInterrupted(LOGGER, ie);
-        }
+      int threshold = voteThreshold(mode, peerServers);
+      if (serverVotes >= threshold || serverVotes == peerServers) {
+        // if the threshold is achieved with just servers or all the servers are visible, transition is granted
+        CONSOLE.info("Action:{} allowed because enough servers are connected", newMode);
+        endVoting(true, newMode, () -> electorate);
+        return true;
       }
-    } finally {
-      CONSOLE.info("Action:{} granted:{} vote tally servers:{} external:{} of total:{}", newMode, allow, serverVotes + 1, voter.getVoteCount(), peerServers + topologyManager.getExternalVoters() + 1);
-      endVoting(allow, newMode, topology);
+      if (voter.overrideVoteReceived()) {
+        CONSOLE.info("Action:{} allowed because override received", newMode);
+        endVoting(true, newMode, () -> electorate);
+        return true;
+      }
+
+      boolean allow = false;
+      long start = System.currentTimeMillis();
+      try {
+        if (voter.getRegisteredVoters() + serverVotes < threshold) {
+          CONSOLE.warn("Not enough registered voters.  Require override intervention or {} members of the stripe to be connected for action {}", peerServers + 1 > threshold ? threshold : "all", newMode);
+        } else while (!allow && System.currentTimeMillis() - start < ServerVoterManagerImpl.VOTEBEAT_TIMEOUT) {
+          try {
+            //  servers connected + votes received
+            if (serverVotes + voter.getVoteCount() < threshold) {
+              TimeUnit.MILLISECONDS.sleep(100);
+            } else {
+              allow = true;
+            }
+          } catch (InterruptedException ie) {
+            L2Utils.handleInterrupted(LOGGER, ie);
+          }
+        }
+      } finally {
+        CONSOLE.info("Action:{} granted:{} vote tally servers:{} external:{} of total:{}", newMode, allow, serverVotes + 1, voter.getVoteCount(), peerServers + topologyManager.getExternalVoters() + 1);
+        endVoting(allow, newMode, () -> electorate);
+      }
+      return allow;
     }
-    return allow;
   }
 
   @Override
@@ -210,7 +214,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     }
   }
 
-  private synchronized int activateVoting(ServerMode mode, Transition moveTo, Topology topology) {
+  private synchronized int activateVoting(ServerMode mode, Transition moveTo, Supplier<Topology> topology) {
     if (!activeVote) {
       blocked = true;
       blockedAt = System.currentTimeMillis();
@@ -227,7 +231,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     // on valid peers that are from the part of the stripe.  This is ok, as
     // the previous model was being extra cautious waiting for passive to
     // start the sync
-    return filterActivePeers(activePeers, topology).size();
+    return filterActivePeers(activePeers, topology.get()).size();
   }
 
   private void promotePeers(Set<NodeID> activePeers) {
@@ -240,13 +244,13 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   }
 
   @SuppressWarnings("fallthrough")
-  private synchronized void endVoting(boolean allowed, Transition moveTo, Topology topology) {
+  private synchronized void endVoting(boolean allowed, Transition moveTo, Supplier<Topology> topology) {
     Assert.assertTrue(moveTo.isStateTransition());
     if (activeVote) {
       if (allowed) {
         switch(moveTo) {
           case MOVE_TO_ACTIVE:
-            promotePeers(filterActivePeers(activePeers, topology));
+            promotePeers(filterActivePeers(activePeers, topology.get()));
             //  fallthrough is expected here
           case CONNECT_TO_ACTIVE:
             actions.remove(Transition.CONNECT_TO_ACTIVE);
