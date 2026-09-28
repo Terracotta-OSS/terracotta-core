@@ -16,8 +16,6 @@
  */
 package org.terracotta.passthrough;
 
-import java.io.DataInputStream;
-import java.io.IOException;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.function.Consumer;
@@ -134,24 +132,7 @@ public class PassThroughServerActiveInvokeContext<M extends EntityMessage, R ext
       public void accept(PassthroughMessage m) {
         if (result != null) {
           try {
-            R response = PassthroughMessageCodec.decodeRawMessage(new PassthroughMessageCodec.Decoder<R>() {
-              @Override
-              public R decode(PassthroughMessage.Type type, boolean shouldReplicate, long transactionID, long oldestTransactionID, DataInputStream input) throws IOException {
-                int len = input.read();
-                if (len >= 0) {
-                  byte[] raw = new byte[len];
-                  input.readFully(raw);
-                  switch (type) {
-                    case COMPLETE_FROM_SERVER:
-                      return codec.decodeResponse(raw);
-                    default:
-                      throw new AssertionError("bad message");
-                  }
-                } else {
-                  return null;
-                }
-              }
-            }, m.asSerializedBytes());
+            R response = PassthroughMessageCodec.decodeRawMessage(new ServerSentResponseDecoder<>(codec), m.asSerializedBytes());
             result.accept(() -> response);
           } catch (Throwable t) {
             result.accept((ActiveServerMessenger.Response<R>) () -> {
