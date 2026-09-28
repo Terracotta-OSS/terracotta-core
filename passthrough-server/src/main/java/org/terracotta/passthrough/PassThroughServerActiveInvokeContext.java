@@ -16,6 +16,8 @@
  */
 package org.terracotta.passthrough;
 
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.function.Consumer;
@@ -127,17 +129,37 @@ public class PassThroughServerActiveInvokeContext<M extends EntityMessage, R ext
   }
 
   private void sendServerMessage(EntityMessage message, Consumer<ActiveServerMessenger.Response<R>> result) {
-    process.sendMessageToActiveFromInsideActive(descriptor, message, makePassthroughMessage(message), m-> {
+    process.sendMessageToActiveFromInsideActive(descriptor, message, makePassthroughMessage(message), new Consumer<PassthroughMessage>() {
+      @Override
+      public void accept(PassthroughMessage m) {
         if (result != null) {
-          R response = codec.decodeResponse(m.asSerializedBytes());
-          result.accept(new ActiveServerMessenger.Response<>() {
-
-            @Override
-            public R getResponse() throws Exception {
-              return response;
-            }
-          });
+          try {
+            R response = PassthroughMessageCodec.decodeRawMessage(new PassthroughMessageCodec.Decoder<R>() {
+              @Override
+              public R decode(PassthroughMessage.Type type, boolean shouldReplicate, long transactionID, long oldestTransactionID, DataInputStream input) throws IOException {
+                int len = input.read();
+                if (len >= 0) {
+                  byte[] raw = new byte[len];
+                  input.readFully(raw);
+                  switch (type) {
+                    case COMPLETE_FROM_SERVER:
+                      return codec.decodeResponse(raw);
+                    default:
+                      throw new AssertionError("bad message");
+                  }
+                } else {
+                  return null;
+                }
+              }
+            }, m.asSerializedBytes());
+            result.accept(() -> response);
+          } catch (Throwable t) {
+            result.accept((ActiveServerMessenger.Response<R>) () -> {
+              throw t;
+            });
+          }
         }
+      }
     });
   }
 

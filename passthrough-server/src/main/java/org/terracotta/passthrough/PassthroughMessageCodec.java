@@ -102,7 +102,7 @@ public class PassthroughMessageCodec {
         output.write(serializedConfiguration);
       }};
   }
-  
+
   public static PassthroughMessage createReconfigureMessage(final String entityClassName, final String entityName, final long version, final byte[] serializedConfiguration) {
     boolean shouldReplicateToPassives = true;
     return new PassthroughMessage(Type.RECONFIGURE_ENTITY, shouldReplicateToPassives) {
@@ -115,7 +115,7 @@ public class PassthroughMessageCodec {
         output.write(serializedConfiguration);
       }};
   }
-  
+
   public static PassthroughMessage createInvokeMessage(final String entityClassName, final String entityName, final long clientInstanceID, final byte[] payload, final boolean shouldReplicateToPassives) {
     return new PassthroughMessage(Type.INVOKE_ON_SERVER, shouldReplicateToPassives) {
       @Override
@@ -285,7 +285,7 @@ public class PassthroughMessageCodec {
   public static <R> R decodeRawMessage(Decoder<R> decoder, byte[] rawMessage) {
     return runRawDecoder(decoder, rawMessage);
   }
-  
+
   public static long decodeTransactionIDFromRawMessage(byte[] rawMessage) {
     Decoder<Long> decoder = new Decoder<Long>() {
 
@@ -296,21 +296,7 @@ public class PassthroughMessageCodec {
     };
     return runRawDecoder(decoder, rawMessage);
   }
-  
-  public static Type decodeTransactionTypeFromRawMessage(byte[] rawMessage) {
-    Decoder<Type> decoder = new Decoder<Type>() {
 
-      @Override
-      public Type decode(Type type, boolean shouldReplicate, long transactionID, long oldestTransactionID, DataInputStream input) throws IOException {
-        // The type is an int ordinal after the transactionID.
-        input.readLong();
-        int ordinal = input.readInt();
-        return Type.values()[ordinal];
-      }
-    };
-    return runRawDecoder(decoder, rawMessage);
-  }
-  
   public static byte[] serializeExceptionToArray(EntityException exception) {
     // We need to manually serialize the exception using Java serialization.
     ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
@@ -327,7 +313,7 @@ public class PassthroughMessageCodec {
     }
     return byteOutput.toByteArray();
   }
-  
+
   public static EntityException deserializeExceptionFromArray(byte[] bytes) {
     EntityException exception = null;
     ByteArrayInputStream byteInput = new ByteArrayInputStream(bytes);

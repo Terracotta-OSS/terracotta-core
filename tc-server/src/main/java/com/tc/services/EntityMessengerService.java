@@ -333,14 +333,11 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
       if (retirementHandles.remove(this) != null) {
         EntityMessengerService.this.messageSelf(futureMessage, t-> {
           if (consumer != null) {
-            consumer.accept(new Response<>() {
-              @Override
-              public R getResponse() throws Exception {
-                if (t.wasExceptionThrown()) {
-                  throw t.getException();
-                } else {
-                  return t.getResponse();
-                }
+            consumer.accept(() -> {
+              if (t.wasExceptionThrown()) {
+                throw t.getException();
+              } else {
+                return t.getResponse();
               }
             });
           }
