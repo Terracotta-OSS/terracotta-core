@@ -40,14 +40,6 @@ public class TripwireFactory {
     return (ENABLED) ? new MessageEvent(eid, concurrency, action, source, instance, transaction, trace) : new NullEvent();
   }
 
-  public static org.terracotta.tripwire.Event createStageEvent(String stage, String debug) {
-    return (ENABLED) ? new MonitoringEvent(stage, debug) : new NullEvent();
-  }
-
-  public static org.terracotta.tripwire.Event createStageEvent(String stage, Object debug) {
-    return (ENABLED) ? new MonitoringEvent(stage, debug.toString()) : new NullEvent();
-  }
-
   public static org.terracotta.tripwire.Event createStageEvent(String stage) {
     return (ENABLED) ? new MonitoringEvent(stage) : new NullEvent();
   }
