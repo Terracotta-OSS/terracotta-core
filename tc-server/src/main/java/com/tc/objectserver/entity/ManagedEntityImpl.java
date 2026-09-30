@@ -1436,8 +1436,10 @@ public class ManagedEntityImpl implements ManagedEntity {
         }
         flushLocalPipeline.completed(id, fetchID, action);
       }
-      event.setDescription(payload.getDebugId());
       event.end();
+      if (event.shouldCommit()) {
+        event.setDescription(payload.getDebugId());
+      }
       event.commit();
     }
 
