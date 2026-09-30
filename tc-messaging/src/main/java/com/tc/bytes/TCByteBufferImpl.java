@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
  *
  */
 package com.tc.bytes;
-
-import com.tc.util.Assert;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -113,19 +111,19 @@ public class TCByteBufferImpl implements TCByteBuffer {
     accessBuffer().rewind();
     return this;
   }
-  
+
   private void incrementBufferReference() {
     if (references != null) {
       references.incrementAndGet();
     }
   }
-  
+
   private void decrementBufferReference() {
     if (references != null) {
       references.decrementAndGet();
     }
   }
-  
+
   @Override
   public ByteBuffer getNioBuffer() {
     ByteBuffer buffer = accessBuffer();
@@ -395,7 +393,7 @@ public class TCByteBufferImpl implements TCByteBuffer {
   public boolean hasArray() {
     return accessBuffer().hasArray();
   }
-  
+
   private void checkReferences() {
     if (references != null && references.get() > 0) {
       throw new IllegalStateException("Nio buffer still referenced " + references.get());
@@ -504,14 +502,7 @@ public class TCByteBufferImpl implements TCByteBuffer {
 
   @Override
   public final long getUint() {
-    long rv = 0;
-
-    rv += ((long) (get() & 0xFF) << 24);
-    rv += ((get() & 0xFF) << 16);
-    rv += ((get() & 0xFF) << 8);
-    rv += ((get() & 0xFF));
-
-    return rv;
+    return getInt() & 0xFFFFFFFFL;
   }
 
   @Override
@@ -528,14 +519,7 @@ public class TCByteBufferImpl implements TCByteBuffer {
 
   @Override
   public final int getUshort() {
-    int rv = 0;
-
-    rv += ((get() & 0xFF) << 8);
-    rv += ((get() & 0xFF));
-
-    Assert.eval((rv >= 0) && (rv <= 0xFFFF));
-
-    return rv;
+    return getShort() & 0xFFFF;
   }
 
   @Override

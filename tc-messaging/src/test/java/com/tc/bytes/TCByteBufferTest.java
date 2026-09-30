@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ package com.tc.bytes;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 public class TCByteBufferTest {
@@ -56,5 +57,37 @@ public class TCByteBufferTest {
       // expected
     }
 
+  }
+
+  @Test
+  public void testRelativeUint() {
+    long[] values = { 0L, 1L, 0x80000000L, 0xFFFFFFFFL };
+
+    TCByteBuffer buf = TCByteBufferFactory.getInstance(values.length * Integer.BYTES);
+    for (long value : values) {
+      buf.putUint(value);
+    }
+    buf.flip();
+
+    for (long value : values) {
+      assertEquals(value, buf.getUint());
+    }
+    assertFalse(buf.hasRemaining());
+  }
+
+  @Test
+  public void testRelativeUshort() {
+    int[] values = { 0, 1, 0x8000, 0xFFFF };
+
+    TCByteBuffer buf = TCByteBufferFactory.getInstance(values.length * Short.BYTES);
+    for (int value : values) {
+      buf.putUshort(value);
+    }
+    buf.flip();
+
+    for (int value : values) {
+      assertEquals(value, buf.getUshort());
+    }
+    assertFalse(buf.hasRemaining());
   }
 }
