@@ -1,5 +1,6 @@
 /*
- * Copyright IBM Corp. 2024, 2025
+ *  Copyright Terracotta, Inc.
+ *  Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,28 +24,24 @@ import java.util.function.Supplier;
  */
 public class TripwireFactory {
   private static final boolean ENABLED;
-  
+
   static {
     boolean hasJFR = false;
     try {
       Class<?> jfr = Class.forName("jdk.jfr.Event");
       hasJFR = (jfr != null) && !Boolean.getBoolean("tripwire.logging.disable");
     } catch (ClassNotFoundException c) {
-      
+
     }
     ENABLED = hasJFR;
   }
-  
+
   public static org.terracotta.tripwire.Event createMessageEvent(String eid, int concurrency, String action, long source, String instance, long transaction, String trace) {
     return (ENABLED) ? new MessageEvent(eid, concurrency, action, source, instance, transaction, trace) : new NullEvent();
   }
 
-  public static org.terracotta.tripwire.Event createStageEvent(String stage, String debug) {
-    return (ENABLED) ? new MonitoringEvent(stage, debug) : new NullEvent();
-  }
-  
-  public static org.terracotta.tripwire.Event createStageEvent(String stage, Object debug) {
-    return (ENABLED) ? new MonitoringEvent(stage, debug.toString()) : new NullEvent();
+  public static org.terracotta.tripwire.Event createStageEvent(String stage) {
+    return (ENABLED) ? new MonitoringEvent(stage) : new NullEvent();
   }
 
   public static org.terracotta.tripwire.Event createPrimeEvent(String name, byte[] uid, long session, long id) {
@@ -62,11 +59,11 @@ public class TripwireFactory {
   public static org.terracotta.tripwire.Event createSyncEvent(String name, byte[] uid, long session) {
     return (ENABLED) ? new SyncEvent(name, uid, session) : new NullEvent();
   }
-  
+
   public static org.terracotta.tripwire.Event createClusterInfo(String info) {
     return (ENABLED) ? new ClusterInfoEvent(info) : new NullEvent();
   }
-  
+
   public static org.terracotta.tripwire.StageMonitor createStageMonitor(String stage, int threads) {
     return (ENABLED) ? new StageMonitorImpl(stage, threads) : new StageMonitor() {
       @Override
@@ -82,7 +79,7 @@ public class TripwireFactory {
       }
     };
   }
- 
+
   public static org.terracotta.tripwire.ClusterInfoMonitor createClusterInfoMonitor(Supplier<String> info) {
     return (ENABLED) ? new ClusterInfoMonitorImpl(info) : new org.terracotta.tripwire.ClusterInfoMonitor() {
       @Override
@@ -94,7 +91,7 @@ public class TripwireFactory {
       }
     };
   }
- 
+
   public static org.terracotta.tripwire.DiskMonitor createDiskMonitor(Path path) {
     return (ENABLED) ? new DiskMonitorImpl(path) : new org.terracotta.tripwire.DiskMonitor() {
       @Override
@@ -122,11 +119,11 @@ public class TripwireFactory {
       }
     };
   }
-  
+
   public static TripwireRecording createTripwireRecording(String configuration) {
     return TripwireFactory.createTripwireRecording(configuration, null, 5, 0);
   }
-  
+
   public static TripwireRecording createTripwireRecording(String configuration, Path dest) {
     return TripwireFactory.createTripwireRecording(configuration, dest, 5, 0);
   }
@@ -135,7 +132,7 @@ public class TripwireFactory {
     if (ENABLED) {
       return new TripwireRecording(configuration, dest, maxAge, maxSize);
     } else {
-      throw new UnsupportedOperationException("tripwire is unavailable");    
+      throw new UnsupportedOperationException("tripwire is unavailable");
     }
   }
 }

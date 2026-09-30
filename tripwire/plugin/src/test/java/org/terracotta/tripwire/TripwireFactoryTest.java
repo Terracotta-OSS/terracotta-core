@@ -1,5 +1,6 @@
 /*
- * Copyright IBM Corp. 2024, 2025
+ *  Copyright Terracotta, Inc.
+ *  Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,31 +18,41 @@ package org.terracotta.tripwire;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  *
  */
 public class TripwireFactoryTest {
-  
+
   public TripwireFactoryTest() {
   }
-  
+
   @BeforeClass
   public static void setUpClass() {
   }
-  
+
   @AfterClass
   public static void tearDownClass() {
   }
-  
+
   @Before
   public void setUp() {
   }
-  
+
   @After
   public void tearDown() {
   }
 
+  @Test
+  public void testNullEventNeverCommits() {
+    Event event = new NullEvent();
+    Assert.assertFalse("NullEvent must never report that it will commit", event.shouldCommit());
+    event.begin();
+    event.end();
+    event.commit();
+  }
 }

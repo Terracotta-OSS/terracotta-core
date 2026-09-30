@@ -1,5 +1,6 @@
 /*
- * Copyright IBM Corp. 2024, 2025
+ *  Copyright Terracotta, Inc.
+ *  Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +21,23 @@ package org.terracotta.tripwire;
  */
 class NullEvent implements org.terracotta.tripwire.Event {
   public void begin() {
-    
+
   }
-  
+
   public void end() {
-    
+
   }
-  
+
   public void commit() {
-    
+
   }
 
   @Override
   public void setDescription(String description) {
+  }
+
+  @Override
+  public boolean shouldCommit() {
+    return false;
   }
 }

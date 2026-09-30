@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,11 +38,11 @@ public class MonitoringEventCreator<EC> implements EventCreator<EC> {
     this.name = name;
     this.next = next;
   }
-  
+
   public static void setPipelineMonitor(PipelineMonitoringConsumer consumer) {
     pipelineConsumer = consumer;
   }
-  
+
   public static void finish() {
     if (pipelineConsumer != null) {
       PipelineMonitor mon = CURRENT.get();
@@ -53,16 +53,16 @@ public class MonitoringEventCreator<EC> implements EventCreator<EC> {
       }
     }
   }
-  
+
   public static void start() {
     if (pipelineConsumer != null) {
       CURRENT.set(new PipelineMonitor());
-    }    
+    }
   }
-  
+
   @Override
   public Event createEvent(EC event) {
-    MonitorStats stats = new MonitorStats(name, event.toString());
+    MonitorStats stats = new MonitorStats(name, event);
     PipelineMonitor running = CURRENT.get();
     if (running != null) {
       running.action(name, PipelineMonitor.Type.ENQUEUE, event);
@@ -115,31 +115,36 @@ public class MonitoringEventCreator<EC> implements EventCreator<EC> {
     private long run = 0;
     private long end = 0;
     private final org.terracotta.tripwire.Event event;
-    
-    public MonitorStats(String name, String debugging) {
+    private final EC context;
+
+    public MonitorStats(String name, EC event) {
       queue();
-      event = TripwireFactory.createStageEvent(name, debugging);
+      this.context = event;
+      this.event = TripwireFactory.createStageEvent(name);
     }
-    
+
     void run() {
       run = System.nanoTime();
       event.begin();
     }
-    
+
     final void queue() {
       queue = System.nanoTime();
     }
-    
+
     void end() {
       end = System.nanoTime();
       event.end();
+      if (event.shouldCommit()) {
+        event.setDescription(context.toString());
+      }
       event.commit();
     }
-    
+
     long queueTime() {
       return run - queue;
     }
-    
+
     long runTime() {
       return end - run;
     }

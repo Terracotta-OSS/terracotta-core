@@ -1,5 +1,6 @@
 /*
- * Copyright IBM Corp. 2024, 2025
+ *  Copyright Terracotta, Inc.
+ *  Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,4 +24,7 @@ public interface Event {
   void end();
   void commit();
   void setDescription(String description);
+  default boolean shouldCommit() {
+    return true;
+  }
 }
