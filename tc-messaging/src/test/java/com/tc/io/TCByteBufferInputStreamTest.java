@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@
  */
 package com.tc.io;
 
+import java.io.EOFException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Random;
@@ -535,7 +537,7 @@ public class TCByteBufferInputStreamTest {
       bbis.close();
     }
   }
-  
+
   private long length(TCByteBuffer[] data) {
     long rv = 0;
     for (TCByteBuffer element : data) {
@@ -569,6 +571,265 @@ public class TCByteBufferInputStreamTest {
     }
 
     return rv;
+  }
+
+  private static TCByteBuffer[] wrapPerByte(byte[] data) {
+    TCByteBuffer[] rv = new TCByteBuffer[data.length];
+    for (int i = 0; i < data.length; i++) {
+      rv[i] = TCByteBufferFactory.wrap(new byte[] { data[i] });
+    }
+    return rv;
+  }
+
+  private static TCByteBufferInputStream streamOver(TCByteBuffer[] buffers) {
+    return new TCByteBufferInputStream(Arrays.stream(buffers).map(TCByteBuffer::duplicate).toArray(TCByteBuffer[]::new));
+  }
+
+  private static TCByteBufferInputStream streamOver(byte[] data) {
+    return streamOver(new TCByteBuffer[] { TCByteBufferFactory.wrap(data) });
+  }
+
+  @Test
+  public void testPrimitiveGoldenBytes() throws IOException {
+    // big-endian wire order, chosen so every byte is distinct
+    byte[] data = new byte[] { 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+        0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D };
+
+    TCByteBufferInputStream in = streamOver(data);
+    try {
+      assertEquals(0x0A0B0C0D, in.readInt());
+      assertEquals(0x0E0F101112131415L, in.readLong());
+      assertEquals((char) 0x1617, in.readChar());
+      assertEquals((short) 0x1819, in.readShort());
+      assertEquals(0x1A1B, in.readUnsignedShort());
+      assertEquals(0x1C, in.readUnsignedByte());
+      assertEquals((byte) 0x1D, in.readByte());
+      assertTrue(streamOver(new byte[] { 1 }).readBoolean());
+      assertFalse(streamOver(new byte[] { 0 }).readBoolean());
+      assertEquals(0, in.available());
+    } finally {
+      in.close();
+    }
+  }
+
+  @Test
+  public void testPrimitiveRoundTrip() throws IOException {
+    for (int blockSize = 1; blockSize <= 3; blockSize++) {
+      long longValue = random.nextLong();
+      int intValue = random.nextInt();
+      short shortValue = (short) random.nextInt();
+      char charValue = (char) random.nextInt();
+      double doubleValue = Double.longBitsToDouble(random.nextLong());
+      float floatValue = Float.intBitsToFloat(random.nextInt());
+      boolean boolValue = random.nextBoolean();
+
+      TCByteBufferOutputStream out = new TCByteBufferOutputStream(blockSize);
+      out.writeLong(longValue);
+      out.writeInt(intValue);
+      out.writeShort(shortValue);
+      out.writeChar(charValue);
+      out.writeDouble(doubleValue);
+      out.writeFloat(floatValue);
+      out.writeBoolean(boolValue);
+      out.close();
+
+      TCByteBufferInputStream in = new TCByteBufferInputStream(out.accessBuffers());
+      try {
+        assertEquals(longValue, in.readLong());
+        assertEquals(intValue, in.readInt());
+        assertEquals(shortValue, in.readShort());
+        assertEquals(charValue, in.readChar());
+        assertEquals(doubleValue, in.readDouble(), 0.0);
+        assertEquals(floatValue, in.readFloat(), 0.0f);
+        assertEquals(boolValue, in.readBoolean());
+        assertEquals(0, in.available());
+      } finally {
+        in.close();
+      }
+    }
+  }
+
+  @Test
+  public void testPrimitiveStraddlingBuffers() throws IOException {
+    // one value per stream; split the source bytes at every possible offset so the
+    // primitive crosses buffer boundaries on every code path (bulk -> fallback included)
+    for (int split = 0; split <= 8; split++) {
+      byte[] longBytes = ByteBuffer.allocate(8).putLong(0x0102030405060708L).array();
+      byte[] head = Arrays.copyOf(longBytes, split);
+      byte[] tail = Arrays.copyOfRange(longBytes, split, 8);
+      TCByteBufferInputStream in = streamOver(new TCByteBuffer[] { TCByteBufferFactory.wrap(head),
+                                                                   TCByteBufferFactory.wrap(tail) });
+      try {
+        assertEquals(0x0102030405060708L, in.readLong());
+        assertEquals(0, in.available());
+      } finally {
+        in.close();
+      }
+    }
+    for (int split = 0; split <= 4; split++) {
+      byte[] intBytes = ByteBuffer.allocate(4).putInt(0x11223344).array();
+      TCByteBufferInputStream in = streamOver(new TCByteBuffer[] { TCByteBufferFactory.wrap(Arrays.copyOf(intBytes, split)),
+                                                                   TCByteBufferFactory.wrap(Arrays.copyOfRange(intBytes, split, 4)) });
+      try {
+        assertEquals(0x11223344, in.readInt());
+        assertEquals(0, in.available());
+      } finally {
+        in.close();
+      }
+    }
+  }
+
+  @Test
+  public void testPrimitiveOneByteBuffers() throws IOException {
+    // every read must fall back to the byte-at-a-time path; values repeat per group of 2/4/8
+    byte[] data = new byte[32];
+    new Random(42).nextBytes(data);
+
+    TCByteBufferInputStream in = streamOver(wrapPerByte(data));
+    try {
+      assertEquals(ByteBuffer.wrap(data, 0, 8).getLong(), in.readLong());
+      assertEquals(ByteBuffer.wrap(data, 8, 4).getInt(), in.readInt());
+      assertEquals(ByteBuffer.wrap(data, 12, 2).getShort(), in.readShort());
+      assertEquals(ByteBuffer.wrap(data, 14, 2).getChar(), in.readChar());
+      assertEquals(ByteBuffer.wrap(data, 16, 2).getShort() & 0xFFFF, in.readUnsignedShort());
+      assertEquals(data[18], in.readByte());
+      assertEquals(ByteBuffer.wrap(data, 19, 8).getDouble(), in.readDouble(), 0.0);
+      assertEquals(ByteBuffer.wrap(data, 27, 4).getFloat(), in.readFloat(), 0.0f);
+      assertEquals(1, in.available());
+    } finally {
+      in.close();
+    }
+  }
+
+  @Test
+  public void testPrimitiveEof() throws IOException {
+    for (int len = 0; len < 8; len++) {
+      byte[] data = new byte[len];
+      new Random(len).nextBytes(data);
+
+      // readLong truncation
+      TCByteBufferInputStream in = streamOver(data);
+      try {
+        in.readLong();
+        fail("expected EOFException for readLong with " + len + " bytes");
+      } catch (EOFException expected) {
+        assertEquals("stream must be fully consumed on truncated primitive", 0, in.available());
+      } finally {
+        in.close();
+      }
+
+      if (len < 4) {
+        // readInt truncation
+        in = streamOver(data);
+        try {
+          in.readInt();
+          fail("expected EOFException for readInt with " + len + " bytes");
+        } catch (EOFException expected) {
+          assertEquals(0, in.available());
+        } finally {
+          in.close();
+        }
+      }
+    }
+    for (int len = 0; len < 2; len++) {
+      byte[] data = new byte[len];
+      TCByteBufferInputStream in = streamOver(data);
+      try {
+        in.readChar();
+        fail("expected EOFException for readChar with " + len + " bytes");
+      } catch (EOFException expected) {
+        assertEquals(0, in.available());
+      } finally {
+        in.close();
+      }
+      in = streamOver(data);
+      try {
+        in.readShort();
+        fail("expected EOFException for readShort with " + len + " bytes");
+      } catch (EOFException expected) {
+        assertEquals(0, in.available());
+      } finally {
+        in.close();
+      }
+      in = streamOver(data);
+      try {
+        in.readUnsignedShort();
+        fail("expected EOFException for readUnsignedShort with " + len + " bytes");
+      } catch (EOFException expected) {
+        assertEquals(0, in.available());
+      } finally {
+        in.close();
+      }
+    }
+  }
+
+  @Test
+  public void testPrimitiveEofAcrossBuffers() throws IOException {
+    // truncated primitive spanning multiple buffers: EOF thrown after all bytes consumed
+    byte[] data = ByteBuffer.allocate(8).putLong(Long.MAX_VALUE).array();
+    for (int split = 1; split < 7; split++) {
+      TCByteBufferInputStream in = streamOver(new TCByteBuffer[] { TCByteBufferFactory.wrap(Arrays.copyOf(data, split)),
+                                                                   TCByteBufferFactory.wrap(Arrays.copyOfRange(data, split, 7)) });
+      try {
+        in.readLong();
+        fail("expected EOFException with 7 total bytes across buffers");
+      } catch (EOFException expected) {
+        assertEquals(0, in.available());
+      } finally {
+        in.close();
+      }
+    }
+  }
+
+  @Test
+  public void testFastPathThenFallbackMix() throws IOException {
+    // exact-fit bulk reads landing on buffer boundaries, then a 2-byte read
+    // straddling a boundary (fallback) followed by fast-path tail reads
+    byte[] first = ByteBuffer.allocate(8).putLong(0xDEADBEEFCAFEBABEL).array();
+    byte[] second = ByteBuffer.allocate(4).putInt(0x01234567).array();
+    byte[] third = new byte[] { 0x33, 0x44, 0x55 };
+    byte[] fourth = new byte[] { 0x66, 0x77, (byte) 0x88 };
+
+    TCByteBufferInputStream in = streamOver(new TCByteBuffer[] { TCByteBufferFactory.wrap(first),
+                                                                 TCByteBufferFactory.wrap(second),
+                                                                 TCByteBufferFactory.wrap(third),
+                                                                 TCByteBufferFactory.wrap(fourth) });
+    try {
+      assertEquals(0xDEADBEEFCAFEBABEL, in.readLong());          // fast path, exact fit
+      assertEquals(0x01234567, in.readInt());                    // fast path, exact fit
+      assertEquals(0x3344, in.readShort());                     // fast path (1 byte left after)
+      assertEquals(0x5566, in.readUnsignedShort());              // fallback (straddles boundary)
+      assertEquals(0x77, in.readUnsignedByte());
+      assertEquals((byte) 0x88, in.readByte());
+      assertEquals(0, in.available());
+    } finally {
+      in.close();
+    }
+  }
+
+  @Test
+  public void testDuplicateWithPrimitives() throws IOException {
+    byte[] data = new byte[32];
+    this.random.nextBytes(data);
+
+    TCByteBufferInputStream bbis = streamOver(data);
+    TCByteBufferInput dupe;
+    try {
+      bbis.readInt();            // consume 4 from a bulk fast path
+      bbis.readShort();          // consume 2 more
+      dupe = bbis.duplicate();
+      assertEquals(bbis.available(), dupe.available());
+      assertEquals(bbis.readLong(), dupe.readLong());
+      assertEquals(bbis.readInt(), dupe.readInt());
+      assertEquals(bbis.readChar(), dupe.readChar());
+      assertEquals(bbis.available(), dupe.available());
+      while (bbis.available() > 0) {
+        assertEquals(bbis.read(), dupe.read());
+      }
+      assertEquals(0, dupe.available());
+    } finally {
+      bbis.close();
+    }
   }
 
 }

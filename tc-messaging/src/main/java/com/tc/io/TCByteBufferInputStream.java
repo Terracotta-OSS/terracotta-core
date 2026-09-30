@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -44,10 +44,10 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
   public TCByteBufferInputStream(TCByteBuffer data) {
     this(new TCByteBuffer[] { data });
   }
-    
+
   public TCByteBufferInputStream(TCReference data) {
     if (data == null) { throw new NullPointerException(); }
-    
+
     this.data = data.duplicate();
     this.list = this.data.iterator();
     this.current = this.list.hasNext() ? this.list.next() : TCByteBufferFactory.getInstance(0);
@@ -56,7 +56,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
 
     this.onCloseHook = this.data::close;
   }
-  
+
   public TCByteBufferInputStream(TCByteBuffer[] data) {
     this(TCReferenceSupport.createGCReference(data));
   }
@@ -71,7 +71,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     checkClosed();
     return new TCByteBufferInputStream(this.data);
   }
-  
+
   @Override
   public int getTotalLength() {
     return Math.toIntExact(this.totalLength);
@@ -105,8 +105,8 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     checkClosed();
 
     if (b == null) { throw new NullPointerException(); }
-    if ((off < 0) || (off > b.length) || (len < 0) || ((off + len) > b.length) || ((off + len) < 0)) { 
-      throw new IndexOutOfBoundsException(); 
+    if ((off < 0) || (off > b.length) || (len < 0) || ((off + len) > b.length) || ((off + len) < 0)) {
+      throw new IndexOutOfBoundsException();
     }
     if (len == 0) { return 0; }
 
@@ -160,21 +160,21 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     }
     return result.flip();
   }
-  
+
   @Override
   public final TCReference readReference(final int len) {
     checkClosed();
 
-    if (len == 0) { 
-      return TCReferenceSupport.createGCReference(TCByteBufferFactory.getInstance(0)); 
+    if (len == 0) {
+      return TCReferenceSupport.createGCReference(TCByteBufferFactory.getInstance(0));
     }
-    
+
     TCReference dup = data.duplicate(len);
     long run = dup.available();
     skip(run);
-    
+
     if (run != len) {
-      throw new BufferUnderflowException(); 
+      throw new BufferUnderflowException();
     }
     return dup;
   }
@@ -182,7 +182,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
   @Override
   public final int read() {
     checkClosed();
-    
+
     TCByteBuffer src = nextBuffer();
     while (src.hasRemaining()) {
       if (src.hasRemaining()) {
@@ -235,12 +235,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
 
   @Override
   public final int readInt() throws IOException {
-    int byte1 = read();
-    int byte2 = read();
-    int byte3 = read();
-    int byte4 = read();
-    if ((byte1 | byte2 | byte3 | byte4) < 0) { throw new EOFException(); }
-    return ((byte1 << 24) + (byte2 << 16) + (byte3 << 8) + (byte4));
+    return (int) readUnsignedInt();
   }
 
   @Override
@@ -259,10 +254,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
 
   @Override
   public final char readChar() throws IOException {
-    int byte1 = read();
-    int byte2 = read();
-    if ((byte1 | byte2) < 0) { throw new EOFException(); }
-    return (char) ((byte1 << 8) + (byte2));
+    return (char) readUnsignedShort();
   }
 
   @Override
@@ -272,20 +264,17 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
 
   @Override
   public final long readLong() throws IOException {
-    int byte1 = read();
-    int byte2 = read();
-    int byte3 = read();
-    int byte4 = read();
-    int byte5 = read();
-    int byte6 = read();
-    int byte7 = read();
-    int byte8 = read();
+    return readUnsignedInt() << Integer.SIZE | readUnsignedInt();
+  }
 
-    if ((byte1 | byte2 | byte3 | byte4 | byte5 | byte6 | byte7 | byte8) < 0) { throw new EOFException(); }
-
-    return (((long) byte1 << 56) + ((long) (byte2 & 255) << 48) + ((long) (byte3 & 255) << 40)
-            + ((long) (byte4 & 255) << 32) + ((long) (byte5 & 255) << 24) + ((byte6 & 255) << 16)
-            + ((byte7 & 255) << 8) + ((byte8 & 255)));
+  private long readUnsignedInt() throws IOException {
+    checkClosed();
+    TCByteBuffer src = nextBuffer();
+    if (src.remaining() >= Integer.BYTES) {
+      return (long) src.getInt() & 0xFFFFFFFFL;
+    } else {
+      return (long) readUnsignedShort() << Short.SIZE | readUnsignedShort();
+    }
   }
 
   @Override
@@ -295,10 +284,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
 
   @Override
   public final short readShort() throws IOException {
-    int byte1 = read();
-    int byte2 = read();
-    if ((byte1 | byte2) < 0) { throw new EOFException(); }
-    return (short) ((byte1 << 8) + (byte2));
+    return (short) readUnsignedShort();
   }
 
   @Override
@@ -366,10 +352,13 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
 
   @Override
   public final int readUnsignedShort() throws IOException {
-    int byte1 = read();
-    int byte2 = read();
-    if ((byte1 | byte2) < 0) { throw new EOFException(); }
-    return (byte1 << 8) + (byte2);
+    checkClosed();
+    TCByteBuffer src = nextBuffer();
+    if (src.remaining() >= Short.BYTES) {
+      return src.getShort() & 0xFFFF;
+    } else {
+      return readUnsignedByte() << Byte.SIZE | readUnsignedByte();
+    }
   }
 
   @Override
