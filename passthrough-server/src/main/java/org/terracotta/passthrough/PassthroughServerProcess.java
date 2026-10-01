@@ -482,7 +482,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   }
 
   public void sendMessageToActiveFromInsideActive(final PassthroughClientDescriptor sender, final EntityMessage newMessage, PassthroughMessage passthroughMessage, Consumer<PassthroughMessage> result) {
-
     if (!running.isRaised()) {
       return;
     }
@@ -515,7 +514,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         }
         @Override
         public PassthroughClientDescriptor clientDescriptorForID(long clientInstanceID) {
-          return new PassthroughClientDescriptor(sender.server, null, clientInstanceID);
+          return new PassthroughClientDescriptor(sender == null ? null : sender.server, null, clientInstanceID);
         }
         @Override
         public long getClientOriginID() {

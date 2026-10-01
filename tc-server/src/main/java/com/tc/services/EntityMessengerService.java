@@ -326,22 +326,21 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     }
 
     public void release() {
-      release(null);
+      release((r)->{});
     }
 
     public void release(Consumer<Response<R>> consumer) {
       if (retirementHandles.remove(this) != null) {
         EntityMessengerService.this.messageSelf(futureMessage, t-> {
-          consumer.accept(new Response<>() {
-            @Override
-            public R getResponse() throws Exception {
+          if (consumer != null) {
+            consumer.accept(() -> {
               if (t.wasExceptionThrown()) {
                 throw t.getException();
               } else {
                 return t.getResponse();
               }
-            }
-          });
+            });
+          }
         });
       }
     }
