@@ -22,6 +22,8 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.function.Consumer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -70,14 +72,11 @@ public class PassThroughServerActiveInvokeContextTest {
    */
   @Test
   public void testClientDescriptorForIDWithNullSenderDoesNotThrowNPE() {
-    PassthroughServerProcess serverField = null;
+    ServerSentSenderWrapper wrapper = new ServerSentSenderWrapper(mock(Consumer.class), mock(Consumer.class), null);
+    PassthroughClientDescriptor descriptor = wrapper.clientDescriptorForID(1L);
 
-    // Build the descriptor exactly as the fixed code does
-    PassthroughClientDescriptor result = new PassthroughClientDescriptor(serverField, null, 42L);
-
-    assertThat(result, is(notNullValue()));
-    assertThat(result.server, is(nullValue()));
-    assertThat(result.clientInstanceID, is(42L));
+    assertThat(descriptor, is(notNullValue()));
+    assertThat(descriptor.sender, is(nullValue()));
   }
 
   /**
@@ -89,11 +88,14 @@ public class PassThroughServerActiveInvokeContextTest {
     PassthroughClientDescriptor senderDescriptor =
         new PassthroughClientDescriptor(mockServer, null, 1L);
 
-    PassthroughServerProcess serverField = senderDescriptor.server;
-    PassthroughClientDescriptor result = new PassthroughClientDescriptor(serverField, null, 99L);
+    ServerSentSenderWrapper wrapper = new ServerSentSenderWrapper(mock(Consumer.class), mock(Consumer.class), senderDescriptor);
+    PassthroughClientDescriptor descriptor = wrapper.clientDescriptorForID(2L);
 
-    assertThat(result.server, is(mockServer));
-    assertThat(result.clientInstanceID, is(99L));
+    assertThat(descriptor, is(notNullValue()));
+    assertThat(descriptor.sender, is(nullValue()));
+    assertThat(descriptor.server, is(mockServer));
+    assertThat(wrapper.getClientOriginID(), is(-1L));
+    assertThat(descriptor.clientInstanceID, is(2L));
   }
 
   // -------------------------------------------------------------------------
