@@ -1,0 +1,42 @@
+
+# Triggers on @bobshell comments and enqueues a job into the shared queue repo.
+# The actual work is done by the Jenkins poller in Terracotta-OSS/pr-review-queue,
+# which calls terracotta-bob-action/.github/workflows/dispatch.yml.
+#
+# Required secret (repo or org level):
+#   BOB_ENQUEUE_PR_REVIEW — fine-grained PAT with `contents: write` on
+#                           Terracotta-OSS/pr-review-queue only
+#
+# Optional variables:
+#   BOB_OWNERS_ONLY — set to "true" to restrict to repo owners only
+#                     (default: OWNER, MEMBER, or COLLABORATOR)
+name: 'Bob PR Review'
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  enqueue:
+    name: 'Enqueue Bob job'
+    if: |-
+      github.event.sender.type == 'User' &&
+      contains(github.event.comment.body, '@bobshell') &&
+      (
+        (vars.BOB_OWNERS_ONLY == 'true' && github.event.comment.author_association == 'OWNER') ||
+        (vars.BOB_OWNERS_ONLY != 'true' && contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association))
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: 'Terracotta-OSS/terracotta-actions/bob-enqueue@main'
+        with:
+          queue_token: '${{ secrets.BOB_ENQUEUE_PR_REVIEW }}'
+          comment:     '${{ github.event.comment.body }}'
+          # Optional: override default Bobcoin budgets
+          # max_cost_review:  5
+          # max_cost_summary: 2
+          # max_cost_triage:  2
