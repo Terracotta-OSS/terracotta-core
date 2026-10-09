@@ -30,9 +30,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
+import org.mockito.Mockito;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.mock;
@@ -194,7 +193,7 @@ public class EntityMessengerServiceTest {
 
     // The future message must have been scheduled
     verify(sink).addToSink(any(VoltronEntityMessage.class));
-
+    Mockito.reset(sink);
     // The consumer itself is only invoked when the scheduled message completes (driven by
     // the completion handler on FakeEntityMessage), which does not happen in this unit test
     // because the sink is mocked.  What we CAN assert is that the handle was correctly
@@ -202,6 +201,6 @@ public class EntityMessengerServiceTest {
     // release() call is a no-op.
     AtomicBoolean secondCallCalled = new AtomicBoolean(false);
     handle.release(r -> secondCallCalled.set(true));
-    assertThat(secondCallCalled.get(), is(false));
+    verify(sink, Mockito.never()).addToSink(any(VoltronEntityMessage.class));
   }
 }
