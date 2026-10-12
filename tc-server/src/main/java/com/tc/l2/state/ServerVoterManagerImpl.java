@@ -20,6 +20,7 @@ package com.tc.l2.state;
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.management.TerracottaManagement;
 import com.tc.services.TimeSource;
+import com.tc.spi.metric.MetricService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +38,17 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
 
   private final Supplier<ServerMode> mode;
   private final Supplier<Integer> voterLimit;
-  final Map<String, Long> voters = new ConcurrentHashMap<>();
+  private final MetricService metricService;
+  final Map<String, Long> voters = new ConcurrentHashMap<>() {
+    @Override
+    public Long remove(Object key) {
+      Long v = super.remove(key);
+      if (v != null) {
+        metricService.fireEvent(MetricService.Event.VOTER_LEAVE);
+      }
+      return v;
+    }
+  };
   private final TimeSource timeSource;
 
   private volatile boolean votingInProgress = false;
@@ -46,11 +57,11 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
 
   private volatile boolean overrideVote = false;
 
-  public ServerVoterManagerImpl(Supplier<ServerMode> mode, Supplier<Integer> voterLimit) throws Exception {
-    this(mode, voterLimit, TimeSource.SYSTEM_TIME_SOURCE, true);
+  public ServerVoterManagerImpl(Supplier<ServerMode> mode, Supplier<Integer> voterLimit, MetricService metricService) throws Exception {
+    this(mode, voterLimit, TimeSource.SYSTEM_TIME_SOURCE, true, metricService);
   }
 
-  ServerVoterManagerImpl(Supplier<ServerMode> mode, Supplier<Integer> voterLimit, TimeSource timeSource, boolean initMBean) throws Exception {
+  ServerVoterManagerImpl(Supplier<ServerMode> mode, Supplier<Integer> voterLimit, TimeSource timeSource, boolean initMBean, MetricService metricService) throws Exception {
     super(ServerVoterManager.class, false);
     if (initMBean) {
       try {
@@ -64,6 +75,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
     this.voterLimit = voterLimit;
     this.timeSource = timeSource;
     this.electionTerm = 0;
+    this.metricService = metricService;
   }
 
   @Override
@@ -79,6 +91,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
     }
 
     voters.put(id, timeSource.currentTimeMillis());
+    metricService.fireEvent(MetricService.Event.VOTER_JOIN);
     logger.info("Registration of voter id: " + id + " confirmed.");
     return electionTerm;
   }

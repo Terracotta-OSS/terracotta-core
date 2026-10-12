@@ -22,6 +22,7 @@ import com.tc.classloader.ServiceLocator;
 import com.tc.net.ClientID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
+import com.tc.spi.metric.MetricService;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -81,7 +82,8 @@ public class EntityManagerImplTest {
         new ManagementTopologyEventCollector(mock(IMonitoringProducer.class)),
         processor,
         mock(ManagementKeyCallback.class),
-        new ServiceLocator(this.getClass().getClassLoader(), false)
+        new ServiceLocator(this.getClass().getClassLoader(), false),
+        MetricService.NOOP
     );
     entityManager.setMessageSink(mock(Sink.class));
     id = new EntityID("com.tc.objectserver.testentity.TestEntity", "foo");

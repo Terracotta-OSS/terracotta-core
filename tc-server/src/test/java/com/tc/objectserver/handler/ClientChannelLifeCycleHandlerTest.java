@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.tc.spi.metric.MetricService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,7 +58,7 @@ public class ClientChannelLifeCycleHandlerTest {
     when(stageManager.getStage(any(String.class), (Class<HydrateContext>)any(Class.class))).thenReturn(stage);
     this.handler = new ClientChannelLifeCycleHandler(commsManager, stageManager, channelManager,
       mock(ClientEntityStateManager.class),
-      mock(ProcessTransactionHandler.class), new ManagementTopologyEventCollector(mock(IMonitoringProducer.class)));
+      mock(ProcessTransactionHandler.class), new ManagementTopologyEventCollector(mock(IMonitoringProducer.class)), MetricService.NOOP);
   }
 
   @After

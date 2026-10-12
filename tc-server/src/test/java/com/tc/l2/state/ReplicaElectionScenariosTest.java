@@ -37,6 +37,7 @@ import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.impl.Topology;
 import com.tc.objectserver.impl.TopologyManager;
 import com.tc.objectserver.persistence.ServerPersistentState;
+import com.tc.spi.metric.MetricService;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -482,7 +483,7 @@ public class ReplicaElectionScenariosTest {
 
     ConsistencyManagerImpl cm = new ConsistencyManagerImpl(
         topologyManager,
-        new ServerVoterManagerImpl(()->ServerMode.ACTIVE, topologyManager::getExternalVoters));
+        new ServerVoterManagerImpl(()->ServerMode.ACTIVE, topologyManager::getExternalVoters, MetricService.NOOP));
 
     ServerID peer1 = new ServerID("peer1", "peer1".getBytes());
 
