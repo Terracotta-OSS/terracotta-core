@@ -25,6 +25,8 @@ import com.tc.async.api.EventHandlerException;
 import com.tc.config.ServerConfigurationManager;
 import com.tc.l2.state.DiagnosticModeConsistencyManager;
 import com.tc.l2.state.SafeStartupManagerImpl;
+import com.tc.l2.state.ServerVoterManager;
+import com.tc.l2.state.ServerVoterManagerImpl;
 import com.tc.logging.TCLogging;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.services.PlatformConfigurationImpl;
@@ -257,6 +259,8 @@ import org.terracotta.configuration.ConfigurationException;
  * Startup and shutdown point. Builds and starts the server
  */
 public class DistributedObjectServer {
+  private static final long PLATFORM_CONSUMER_ID = 0;
+
   private final ConnectionPolicy                 connectionPolicy;
   private final TCServer                         server;
   private final ServerBuilder                    serverBuilder;
@@ -327,6 +331,8 @@ public class DistributedObjectServer {
     DefaultSocketEndpointFactory.setSocketEndpointFactory(new ClearTextSocketEndpointFactory());
   }
 
+  public ServiceRegistry getPlatformServiceRegistry() { return this.serviceRegistry.subRegistry(PLATFORM_CONSUMER_ID); }
+
   protected final ServerBuilder createServerBuilder(Node thisNode, Logger tcLogger,
                                                     TCServer server) {
     return new StandardServerBuilder(thisNode, tcLogger);
@@ -339,14 +345,14 @@ public class DistributedObjectServer {
   public byte[] getClusterState(Charset set, PrettyPrinter pp) {
     try {
       if (pp == null) {
-        pp = this.serviceRegistry.subRegistry(0).getService(new BasicServiceConfiguration<>(PrettyPrinter.class));
+        pp = this.getPlatformServiceRegistry().getService(new BasicServiceConfiguration<>(PrettyPrinter.class));
       }
     } catch (ServiceException se) {
       logger.warn("error getting printer for cluster state", se);
     }
     try {
       if (pp == null) {
-        DiagnosticFormat format = this.serviceRegistry.subRegistry(0).getService(new BasicServiceConfiguration<>(DiagnosticFormat.class));
+        DiagnosticFormat format = this.getPlatformServiceRegistry().getService(new BasicServiceConfiguration<>(DiagnosticFormat.class));
         if (format != null) {
             pp = new PrettyPrinter() {
             @Override
@@ -513,8 +519,7 @@ public class DistributedObjectServer {
     // ***** NOTE:  At this point, since we are about to create a subregistry for the platform, the serviceRegistry must be complete!
 
     // The platform gets the reserved consumerID 0.
-    long platformConsumerID = 0;
-    InternalServiceRegistry platformServiceRegistry = serviceRegistry.subRegistry(platformConsumerID);
+    final InternalServiceRegistry platformServiceRegistry = serviceRegistry.subRegistry(PLATFORM_CONSUMER_ID);
 
     Set<ProductID> capablities = EnumSet.allOf(ProductID.class);
 
@@ -598,7 +603,7 @@ public class DistributedObjectServer {
       consoleLogger.warn("It is not recommended to configure external voters when there is an odd number of servers in the stripe");
     }
 
-    ConsistencyManager consistencyMgr = createConsistencyManager(configSetupManager, knownPeers, voteCount);
+    ConsistencyManager consistencyMgr = createConsistencyManager(knownPeers, voteCount);
 
     final InetSocketAddress dsoBind = new InetSocketAddress(l2DSOConfig.getTsaPort().getHostString(), l2DSOConfig.getTsaPort().getPort());
     this.l1Listener = this.communicationsManager.createListener(dsoBind, (MessageChannel c)->!c.getProductID().isReconnectEnabled() || !server.isReconnectWindow(),
@@ -911,9 +916,7 @@ public class DistributedObjectServer {
     }
   }
 
-  private ConsistencyManager createConsistencyManager(ServerConfigurationManager configSetupManager,
-                                                             int knownPeers,
-                                                             int voteCount) {
+  private ConsistencyManager createConsistencyManager(int knownPeers, int voteCount) {
     // start the server in diagnostic mode if the configuration is not complete
     if (configSetupManager.isPartialConfiguration()) {
       if (knownPeers != 0) {
@@ -923,10 +926,16 @@ public class DistributedObjectServer {
     }
 
     boolean consistentStartup = knownPeers > 0 && (configSetupManager.isConsistentStartup() || voteCount >= 0);
+    ServerVoterManager voter;
+    try {
+      voter = new ServerVoterManagerImpl(()->this.l2Coordinator != null ? this.l2Coordinator.getStateManager().getCurrentMode() : ServerMode.START, topologyManager::getExternalVoters);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
     return new SafeStartupManagerImpl(
         consistentStartup,
         knownPeers,
-        new ConsistencyManagerImpl(()->this.l2Coordinator != null ? this.l2Coordinator.getStateManager().getCurrentMode() : ServerMode.START, this.topologyManager)
+        new ConsistencyManagerImpl(this.topologyManager, voter)
     );
   }
 
@@ -960,7 +969,7 @@ public class DistributedObjectServer {
     boolean enabled = tcProperties.getBoolean(TCPropertiesConsts.L2_L1REDIRECT_ENABLED, true);
     NetworkTranslator translator = null;
     try {
-      translator = this.serviceRegistry.subRegistry(0).getService(new BasicServiceConfiguration<>(NetworkTranslator.class));
+      translator = this.getPlatformServiceRegistry().getService(new BasicServiceConfiguration<>(NetworkTranslator.class));
     } catch (ServiceException se) {
       logger.warn("error getting printer for cluster state", se);
     }
@@ -1327,7 +1336,7 @@ public class DistributedObjectServer {
   }
 
   private VersionCompatibility getVersionCompatibility() {
-    Collection<VersionCompatibility> compat = serviceRegistry.subRegistry(0).getServices(()->VersionCompatibility.class);
+    Collection<VersionCompatibility> compat = getPlatformServiceRegistry().getServices(()->VersionCompatibility.class);
     if (compat == null || compat.isEmpty()) {
       return new DefaultVersionCompatibility();
     } else if (compat.size() == 1) {

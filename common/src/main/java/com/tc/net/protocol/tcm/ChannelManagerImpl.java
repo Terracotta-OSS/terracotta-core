@@ -32,7 +32,7 @@ import java.util.function.Predicate;
 
 /**
  * provides the sessionIDs
- * 
+ *
  * @author steve
  */
 class ChannelManagerImpl implements ChannelManager, ChannelEventListener, ServerMessageChannelFactory {

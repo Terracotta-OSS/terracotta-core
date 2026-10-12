@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public class EntityManagerImplTest {
     ManagedEntity second = entityManager.createEntity(id, version, consumerID);
     Assert.assertEquals(entity, second);
   }
-  
+
   @Test
   public void testNullEntityChecks() throws Exception {
     Optional<ManagedEntity> check = entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(EntityID.NULL_ID, version));
