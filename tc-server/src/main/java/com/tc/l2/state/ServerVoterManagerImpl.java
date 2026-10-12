@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
         return null;
       }
     });
-    
+
     if (val == null) {
       return INVALID_VOTER_RESPONSE;
     }
@@ -138,7 +138,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
     String[] split = idTerm.split(":");
     return vote(split[0], Long.parseLong(split[1]));
   }
-  
+
   @Override
   public int getRegisteredVoters() {
     return (int)voters.entrySet().stream()
@@ -191,7 +191,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
     logger.info("Deregister " + id);
     return !votingInProgress ? voters.remove(id) != null : false;
   }
-  
+
   @Override
   public void reset() {
     //

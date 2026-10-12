@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -49,19 +49,19 @@ public class ConsistencyManagerImplTest {
 
   public ConsistencyManagerImplTest() {
   }
-  
+
   @BeforeClass
   public static void setUpClass() {
   }
-  
+
   @AfterClass
   public static void tearDownClass() {
   }
-  
+
   @Before
   public void setUp() {
   }
-  
+
   @After
   public void tearDown() {
   }
@@ -80,7 +80,7 @@ public class ConsistencyManagerImplTest {
     when(server.getManagement()).thenReturn(jmx);
     ServerEnv.setServer(server);
     TopologyManager topologyManager = new TopologyManager(()->new HashSet<>(asList("localhost:9410", "localhost:9510")), ()->1);
-    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(()->ServerMode.ACTIVE, topologyManager);
+    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager, new ServerVoterManagerImpl(()->ServerMode.ACTIVE, topologyManager::getExternalVoters));
     caller.call(ServerVoterManager.MBEAN_NAME, "registerVoter", voter);
     long term = Long.parseLong(caller.call(ServerVoterManager.MBEAN_NAME, "heartbeat", voter));
     Assert.assertTrue(term == 0);
@@ -111,18 +111,18 @@ public class ConsistencyManagerImplTest {
   @Test
   public void testVoteConfig() throws Exception {
     int servers = 1;
-    
+
     Assert.assertEquals(-1, ConsistencyManager.parseVoteCount(new FailoverBehavior(FailoverBehavior.Type.AVAILABILITY, 0), servers));
     servers = 2;
-    
-    Assert.assertEquals(1, ConsistencyManager.parseVoteCount(new FailoverBehavior(FailoverBehavior.Type.CONSISTENCY, 1), servers));    
+
+    Assert.assertEquals(1, ConsistencyManager.parseVoteCount(new FailoverBehavior(FailoverBehavior.Type.CONSISTENCY, 1), servers));
     Assert.assertEquals(2, ConsistencyManager.parseVoteCount(new FailoverBehavior(FailoverBehavior.Type.CONSISTENCY, 2), servers));
   }
-  
+
   @Test
   public void testAddClientIsNotPersistent() throws Exception {
     TopologyManager topologyManager = new TopologyManager(()->new HashSet<>(asList("localhost:9410", "localhost:9510")), ()->1);
-    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(()->ServerMode.ACTIVE, topologyManager);
+    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager, new ServerVoterManagerImpl(()->ServerMode.ACTIVE, topologyManager::getExternalVoters));
     long cterm = impl.getCurrentTerm();
     boolean granted = impl.requestTransition(ServerMode.ACTIVE, mock(NodeID.class), ConsistencyManager.Transition.ADD_CLIENT);
     Assert.assertTrue(granted);
@@ -134,7 +134,7 @@ public class ConsistencyManagerImplTest {
   @Test
   public void testAddClientDoesntVote() throws Exception {
     TopologyManager topologyManager = new TopologyManager(()->new HashSet<>(asList("localhost:9410", "localhost:9510")), ()->1);
-    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(()->ServerMode.ACTIVE, topologyManager);
+    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager, new ServerVoterManagerImpl(()->ServerMode.ACTIVE, topologyManager::getExternalVoters));
     long cterm = impl.getCurrentTerm();
     boolean granted = impl.requestTransition(ServerMode.ACTIVE, mock(NodeID.class), ConsistencyManager.Transition.ADD_CLIENT);
     Assert.assertTrue(granted);

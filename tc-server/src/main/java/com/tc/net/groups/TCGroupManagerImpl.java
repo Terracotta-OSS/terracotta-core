@@ -157,7 +157,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
          bufferManagerFactory);
   }
 
-  public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, ConnectionPolicy connectionPolicy,
+  private TCGroupManagerImpl(ServerConfigurationManager configSetupManager, ConnectionPolicy connectionPolicy,
                             StageManager stageManager,
                             TCConnectionManager comms,
                             ServerID thisNodeID, Node thisNode,
@@ -721,10 +721,8 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     return (handshakeTimer);
   }
 
-  /*
-   * for testing only
-   */
-  int size() {
+  @Override
+  public int size() {
     return members.size();
   }
 

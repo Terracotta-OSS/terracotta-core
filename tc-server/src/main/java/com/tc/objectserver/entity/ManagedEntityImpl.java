@@ -584,7 +584,9 @@ public class ManagedEntityImpl implements ManagedEntity {
       switch (request.getAction()) {
         case INVOKE_ACTION:
           Optional.ofNullable(decodeMessage(message, response))
-              .ifPresent(em->performAction(request, em, response, concurrencyKey));
+              .ifPresent( em -> {
+                performAction(request, em, response, concurrencyKey);
+              });
           break;
         case REQUEST_SYNC_ENTITY:
           performSync(response, request.replicateTo(Collections.emptySet()), concurrencyKey);

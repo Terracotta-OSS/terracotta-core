@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class ClientChannelLifeCycleHandlerTest {
     when(stage.getSink()).thenReturn(mock(Sink.class));
     when(stageManager.getStage(any(String.class), (Class<HydrateContext>)any(Class.class))).thenReturn(stage);
     this.handler = new ClientChannelLifeCycleHandler(commsManager, stageManager, channelManager,
-      mock(ClientEntityStateManager.class), 
+      mock(ClientEntityStateManager.class),
       mock(ProcessTransactionHandler.class), new ManagementTopologyEventCollector(mock(IMonitoringProducer.class)));
   }
 
@@ -76,7 +76,7 @@ public class ClientChannelLifeCycleHandlerTest {
     when(fakeChannel.getLocalAddress()).thenReturn(null);
 
     when(fakeChannel.getChannelID()).thenReturn(ChannelID.NULL_ID);
-    
+
     this.handler.channelRemoved(fakeChannel);
   }
 }
