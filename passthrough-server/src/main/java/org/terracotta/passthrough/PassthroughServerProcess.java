@@ -482,7 +482,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   }
 
   public void sendMessageToActiveFromInsideActive(final PassthroughClientDescriptor sender, final EntityMessage newMessage, PassthroughMessage passthroughMessage, Consumer<PassthroughMessage> result) {
-
     if (!running.isRaised()) {
       return;
     }
@@ -497,31 +496,10 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       Assert.assertTrue(!this.resending.isRaised());
 
       PassthroughMessageContainer container = new PassthroughMessageContainer();
-      container.sender = new IMessageSenderWrapper() {
-        @Override
-        public void sendAck(PassthroughMessage ack) {
-          // Do nothing on ack.
-        }
-        @Override
-        public void sendComplete(PassthroughMessage complete, boolean last) {
-          if (result != null) {
-            result.accept(complete);
-          }
-        }
-        @Override
-        public void sendRetire(PassthroughMessage retired) {
-          retireReadyItems(newMessage);
-          handleMessageRetirement(null, retired);
-        }
-        @Override
-        public PassthroughClientDescriptor clientDescriptorForID(long clientInstanceID) {
-          return new PassthroughClientDescriptor(sender.server, null, clientInstanceID);
-        }
-        @Override
-        public long getClientOriginID() {
-          return -1L;
-        }
-      };
+      container.sender = new ServerSentSenderWrapper(result, (retired)-> {
+            retireReadyItems(newMessage);
+            handleMessageRetirement(null, retired);
+        }, sender);
       container.message = passthroughMessage.asSerializedBytes();
       this.messageQueue.add(container);
   }
@@ -747,6 +725,11 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       }
     }
     return null;
+  }
+
+  /*  test only method  */
+  PassthroughMessageContainer getCurrentMessage() {
+    return messageQueue.peek();
   }
 
   private void serverThreadHandleMessage(IMessageSenderWrapper sender, byte[] message) {

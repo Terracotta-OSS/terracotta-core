@@ -127,17 +127,20 @@ public class PassThroughServerActiveInvokeContext<M extends EntityMessage, R ext
   }
 
   private void sendServerMessage(EntityMessage message, Consumer<ActiveServerMessenger.Response<R>> result) {
-    process.sendMessageToActiveFromInsideActive(descriptor, message, makePassthroughMessage(message), m-> {
+    process.sendMessageToActiveFromInsideActive(descriptor, message, makePassthroughMessage(message), new Consumer<PassthroughMessage>() {
+      @Override
+      public void accept(PassthroughMessage m) {
         if (result != null) {
-          R response = codec.decodeResponse(m.asSerializedBytes());
-          result.accept(new ActiveServerMessenger.Response<>() {
-
-            @Override
-            public R getResponse() throws Exception {
-              return response;
-            }
-          });
+          try {
+            R response = PassthroughMessageCodec.decodeRawMessage(new ServerSentResponseDecoder<>(codec), m.asSerializedBytes());
+            result.accept(() -> response);
+          } catch (Throwable t) {
+            result.accept((ActiveServerMessenger.Response<R>) () -> {
+              throw t;
+            });
+          }
         }
+      }
     });
   }
 
