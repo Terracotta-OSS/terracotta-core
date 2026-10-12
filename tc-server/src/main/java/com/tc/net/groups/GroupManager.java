@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@ import com.tc.text.PrettyPrintable;
 public interface GroupManager<M extends GroupMessage> extends PrettyPrintable {
 
   public NodeID join(GroupConfiguration groupConfiguration) throws GroupException;
-  
+
   public void disconnect();
-  
+
   public ServerID getLocalNodeID();
 
   public void sendAll(M msg);
@@ -69,14 +69,16 @@ public interface GroupManager<M extends GroupMessage> extends PrettyPrintable {
   public boolean isServerConnected(String nodeName);
 
   public void closeMember(ServerID serverID);
-  
+
   public void closeMember(String name);
-  
+
   public TCConnectionManager getConnectionManager();
 
   public void shutdown();
 
   public boolean isStopped();
-  
+
   int getBufferCount();
+
+  int size();
 }

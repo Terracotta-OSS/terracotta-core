@@ -481,7 +481,8 @@ public class ReplicaElectionScenariosTest {
     when(realTopology.getTopology()).thenReturn(topology);
 
     ConsistencyManagerImpl cm = new ConsistencyManagerImpl(
-        () -> ServerMode.ACTIVE, realTopology);
+        topologyManager,
+        new ServerVoterManagerImpl(()->ServerMode.ACTIVE, topologyManager::getExternalVoters));
 
     ServerID peer1 = new ServerID("peer1", "peer1".getBytes());
 
