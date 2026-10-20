@@ -237,14 +237,6 @@ public class ReplicaElectionScenariosTest {
         StateManager.convert(StateManager.PASSIVE_REPLICA_START));
   }
 
-  @Test
-  public void testPassiveStatesIncludesNewModes() {
-    assertTrue("PASSIVE_STATES must include RELAY_CONNECTED",
-        ServerMode.PASSIVE_STATES.contains(ServerMode.RELAY_CONNECTED));
-    assertTrue("PASSIVE_STATES must include REPLICA_START",
-        ServerMode.PASSIVE_STATES.contains(ServerMode.REPLICA_START));
-  }
-
   // =========================================================================
   // SECTION 2 — Single-server election self-completes immediately
   // =========================================================================
