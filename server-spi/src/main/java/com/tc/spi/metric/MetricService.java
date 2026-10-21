@@ -54,6 +54,8 @@ public interface MetricService {
    * <ul>
    *   <li>{@code "type"} – the fully qualified entity class name, present for
    *       {@link #ENTITY_INVOKE}, {@link #ENTITY_FETCH}, and {@link #ENTITY_RELEASE}.</li>
+   *   <li>{@code "state"} – the server state name (e.g. {@code "ACTIVE-COORDINATOR"},
+   *       {@code "PASSIVE-STANDBY"}), present for {@link #MEMBER_STATE}.</li>
    * </ul>
    */
   enum Event {
@@ -83,6 +85,13 @@ public interface MetricService {
     MEMBER_JOIN,
     /** A peer server left the stripe. */
     MEMBER_LEAVE,
+    /**
+     * The local server's state changed.
+     * Fired on every state transition with a {@code "state"} property carrying
+     * the new state name (e.g. {@code "ACTIVE-COORDINATOR"}, {@code "PASSIVE-STANDBY"}).
+     * Consumers can use this to track failover, sync, and startup progressions.
+     */
+    MEMBER_STATE,
     /** A voter registered with this server. */
     VOTER_JOIN,
     /** A voter de-registered from this server. */

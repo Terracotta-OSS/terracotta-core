@@ -247,6 +247,8 @@ import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.handler.DuplicationTransactionHandler;
 import com.tc.objectserver.handler.PassiveAckSender;
 import static com.tc.objectserver.handler.PassiveAckSender.decodeReplicationType;
+import static java.util.Collections.singletonMap;
+
 import com.tc.objectserver.handler.PassiveMessageResultCollector;
 import com.tc.objectserver.handler.RelayTransactionHandler;
 import com.tc.objectserver.persistence.ClusterPersistentState;
@@ -893,6 +895,8 @@ public class DistributedObjectServer {
 
     final CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
+
+    state.registerForStateChangeEvents(sce -> metricService.fireEvent(MetricService.Event.MEMBER_STATE, singletonMap("state", sce.getCurrentState().getName())));
 
     this.metricService.addMetricSupplier(MetricService.Metric.MEMBERS, groupCommManager::size);
     this.metricService.addMetricSupplier(MetricService.Metric.CLIENTS, channelLifeCycleHandler::getClientCount);
