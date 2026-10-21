@@ -17,6 +17,7 @@
  */
 package com.tc.objectserver.impl;
 
+import com.tc.spi.metric.MetricService;
 import org.slf4j.Logger;
 import org.terracotta.entity.ServiceRegistry;
 
@@ -48,7 +49,8 @@ public interface ServerBuilder extends PostInit {
                                                             TCConnectionManager connectionManager,
                                                             ServerID serverNodeID,
                                                             StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
-                                                            SocketEndpointFactory bufferManagerFactory);
+                                                            SocketEndpointFactory bufferManagerFactory,
+                                                            MetricService metricService);
 
   ServerConfigurationContext createServerConfigurationContext(String id, StageManager stageManager, DSOChannelManager channelManager,
                                                               ChannelStatsImpl channelStats,

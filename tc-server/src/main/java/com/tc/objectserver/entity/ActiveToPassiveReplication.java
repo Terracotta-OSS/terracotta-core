@@ -19,6 +19,8 @@ package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.l2.state.StateManager;
+import com.tc.util.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +55,7 @@ import com.tc.object.session.SessionID;
 import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.handler.ReplicationReceivingAction;
 import com.tc.spi.Guardian;
+import com.tc.spi.metric.MetricService;
 import com.tc.util.DaemonThreadFactory;
 import java.util.AbstractSet;
 import java.util.Collection;
@@ -88,17 +91,19 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private final GroupManager serverCheck;
   private final ProcessTransactionHandler snapshotter;
   private final ConsistencyManager consistencyMgr;
+  private final MetricService metricService;
 
   private final Sink<ReplicationReceivingAction> receiveHandler;
   private final AtomicLong sessionMaker = new AtomicLong();
 
-  public ActiveToPassiveReplication(ConsistencyManager consistencyMgr, ProcessTransactionHandler snapshotter, EntityPersistor persistor, ReplicationSender replicationSender, Sink<ReplicationReceivingAction> processor, GroupManager serverMatch) {
+  public ActiveToPassiveReplication(ConsistencyManager consistencyMgr, ProcessTransactionHandler snapshotter, EntityPersistor persistor, ReplicationSender replicationSender, Sink<ReplicationReceivingAction> processor, GroupManager serverMatch, MetricService metricService) {
     this.consistencyMgr = consistencyMgr;
     this.replicationSender = replicationSender;
     this.persistor = persistor;
     this.serverCheck = serverMatch;
     this.snapshotter = snapshotter;
     this.receiveHandler = processor;
+    this.metricService = metricService;
   }
 
   @Override
@@ -177,6 +182,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       props.setProperty("server", newNode.toString());
       props.setProperty("session", session.toString());
       GuardianContext.validate(Guardian.Op.SECURITY_OP, "passive sync started", props);
+      firePeerState(newNode, StateManager.PASSIVE_SYNCING);
       executePassiveSync(newNode, session);
       return true;
     } else {
@@ -226,6 +232,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       props.setProperty("session", session.toString());
       GuardianContext.validate(Guardian.Op.SECURITY_OP, "passive sync completed", props);
       replicateActivity(SyncReplicationActivity.createEndSyncMessage(TCByteBufferFactory.wrap(replicateEntityPersistor())), Collections.singleton(session)).waitForCompleted();
+      firePeerState(newNode, StateManager.PASSIVE_STANDBY);
       sync.end();
       sync.commit();
     });
@@ -378,6 +385,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     synchronized(standByNodes) {
       standByNodes.add(nodeID);
     }
+    firePeerState(nodeID, StateManager.PASSIVE_UNINITIALIZED);
   }
 
   @Override
@@ -392,6 +400,12 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       standByNodes.remove(nodeID);
       standByNodes.notifyAll();
     }
+    firePeerState(nodeID, StateManager.STOP_STATE);
+  }
+
+  private void firePeerState(NodeID nodeID, State state) {
+    String serverName = nodeID instanceof ServerID ? ((ServerID) nodeID).getName() : nodeID.toString();
+    metricService.fireEvent(MetricService.Event.MEMBER_STATE, java.util.Map.of("peer", serverName, "state", state.getName()));
   }
 
   public void close() {

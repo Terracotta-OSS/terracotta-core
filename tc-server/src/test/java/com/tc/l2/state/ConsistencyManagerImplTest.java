@@ -20,6 +20,7 @@ package com.tc.l2.state;
 import com.tc.net.NodeID;
 import com.tc.objectserver.impl.JMXSubsystem;
 import com.tc.objectserver.impl.TopologyManager;
+import com.tc.spi.metric.MetricService;
 import com.tc.util.Assert;
 import org.terracotta.configuration.FailoverBehavior;
 
@@ -80,7 +81,7 @@ public class ConsistencyManagerImplTest {
     when(server.getManagement()).thenReturn(jmx);
     ServerEnv.setServer(server);
     TopologyManager topologyManager = new TopologyManager(()->new HashSet<>(asList("localhost:9410", "localhost:9510")), ()->1);
-    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager, new ServerVoterManagerImpl(()->ServerMode.ACTIVE, topologyManager::getExternalVoters));
+    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager, new ServerVoterManagerImpl(()->ServerMode.ACTIVE, topologyManager::getExternalVoters, MetricService.NOOP));
     caller.call(ServerVoterManager.MBEAN_NAME, "registerVoter", voter);
     long term = Long.parseLong(caller.call(ServerVoterManager.MBEAN_NAME, "heartbeat", voter));
     Assert.assertTrue(term == 0);
@@ -122,7 +123,7 @@ public class ConsistencyManagerImplTest {
   @Test
   public void testAddClientIsNotPersistent() throws Exception {
     TopologyManager topologyManager = new TopologyManager(()->new HashSet<>(asList("localhost:9410", "localhost:9510")), ()->1);
-    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager, new ServerVoterManagerImpl(()->ServerMode.ACTIVE, topologyManager::getExternalVoters));
+    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager, new ServerVoterManagerImpl(()->ServerMode.ACTIVE, topologyManager::getExternalVoters, MetricService.NOOP));
     long cterm = impl.getCurrentTerm();
     boolean granted = impl.requestTransition(ServerMode.ACTIVE, mock(NodeID.class), ConsistencyManager.Transition.ADD_CLIENT);
     Assert.assertTrue(granted);
@@ -134,7 +135,7 @@ public class ConsistencyManagerImplTest {
   @Test
   public void testAddClientDoesntVote() throws Exception {
     TopologyManager topologyManager = new TopologyManager(()->new HashSet<>(asList("localhost:9410", "localhost:9510")), ()->1);
-    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager, new ServerVoterManagerImpl(()->ServerMode.ACTIVE, topologyManager::getExternalVoters));
+    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager, new ServerVoterManagerImpl(()->ServerMode.ACTIVE, topologyManager::getExternalVoters, MetricService.NOOP));
     long cterm = impl.getCurrentTerm();
     boolean granted = impl.requestTransition(ServerMode.ACTIVE, mock(NodeID.class), ConsistencyManager.Transition.ADD_CLIENT);
     Assert.assertTrue(granted);

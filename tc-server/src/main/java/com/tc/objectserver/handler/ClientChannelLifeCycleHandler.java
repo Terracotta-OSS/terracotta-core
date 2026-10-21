@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
+import com.tc.spi.metric.MetricService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,18 +63,22 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
   private static final Logger logger = LoggerFactory.getLogger(ClientChannelLifeCycleHandler.class);
   private final Sink<VoltronEntityMessage> voltronSink;
 
+  private final MetricService metricService;
+
   public ClientChannelLifeCycleHandler(CommunicationsManager commsManager,
                                  StageManager stageManager,
                                  DSOChannelManager channelManager,
                                  ClientEntityStateManager chain,
                                  ProcessTransactionHandler handler,
-                                 ManagementTopologyEventCollector collector) {
+                                 ManagementTopologyEventCollector collector,
+                                 MetricService metricService) {
     this.commsManager = commsManager;
     this.channelMgr = channelManager;
     this.clientEvents = chain;
     this.collector = collector;
     this.pth = handler;
     this.voltronSink = stageManager.getStage(ServerConfigurationContext.SINGLE_THREADED_FAST_PATH, VoltronEntityMessage.class).getSink();
+    this.metricService = metricService;
   }
 
   /**
@@ -175,6 +180,7 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
     synchronized (knownClients) {
       collector.clientDidConnect(channel, clientID);
       knownClients.add(clientID);
+      metricService.fireEvent(MetricService.Event.CLIENT_JOIN);
     }
   }
 
@@ -183,6 +189,7 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
       if (knownClients.contains(clientID)) {
         GuardianContext.clientRemoved(clientID);
         knownClients.remove(clientID);
+        metricService.fireEvent(MetricService.Event.CLIENT_LEAVE);
       }
     }
   }

@@ -26,6 +26,7 @@ import com.tc.net.ClientID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 
+import com.tc.spi.metric.MetricService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.EntityMessage;
@@ -77,6 +78,7 @@ public class EntityManagerImpl implements EntityManager {
   private boolean shouldCreateActiveEntities;
 
   private final Semaphore snapshotLock = new Semaphore(1); // sync and create or destroy are mutually exclusive
+  private final MetricService metricService;
 
   // The sort comparator.
   private final Comparator<ManagedEntity> consumerIdSorter = new Comparator<ManagedEntity>() {
@@ -94,7 +96,7 @@ public class EntityManagerImpl implements EntityManager {
 
   public EntityManagerImpl(TerracottaServiceProviderRegistry serviceRegistry,
       ClientEntityStateManager clientEntityStateManager, ManagementTopologyEventCollector eventCollector,
-      RequestProcessor processor, ManagementKeyCallback flushLocalPipeline, ServiceLocator locator) {
+      RequestProcessor processor, ManagementKeyCallback flushLocalPipeline, ServiceLocator locator, MetricService metricService) {
     this.serviceRegistry = serviceRegistry;
     this.clientEntityStateManager = clientEntityStateManager;
     this.eventCollector = eventCollector;
@@ -106,6 +108,7 @@ public class EntityManagerImpl implements EntityManager {
     ManagedEntity platform = createPlatformEntity();
     entities.put(platform.getID(), PlatformEntity.PLATFORM_FETCH_ID);
     entityIndex.put(PlatformEntity.PLATFORM_FETCH_ID, platform);
+    this.metricService = metricService;
   }
 
   public void setMessageSink(Sink<VoltronEntityMessage> sink) {
@@ -188,7 +191,7 @@ public class EntityManagerImpl implements EntityManager {
       FetchID current = entities.compute(id, (eid, fetch)-> shouldCreateActiveEntities ? Optional.ofNullable(fetch).orElse(new FetchID(consumerID)) : new FetchID(consumerID));
       ManagedEntity temp = entityIndex.computeIfAbsent(current, (fetch)->
         new ManagedEntityImpl(id, version, consumerID, flushLocalPipeline, serviceRegistry.subRegistry(consumerID),
-          clientEntityStateManager, eventCollector, this.messageSelf, processorPipeline, service, shouldCreateActiveEntities, canDelete(id)));
+          clientEntityStateManager, eventCollector, this.messageSelf, processorPipeline, service, shouldCreateActiveEntities, canDelete(id), metricService));
 
       return temp;
     } finally {
@@ -206,7 +209,7 @@ public class EntityManagerImpl implements EntityManager {
     Assert.assertNull(checkNull); //  must be null, nothing should be competing
     ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, consumerID, flushLocalPipeline,
           serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, this.messageSelf,
-          processorPipeline, service, this.shouldCreateActiveEntities, canDelete);
+          processorPipeline, service, this.shouldCreateActiveEntities, canDelete, metricService);
 
     checkNull = entityIndex.put(set, temp);
     Assert.assertNull(checkNull); //  must be null, nothing should be competing
