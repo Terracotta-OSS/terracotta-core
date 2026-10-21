@@ -17,6 +17,8 @@
  */
 package com.tc.net.groups;
 
+import com.tc.spi.metric.MetricService;
+import com.tc.stats.ChannelMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,6 +100,7 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.stream.Collectors.toSet;
 import org.terracotta.server.ServerEnv;
@@ -124,6 +127,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private final Map<String, GroupMessageListener<? extends GroupMessage>>           messageListeners            = new ConcurrentHashMap<>();
   private final Map<MessageID, GroupResponseImpl>               pendingRequests             = new ConcurrentHashMap<>();
   private final AtomicBoolean                               isStopped                   = new AtomicBoolean(false);
+  private final AtomicLong                                  outboundConnectionCount     = new AtomicLong(0);
   private final ConcurrentHashMap<ServerID, TCGroupMember>  members                     = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<MessageChannel, ServerID>  memberReceiver                     = new ConcurrentHashMap<>();
   private final Timer                                       handshakeTimer              = new Timer(ServerEnv.getServer().getIdentifier() +
@@ -135,6 +139,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private final AtomicBoolean                               alreadyJoined               = new AtomicBoolean(false);
   private final WeightGeneratorFactory                      weightGeneratorFactory;
   private final SocketEndpointFactory                        bufferManagerFactory;
+  private final MetricService metricService;
 
   private CommunicationsManager                             communicationsManager;
   private TCConnectionManager                               connectionManager;
@@ -152,16 +157,16 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, StageManager stageManager,
                             TCConnectionManager comms,
                             ServerID thisNodeID, Node thisNode,
-                            WeightGeneratorFactory weightGenerator, SocketEndpointFactory bufferManagerFactory) {
+                            WeightGeneratorFactory weightGenerator, SocketEndpointFactory bufferManagerFactory, MetricService metricService) {
     this(configSetupManager, new NullConnectionPolicy(), stageManager, comms, thisNodeID, thisNode, weightGenerator,
-         bufferManagerFactory);
+         bufferManagerFactory, metricService);
   }
 
   private TCGroupManagerImpl(ServerConfigurationManager configSetupManager, ConnectionPolicy connectionPolicy,
                             StageManager stageManager,
                             TCConnectionManager comms,
                             ServerID thisNodeID, Node thisNode,
-                            WeightGeneratorFactory weightGenerator, SocketEndpointFactory bufferManagerFactory) {
+                            WeightGeneratorFactory weightGenerator, SocketEndpointFactory bufferManagerFactory, MetricService metricService) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     this.connectionManager = comms;
@@ -177,6 +182,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
     this.groupPort = l2DSOConfig.getGroupPort().getPort();
     this.weightGeneratorFactory = weightGenerator;
+    this.metricService = metricService;
 
     InetSocketAddress socketAddress;
     // proxy group port. use a different group port from tc.properties (if exist) than the one on tc-config
@@ -209,7 +215,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.stageManager = stageManager;
     this.bufferManagerFactory = new ClearTextSocketEndpointFactory();
     this.configuredNodes = ()->new HashSet<>(Arrays.asList(servers));
-
+    this.metricService = MetricService.NOOP;
     this.groupPort = groupPort;
     this.version = "UNKNOWN";
     this.weightGeneratorFactory = weightGenerator;
@@ -249,6 +255,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     groupListener = communicationsManager.createListener(socketAddress, (c)->true, new DefaultConnectionIdFactory(), (MessageTransport t)->true);
     // Listen to channel creation/removal
     groupListener.getChannelManager().addEventListener(this);
+    groupListener.getChannelManager().addEventListener(new ChannelMetrics(metricService));
 
     registerForMessages(GroupZapNodeMessage.class, new ZapNodeRequestRouter());
   }
@@ -335,12 +342,16 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private boolean membersAdd(TCGroupMember member) {
     ServerID nodeID = member.getPeerNodeID();
     TCGroupMember old = members.putIfAbsent(nodeID, member);
+    if (old == null) {
+      metricService.fireEvent(MetricService.Event.MEMBER_JOIN);
+    }
     return old == null;
   }
 
   private void membersRemove(TCGroupMember member) {
     ServerID nodeID = member.getPeerNodeID();
     members.remove(nodeID);
+    metricService.fireEvent(MetricService.Event.MEMBER_LEAVE);
   }
 
   private void removeIfMemberReconnecting(ServerID newNodeID) {
@@ -656,10 +667,44 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     ProductID product = ProductID.DISCOVERY;
     ClientMessageChannel channel = communicationsManager.createClientChannel(product, 2_000 /*  timeout */);
 
+    // Track this outbound connection in metrics via a ChannelEventListener.
+    // ChannelMetrics implements ChannelManagerEventListener (server-side) and cannot be used here;
+    // instead we fire the same CONNECTION_OPEN/CLOSE events directly.
+    channel.addListener(event -> {
+      switch (event.getType()) {
+        case TRANSPORT_CONNECTED_EVENT:
+          outboundConnectionCount.incrementAndGet();
+          metricService.fireEvent(MetricService.Event.CONNECTION_OPEN);
+          break;
+        case CHANNEL_CLOSED_EVENT:
+          outboundConnectionCount.decrementAndGet();
+          metricService.fireEvent(MetricService.Event.CONNECTION_CLOSE);
+          break;
+        default:
+          break;
+      }
+    });
+
     channel.addListener(listener);
     channel.open(serverAddress);
 
     handshake(channel);
+  }
+
+  /**
+   * Returns the current number of outbound (client-side) connections this server has opened to peers.
+   * These are not tracked by the inbound {@link #groupListener} channel manager, so they must be
+   * counted separately to get a complete picture of all physical server-to-server connections.
+   *
+   * @return number of open outbound peer connections
+   */
+  public long getOutboundConnectionCount() {
+    return outboundConnectionCount.get();
+  }
+
+  @Override
+  public NetworkListener getNetworkListener() {
+    return groupListener;
   }
 
   public void openChannel(String hostname, int port, ChannelEventListener listener) throws TCTimeoutException,

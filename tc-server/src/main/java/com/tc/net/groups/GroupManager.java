@@ -24,6 +24,8 @@ import com.tc.net.ServerID;
 import com.tc.net.core.TCConnectionManager;
 
 import java.util.Set;
+
+import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.text.PrettyPrintable;
 
 public interface GroupManager<M extends GroupMessage> extends PrettyPrintable {
@@ -81,4 +83,14 @@ public interface GroupManager<M extends GroupMessage> extends PrettyPrintable {
   int getBufferCount();
 
   int size();
+
+  NetworkListener getNetworkListener();
+
+  /**
+   * Returns the current number of outbound (client-side) connections this server has opened to peer servers.
+   * These complement the inbound connections tracked by {@link #getNetworkListener()}'s channel manager.
+   *
+   * @return number of open outbound peer connections
+   */
+  long getOutboundConnectionCount();
 }

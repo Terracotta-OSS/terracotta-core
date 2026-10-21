@@ -17,6 +17,7 @@
  */
 package com.tc.objectserver.impl;
 
+import com.tc.spi.metric.MetricService;
 import org.slf4j.Logger;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceException;
@@ -65,9 +66,10 @@ public class StandardServerBuilder implements ServerBuilder {
                                                                    TCConnectionManager connections,
                                                                    ServerID serverNodeID,
                                                                    StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
-                                                                   SocketEndpointFactory bufferManagerFactory) {
+                                                                   SocketEndpointFactory bufferManagerFactory,
+                                                                   MetricService metricService) {
     return new TCGroupManagerImpl(configManager, stageManager, connections, serverNodeID, this.thisNode,
-                                  weightGeneratorFactory, bufferManagerFactory);
+                                  weightGeneratorFactory, bufferManagerFactory, metricService);
   }
 
   @Override
