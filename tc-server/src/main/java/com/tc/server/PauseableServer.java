@@ -127,7 +127,7 @@ public class PauseableServer implements Pauseable, SPIServer {
 
     @Override
     public String getState() {
-        return impl.getState().toString();
+        return impl.getState().getName();
     }
 
     @Override
