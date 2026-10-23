@@ -25,12 +25,14 @@ import com.tc.net.StripeID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
+import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.function.Supplier;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -72,12 +74,12 @@ public class ReplicatedClusterStateManagerImplTest {
     // Given: Server is in ACTIVE mode
     when(currentModeSupplier.get()).thenReturn(ServerMode.ACTIVE);
     when(configurationProvider.getSyncData()).thenReturn(new byte[]{1, 2, 3});
-    
+
     // Mock StripeID to avoid NullPointerException in ClusterStateMessage
     StripeID stripeID = mock(StripeID.class);
     when(stripeID.getName()).thenReturn("stripe-1");
     when(clusterState.getStripeID()).thenReturn(stripeID);
-    
+
     manager = new ReplicatedClusterStateManagerImpl(
         groupManager,
         currentModeSupplier,
@@ -101,11 +103,11 @@ public class ReplicatedClusterStateManagerImplTest {
   public void testPublishClusterStateWhenStopping() throws GroupException {
     // Given: Server is in STOP mode (shutting down)
     when(currentModeSupplier.get()).thenReturn(ServerMode.STOP);
-    
+
     manager = new ReplicatedClusterStateManagerImpl(
-        groupManager, 
-        currentModeSupplier, 
-        clusterState, 
+        groupManager,
+        currentModeSupplier,
+        clusterState,
         configurationProvider
     );
 
@@ -125,11 +127,11 @@ public class ReplicatedClusterStateManagerImplTest {
   public void testPublishClusterStateWhenPassive() throws GroupException {
     // Given: Server is in PASSIVE mode
     when(currentModeSupplier.get()).thenReturn(ServerMode.PASSIVE);
-    
+
     manager = new ReplicatedClusterStateManagerImpl(
-        groupManager, 
-        currentModeSupplier, 
-        clusterState, 
+        groupManager,
+        currentModeSupplier,
+        clusterState,
         configurationProvider
     );
 
@@ -149,11 +151,11 @@ public class ReplicatedClusterStateManagerImplTest {
   public void testPublishClusterStateWhenUninitialized() throws GroupException {
     // Given: Server is in UNINITIALIZED mode
     when(currentModeSupplier.get()).thenReturn(ServerMode.UNINITIALIZED);
-    
+
     manager = new ReplicatedClusterStateManagerImpl(
-        groupManager, 
-        currentModeSupplier, 
-        clusterState, 
+        groupManager,
+        currentModeSupplier,
+        clusterState,
         configurationProvider
     );
 
@@ -174,12 +176,12 @@ public class ReplicatedClusterStateManagerImplTest {
     // Given: Server starts in ACTIVE mode
     when(currentModeSupplier.get()).thenReturn(ServerMode.ACTIVE);
     when(configurationProvider.getSyncData()).thenReturn(new byte[]{1, 2, 3});
-    
+
     // Mock StripeID to avoid NullPointerException in ClusterStateMessage
     StripeID stripeID = mock(StripeID.class);
     when(stripeID.getName()).thenReturn("stripe-1");
     when(clusterState.getStripeID()).thenReturn(stripeID);
-    
+
     manager = new ReplicatedClusterStateManagerImpl(
         groupManager,
         currentModeSupplier,
@@ -189,7 +191,7 @@ public class ReplicatedClusterStateManagerImplTest {
 
     // When: First call succeeds while ACTIVE
     manager.publishClusterState(targetNode);
-    
+
     // Then: Message should be sent
     verify(groupManager, times(1)).sendTo(eq(targetNode), any(ClusterStateMessage.class));
 
@@ -201,5 +203,139 @@ public class ReplicatedClusterStateManagerImplTest {
 
     // Then: No additional message should be sent (still only 1 from before)
     verify(groupManager, times(1)).sendTo(eq(targetNode), any(ClusterStateMessage.class));
+  }
+
+  /**
+   * Test that a COMPLETE_STATE cluster state message received while in REPLICA mode is NOT applied
+   * to local cluster state. DR replica servers must not absorb cluster state from another cluster.
+   */
+  @Test
+  public void testClusterStateMessageNotAppliedOnReplica() {
+    // Given: Server is in REPLICA mode (DR replication scenario)
+    when(currentModeSupplier.get()).thenReturn(ServerMode.REPLICA);
+
+    manager = new ReplicatedClusterStateManagerImpl(
+        groupManager,
+        currentModeSupplier,
+        clusterState,
+        configurationProvider
+    );
+    when(clusterState.getStripeID()).thenReturn(new StripeID("test"));
+    when(clusterState.getAllConnections()).thenReturn(Collections.emptySet());
+    when(clusterState.getConfigSyncData()).thenReturn(new byte[0]);
+    when(clusterState.getStartGlobalMessageID()).thenReturn(1L);
+    when(clusterState.getNextAvailableChannelID()).thenReturn(1L);
+    // Build a real COMPLETE_STATE message (no serialization needed — initMessage skipped,
+    // we construct directly to avoid touching a real ClusterState for the sender side)
+    ClusterStateMessage msg = ClusterStateMessage.createClusterStateMessage(clusterState);
+
+    // When: The message is delivered as if received from a remote node
+    manager.messageReceived(targetNode, msg);
+
+    // Then: initState must never be called — the replica must not absorb cross-cluster state
+    verify(clusterState, never()).setNextAvailableChannelID(anyLong());
+    verify(clusterState, never()).addNewConnection(any());
+    verify(clusterState, never()).setStripeID(any());
+    verify(clusterState, never()).setConfigSyncData(any());
+    verify(clusterState, never()).setStartGlobalMessageID(anyLong());
+  }
+
+  /**
+   * Test that a NEW_CONNECTION_CREATED cluster state message received while in REPLICA mode
+   * is NOT applied to local cluster state.
+   */
+  @Test
+  public void testConnectionCreatedMessageNotAppliedOnReplica() {
+    // Given: Server is in REPLICA mode
+    when(currentModeSupplier.get()).thenReturn(ServerMode.REPLICA);
+
+    manager = new ReplicatedClusterStateManagerImpl(
+        groupManager,
+        currentModeSupplier,
+        clusterState,
+        configurationProvider
+    );
+
+    com.tc.net.protocol.transport.ConnectionID connID =
+        mock(com.tc.net.protocol.transport.ConnectionID.class);
+    ClusterStateMessage msg = ClusterStateMessage.createNewConnectionCreatedMessage(connID);
+
+    // When: The message is delivered
+    manager.messageReceived(targetNode, msg);
+
+    // Then: The connection must not be added to local state
+    verify(clusterState, never()).addNewConnection(any());
+  }
+
+  /**
+   * Test that a COMPLETE_STATE cluster state message received while in REPLICA_START mode
+   * is NOT applied to local cluster state.
+   */
+  @Test
+  public void testClusterStateMessageNotAppliedOnReplicaStart() {
+    // Given: Server is in REPLICA_START mode (DR replication, before fully connected)
+    when(currentModeSupplier.get()).thenReturn(ServerMode.REPLICA_START);
+
+    manager = new ReplicatedClusterStateManagerImpl(
+        groupManager,
+        currentModeSupplier,
+        clusterState,
+        configurationProvider
+    );
+
+    when(clusterState.getStripeID()).thenReturn(new StripeID("test"));
+    when(clusterState.getAllConnections()).thenReturn(Collections.emptySet());
+    when(clusterState.getConfigSyncData()).thenReturn(new byte[0]);
+    when(clusterState.getStartGlobalMessageID()).thenReturn(1L);
+    when(clusterState.getNextAvailableChannelID()).thenReturn(1L);
+
+    ClusterStateMessage msg = ClusterStateMessage.createClusterStateMessage(clusterState);
+
+    // When: The message is delivered
+    manager.messageReceived(targetNode, msg);
+
+    // Then: initState must never be called on a REPLICA_START server
+    verify(clusterState, never()).setNextAvailableChannelID(anyLong());
+    verify(clusterState, never()).addNewConnection(any());
+    verify(clusterState, never()).setStripeID(any());
+    verify(clusterState, never()).setConfigSyncData(any());
+    verify(clusterState, never()).setStartGlobalMessageID(anyLong());
+  }
+
+  /**
+   * Confirm the inverse: a COMPLETE_STATE message received while in PASSIVE (standby) mode
+   * IS applied to local state, as an in-cluster passive must sync from its active.
+   */
+  @Test
+  public void testClusterStateMessageIsAppliedOnPassiveStandby() {
+    // Given: Server is in PASSIVE (standby) mode
+    when(currentModeSupplier.get()).thenReturn(ServerMode.PASSIVE);
+
+    manager = new ReplicatedClusterStateManagerImpl(
+        groupManager,
+        currentModeSupplier,
+        clusterState,
+        configurationProvider
+    );
+
+    when(clusterState.getStripeID()).thenReturn(new StripeID("test"));
+    when(clusterState.getAllConnections()).thenReturn(Collections.emptySet());
+    when(clusterState.getConfigSyncData()).thenReturn(new byte[0]);
+    when(clusterState.getStartGlobalMessageID()).thenReturn(1L);
+    when(clusterState.getNextAvailableChannelID()).thenReturn(1L);
+
+    ClusterStateMessage msg = ClusterStateMessage.createClusterStateMessage(clusterState);
+
+    // When: The message is delivered from the in-cluster active
+    manager.messageReceived(targetNode, msg);
+
+    // Then: The state IS synced — in-cluster passives do process the message
+    verify(clusterState).syncSequenceState();
+    verify(clusterState).setNextAvailableChannelID(anyLong());
+    verify(clusterState, never()).addNewConnection(any());
+    verify(clusterState).setStripeID(any());
+    verify(clusterState).setConfigSyncData(any());
+    verify(clusterState).setStartGlobalMessageID(anyLong());
+    verify(configurationProvider).sync(any());
   }
 }

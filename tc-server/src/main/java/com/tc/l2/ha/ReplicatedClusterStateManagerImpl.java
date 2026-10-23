@@ -44,7 +44,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   private final ClusterState    state;
   private final ServerConfigurationManager configurationProvider;
   private final Supplier<ServerMode>    currentMode;
-  
+
   private boolean stateActivated = false;
 
   public ReplicatedClusterStateManagerImpl(GroupManager<AbstractGroupMessage> groupManager, Supplier<ServerMode> currentMode,
@@ -55,7 +55,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     this.configurationProvider = configurationProvider;
     groupManager.registerForMessages(ClusterStateMessage.class, this);
   }
-  
+
   private synchronized void activateClusterState() {
     if (!stateActivated) {
         state.generateStripeIDIfNeeded();
@@ -64,7 +64,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     }
     state.setConfigSyncData(configurationProvider.getSyncData());
   }
-  
+
   private synchronized void syncClusterState(ClusterStateMessage msg) {
     if (!stateActivated) {
       msg.initState(state);

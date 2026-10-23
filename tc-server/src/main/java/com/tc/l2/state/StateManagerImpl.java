@@ -454,7 +454,7 @@ public class StateManagerImpl implements StateManager {
   @Override
   public boolean moveToStopStateIf(Set<ServerMode> validStates) {
     try {
-      switchToState(ServerMode.STOP, EnumSet.of(this.getCurrentMode()));
+      switchToState(ServerMode.STOP, validStates);
       return true;
     } catch (IllegalStateException state) {
       logger.info("request to stop denied. Current state: {}", this.getCurrentMode());

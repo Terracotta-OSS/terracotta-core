@@ -242,5 +242,5 @@ public enum ServerMode {
   }
 
   public static final Set<ServerMode> VALID_STATES = EnumSet.allOf(ServerMode.class);
-  public static final Set<ServerMode> PASSIVE_STATES = EnumSet.of(UNINITIALIZED, PASSIVE, SYNCING, RELAY, RELAY_CONNECTED, REPLICA_START, REPLICA);
+  public static final Set<ServerMode> PASSIVE_STATES = EnumSet.of(UNINITIALIZED, PASSIVE, SYNCING, RELAY, RELAY_CONNECTED);
 };

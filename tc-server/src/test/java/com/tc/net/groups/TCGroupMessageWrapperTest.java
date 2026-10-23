@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -58,6 +58,8 @@ import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
 import com.tc.net.protocol.tcm.TCAction;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /*
  * This test really belongs in the TC Messaging module but it's dependencies
@@ -73,7 +75,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
   final TCMessageFactory                          msgFactory     = new TCMessageFactoryImpl(monitor);
   final TCMessageRouter                           msgRouter      = new TCMessageRouterImpl();
   private TCConnectionManager                     clientConns;
-  private TCConnectionManager                     serverConns;  
+  private TCConnectionManager                     serverConns;
   private CommunicationsManager                   clientComms;
   private CommunicationsManager                   serverComms;
   private ChannelManager                          channelManager;
@@ -185,7 +187,9 @@ public class TCGroupMessageWrapperTest extends TestCase {
   }
 
   public void testClusterStateMessage() throws Exception {
-    AbstractGroupMessage sendMesg = new ClusterStateMessage(ClusterStateMessage.OPERATION_SUCCESS, new MessageID(1000));
+    ClusterStateMessage origin = mock(ClusterStateMessage.class);
+    when(origin.getMessageID()).thenReturn(new MessageID(1000));
+    AbstractGroupMessage sendMesg = ClusterStateMessage.createOKResponse(origin);
     sendGroupMessage(sendMesg);
   }
 
