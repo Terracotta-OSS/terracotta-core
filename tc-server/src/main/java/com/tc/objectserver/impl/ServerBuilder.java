@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  */
 package com.tc.objectserver.impl;
 
+import com.tc.spi.metric.MetricService;
 import org.slf4j.Logger;
 import org.terracotta.entity.ServiceRegistry;
 
@@ -44,11 +45,12 @@ import java.io.IOException;
 
 public interface ServerBuilder extends PostInit {
   GroupManager<AbstractGroupMessage> createGroupCommManager(ServerConfigurationManager configManager,
-                                                            StageManager stageManager, 
+                                                            StageManager stageManager,
                                                             TCConnectionManager connectionManager,
                                                             ServerID serverNodeID,
                                                             StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
-                                                            SocketEndpointFactory bufferManagerFactory);
+                                                            SocketEndpointFactory bufferManagerFactory,
+                                                            MetricService metricService);
 
   ServerConfigurationContext createServerConfigurationContext(String id, StageManager stageManager, DSOChannelManager channelManager,
                                                               ChannelStatsImpl channelStats,

@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.tc.net.ClientID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 
+import com.tc.spi.metric.MetricService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.EntityMessage;
@@ -69,15 +70,16 @@ public class EntityManagerImpl implements EntityManager {
   private final TerracottaServiceProviderRegistry serviceRegistry;
   private final ClientEntityStateManager clientEntityStateManager;
   private final ManagementTopologyEventCollector eventCollector;
-  
+
   private final ManagementKeyCallback flushLocalPipeline;
   private Sink<VoltronEntityMessage> messageSelf;
-  
+
   private final RequestProcessor processorPipeline;
   private boolean shouldCreateActiveEntities;
-  
+
   private final Semaphore snapshotLock = new Semaphore(1); // sync and create or destroy are mutually exclusive
-  
+  private final MetricService metricService;
+
   // The sort comparator.
   private final Comparator<ManagedEntity> consumerIdSorter = new Comparator<ManagedEntity>() {
     @Override
@@ -92,9 +94,9 @@ public class EntityManagerImpl implements EntityManager {
     }};
 
 
-  public EntityManagerImpl(TerracottaServiceProviderRegistry serviceRegistry, 
-      ClientEntityStateManager clientEntityStateManager, ManagementTopologyEventCollector eventCollector, 
-      RequestProcessor processor, ManagementKeyCallback flushLocalPipeline, ServiceLocator locator) {
+  public EntityManagerImpl(TerracottaServiceProviderRegistry serviceRegistry,
+      ClientEntityStateManager clientEntityStateManager, ManagementTopologyEventCollector eventCollector,
+      RequestProcessor processor, ManagementKeyCallback flushLocalPipeline, ServiceLocator locator, MetricService metricService) {
     this.serviceRegistry = serviceRegistry;
     this.clientEntityStateManager = clientEntityStateManager;
     this.eventCollector = eventCollector;
@@ -106,8 +108,9 @@ public class EntityManagerImpl implements EntityManager {
     ManagedEntity platform = createPlatformEntity();
     entities.put(platform.getID(), PlatformEntity.PLATFORM_FETCH_ID);
     entityIndex.put(PlatformEntity.PLATFORM_FETCH_ID, platform);
+    this.metricService = metricService;
   }
-  
+
   public void setMessageSink(Sink<VoltronEntityMessage> sink) {
     this.messageSelf = sink;
   }
@@ -145,7 +148,7 @@ public class EntityManagerImpl implements EntityManager {
   public List<VoltronEntityMessage> enterActiveState() {
     // We can't enter active twice.
     Assert.assertFalse(this.shouldCreateActiveEntities);
-    //  locking the snapshotting until full active is achieved 
+    //  locking the snapshotting until full active is achieved
     snapshotLock.acquireUninterruptibly();
     try {
       // Tell our implementation-provided services to become active (since they might have modes of operation).
@@ -153,7 +156,7 @@ public class EntityManagerImpl implements EntityManager {
 
       // Set the state of the manager.
       this.shouldCreateActiveEntities = true;
-      // We can promote directly because this method is only called from PTH initialize 
+      // We can promote directly because this method is only called from PTH initialize
       //  thus, this only happens once RTH is spun down and PTH is beginning to spin up.  We know the request queues are clear
       // issue-439: We need to sort these entities, ascending by consumerID.
       List<ManagedEntity> sortingList = new ArrayList<ManagedEntity>(this.entityIndex.values());
@@ -162,7 +165,7 @@ public class EntityManagerImpl implements EntityManager {
       for (ManagedEntity entity : sortingList) {
         try {
             reconnectDone.add(new LocalPipelineFlushMessage(
-              EntityDescriptor.createDescriptorForInvoke(new FetchID(entity.getConsumerID()), ClientInstanceID.NULL_ID), 
+              EntityDescriptor.createDescriptorForInvoke(new FetchID(entity.getConsumerID()), ClientInstanceID.NULL_ID),
               entity.promoteEntity()));
         } catch (ConfigurationException ce) {
           String errMsg = "failure to promote entity: " + entity.getID();
@@ -188,7 +191,7 @@ public class EntityManagerImpl implements EntityManager {
       FetchID current = entities.compute(id, (eid, fetch)-> shouldCreateActiveEntities ? Optional.ofNullable(fetch).orElse(new FetchID(consumerID)) : new FetchID(consumerID));
       ManagedEntity temp = entityIndex.computeIfAbsent(current, (fetch)->
         new ManagedEntityImpl(id, version, consumerID, flushLocalPipeline, serviceRegistry.subRegistry(consumerID),
-          clientEntityStateManager, eventCollector, this.messageSelf, processorPipeline, service, shouldCreateActiveEntities, canDelete(id)));
+          clientEntityStateManager, eventCollector, this.messageSelf, processorPipeline, service, shouldCreateActiveEntities, canDelete(id), metricService));
 
       return temp;
     } finally {
@@ -204,10 +207,10 @@ public class EntityManagerImpl implements EntityManager {
     FetchID set = new FetchID(consumerID);
     Object checkNull = entities.put(entityID, set);
     Assert.assertNull(checkNull); //  must be null, nothing should be competing
-    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, consumerID, flushLocalPipeline, 
+    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, consumerID, flushLocalPipeline,
           serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, this.messageSelf,
-          processorPipeline, service, this.shouldCreateActiveEntities, canDelete);
-    
+          processorPipeline, service, this.shouldCreateActiveEntities, canDelete, metricService);
+
     checkNull = entityIndex.put(set, temp);
     Assert.assertNull(checkNull); //  must be null, nothing should be competing
     try {
@@ -231,7 +234,7 @@ public class EntityManagerImpl implements EntityManager {
           return entity;
         }
       });
-      
+
       if (e == null) {
         LOGGER.debug("removed " + id);
         return true;
@@ -251,12 +254,12 @@ public class EntityManagerImpl implements EntityManager {
       return getEntity(descriptor.getEntityID(), descriptor.getClientSideVersion());
     }
   }
-  
+
   private Optional<ManagedEntity> getEntity(FetchID idx) {
     Assert.assertFalse(idx.isNull());
     return Optional.ofNullable(this.entityIndex.get(idx));
   }
-  
+
   private Optional<ManagedEntity> getEntity(EntityID id, long version) throws ServerException {
     Assert.assertNotNull(id);
     if (EntityID.NULL_ID == id) {
@@ -267,7 +270,7 @@ public class EntityManagerImpl implements EntityManager {
     FetchID fetch = entities.get(id);
     if (fetch != null) {
       ManagedEntity entity = entityIndex.get(fetch);
-      //  if the version in the descriptor is not valid, don't check 
+      //  if the version in the descriptor is not valid, don't check
       //  check the provided version against the version of the entity
       if (version > 0 && entity.getVersion() != version) {
         throw ServerException.createEntityVersionMismatch(id, entity.getVersion() + " does not match " + version);
@@ -295,7 +298,7 @@ public class EntityManagerImpl implements EntityManager {
   public Collection<ManagedEntity> getAll() {
     return new ArrayList<>(entityIndex.values());
   }
-  
+
   @Override
   public List<ManagedEntity> snapshot(Predicate<ManagedEntity> runFirst) {
     snapshotLock.acquireUninterruptibly();
@@ -332,7 +335,7 @@ public class EntityManagerImpl implements EntityManager {
       // This needs to be null or else there was some kind of unexpected concurrent access which would have caused failure or a duplicate entry.
       Assert.assertNull(oldService);
     }
-    
+
     // We must have a service by now or we would have thrown.
     Assert.assertNotNull(service);
     long serviceVersion = service.getVersion();
@@ -341,7 +344,7 @@ public class EntityManagerImpl implements EntityManager {
     }
     return service;
   }
-  
+
   @Override
   public Set<ClientID> resetReferences() {
     for (ManagedEntity me : entityIndex.values()) {

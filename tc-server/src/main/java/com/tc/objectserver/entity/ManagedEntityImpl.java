@@ -54,6 +54,7 @@ import com.tc.services.EntityMessengerService;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.services.MappedStateCollector;
 import com.tc.spi.Guardian;
+import com.tc.spi.metric.MetricService;
 import com.tc.tracing.Trace;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -114,6 +115,8 @@ public class ManagedEntityImpl implements ManagedEntity {
   private final long version;
   private final long consumerID;
   private final InternalServiceRegistry registry;
+  private final MetricService metricService;
+  private final Map<String, String> cachedEventProperties;
   private final Sink<VoltronEntityMessage> messageSelf;
   private final ClientEntityStateManager clientEntityStateManager;
   private final ManagementTopologyEventCollector eventCollector;
@@ -152,7 +155,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   ManagedEntityImpl(EntityID id, long version, long consumerID, ManagementKeyCallback flushLocalPipeline, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ManagementTopologyEventCollector eventCollector,
                     Sink<VoltronEntityMessage> msg,
                     RequestProcessor process, EntityServerService<EntityMessage, EntityResponse> factory,
-                    boolean isInActiveState, boolean canDelete) {
+                    boolean isInActiveState, boolean canDelete, MetricService metricService) {
     this.id = id;
     this.isDestroyed = true;
     this.version = version;
@@ -161,6 +164,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.fetchID = new FetchID(consumerID);
     this.flushLocalPipeline = flushLocalPipeline;
     this.registry = registry;
+    this.metricService = metricService;
+    this.cachedEventProperties = Collections.singletonMap("type", this.id.getClassName());
     this.messageSelf = msg;
     Assert.assertNotNull(this.messageSelf);
     this.clientEntityStateManager = clientEntityStateManager;
@@ -482,10 +487,12 @@ public class ManagedEntityImpl implements ManagedEntity {
           if (!GuardianContext.validate(Guardian.Op.ENTITY_FETCH, this.getID().getClassName() + ":" + this.getID().getEntityName())) {
             resp.failure(ServerException.createPermissionDenied(this.getID()));
           } else {
+            this.metricService.fireEvent(MetricService.Event.ENTITY_FETCH, this.cachedEventProperties);
             getEntity(request, resp, payload.getRawPayload());
           }
           break;
         case RELEASE_ENTITY:
+          this.metricService.fireEvent(MetricService.Event.ENTITY_RELEASE, this.cachedEventProperties);
           releaseEntity(request, resp);
           break;
         case RECONFIGURE_ENTITY:
@@ -584,7 +591,10 @@ public class ManagedEntityImpl implements ManagedEntity {
       switch (request.getAction()) {
         case INVOKE_ACTION:
           Optional.ofNullable(decodeMessage(message, response))
-              .ifPresent(em->performAction(request, em, response, concurrencyKey));
+              .ifPresent( em -> {
+                this.metricService.fireEvent(MetricService.Event.ENTITY_INVOKE, this.cachedEventProperties);
+                performAction(request, em, response, concurrencyKey);
+              });
           break;
         case REQUEST_SYNC_ENTITY:
           performSync(response, request.replicateTo(Collections.emptySet()), concurrencyKey);

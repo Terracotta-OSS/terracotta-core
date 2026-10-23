@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.tc.classloader.ServiceLocator;
 import com.tc.net.ClientID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
+import com.tc.spi.metric.MetricService;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -81,7 +82,8 @@ public class EntityManagerImplTest {
         new ManagementTopologyEventCollector(mock(IMonitoringProducer.class)),
         processor,
         mock(ManagementKeyCallback.class),
-        new ServiceLocator(this.getClass().getClassLoader(), false)
+        new ServiceLocator(this.getClass().getClassLoader(), false),
+        MetricService.NOOP
     );
     entityManager.setMessageSink(mock(Sink.class));
     id = new EntityID("com.tc.objectserver.testentity.TestEntity", "foo");
@@ -112,7 +114,7 @@ public class EntityManagerImplTest {
     ManagedEntity second = entityManager.createEntity(id, version, consumerID);
     Assert.assertEquals(entity, second);
   }
-  
+
   @Test
   public void testNullEntityChecks() throws Exception {
     Optional<ManagedEntity> check = entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(EntityID.NULL_ID, version));

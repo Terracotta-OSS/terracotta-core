@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,14 +24,16 @@ import com.tc.net.ServerID;
 import com.tc.net.core.TCConnectionManager;
 
 import java.util.Set;
+
+import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.text.PrettyPrintable;
 
 public interface GroupManager<M extends GroupMessage> extends PrettyPrintable {
 
   public NodeID join(GroupConfiguration groupConfiguration) throws GroupException;
-  
+
   public void disconnect();
-  
+
   public ServerID getLocalNodeID();
 
   public void sendAll(M msg);
@@ -69,14 +71,26 @@ public interface GroupManager<M extends GroupMessage> extends PrettyPrintable {
   public boolean isServerConnected(String nodeName);
 
   public void closeMember(ServerID serverID);
-  
+
   public void closeMember(String name);
-  
+
   public TCConnectionManager getConnectionManager();
 
   public void shutdown();
 
   public boolean isStopped();
-  
+
   int getBufferCount();
+
+  int size();
+
+  NetworkListener getNetworkListener();
+
+  /**
+   * Returns the current number of outbound (client-side) connections this server has opened to peer servers.
+   * These complement the inbound connections tracked by {@link #getNetworkListener()}'s channel manager.
+   *
+   * @return number of open outbound peer connections
+   */
+  long getOutboundConnectionCount();
 }

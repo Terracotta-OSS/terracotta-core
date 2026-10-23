@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.l2.state.StateManager;
+import com.tc.util.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +55,7 @@ import com.tc.object.session.SessionID;
 import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.handler.ReplicationReceivingAction;
 import com.tc.spi.Guardian;
+import com.tc.spi.metric.MetricService;
 import com.tc.util.DaemonThreadFactory;
 import java.util.AbstractSet;
 import java.util.Collection;
@@ -71,11 +74,11 @@ import org.terracotta.tripwire.TripwireFactory;
 /**
  *  This class acts to connect {@link ProcessTransactionHandler} to the {@link ReplicationSender}
  *
- *  This class lies idle until activated by setting the current passive nodes.  This should 
+ *  This class lies idle until activated by setting the current passive nodes.  This should
  *  occur only when the server is transitioning from passive-standby to active
  */
 public class ActiveToPassiveReplication implements PassiveReplicationBroker, GroupEventsListener {
-  
+
   private static final Logger LOGGER = LoggerFactory.getLogger(ActiveToPassiveReplication.class);
   private volatile boolean activated = false;
   private final Map<ServerID, SessionID> passiveNodes = new ConcurrentHashMap<>();
@@ -88,17 +91,19 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private final GroupManager serverCheck;
   private final ProcessTransactionHandler snapshotter;
   private final ConsistencyManager consistencyMgr;
-  
+  private final MetricService metricService;
+
   private final Sink<ReplicationReceivingAction> receiveHandler;
   private final AtomicLong sessionMaker = new AtomicLong();
 
-  public ActiveToPassiveReplication(ConsistencyManager consistencyMgr, ProcessTransactionHandler snapshotter, EntityPersistor persistor, ReplicationSender replicationSender, Sink<ReplicationReceivingAction> processor, GroupManager serverMatch) {
+  public ActiveToPassiveReplication(ConsistencyManager consistencyMgr, ProcessTransactionHandler snapshotter, EntityPersistor persistor, ReplicationSender replicationSender, Sink<ReplicationReceivingAction> processor, GroupManager serverMatch, MetricService metricService) {
     this.consistencyMgr = consistencyMgr;
     this.replicationSender = replicationSender;
     this.persistor = persistor;
     this.serverCheck = serverMatch;
     this.snapshotter = snapshotter;
     this.receiveHandler = processor;
+    this.metricService = metricService;
   }
 
   @Override
@@ -117,14 +122,14 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       }
     }
   }
-  
+
   public void enterActiveState(Set<ServerID> passives) {
     Assert.assertFalse(activated);
     activated = true;
     primePassives(passives);
   }
   /**
- * starts the stream of messages to each passive the server knows about.  This should only happen 
+ * starts the stream of messages to each passive the server knows about.  This should only happen
  * when a server enters active state.
  */
   private void primePassives(Set<ServerID> passives) {
@@ -167,7 +172,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private static int executionLane(SessionID session) {
     return Long.hashCode(session.toLong());
   }
-  
+
   public boolean startPassiveSync(ServerID newNode) {
     Assert.assertTrue(activated);
     SessionID session = prime(newNode);
@@ -177,6 +182,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       props.setProperty("server", newNode.toString());
       props.setProperty("session", session.toString());
       GuardianContext.validate(Guardian.Op.SECURITY_OP, "passive sync started", props);
+      firePeerState(newNode, StateManager.PASSIVE_SYNCING);
       executePassiveSync(newNode, session);
       return true;
     } else {
@@ -226,11 +232,12 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       props.setProperty("session", session.toString());
       GuardianContext.validate(Guardian.Op.SECURITY_OP, "passive sync completed", props);
       replicateActivity(SyncReplicationActivity.createEndSyncMessage(TCByteBufferFactory.wrap(replicateEntityPersistor())), Collections.singleton(session)).waitForCompleted();
+      firePeerState(newNode, StateManager.PASSIVE_STANDBY);
       sync.end();
       sync.commit();
     });
   }
-  
+
   private byte[] replicateEntityPersistor() {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     try {
@@ -239,7 +246,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       }
       return out.toByteArray();
     } catch (IOException ioe) {
-      
+
     }
     return null;
   }
@@ -347,10 +354,10 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
           L2Utils.handleInterrupted(LOGGER, ie);
         }
       }
-// first remove it from the list of passive nodes so that anything sending new messages 
+// first remove it from the list of passive nodes so that anything sending new messages
 // will have to remove it from the list of nodes to send to
-//  acknowledge all the messages for this node because it is gone, this may result in 
-//  a double ack locally but that is ok.  acknowledge is loose and can tolerate it. 
+//  acknowledge all the messages for this node because it is gone, this may result in
+//  a double ack locally but that is ok.  acknowledge is loose and can tolerate it.
   //  remove the passive node from the sender first.  nothing else is going out
       if (passiveNodes.remove(nodeID, session)) {
         removePassiveSession(session);
@@ -360,7 +367,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       }
     });
   }
-  
+
   private void removePassiveSession(SessionID session) {
     this.replicationSender.removePassive(session);
     Iterator<Map.Entry<SyncReplicationActivity.ActivityID, ActivePassiveAckWaiter>> scan = waiters.entrySet().iterator();
@@ -378,6 +385,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     synchronized(standByNodes) {
       standByNodes.add(nodeID);
     }
+    firePeerState(nodeID, StateManager.PASSIVE_UNINITIALIZED);
   }
 
   @Override
@@ -392,6 +400,12 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       standByNodes.remove(nodeID);
       standByNodes.notifyAll();
     }
+    firePeerState(nodeID, StateManager.STOP_STATE);
+  }
+
+  private void firePeerState(NodeID nodeID, State state) {
+    String serverName = nodeID instanceof ServerID ? ((ServerID) nodeID).getName() : nodeID.toString();
+    metricService.fireEvent(MetricService.Event.MEMBER_STATE, java.util.Map.of("peer", serverName, "state", state.getName()));
   }
 
   public void close() {
@@ -424,7 +438,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
               LOGGER.warn(e.toString());
           }
       }
-      
+
     }
     return term;
   }
