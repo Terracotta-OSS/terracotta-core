@@ -22,7 +22,6 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.StageController;
-import com.tc.exception.TCServerRestartException;
 import com.tc.exception.TCShutdownServerException;
 import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.ha.WeightGeneratorFactory;
@@ -37,6 +36,7 @@ import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.impl.Topology;
 import com.tc.objectserver.impl.TopologyManager;
 import com.tc.objectserver.persistence.ServerPersistentState;
+import org.terracotta.event.EventService;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -473,7 +473,8 @@ public class ReplicaElectionScenariosTest {
     when(realTopology.getTopology()).thenReturn(topology);
 
     ConsistencyManagerImpl cm = new ConsistencyManagerImpl(
-        () -> ServerMode.ACTIVE, realTopology);
+        topologyManager,
+        new ServerVoterManagerImpl(()->ServerMode.ACTIVE, topologyManager::getExternalVoters, EventService.NOOP));
 
     ServerID peer1 = new ServerID("peer1", "peer1".getBytes());
 

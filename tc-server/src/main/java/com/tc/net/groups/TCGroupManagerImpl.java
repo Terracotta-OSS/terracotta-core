@@ -17,6 +17,7 @@
  */
 package com.tc.net.groups;
 
+import org.terracotta.event.EventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,6 +100,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toSet;
 import org.terracotta.server.ServerEnv;
 import com.tc.net.protocol.tcm.TCAction;
@@ -135,6 +137,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private final AtomicBoolean                               alreadyJoined               = new AtomicBoolean(false);
   private final WeightGeneratorFactory                      weightGeneratorFactory;
   private final SocketEndpointFactory                        bufferManagerFactory;
+  private final EventService eventService;
 
   private CommunicationsManager                             communicationsManager;
   private TCConnectionManager                               connectionManager;
@@ -152,16 +155,16 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, StageManager stageManager,
                             TCConnectionManager comms,
                             ServerID thisNodeID, Node thisNode,
-                            WeightGeneratorFactory weightGenerator, SocketEndpointFactory bufferManagerFactory) {
+                            WeightGeneratorFactory weightGenerator, SocketEndpointFactory bufferManagerFactory, EventService eventService) {
     this(configSetupManager, new NullConnectionPolicy(), stageManager, comms, thisNodeID, thisNode, weightGenerator,
-         bufferManagerFactory);
+         bufferManagerFactory, eventService);
   }
 
-  public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, ConnectionPolicy connectionPolicy,
+  private TCGroupManagerImpl(ServerConfigurationManager configSetupManager, ConnectionPolicy connectionPolicy,
                             StageManager stageManager,
                             TCConnectionManager comms,
                             ServerID thisNodeID, Node thisNode,
-                            WeightGeneratorFactory weightGenerator, SocketEndpointFactory bufferManagerFactory) {
+                            WeightGeneratorFactory weightGenerator, SocketEndpointFactory bufferManagerFactory, EventService eventService) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     this.connectionManager = comms;
@@ -177,6 +180,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
     this.groupPort = l2DSOConfig.getGroupPort().getPort();
     this.weightGeneratorFactory = weightGenerator;
+    this.eventService = eventService;
 
     InetSocketAddress socketAddress;
     // proxy group port. use a different group port from tc.properties (if exist) than the one on tc-config
@@ -209,7 +213,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.stageManager = stageManager;
     this.bufferManagerFactory = new ClearTextSocketEndpointFactory();
     this.configuredNodes = ()->new HashSet<>(Arrays.asList(servers));
-
+    this.eventService = EventService.NOOP;
     this.groupPort = groupPort;
     this.version = "UNKNOWN";
     this.weightGeneratorFactory = weightGenerator;
@@ -335,12 +339,17 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private boolean membersAdd(TCGroupMember member) {
     ServerID nodeID = member.getPeerNodeID();
     TCGroupMember old = members.putIfAbsent(nodeID, member);
+    if (old == null) {
+      eventService.fireEvent(EventService.Event.PEER_JOIN, singletonMap("peer", nodeID.getName()));
+    }
     return old == null;
   }
 
   private void membersRemove(TCGroupMember member) {
     ServerID nodeID = member.getPeerNodeID();
-    members.remove(nodeID);
+    if (members.remove(nodeID) != null) {
+      eventService.fireEvent(EventService.Event.PEER_LEAVE, singletonMap("peer", nodeID.getName()));
+    }
   }
 
   private void removeIfMemberReconnecting(ServerID newNodeID) {
@@ -721,10 +730,8 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     return (handshakeTimer);
   }
 
-  /*
-   * for testing only
-   */
-  int size() {
+  @Override
+  public int size() {
     return members.size();
   }
 

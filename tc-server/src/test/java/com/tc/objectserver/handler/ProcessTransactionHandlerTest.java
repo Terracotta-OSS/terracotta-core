@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.terracotta.event.EventService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -138,7 +139,7 @@ public class ProcessTransactionHandlerTest {
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
     when(broker.passives()).thenReturn(Collections.emptySet());
     processor.setReplication(broker);
-    entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop, new ServiceLocator(this.getClass().getClassLoader(), false));
+    entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop, new ServiceLocator(this.getClass().getClassLoader(), false), EventService.NOOP);
     entityManager.setMessageSink(mock(Sink.class));
 
     this.processTransactionHandler = new ProcessTransactionHandler(persistor, channelManager, entityManager);

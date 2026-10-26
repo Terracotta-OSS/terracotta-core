@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ package com.tc.l2.state;
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.management.TerracottaManagement;
 import com.tc.services.TimeSource;
+import org.terracotta.event.EventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +38,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
 
   private final Supplier<ServerMode> mode;
   private final Supplier<Integer> voterLimit;
+  private final EventService eventService;
   final Map<String, Long> voters = new ConcurrentHashMap<>();
   private final TimeSource timeSource;
 
@@ -46,11 +48,11 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
 
   private volatile boolean overrideVote = false;
 
-  public ServerVoterManagerImpl(Supplier<ServerMode> mode, Supplier<Integer> voterLimit) throws Exception {
-    this(mode, voterLimit, TimeSource.SYSTEM_TIME_SOURCE, true);
+  public ServerVoterManagerImpl(Supplier<ServerMode> mode, Supplier<Integer> voterLimit, EventService eventService) throws Exception {
+    this(mode, voterLimit, TimeSource.SYSTEM_TIME_SOURCE, true, eventService);
   }
 
-  ServerVoterManagerImpl(Supplier<ServerMode> mode, Supplier<Integer> voterLimit, TimeSource timeSource, boolean initMBean) throws Exception {
+  ServerVoterManagerImpl(Supplier<ServerMode> mode, Supplier<Integer> voterLimit, TimeSource timeSource, boolean initMBean, EventService eventService) throws Exception {
     super(ServerVoterManager.class, false);
     if (initMBean) {
       try {
@@ -64,6 +66,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
     this.voterLimit = voterLimit;
     this.timeSource = timeSource;
     this.electionTerm = 0;
+    this.eventService = eventService;
   }
 
   @Override
@@ -79,6 +82,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
     }
 
     voters.put(id, timeSource.currentTimeMillis());
+    eventService.fireEvent(EventService.Event.VOTER_JOIN);
     logger.info("Registration of voter id: " + id + " confirmed.");
     return electionTerm;
   }
@@ -98,10 +102,11 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
       } else {
         votes.remove(key);
         voters.remove(key);
+        eventService.fireEvent(EventService.Event.VOTER_LEAVE);
         return null;
       }
     });
-    
+
     if (val == null) {
       return INVALID_VOTER_RESPONSE;
     }
@@ -138,7 +143,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
     String[] split = idTerm.split(":");
     return vote(split[0], Long.parseLong(split[1]));
   }
-  
+
   @Override
   public int getRegisteredVoters() {
     return (int)voters.entrySet().stream()
@@ -149,6 +154,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
             String id = entry.getKey();
             votes.remove(id);
             voters.remove(id);
+            eventService.fireEvent(EventService.Event.VOTER_LEAVE);
             return false;
           }
         })
@@ -189,9 +195,13 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
   @Override
   public boolean deregisterVoter(String id) {
     logger.info("Deregister " + id);
-    return !votingInProgress ? voters.remove(id) != null : false;
+    if (!votingInProgress && voters.remove(id) != null) {
+      eventService.fireEvent(EventService.Event.VOTER_LEAVE);
+      return true;
+    }
+    return false;
   }
-  
+
   @Override
   public void reset() {
     //
