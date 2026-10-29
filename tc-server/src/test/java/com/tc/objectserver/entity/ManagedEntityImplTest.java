@@ -38,6 +38,7 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.entity.RequestProcessor.EntityRequest;
 import com.tc.services.InternalServiceRegistry;
+import org.terracotta.event.EventService;
 import com.tc.util.Assert;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -175,7 +176,7 @@ public class ManagedEntityImplTest {
     eventCollector = new ManagementTopologyEventCollector(mock(IMonitoringProducer.class));
     // We will start this in a passive state, as the general test case.
     boolean isInActiveState = false;
-    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, isInActiveState, true);
+    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, isInActiveState, true, EventService.NOOP);
     clientDescriptor = new ClientDescriptorImpl(nodeID, clientInstanceID);
     EntityMessage request = mock(EntityMessage.class);
 
@@ -318,7 +319,7 @@ public class ManagedEntityImplTest {
   @Test
   public void testPromotePermanentEntity() throws Exception {
     // first create a passive entity and then promote
-    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, false, false);
+    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, false, false, EventService.NOOP);
     ServerEntityRequest request = mockCreateEntityRequest();
     TestingResponse response = mockResponse();
     String config = "foo";
@@ -528,7 +529,7 @@ public class ManagedEntityImplTest {
         return Collections.singleton(1);
       }
     });
-    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, false, true);
+    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, false, true, EventService.NOOP);
     TestingResponse resp = mockResponse();
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.emptyPayload(), resp));
     resp.waitFor();
@@ -593,7 +594,7 @@ public class ManagedEntityImplTest {
         return Collections.singleton(1);
       }
     });
-    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, false, true);
+    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, false, true, EventService.NOOP);
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.emptyPayload(), response));
     response.waitFor();
 
@@ -679,7 +680,7 @@ public class ManagedEntityImplTest {
     when(this.serverEntityService.getConcurrencyStrategy(any(byte[].class))).thenReturn(basic);
     when(this.serverEntityService.getMessageCodec()).thenReturn(codec);
     TestingResponse response = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, false, true));
+    invokeOnTransactionHandler(()->managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, false, true, EventService.NOOP));
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.emptyPayload(), response));
     response.waitFor();
 
