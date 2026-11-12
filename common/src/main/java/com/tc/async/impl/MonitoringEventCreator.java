@@ -17,6 +17,7 @@
  */
 package com.tc.async.impl;
 
+import com.tc.statistics.util.RuntimeWindowStats;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -32,6 +33,8 @@ public class MonitoringEventCreator<EC> implements EventCreator<EC> {
   private final LongAdder queueTime = new LongAdder();
   private final LongAdder runTime = new LongAdder();
   private final LongAdder queued = new LongAdder();
+  private final RuntimeWindowStats inQueue = new RuntimeWindowStats();
+  private final RuntimeWindowStats running = new RuntimeWindowStats();
   private static PipelineMonitoringConsumer pipelineConsumer;
 
   public MonitoringEventCreator(String name, EventCreator<EC> next) {
@@ -95,6 +98,8 @@ public class MonitoringEventCreator<EC> implements EventCreator<EC> {
     runTime.add(stats.runTime());
     queueTime.add(stats.queueTime());
     queued.increment();
+    inQueue.record(stats.queueTime());
+    running.record(stats.runTime());
   }
 
   public Map<String, ?> getState() {
@@ -106,6 +111,8 @@ public class MonitoringEventCreator<EC> implements EventCreator<EC> {
     if (count > 0) {
       stats.put("average queue time", TimeUnit.NANOSECONDS.toNanos(queueTime.sum()/count));
       stats.put("average run time", TimeUnit.NANOSECONDS.toNanos(runTime.sum()/count));
+      stats.put("runtimes", running.convert());
+      stats.put("queuetimes", inQueue.convert());
     }
     return stats;
   }
