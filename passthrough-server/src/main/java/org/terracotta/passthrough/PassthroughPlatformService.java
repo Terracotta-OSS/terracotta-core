@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,10 @@ package org.terracotta.passthrough;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.Map;
 import org.terracotta.monitoring.PlatformService;
 import org.terracotta.monitoring.PlatformStopException;
+import org.terracotta.monitoring.PlatformSystem;
 
 /**
  * @author vmad
@@ -37,6 +39,11 @@ public class PassthroughPlatformService implements PlatformService {
   @Override
   public void dumpPlatformState() {
     passthroughServer.dump();
+  }
+
+  @Override
+  public Map<String, ?> queryPlatformState(PlatformSystem subsystem) {
+    return passthroughServer.queryPlaformState(subsystem);
   }
 
   @Override
@@ -73,6 +80,6 @@ public class PassthroughPlatformService implements PlatformService {
   public long uptime() {
     return 0L;
   }
-    
-    
+
+
 }

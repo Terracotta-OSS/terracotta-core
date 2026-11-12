@@ -91,7 +91,6 @@ import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.l2.msg.SyncReplicationActivity;
 import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE;
-import static java.lang.Math.max;
 
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
@@ -238,6 +237,7 @@ import com.tc.net.protocol.tcm.TCAction;
 import com.tc.net.utils.ConnectionLogger;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.objectserver.core.impl.MonitoringProducerMultiplexor;
 import com.tc.objectserver.handler.DuplicationTransactionHandler;
 import com.tc.objectserver.handler.PassiveAckSender;
 import static com.tc.objectserver.handler.PassiveAckSender.decodeReplicationType;
@@ -250,8 +250,10 @@ import com.tc.productinfo.ProductInfo;
 import com.tc.productinfo.VersionCompatibility;
 import com.tc.util.version.CollectionVersionCompatibility;
 import com.tc.util.version.DefaultVersionCompatibility;
+import static java.lang.Integer.max;
 import java.util.concurrent.Future;
 import org.terracotta.configuration.ConfigurationException;
+import org.terracotta.monitoring.PlatformSystem;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -274,6 +276,7 @@ public class DistributedObjectServer {
   private CounterManager                         sampledCounterManager;
   private ServerManagementContext                managementContext;
   private Persistor                              persistor;
+  private ActiveToPassiveReplication             passives;
 
   private L2Coordinator                          l2Coordinator;
 
@@ -380,6 +383,7 @@ public class DistributedObjectServer {
     }
     collectState(this.groupCommManager, pp);
     collectState(this.l2Coordinator, pp);
+    collectState(this.passives, pp);
     collectState(this.entityManager, pp);
     collectState(this.serviceRegistry, pp);
     collectState(this.managementContext, pp);
@@ -400,6 +404,55 @@ public class DistributedObjectServer {
       t.printStackTrace(p);
       p.close();
       prettyPrinter.println(w.toString());
+    }
+  }
+
+  public Map<String, ?> queryPlatformState(PlatformSystem subsystem) {
+    switch (subsystem) {
+      case STAGE_MANAGER -> {
+        return this.seda.getStageManager().getStateMap();
+      }
+      case CLIENT_COMMS -> {
+        return this.communicationsManager.getStateMap();
+      }
+      case PERSISTOR -> {
+        return this.persistor.getStateMap();
+      }
+      case GROUP_COMMS -> {
+        return this.groupCommManager.getStateMap();
+      }
+      case COORDINATOR -> {
+        return this.l2Coordinator.getStateMap();
+      }
+      case ENTITY_MANAGER -> {
+        return this.entityManager.getStateMap();
+      }
+      case MANAGEMENT -> {
+        return this.managementContext.getStateMap();
+      }
+      case SERVICE_REGISTRY -> {
+        return this.serviceRegistry.getStateMap();
+      }
+      case CHANNEL_MANAGER -> {
+        if (managementContext != null) {
+          return new ClientHandshakePrettyPrintable(this.managementContext.getChannelManager().getActiveChannels()).getStateMap();
+        } else {
+          return Collections.emptyMap();
+        }
+      }
+      case REPLICATION_MANAGER -> {
+        return this.passives.getStateMap();
+      }
+      case ALL -> {
+        Map<String, Object> systems = new HashMap<>();
+        for (PlatformSystem sub : PlatformSystem.values()) {
+          systems.put(sub.name(), queryPlatformState(sub));
+        }
+        return systems;
+      }
+      default -> {
+        return Collections.emptyMap();
+      }
     }
   }
 
@@ -677,22 +730,13 @@ public class DistributedObjectServer {
     final ChannelStatsImpl channelStats = new ChannelStatsImpl(sampledCounterManager, channelManager);
     channelManager.addEventListener(channelStats);
 
-    // Note that the monitoring service interface can be null if there is no monitoring support loaded into the server.
-    IMonitoringProducer serviceInterface = null;
-
-    try {
-      serviceInterface = platformServiceRegistry.getService(new BasicServiceConfiguration<>(IMonitoringProducer.class));
-    } catch (ServiceException multi) {
-      Assert.fail("Multiple IMonitoringProducer implementations found!");
-    }
-
     boolean USE_DIRECT = !tcProperties.getBoolean(TCPropertiesConsts.L2_SEDA_STAGE_DISABLE_DIRECT_SINKS, false);
     if (!USE_DIRECT) {
       logger.info("disabling the use for direct sinks");
     }
     RequestProcessor processor = new RequestProcessor(stageManager, USE_DIRECT);
 
-    ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(serviceInterface);
+    ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(new MonitoringProducerMultiplexor(platformServiceRegistry.getServices(new BasicServiceConfiguration<>(IMonitoringProducer.class))));
     ClientEntityStateManager clientEntityStateManager = new ClientEntityStateManagerImpl();
 
     entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::flushLocalPipeline, this.configSetupManager.getServiceLocator());
@@ -786,18 +830,34 @@ public class DistributedObjectServer {
                                                                   consistencyMgr);
 
     connectServerStateToReplicatedState(monitoringShimService, state, l2Coordinator.getReplicatedClusterStateManager());
-// setup replication
+
+    final ServerClientHandshakeManager clientHandshakeManager = new ServerClientHandshakeManager(
+        LoggerFactory.getLogger(ServerClientHandshakeManager.class),
+        consistencyMgr,
+        channelManager,
+        new Timer("Reconnect timer", true),
+        () -> l2DSOConfig.getClientReconnectWindow() * 1000L, //need to pass reconnect window as milliseconds
+        fast.getSink(),
+        pInfo,
+        consoleLogger
+    );
+
+    this.context = this.serverBuilder.createServerConfigurationContext(configSetupManager.getServerConfiguration().getName(), stageManager,
+                                                                       channelStats, this.l2Coordinator,
+                                                                       clientHandshakeManager,
+                                                                       this.connectionIdFactory);
+    // setup replication only if there are known peers
     final Sink<ReplicationSendingAction> replicationSenderStage =
         stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
-                                 ReplicationSendingAction.class, new GenericHandler<>(), max(3, knownPeers)).getSink();
+                             ReplicationSendingAction.class, new GenericHandler<>(), max(3, knownPeers)).getSink();
     final Sink<ReplicationSendingAction> replicationSenderFlushStage =
         stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_FLUSH_STAGE,
-                                 ReplicationSendingAction.class, new GenericHandler<>(), max(3, knownPeers)).getSink();
+                             ReplicationSendingAction.class, new GenericHandler<>(), max(3, knownPeers)).getSink();
     ReplicationSender replicationSender = new ReplicationSender(replicationSenderStage, replicationSenderFlushStage, groupCommManager);
     final Sink<ReplicationReceivingAction> replicationReceivingStage =
         stageManager.createStage(ServerConfigurationContext.PASSIVE_TO_ACTIVE_DRIVER_STAGE,
-                                 ReplicationReceivingAction.class, new GenericHandler<>(), max(3, knownPeers)).getSink();
-    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(consistencyMgr, processTransactionHandler, this.persistor.getEntityPersistor(), replicationSender, replicationReceivingStage, this.getGroupManager());
+                             ReplicationReceivingAction.class, new GenericHandler<>(), max(3, knownPeers)).getSink();
+    this.passives = new ActiveToPassiveReplication(consistencyMgr, processTransactionHandler, this.persistor.getEntityPersistor(), replicationSender, replicationReceivingStage, this.getGroupManager());
     processor.setReplication(passives);
 
     Stage<ReplicationMessageAck> replicationStageAck = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE, ReplicationMessageAck.class,
@@ -848,22 +908,6 @@ public class DistributedObjectServer {
     Sink<PlatformInfoRequest> info = createPlatformInformationStages(stageManager, monitoringShimService);
     dispatchHandler.addListener(connectPassiveEvents(info, monitoringShimService));
 
-    final ServerClientHandshakeManager clientHandshakeManager = new ServerClientHandshakeManager(
-        LoggerFactory.getLogger(ServerClientHandshakeManager.class),
-        consistencyMgr,
-        channelManager,
-        new Timer("Reconnect timer", true),
-        () -> l2DSOConfig.getClientReconnectWindow() * 1000L, //need to pass reconnect window as milliseconds
-        fast.getSink(),
-        pInfo,
-        consoleLogger
-    );
-
-    this.context = this.serverBuilder.createServerConfigurationContext(configSetupManager.getServerConfiguration().getName(), stageManager, channelManager,
-                                                                       channelStats, this.l2Coordinator,
-                                                                       clientHandshakeManager,
-                                                                       this.connectionIdFactory);
-    this.context.addShutdownItem(passives::close);
     toInit.add(this.serverBuilder);
 
     startStages(stageManager, toInit);
@@ -896,6 +940,7 @@ public class DistributedObjectServer {
     try {
       logger.info("shutdown initiated");
       this.l2Coordinator.shutdown();
+      this.passives.shutdown();
       this.groupCommManager.shutdown();
       this.communicationsManager.shutdown();
       this.communicationsManager.getConnectionManager().closeAllConnections();
@@ -916,9 +961,6 @@ public class DistributedObjectServer {
                                                              int voteCount) {
     // start the server in diagnostic mode if the configuration is not complete
     if (configSetupManager.isPartialConfiguration()) {
-      if (knownPeers != 0) {
-        throw new RuntimeException("Diagnostic mode is not supported with multi-server stripe");
-      }
       return new DiagnosticModeConsistencyManager();
     }
 

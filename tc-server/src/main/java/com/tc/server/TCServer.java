@@ -28,6 +28,8 @@ import com.tc.util.State;
 import org.terracotta.server.StopAction;
 
 import java.util.List;
+import java.util.Map;
+import org.terracotta.monitoring.PlatformSystem;
 
 public interface TCServer extends Pauseable {
   String[] processArguments();
@@ -93,4 +95,6 @@ public interface TCServer extends Pauseable {
   void leaveGroup();
 
   boolean replicaFailoverToActive();
+
+  Map<String, ?> queryServerState(PlatformSystem subsystem);
 }

@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ import javax.management.remote.JMXServiceURL;
 
 /**
  * This is the top-level MBean for the DSO subsystem, off which to hang JSR-77 Stats and Config MBeans.
- * 
+ *
  * @see DSOMBean
  */
 public class DSO extends AbstractNotifyingMBean implements DSOMBean {
@@ -77,9 +77,9 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   static final int DEFAULT_JMX_REMOTE_PORT = 5000;
 
   private final MBeanServer                            mbeanServer;
-  
+
   private final Set<ObjectName>                        clientObjectNames      = new LinkedHashSet<>();
-  
+
   private final Map<ObjectName, Client>             clientMap              = new HashMap<>();
   private final DSOChannelManagerMBean                 channelMgr;
   private final TCConnectionManager                 connections;
@@ -88,7 +88,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   private final ConnectionPolicy                       connectionPolicy;
   private final VoltronMessageHandler               messageHandler;
   private final VoltronMessageSink                  messageSink;
-  
+
   private volatile int jmxRemotePort = DEFAULT_JMX_REMOTE_PORT;
   private volatile JMXConnectorServer jmxConnectorServer;
   private Registry registry;
@@ -107,8 +107,11 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     this.group = configContext.getL2Coordinator().getGroupManager();
     // add various listeners (do this before the setupXXX() methods below so we don't ever miss anything)
     channelMgr.addEventListener(new ChannelManagerListener());
-    configContext.addShutdownItem(pool::shutdown);
     setupClients();
+  }
+
+  public void shutdown() {
+    pool.shutdown();
   }
 
   @Override
@@ -127,12 +130,12 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   public int getBufferCount() {
     return connections.getBufferCount();
   }
-  
+
   @Override
   public int getGroupBufferCount() {
     return group.getBufferCount();
   }
-  
+
   @Override
   public List<Client> getConnectedClients() {
     synchronized (clientMap) {
@@ -455,7 +458,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
       return "Caught exception while stopping jmx remote at port " + jmxRemotePort + ": " + t.getLocalizedMessage();
     }
   }
-  
+
 
   @Override
   public int getCurrentBackoff() {
@@ -485,7 +488,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   @Override
   public boolean isCurrentlyDirect() {
     return messageHandler.currentlyDirect();
-  }  
+  }
 
   @Override
   public long getMaxBackoffTime() {

@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -149,7 +150,7 @@ public class StateManagerImplTest {
 
       L2Coordinator l2CoordinatorMock = mock(L2Coordinator.class);
       when(l2CoordinatorMock.getStateManager()).thenReturn(stateManagers[i]);
-      ServerConfigurationContext serverConfigurationContextMock = new ServerConfigurationContextImpl("", stageManagers[i], null, null, null, l2CoordinatorMock);
+      ServerConfigurationContext serverConfigurationContextMock = new ServerConfigurationContextImpl("", stageManagers[i], null, null, l2CoordinatorMock);
       stageManagers[i].startAll(serverConfigurationContextMock, new ArrayList<>());
     }
   }
@@ -203,7 +204,7 @@ public class StateManagerImplTest {
         break;
       }
     }
-    
+
     for (int i = 0; i < NUM_OF_SERVERS; i++) {
       boolean waitfor = true;
       while (waitfor) {
@@ -214,9 +215,9 @@ public class StateManagerImplTest {
             default -> waitfor = false;
         }
       }
-      
+
       stageManagers[i].stopAll();
-      
+
       ArgumentCaptor<State> cap = ArgumentCaptor.forClass(State.class);
       if (activeIndex == i) {
         verify(stageControllers[i]).transition(eq(BOOTSTRAP_STATE), cap.capture());
@@ -325,7 +326,7 @@ public class StateManagerImplTest {
         .then((invoke)->mockStage((EventHandler)invoke.getArguments()[2]));
     when(stageManager.createStage(anyString(), any(Class.class), any(EventHandler.class), anyInt()))
         .then((invoke)->mockStage((EventHandler)invoke.getArguments()[2]));
-    
+
     ConsistencyManager mgr = mock(ConsistencyManager.class);
     when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
     when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(), any(Transition.class))).thenReturn(Boolean.TRUE);
@@ -399,6 +400,42 @@ public class StateManagerImplTest {
   public void testStateConversion() {
     ServerMode mode = StateManager.convert(StateManager.ACTIVE_COORDINATOR);
     com.tc.util.Assert.assertEquals(ServerMode.ACTIVE, mode);
+  }
+
+  @Test
+  public void testMoveToStopStateIfCurrentStateIsValid() {
+    StateManagerImpl mgr = stateManagers[0];
+    Assert.assertEquals(ServerMode.INITIAL, mgr.getCurrentMode());
+
+    Assert.assertTrue(mgr.moveToStopStateIf(EnumSet.of(ServerMode.INITIAL, ServerMode.START)));
+
+    Assert.assertEquals(ServerMode.STOP, mgr.getCurrentMode());
+  }
+
+  @Test
+  public void testMoveToStopStateIfCurrentStateIsNotValid() {
+    StateManagerImpl mgr = stateManagers[0];
+    Assert.assertEquals(ServerMode.INITIAL, mgr.getCurrentMode());
+
+    Assert.assertFalse(mgr.moveToStopStateIf(EnumSet.of(ServerMode.ACTIVE, ServerMode.PASSIVE)));
+    Assert.assertEquals("state must be unchanged when stop is denied", ServerMode.INITIAL, mgr.getCurrentMode());
+
+    Assert.assertFalse(mgr.moveToStopStateIf(Collections.emptySet()));
+    Assert.assertEquals("state must be unchanged when stop is denied", ServerMode.INITIAL, mgr.getCurrentMode());
+  }
+
+  @Test
+  public void testMoveToStopStateIfEvaluatesAgainstCurrentState() {
+    StateManagerImpl mgr = stateManagers[0];
+    mgr.moveToDiagnosticMode();
+    Assert.assertEquals(ServerMode.DIAGNOSTIC, mgr.getCurrentMode());
+
+    // INITIAL is no longer the current state so it must not permit the stop
+    Assert.assertFalse(mgr.moveToStopStateIf(EnumSet.of(ServerMode.INITIAL)));
+    Assert.assertEquals(ServerMode.DIAGNOSTIC, mgr.getCurrentMode());
+
+    Assert.assertTrue(mgr.moveToStopStateIf(EnumSet.of(ServerMode.DIAGNOSTIC)));
+    Assert.assertEquals(ServerMode.STOP, mgr.getCurrentMode());
   }
 
   @Test

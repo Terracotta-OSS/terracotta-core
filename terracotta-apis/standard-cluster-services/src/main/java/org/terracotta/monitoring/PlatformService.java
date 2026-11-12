@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,17 @@
 package org.terracotta.monitoring;
 
 import java.io.InputStream;
+import java.util.Map;
 
 
 /**
  * A Service for entities to interact with Platform
  */
 public interface PlatformService {
+  /**
+   * Queries various parts of the platform
+   */
+  Map<String, ?> queryPlatformState(PlatformSystem subsystem);
   /**
    * Dumps platform state into logs
    */
@@ -32,16 +37,16 @@ public interface PlatformService {
    * Stops the server
    */
   void stopPlatform();
-  
+
   /**
    * A Fatal error has occurred.Server will exit.
-   * 
+   *
    * @param description of the error
    */
   void fatalError(String description);
   /**
    * Server uptime.
-   * 
+   *
    * @return the milliseconds that have passed since the server process was started
    */
   long uptime();
