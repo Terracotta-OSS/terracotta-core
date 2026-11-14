@@ -23,6 +23,7 @@ import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.utils.L2Utils;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.impl.Topology;
 import com.tc.objectserver.impl.TopologyManager;
 import com.tc.util.Assert;
@@ -78,10 +79,10 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     return map;
   }
 
-  public ConsistencyManagerImpl(Supplier<ServerMode> mode, TopologyManager topologyManager) {
+  public ConsistencyManagerImpl(ManagementTopologyEventCollector collector, Supplier<ServerMode> mode, TopologyManager topologyManager) {
     this.topologyManager = topologyManager;
     try {
-      this.voter = new ServerVoterManagerImpl(mode, topologyManager::getExternalVoters);
+      this.voter = new ServerVoterManagerImpl(collector, mode, topologyManager::getExternalVoters);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ import java.util.function.Supplier;
 
 /**
  * Communications manager for setting up listeners and creating client connections
- * 
+ *
  * @author teck
  */
 public class CommunicationsManagerImpl implements CommunicationsManager {
@@ -116,20 +116,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    Map<TCMessageType, Class<? extends TCAction>> messageTypeClassMapping,
                                    Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping) {
     this(monitor, messageRouter, stackHarnessFactory, connectionManager, connectionPolicy, config,
-         transportHandshakeErrorHandler, messageTypeClassMapping, ReconnectionRejectedHandlerL2.SINGLETON, new ClearTextSocketEndpointFactory());
-    this.serverID = serverID;
-  }
-
-  public CommunicationsManagerImpl(MessageMonitor monitor, TCMessageRouter messageRouter,
-                                   NetworkStackHarnessFactory stackHarnessFactory, TCConnectionManager connectionManager,
-                                   ConnectionPolicy connectionPolicy,
-                                   HealthCheckerConfig config, ServerID serverID,
-                                   TransportHandshakeErrorHandler transportHandshakeErrorHandler,
-                                   Map<TCMessageType, Class<? extends TCAction>> messageTypeClassMapping,
-                                   Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping,
-                                   SocketEndpointFactory socketEndpointFactory) {
-    this(monitor, messageRouter, stackHarnessFactory, connectionManager, connectionPolicy, config,
-         transportHandshakeErrorHandler, messageTypeClassMapping, ReconnectionRejectedHandlerL2.SINGLETON, socketEndpointFactory);
+         transportHandshakeErrorHandler, messageTypeClassMapping, ReconnectionRejectedHandlerL2.SINGLETON);
     this.serverID = serverID;
   }
 
@@ -142,23 +129,22 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping) {
     this(monitor, messageRouter, stackHarnessFactory, connMgr, connectionPolicy,
          healthCheckerConf, transportHandshakeErrorHandler, messageTypeClassMapping,
-         ReconnectionRejectedHandlerL1.SINGLETON, new ClearTextSocketEndpointFactory());
+         ReconnectionRejectedHandlerL1.SINGLETON);
   }
 
   /**
    * Create a comms manager with the given connection manager. This cstr is mostly for testing, or in the event that you
    * actually want to use an explicit connection manager
-   * 
+   *
    * @param connMgr the connection manager to use
    */
   public CommunicationsManagerImpl(MessageMonitor monitor, TCMessageRouter messageRouter,
                                    NetworkStackHarnessFactory stackHarnessFactory, TCConnectionManager connMgr,
-                                   ConnectionPolicy connectionPolicy, 
+                                   ConnectionPolicy connectionPolicy,
                                    HealthCheckerConfig healthCheckerConf,
                                    TransportHandshakeErrorHandler transportHandshakeErrorHandler,
                                    Map<TCMessageType, Class<? extends TCAction>> messageTypeClassMapping,
-                                   ReconnectionRejectedHandler reconnectionRejectedHandler,
-                                   SocketEndpointFactory socketEndpointFactory) {
+                                   ReconnectionRejectedHandler reconnectionRejectedHandler) {
     this.monitor = monitor;
     this.messageRouter = messageRouter;
     this.transportMessageFactory = new TransportMessageFactoryImpl();
@@ -178,7 +164,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
             new ConnectionHealthCheckerImpl(healthCheckerConfig, connectionManager, createReferenceCheck()) :
             new ConnectionHealthCheckerEchoImpl();
   }
-  
+
   private Supplier<Boolean> createReferenceCheck() {
 // reference this manager.  If it not reachable, all connections and threads associated need to be cleaned up.
     ReferenceQueue<Object> gc = new ReferenceQueue<>();
@@ -191,7 +177,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
       return !gcd.isSet();
     };
   }
-  
+
   @Override
   public Map<String, ?> getStateMap() {
     Map<String, Object> map = new LinkedHashMap<>();
@@ -224,7 +210,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
       logger.warn("shutdown already started");
     }
   }
-  
+
   @Override
   public NetworkListener[] getAllListeners() {
     synchronized (listeners) {
@@ -241,9 +227,9 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   public ClientMessageChannel createClientChannel(ProductID productId, int timeout) {
     return createClientChannel(productId, timeout, null, null);
   }
-  
-  public ClientMessageChannel createClientChannel(ProductID productId, 
-                                                  int timeout, 
+
+  public ClientMessageChannel createClientChannel(ProductID productId,
+                                                  int timeout,
                                                   MessageTransportFactory transportFactory,
                                                   TCMessageFactory messageFactory) {
 
@@ -329,7 +315,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                  boolean resueAddr, Set<ConnectionID> initialConnectionIDs, RedirectAddressProvider activeProvider, Predicate<MessageTransport> validation, ConnectionIDFactory connectionIdFactory,
                                  WireProtocolMessageSink wireProtocolMessageSink) throws IOException {
 
-    MessageTransportFactory transportFactory = new MessageTransportFactory() {      
+    MessageTransportFactory transportFactory = new MessageTransportFactory() {
       @Override
       public ClientMessageTransport createNewTransport() {
         throw new AssertionError();

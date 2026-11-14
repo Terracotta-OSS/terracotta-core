@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.terracotta.monitoring.PlatformMonitoringConstants;
 
 import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
+import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
@@ -46,6 +47,7 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Properties;
 import java.util.stream.Collectors;
 import org.terracotta.monitoring.ServerState;
 
@@ -63,17 +65,21 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   private final Map<ClientID, Collection<FetchID>> incomingDisconnects;
   private final Map<ClientID, Collection<ClientInstanceID>> incomingReleases;
   private final Map<ClientID, Collection<ResolvedDescriptors>> incomingFetches;
+  private final Set<TCConnection> connections;
+  private final Set<String> voters;
   private boolean isActiveState;
 
   public ManagementTopologyEventCollector(IMonitoringProducer serviceInterface) {
     this.serviceInterface = serviceInterface;
-    this.connectedClients = new HashSet<ClientID>();
-    this.entities = new HashMap<Long, EntityID>();
+    this.connectedClients = new HashSet<>();
+    this.connections = new HashSet<>();
+    this.voters = new HashSet<>();
+    this.entities = new HashMap<>();
     this.incomingReleases = new HashMap<>();
     this.incomingFetches = new HashMap<>();
     this.incomingDisconnects = new HashMap<>();
     this.isActiveState = false;
-    
+
     // Do our initial configuration of the service.
     if (null != this.serviceInterface) {
       // Create the root of the platform tree.
@@ -88,7 +94,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   }
 
 /**
- * it is possible for a server to update it's state multiple times without 
+ * it is possible for a server to update it's state multiple times without
  *  actually changing state.  this and underlying methods must tolerate that
  */
   @Override
@@ -104,17 +110,41 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
       }
     }
 
-    String stateValue = this.isActiveState ? 
-        PlatformMonitoringConstants.SERVER_STATE_ACTIVE : 
-          (standby) ? PlatformMonitoringConstants.SERVER_STATE_PASSIVE : 
-            (syncing) ? PlatformMonitoringConstants.SERVER_STATE_SYNCHRONIZING : 
+    String stateValue = this.isActiveState ?
+        PlatformMonitoringConstants.SERVER_STATE_ACTIVE :
+          (standby) ? PlatformMonitoringConstants.SERVER_STATE_PASSIVE :
+            (syncing) ? PlatformMonitoringConstants.SERVER_STATE_SYNCHRONIZING :
                         PlatformMonitoringConstants.SERVER_STATE_UNINITIALIZED;
-    
+
     // Set this in the monitoring interface.
     if (null != this.serviceInterface) {
       this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(stateValue, System.currentTimeMillis(), activateTime));
     }
     LOGGER.debug("server entered state " + state + " at " + activateTime);
+  }
+
+  public synchronized void connectionOpened(TCConnection connection, Properties description) {
+    if (connections.add(connection)) {
+      this.serviceInterface.addNode(PlatformMonitoringConstants.CONNECTIONS_PATH, Integer.toString(System.identityHashCode(connection)), description);
+    }
+  }
+
+  public synchronized void connectionClosed(TCConnection connection, Properties description) {
+    if (connections.remove(connection)) {
+      this.serviceInterface.removeNode(PlatformMonitoringConstants.CONNECTIONS_PATH, Integer.toString(System.identityHashCode(connection)));
+    }
+  }
+
+  public synchronized void voterAdded(String id, Properties description) {
+    if (voters.add(id)) {
+      this.serviceInterface.addNode(PlatformMonitoringConstants.VOTERS_PATH, id, description);
+    }
+  }
+
+  public synchronized void voterRemoved(String id, Properties description) {
+    if (voters.remove(id)) {
+      this.serviceInterface.removeNode(PlatformMonitoringConstants.VOTERS_PATH, id);
+    }
   }
 
   @Override
@@ -153,17 +183,17 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
       if (earlyFetches != null && !earlyFetches.isEmpty()) {
         for (ResolvedDescriptors ed : earlyFetches) {
           String fetchIdentifier = fetchIdentifierForService(client, ed.id, ed.consumerID, ed.instance);
-          boolean didAdd = this.serviceInterface.addNode(PlatformMonitoringConstants.FETCHED_PATH, 
-                  fetchIdentifier, 
-                  new PlatformClientFetchedEntity(clientIdentifierForService(client), 
-                          entityIdentifierForService(ed.id, ed.consumerID), 
+          boolean didAdd = this.serviceInterface.addNode(PlatformMonitoringConstants.FETCHED_PATH,
+                  fetchIdentifier,
+                  new PlatformClientFetchedEntity(clientIdentifierForService(client),
+                          entityIdentifierForService(ed.id, ed.consumerID),
                           new ClientDescriptorImpl(client, ed.getClientInstanceID())));
           // This MUST have been added (otherwise, it implies that there is a serious bug somewhere).
           if (!didAdd) {
             LOGGER.warn("unbalanced client connect " + fetchIdentifier);
-          }        
+          }
         }
-        
+
       }
     }
     LOGGER.debug("client did connect " + channel);
@@ -174,7 +204,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     Assert.assertTrue(this.connectedClients.contains(client));
     // Now, remove it from the connected set.
     this.connectedClients.remove(client);
-    
+
     // Remove it from the monitoring interface.
     removeClientIfPossible(client);
     LOGGER.debug("client did disconnect " + client);
@@ -239,7 +269,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
         LOGGER.warn("unbalanced client release " + fetchIdentifier);
       }
     }
-    
+
     if (incomingReleases.containsKey(client)) {
       Collection<ClientInstanceID> expected = incomingReleases.get(client);
       Assert.assertTrue(expected.remove(instance));
@@ -250,7 +280,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     }
     LOGGER.debug("client " + client + " released " + entity);
   }
-  
+
   public synchronized void expectedDisconnects(ClientID cid, Collection<FetchID> releases) {
     if (null != serviceInterface) {
       if (!releases.isEmpty()) {
@@ -260,8 +290,8 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
         Assert.assertTrue(removeClientIfPossible(cid));
       }
     }
-  }  
-  
+  }
+
   public synchronized void clientDisconnectedFromEntity(ClientID cid, FetchID fetch, Collection<EntityDescriptor> fids) {
     if (null != serviceInterface) {
       Collection<FetchID> fetches = incomingDisconnects.get(cid);
@@ -273,7 +303,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
       }
     }
   }
-  
+
   private boolean removeClientIfPossible(ClientID client) {
     if (!incomingReleases.containsKey(client) && !incomingDisconnects.containsKey(client)) {
       // Remove it from the monitoring interface.
@@ -285,7 +315,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     }
     return false;
   }
-  
+
   private void expectedReleases(ClientID cid, Collection<EntityDescriptor> releases) {
     if (!releases.isEmpty()) {
       incomingReleases.compute(cid, (ignore,ex)->{
@@ -301,7 +331,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
 
   private void addEntityToTracking(EntityID id, long consumerID, boolean isActive) {
     this.entities.put(consumerID, id);
-    
+
     // Add it to the monitoring interface.
     if (null != this.serviceInterface) {
       String entityClassName = id.getClassName();
@@ -314,7 +344,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
 
   private void removeEntityFromTracking(EntityID id, long consumerID) {
     this.entities.remove(consumerID);
-    
+
     // Remove it to the monitoring interface.
     if (null != this.serviceInterface) {
       String entityIdentifier = entityIdentifierForService(id, consumerID);
@@ -329,11 +359,11 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   private String entityIdentifierForService(EntityID id, long consumerID) {
     return id.getClassName() + id.getEntityName() + consumerID;
   }
-  
+
   private String fetchIdentifierForService(ClientID client, EntityID entity, long consumerID, ClientInstanceID cid) {
-    return clientIdentifierForService(client) + "_" + entityIdentifierForService(entity, consumerID) + "_" + cid.getID(); 
+    return clientIdentifierForService(client) + "_" + entityIdentifierForService(entity, consumerID) + "_" + cid.getID();
   }
-  
+
   private static class ResolvedDescriptors {
     private final EntityID   id;
     private final long consumerID;

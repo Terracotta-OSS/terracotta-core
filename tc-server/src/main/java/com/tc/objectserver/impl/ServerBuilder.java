@@ -34,7 +34,6 @@ import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
-import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.persistence.Persistor;
@@ -47,8 +46,7 @@ public interface ServerBuilder extends PostInit {
                                                             StageManager stageManager,
                                                             TCConnectionManager connectionManager,
                                                             ServerID serverNodeID,
-                                                            StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
-                                                            SocketEndpointFactory bufferManagerFactory);
+                                                            StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory);
 
   ServerConfigurationContext createServerConfigurationContext(String id, StageManager stageManager,
                                                               ChannelStatsImpl channelStats,

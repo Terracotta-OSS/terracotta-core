@@ -619,9 +619,9 @@ public class DistributedObjectServer {
 
     final TCMessageRouter messageRouter = new TCMessageRouterImpl();
 
-    SocketEndpointFactory bufferManagerFactory = getSocketEndpointFactory(platformServiceRegistry);
+    ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(new MonitoringProducerMultiplexor(platformServiceRegistry.getServices(new BasicServiceConfiguration<>(IMonitoringProducer.class))));
 
-    TCConnectionManager connectionManager = new TCConnectionManagerImpl(configSetupManager.getServerConfiguration().getName(), new ConnectionLogger("client"), commWorkerThreadCount, bufferManagerFactory);
+    TCConnectionManager connectionManager = new TCConnectionManagerImpl(configSetupManager.getServerConfiguration().getName(), new ConnectionLogger(eventCollector), commWorkerThreadCount, getSocketEndpointFactory(platformServiceRegistry));
 
     final MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, logger, threadGroup, connectionManager);
 
@@ -632,8 +632,7 @@ public class DistributedObjectServer {
                                                                new DisabledHealthCheckerConfigImpl(),
                                                                this.thisServerNodeID,
                                                                new TransportHandshakeErrorNullHandler(),
-                                                               getMessageTypeClassMappings(), Collections.emptyMap(),
-                                                               bufferManagerFactory
+                                                               getMessageTypeClassMappings(), Collections.emptyMap()
     );
 
     NullConnectionIDFactoryImpl infoConnections = new NullConnectionIDFactoryImpl();
@@ -651,7 +650,7 @@ public class DistributedObjectServer {
       consoleLogger.warn("It is not recommended to configure external voters when there is an odd number of servers in the stripe");
     }
 
-    ConsistencyManager consistencyMgr = createConsistencyManager(configSetupManager, knownPeers, voteCount);
+    ConsistencyManager consistencyMgr = createConsistencyManager(eventCollector, configSetupManager, knownPeers, voteCount);
 
     final InetSocketAddress dsoBind = new InetSocketAddress(l2DSOConfig.getTsaPort().getHostString(), l2DSOConfig.getTsaPort().getPort());
     this.l1Listener = this.communicationsManager.createListener(dsoBind, (MessageChannel c)->!c.getProductID().isReconnectEnabled() || !server.isReconnectWindow(),
@@ -736,7 +735,6 @@ public class DistributedObjectServer {
     }
     RequestProcessor processor = new RequestProcessor(stageManager, USE_DIRECT);
 
-    ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(new MonitoringProducerMultiplexor(platformServiceRegistry.getServices(new BasicServiceConfiguration<>(IMonitoringProducer.class))));
     ClientEntityStateManager clientEntityStateManager = new ClientEntityStateManagerImpl();
 
     entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::flushLocalPipeline, this.configSetupManager.getServiceLocator());
@@ -759,8 +757,7 @@ public class DistributedObjectServer {
 
     this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager, connectionManager,
                                                                       this.thisServerNodeID,
-                                                                      this.stripeIDStateManager, this.globalWeightGeneratorFactory,
-                                                                      bufferManagerFactory);
+                                                                      this.stripeIDStateManager, this.globalWeightGeneratorFactory);
 
     if (consistencyMgr instanceof GroupEventsListener) {
       this.groupCommManager.registerForGroupEvents((GroupEventsListener)consistencyMgr);
@@ -956,7 +953,7 @@ public class DistributedObjectServer {
     }
   }
 
-  private ConsistencyManager createConsistencyManager(ServerConfigurationManager configSetupManager,
+  private ConsistencyManager createConsistencyManager(ManagementTopologyEventCollector collector, ServerConfigurationManager configSetupManager,
                                                              int knownPeers,
                                                              int voteCount) {
     // start the server in diagnostic mode if the configuration is not complete
@@ -968,7 +965,7 @@ public class DistributedObjectServer {
     return new SafeStartupManagerImpl(
         consistentStartup,
         knownPeers,
-        new ConsistencyManagerImpl(()->this.l2Coordinator != null ? this.l2Coordinator.getStateManager().getCurrentMode() : ServerMode.START, this.topologyManager)
+        new ConsistencyManagerImpl(collector, ()->this.l2Coordinator != null ? this.l2Coordinator.getStateManager().getCurrentMode() : ServerMode.START, this.topologyManager)
     );
   }
 

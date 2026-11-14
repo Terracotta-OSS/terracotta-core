@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ import java.util.concurrent.Future;
 
 /**
  * The {@link TCConnectionManager} implementation.
- * 
+ *
  * @author teck
  * @author mgovinda
  */
@@ -60,6 +60,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
                                                                                             false);
   protected static final Logger logger                 = LoggerFactory.getLogger(TCConnectionManager.class);
 
+  private final String                 name;
   private final TCCommImpl              comm;
   private final Set<TCConnectionImpl>       connections            = new HashSet<>();
   private final Set<TCListener>         listeners              = new HashSet<>();
@@ -80,16 +81,18 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     this.listenerEvents = new ListenerEvents();
     this.socketParams = new SocketParams();
     this.socketEndpointFactory = socketEndpointFactory;
+    this.name = name;
     this.comm = new TCCommImpl(name, workerCommCount, socketParams);
     this.comm.start();
   }
-  
+
   @Override
   public Map<String, ?> getStateMap() {
     Map<String, Object> state = new LinkedHashMap<>();
     synchronized(connections) {
       state.put("connections", connections.stream().map(connection->connection.getState()).collect(Collectors.toList()));
     }
+    state.put("name", this.name);
     state.put("processors", comm.getState());
     state.put("buffers.cached", buffers.size());
     state.put("buffers.referenced", buffers.referenced());
@@ -179,7 +182,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   public void closeAllConnections() {
     closeAllConnections(false);
   }
-  
+
   @Override
   public void asynchCloseAllConnections() {
     closeAllConnections(true);
@@ -202,7 +205,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   }
 
   @Override
-  public void closeAllListeners() {    
+  public void closeAllListeners() {
     TCListener[] list = getAllListeners();
     for (TCListener lsnr : list) {
       try {
@@ -212,14 +215,14 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
       }
     }
   }
-  
+
   private synchronized void addCreatedListener(TCListener listener) throws IOException {
     if (listener.isStopped()) {
       throw new IOException("listener closed");
     }
     listeners.add(listener);
   }
-  
+
   private synchronized void removeDeadListener(TCListener listener) {
     if (!listener.isStopped()) {
       throw new RuntimeException("listener not closed");
@@ -231,7 +234,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   public TCComm getTcComm() {
     return this.comm;
   }
-  
+
   @Override
   public final synchronized void shutdown() {
     if (shutdown.attemptSet()) {
@@ -340,12 +343,12 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   TCDirectByteBufferCache getBufferCache() {
     return buffers;
   }
-  
+
   @Override
   public int getBufferCount() {
     return buffers.referenced();
   }
-  
+
   void distribute() {
     connections.forEach(TCConnectionImpl::migrate);
   }
