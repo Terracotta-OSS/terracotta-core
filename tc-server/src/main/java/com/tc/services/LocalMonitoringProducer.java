@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     this.bestEfforts = new BestEffortsMonitoring(timer);
     this.classLoader = new ServiceClassLoader(loader);
   }
-  
+
   public void start() {
     this.timer.start();
   }
@@ -97,7 +97,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
       Thread.currentThread().interrupt();
     }
   }
-  
+
   @Override
   public synchronized void entityCreated(ManagedEntity sender) {
 
@@ -341,12 +341,11 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
         if (null != LocalMonitoringProducer.this.activeWrapper) {
           LocalMonitoringProducer.this.activeWrapper.addNode(consumerID, parents, name, value);
         }
-        didStore = true;
       }
-    } else {
-      // This means we are active so just pass it through.
-      didStore = underlyingCollector.addNode(LocalMonitoringProducer.this.thisServer, parents, name, value);
     }
+
+    didStore = underlyingCollector.addNode(LocalMonitoringProducer.this.thisServer, parents, name, value);
+
     return didStore;
   }
 
@@ -366,10 +365,10 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
           didRemove = true;
         }
       }
-    } else {
-      // This means we are active so just pass it through.
-      didRemove = underlyingCollector.removeNode(this.thisServer, parents, name);
     }
+      // This means we are active so just pass it through.
+    didRemove = underlyingCollector.removeNode(this.thisServer, parents, name);
+
     return didRemove;
   }
 
@@ -377,10 +376,10 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     if (null != this.bestEfforts) {
       // Pass this to the BestEffortsMonitoring object so it can handle this.
       this.bestEfforts.pushBestEfforts(consumerID, name, data);
-    } else {
-      // We are the active so just push this through.
-      underlyingCollector.pushBestEffortsData(this.thisServer, name, data);
     }
+// always push to underlying
+    underlyingCollector.pushBestEffortsData(this.thisServer, name, data);
+
   }
 
   private CacheNode findParent(long consumerID, String[] parents) {

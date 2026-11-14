@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -62,7 +62,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Test;
-import static org.mockito.ArgumentMatchers.any;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.spy;
@@ -181,7 +180,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     tearGroups();
   }
-  
+
 //  @Ignore
 //  public void testRelayReplicateOpenClose() throws Exception {
 //    setupGroups(2);
@@ -191,10 +190,10 @@ public class TCGroupManagerImplTest extends TCTestCase {
 //
 //    Set<Node> nodeSet1 = new HashSet<>();
 //    nodeSet1.add(nodes[0]);
-//     
+//
 //    Set<Node> nodeSet2 = new HashSet<>();
 //    nodeSet2.add(nodes[1]);
-//    
+//
 //    GroupConfiguration groupConfiguration1 = getGroupConfiguration(nodeSet1, nodes[0]);
 //    GroupConfiguration groupConfiguration2 = getGroupConfiguration(nodeSet2, nodes[1]);
 //
@@ -212,7 +211,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
 //        .getLocalNodeID().equals(member2.getPeerNodeID()));
 //    assertTrue("Expected  " + member1.getPeerNodeID() + " but got " + member2.getLocalNodeID(), member1.getPeerNodeID()
 //        .equals(member2.getLocalNodeID()));
-//    
+//
 //    // close test
 //    member1.getChannel().close();
 //
@@ -223,7 +222,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
 //
 //    tearGroups();
 //  }
-  
+
   public void testOpenZappedNode() throws Exception {
     setupGroups(2);
 
@@ -421,7 +420,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
         throw new RuntimeException(g);
       }
     }, Executors.newSingleThreadExecutor());
-    
+
     Thread.sleep(2000);
     groups[0].closeMember(groups[1].getLocalNodeID());
 
@@ -429,7 +428,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     Assert.assertTrue(r.getResponses().isEmpty());
     tearGroups();
   }
-  
+
   public void testSendToAll() throws Exception {
     int nGrp = 5;
     setupGroups(nGrp);

@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,11 +19,13 @@ package com.tc.l2.state;
 
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.management.TerracottaManagement;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.services.TimeSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -40,17 +42,19 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
   final Map<String, Long> voters = new ConcurrentHashMap<>();
   private final TimeSource timeSource;
 
+  private final ManagementTopologyEventCollector collector;
+
   private volatile boolean votingInProgress = false;
   private volatile long electionTerm;
   private final Set<String> votes = ConcurrentHashMap.newKeySet();
 
   private volatile boolean overrideVote = false;
 
-  public ServerVoterManagerImpl(Supplier<ServerMode> mode, Supplier<Integer> voterLimit) throws Exception {
-    this(mode, voterLimit, TimeSource.SYSTEM_TIME_SOURCE, true);
+  public ServerVoterManagerImpl(ManagementTopologyEventCollector collector, Supplier<ServerMode> mode, Supplier<Integer> voterLimit) throws Exception {
+    this(collector, mode, voterLimit, TimeSource.SYSTEM_TIME_SOURCE, true);
   }
 
-  ServerVoterManagerImpl(Supplier<ServerMode> mode, Supplier<Integer> voterLimit, TimeSource timeSource, boolean initMBean) throws Exception {
+  ServerVoterManagerImpl(ManagementTopologyEventCollector collector, Supplier<ServerMode> mode, Supplier<Integer> voterLimit, TimeSource timeSource, boolean initMBean) throws Exception {
     super(ServerVoterManager.class, false);
     if (initMBean) {
       try {
@@ -60,6 +64,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
         logger.warn("problem registering MBean", e);
       }
     }
+    this.collector = collector;
     this.mode = mode;
     this.voterLimit = voterLimit;
     this.timeSource = timeSource;
@@ -79,6 +84,8 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
     }
 
     voters.put(id, timeSource.currentTimeMillis());
+
+    collector.voterAdded(id, new Properties());
     logger.info("Registration of voter id: " + id + " confirmed.");
     return electionTerm;
   }
@@ -97,11 +104,11 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
         return currentTime;
       } else {
         votes.remove(key);
-        voters.remove(key);
+        removeVoter(key);
         return null;
       }
     });
-    
+
     if (val == null) {
       return INVALID_VOTER_RESPONSE;
     }
@@ -138,7 +145,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
     String[] split = idTerm.split(":");
     return vote(split[0], Long.parseLong(split[1]));
   }
-  
+
   @Override
   public int getRegisteredVoters() {
     return (int)voters.entrySet().stream()
@@ -148,7 +155,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
           } else {
             String id = entry.getKey();
             votes.remove(id);
-            voters.remove(id);
+            removeVoter(id);
             return false;
           }
         })
@@ -189,9 +196,18 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
   @Override
   public boolean deregisterVoter(String id) {
     logger.info("Deregister " + id);
-    return !votingInProgress ? voters.remove(id) != null : false;
+    boolean removed = !votingInProgress ? removeVoter(id) : false;
+    return removed;
   }
-  
+
+  private boolean removeVoter(String id) {
+    if (voters.remove(id) != null) {
+      collector.voterRemoved(id, new Properties());
+      return true;
+    } else {
+      return false;
+    }
+  }
   @Override
   public void reset() {
     //

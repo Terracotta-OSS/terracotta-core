@@ -31,7 +31,6 @@ import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.StateManager;
 import com.tc.net.ServerID;
-import com.tc.net.core.SocketEndpointFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
@@ -39,7 +38,6 @@ import com.tc.net.groups.Node;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.groups.TCGroupManagerImpl;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
-import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
@@ -64,10 +62,9 @@ public class StandardServerBuilder implements ServerBuilder {
                                                                    StageManager stageManager,
                                                                    TCConnectionManager connections,
                                                                    ServerID serverNodeID,
-                                                                   StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
-                                                                   SocketEndpointFactory bufferManagerFactory) {
+                                                                   StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory) {
     return new TCGroupManagerImpl(configManager, stageManager, connections, serverNodeID, this.thisNode,
-                                  weightGeneratorFactory, bufferManagerFactory);
+                                  weightGeneratorFactory);
   }
 
   @Override

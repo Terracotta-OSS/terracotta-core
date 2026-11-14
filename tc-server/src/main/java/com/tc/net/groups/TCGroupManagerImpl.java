@@ -134,7 +134,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private final StageManager                                stageManager;
   private final AtomicBoolean                               alreadyJoined               = new AtomicBoolean(false);
   private final WeightGeneratorFactory                      weightGeneratorFactory;
-  private final SocketEndpointFactory                        bufferManagerFactory;
 
   private CommunicationsManager                             communicationsManager;
   private TCConnectionManager                               connectionManager;
@@ -152,21 +151,19 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, StageManager stageManager,
                             TCConnectionManager comms,
                             ServerID thisNodeID, Node thisNode,
-                            WeightGeneratorFactory weightGenerator, SocketEndpointFactory bufferManagerFactory) {
-    this(configSetupManager, new NullConnectionPolicy(), stageManager, comms, thisNodeID, thisNode, weightGenerator,
-         bufferManagerFactory);
+                            WeightGeneratorFactory weightGenerator) {
+    this(configSetupManager, new NullConnectionPolicy(), stageManager, comms, thisNodeID, thisNode, weightGenerator);
   }
 
   public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, ConnectionPolicy connectionPolicy,
                             StageManager stageManager,
                             TCConnectionManager comms,
                             ServerID thisNodeID, Node thisNode,
-                            WeightGeneratorFactory weightGenerator, SocketEndpointFactory bufferManagerFactory) {
+                            WeightGeneratorFactory weightGenerator) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     this.connectionManager = comms;
     this.thisNodeID = thisNodeID;
-    this.bufferManagerFactory = bufferManagerFactory;
     this.version = configSetupManager.getProductInfo().version();
     this.configuredNodes = ()-> {
       return configSetupManager.getGroupConfiguration().getNodes();
@@ -207,7 +204,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
                             StageManager stageManager, WeightGeneratorFactory weightGenerator, Node[] servers) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
-    this.bufferManagerFactory = new ClearTextSocketEndpointFactory();
+    this.connectionManager = new TCConnectionManagerImpl();
     this.configuredNodes = ()->new HashSet<>(Arrays.asList(servers));
 
     this.groupPort = groupPort;
@@ -233,17 +230,13 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     HealthCheckerConfig hcconfig = new HealthCheckerConfigImpl(tcProperties
                                                               .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY), ServerEnv.getServer().getIdentifier() + " - TCGroupManager");
 
-    if (connectionManager == null) {
-      connectionManager = new TCConnectionManagerImpl(ServerEnv.getServer().getIdentifier() + " - " + CommunicationsManager.COMMSMGR_GROUPS, new ConnectionLogger("server"), serverCount <= 1 ? 0 :
-        serverCount, bufferManagerFactory);
-    }
     communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), messageRouter,
                                                           networkStackHarnessFactory,
                                                           this.connectionManager,
                                                           this.connectionPolicy,
                                                           hcconfig,
                                                           thisNodeID, new TransportHandshakeErrorHandlerForGroupComm(),
-                                                          messageTypeClassMapping, Collections.emptyMap(), bufferManagerFactory
+                                                          messageTypeClassMapping, Collections.emptyMap()
     );
 
     groupListener = communicationsManager.createListener(socketAddress, (c)->true, new DefaultConnectionIdFactory(), (MessageTransport t)->true);
