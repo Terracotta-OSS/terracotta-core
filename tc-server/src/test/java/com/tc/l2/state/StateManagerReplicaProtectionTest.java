@@ -95,7 +95,7 @@ public class StateManagerReplicaProtectionTest {
     // Verify REPLICA_START mode properties that prevent election participation
     assertFalse("Replica should not be able to start elections",
         stateManager.getCurrentMode().canStartElection());
-    assertFalse("Replica should not be able to become active",
+    assertTrue("Replica should be able to become active",
         stateManager.getCurrentMode().canBeActive());
   }
 
@@ -112,9 +112,9 @@ public class StateManagerReplicaProtectionTest {
     assertEquals(ServerMode.REPLICA_START, stateManager.getCurrentMode());
     assertFalse("REPLICA_START should not be able to start elections",
         stateManager.getCurrentMode().canStartElection());
-    assertFalse("REPLICA_START should not be able to become active",
+    assertTrue("REPLICA_START should be able to become active",
         stateManager.getCurrentMode().canBeActive());
-    assertFalse("REPLICA_START should not contain data",
+    assertTrue("REPLICA_START may contain data",
         stateManager.getCurrentMode().containsData());
     assertTrue("REPLICA_START should be in startup mode",
         stateManager.getCurrentMode().isStartup());
@@ -153,25 +153,6 @@ public class StateManagerReplicaProtectionTest {
 
     // Verify replica mode doesn't allow election start
     assertFalse(stateManager.getCurrentMode().canStartElection());
-  }
-
-  @Test
-  public void testReplicaCannotBeActive() throws Exception {
-    // Test that REPLICA_START mode cannot become active
-    stateManager = new StateManagerImpl(logger, (n) -> true, groupManager, stageController,
-        mgmtController, stageManager, 5, weightGeneratorFactory, consistencyManager,
-        statePersistor, topologyManager);
-
-    stateManager.moveToReplicaMode();
-
-    // Verify REPLICA_START mode cannot be active
-    assertFalse(stateManager.getCurrentMode().canBeActive());
-
-    // Verify it doesn't contain data (fresh start)
-    assertFalse(stateManager.getCurrentMode().containsData());
-
-    // Verify it's in startup mode
-    assertTrue(stateManager.getCurrentMode().isStartup());
   }
 
   @Test

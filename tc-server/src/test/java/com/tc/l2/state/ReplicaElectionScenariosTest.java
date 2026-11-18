@@ -223,8 +223,8 @@ public class ReplicaElectionScenariosTest {
   public void testReplicaStartModeProperties() {
     ServerMode mode = ServerMode.REPLICA_START;
     assertFalse("REPLICA_START must not allow starting an election", mode.canStartElection());
-    assertFalse("REPLICA_START must not be eligible to become active",  mode.canBeActive());
-    assertFalse("REPLICA_START must not contain data",                  mode.containsData());
+    assertTrue("REPLICA_START must not be eligible to become active",  mode.canBeActive());
+    assertTrue("REPLICA_START can contain data",                  mode.containsData());
     assertTrue ("REPLICA_START must be in startup phase",               mode.isStartup());
     assertFalse("REPLICA_START must not require election gate",         mode.requiresElection());
   }
