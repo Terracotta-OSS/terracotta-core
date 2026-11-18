@@ -29,6 +29,7 @@ public class SystemStateHelper {
   private static final String[] CONNECTIONS = {"CLIENT_COMMS", "connectionManager", "connections"};
   private static final String[] PEERS = {"GROUP_COMMS", "connectionManager", "connections"};
   private static final String[] VOTERS = {"COORDINATOR", "stateManager", "consistency", "delegate", "voter", "count"};
+  private static final String[] INVOKE_COUNT = {"ENTITY_MANAGER", "stateManager", "consistency", "delegate", "voter", "invokeCount"};
 
   public SystemStateHelper(Map<String, ?> state) {
     this.state = state;
@@ -44,6 +45,10 @@ public class SystemStateHelper {
 
   public long getVoterCount() {
     return getNumber(VOTERS).orElse(0).longValue();
+  }
+
+  public long getInvokeCount() {
+    return getNumber(INVOKE_COUNT).orElse(0).longValue();
   }
 
   private Optional<List<?>> getList(String[] path) {
