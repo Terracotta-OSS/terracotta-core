@@ -34,6 +34,7 @@ import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.spi.Pauseable;
 import com.tc.spi.SPIServer;
 import java.util.Properties;
+import org.terracotta.monitoring.PlatformSystem;
 
 public class PauseableServer implements Pauseable, SPIServer {
     private final TCServerImpl impl;
@@ -186,6 +187,11 @@ public class PauseableServer implements Pauseable, SPIServer {
     @Override
     public String getClusterState() {
         return impl.getClusterState(null);
+    }
+
+    @Override
+    public Map<String, ?> queryClusterState(PlatformSystem part) {
+      return impl.queryServerState(part);
     }
 
     @Override

@@ -441,7 +441,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     props.put("destroyed", this.isDestroyed);
     props.put("active", this.isInActiveState);
     props.put("removeable", this.isRemoveable());
-    props.put("count", invokeRuntime.getTotal().getCount());
+    props.put("invokeCount", invokeRuntime.getTotal().getCount());
     props.put("invokeRuntimes", invokeRuntime.convert());
     MappedStateCollector mapped = new MappedStateCollector(this.id.getEntityName());
     try {
