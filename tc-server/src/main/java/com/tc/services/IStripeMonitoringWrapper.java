@@ -64,7 +64,9 @@ class IStripeMonitoringWrapper implements IStripeMonitoring {
   @Override
   public boolean addNode(PlatformServer sender, String[] parents, String name, Serializable value) {
     try {
-      return underlying.stream().map(u->u.addNode(sender, parents, name, value)).reduce(Boolean.TRUE, (m,n)->m&n);
+      return underlying.stream().map(u->
+              u.addNode(sender, parents, name, value
+      )).reduce(Boolean.TRUE, (m,n)->m&n);
     } catch (Exception e) {
       logger.warn("caught exception while invoking addNode", e);
     }
