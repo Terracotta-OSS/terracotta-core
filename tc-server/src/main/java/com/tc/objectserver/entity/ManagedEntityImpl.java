@@ -443,6 +443,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     props.put("removeable", this.isRemoveable());
     props.put("invokeCount", invokeRuntime.getTotal().getCount());
     props.put("invokeRuntimes", invokeRuntime.convert());
+    props.put("scheduleRuntimes", invokeScheduleTime.convert());
     MappedStateCollector mapped = new MappedStateCollector(this.id.getEntityName());
     try {
       if(activeServerEntity != null) {
