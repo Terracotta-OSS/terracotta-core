@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -128,11 +128,11 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
   public void initialize(List<String> configurationParams) throws ConfigurationException {
     ClassLoader classLoader = this.getClass().getClassLoader();
     ClassLoader oldloader = Thread.currentThread().getContextClassLoader();
-    
+
     try {
       ServerEnv.getServer().getManagement().registerMBean("RelayManager", new RelayMBeanImpl(this));
     } catch (NotCompliantMBeanException | NullPointerException not) {
-      
+
     }
 
     try {
@@ -172,7 +172,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
       return null;
     }
   }
-  
+
   private static InetSocketAddress parseRelayAddress(String hostPort) {
     if (hostPort != null) {
       String[] sp = hostPort.split(":");
@@ -219,14 +219,14 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
       ServerEnv.getServer().console(getConfigurationParamsDescription());
       throw new ConfigurationException("provided usage information");
     }
-    
+
     if (commandLine.hasOption(RELAY_SRC.getShortName())) {
       this.relaySrc = commandLine.getOptionValue(RELAY_SRC.getShortName(), null);
     }
     if (commandLine.hasOption(RELAY_DST.getShortName())) {
       this.relaySrc = commandLine.getOptionValue(RELAY_DST.getShortName(), null);
     }
-    
+
     if (commandLine.hasOption(CONSOLE.getShortName())) {
       this.console = true;
     }
@@ -305,7 +305,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
               .longOpt(RELAY_SRC.getLongName())
               .hasArg()
               .argName("relay-address")
-              .desc("start as a relay source")
+              .desc("start as a replica pointing to the relay source")
               .build()
     );
     options.addOption(
@@ -313,10 +313,10 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
               .longOpt(RELAY_DST.getLongName())
               .hasArg()
               .argName("relay-address")
-              .desc("start as a relay destination")
+              .desc("start as a relay pointing to the destination")
               .build()
     );
-    options.addOption(        
+    options.addOption(
         Option.builder(CONSOLE.getShortName())
               .longOpt(CONSOLE.getLongName())
               .desc("log only to the console")
@@ -324,7 +324,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
     );
     return options;
   }
-  
+
   public static class TcConfigurationWrapper implements Configuration, PrettyPrintable {
     private final String serverName;
     private final TcConfiguration  configuration;
@@ -343,7 +343,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
       this.relayGroupPort = relayGroupPort;
       this.console = console;
     }
-    
+
     private void clearRelays() {
       this.relayPeer = null;
       this.relayGroupPort = null;
@@ -421,7 +421,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
         Thread.currentThread().setContextClassLoader(loader);
       }
     }
-    
+
     @Override
     public Map<String, ?> getStateMap() {
       Map<String, Object> mappedStateCollector = new LinkedHashMap<>();
@@ -442,7 +442,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
         }
       };
     }
-    
+
     private Server getDefaultServer(Servers servers) throws ConfigurationException {
       List<Server> serverList = servers.getServer();
       if (serverList.size() == 1) {
@@ -471,7 +471,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
         throw new ConfigurationException("Exception when trying to find the default server configuration", uhe);
       }
     }
-    
+
     private Set<InetAddress> getAllLocalInetAddresses() {
       Set<InetAddress> localAddresses = new HashSet<>();
       Enumeration<NetworkInterface> networkInterfaces;
@@ -499,7 +499,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
       return relayGroupPort;
     }
   }
-  
+
   public boolean clearRelays() {
     try {
       return relaySrc != null;
@@ -508,7 +508,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
       wrapped.clearRelays();
     }
   }
-  
+
   private static Server findServer(Servers servers, String serverName) throws ConfigurationException {
     for (Server server : servers.getServer()) {
       if (server.getName().equals(serverName)) {

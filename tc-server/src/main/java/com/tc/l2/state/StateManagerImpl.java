@@ -150,10 +150,9 @@ public class StateManagerImpl implements StateManager {
 //  now make sure elections are done
     elections.waitForElectionToFinish();
   }
-// for tests
-  public void waitForElectionsToFinish() throws InterruptedException {
-//  now make sure elections are done
-    elections.waitForElectionToFinish();
+
+  boolean electionDidStart() {
+    return elections.electionDidStart();
   }
 
   /*
@@ -166,7 +165,7 @@ public class StateManagerImpl implements StateManager {
     // Went down as either PASSIVE_STANDBY or UNITIALIZED, either way we need to wait for the active to zap, just skip
     // the election and wait for a zap.
     info("Starting election initial state: " + startState);
-    if (canStartElection()) {
+    if (startElection.test(ServerID.NULL_ID) && canStartElection()) {
       runElection();
     } else {
       info("Ignoring Election request since not in right state: " + this.state);
@@ -226,9 +225,14 @@ public class StateManagerImpl implements StateManager {
     // concluded)
     boolean isNew = isFreshServer();
     if (getActiveNodeID().isNull()) {
+      ServerMode currentMode = getCurrentMode();
       debugInfo("Running election - isNew: " + isNew);
-      // if a server is replica, it should not be communicating with any other servers even if they are configured
-      Set<String> peers = getCurrentMode() != ServerMode.REPLICA ? lockedTopology.getServers() : Collections.emptySet();
+
+      Set<String> peers = lockedTopology.getPeers();
+      // replicas should not connect to any possible other servers before going active
+      if (currentMode == ServerMode.REPLICA_START || currentMode == ServerMode.REPLICA) {
+        peers = Collections.emptySet();
+      }
       electionSink.addToSink(new ElectionContext(myNodeID,  peers, isNew, weightsFactory, state.getState(), (nodeid)-> {
         boolean rerun = false;
         if (nodeid == myNodeID) {
@@ -272,7 +276,7 @@ public class StateManagerImpl implements StateManager {
     } else {
       electionFinished();
       // this should not be possible but replicas should never lose elections
-      if (getCurrentMode() == ServerMode.REPLICA) {
+      if (getCurrentMode() == ServerMode.REPLICA || getCurrentMode() == ServerMode.REPLICA_START) {
         logger.warn("replicas should not lose elections");
         electionMgr.reset(ServerID.NULL_ID, null);
         runElection();
@@ -463,7 +467,7 @@ public class StateManagerImpl implements StateManager {
   }
 
   private void moveToActiveState(Set<ServerID> passives, Topology topology) {
-    ServerMode oldState = switchToState(ServerMode.ACTIVE, EnumSet.of(ServerMode.INITIAL, ServerMode.START, ServerMode.PASSIVE, ServerMode.REPLICA));
+    ServerMode oldState = switchToState(ServerMode.ACTIVE, EnumSet.of(ServerMode.INITIAL, ServerMode.START, ServerMode.PASSIVE, ServerMode.REPLICA_START, ServerMode.REPLICA));
     // TODO :: If state == START_STATE publish cluster ID
     debugInfo("Moving to active state");
     for (NodeID peer : passives) {
@@ -739,7 +743,6 @@ public class StateManagerImpl implements StateManager {
   private void validatePeerResponseToReplicaDelaration(L2StateMessage response) throws GroupException {
     if (response != null) {
       NodeID nodeID = response.messageFrom();
-      ServerMode peerState = StateManager.convert(response.getState());
       if (response.getType() != L2StateMessage.RESULT_AGREED) {
         String error = "Recd wrong response from : " + nodeID + " : msg = " + response + " while publishing Replica State";
         logger.info(error);
@@ -800,8 +803,9 @@ public class StateManagerImpl implements StateManager {
     boolean elect = false;
 
     synchronized (this) {
-      if (state.isStartup() || (!disconnectedNode.isNull() && disconnectedNode.equals(activeNode))) {
+      if (state.isStartup() || (!disconnectedNode.isNull() && disconnectedNode.equals(getActiveNodeID()))) {
         // ACTIVE Node is gone
+        logger.info("removing active state: {} disconnected: {} active: {}", state, disconnectedNode, getActiveNodeID());
         info("ACTIVE is gone");
         setActiveNodeID(ServerID.NULL_ID);
       }
@@ -813,12 +817,23 @@ public class StateManagerImpl implements StateManager {
         elect = true;
       }
     }
-    if (elect && startElection.test(disconnectedNode)) {
+    if (elect && startElection.test(disconnectedNode) && canStartElection()) {
       info("Starting Election to determine cluster wide ACTIVE L2");
       runElection();
     } else {
       debugInfo("Not starting election even though node left: " + disconnectedNode);
     }
+  }
+
+  @Override
+  public boolean waitForElectionToComplete() {
+    boolean wasInProgress = elections.electionDidStart();
+    try {
+      elections.waitForElectionToFinish();
+    } catch (InterruptedException ie) {
+      logger.info("election interrupted", ie);
+    }
+    return wasInProgress;
   }
 
   private void sendVerificationOKResponse(L2StateMessage msg) {
@@ -890,7 +905,6 @@ public class StateManagerImpl implements StateManager {
     }
   }
 
-
   private static class ElectionGate {
     private boolean electionInProgress = false;
 
@@ -910,6 +924,10 @@ public class StateManagerImpl implements StateManager {
         electionInProgress = false;
         notifyAll();
       }
+    }
+
+    public synchronized boolean electionDidStart() {
+      return electionInProgress;
     }
 
     public synchronized void waitForElectionToFinish() throws InterruptedException {

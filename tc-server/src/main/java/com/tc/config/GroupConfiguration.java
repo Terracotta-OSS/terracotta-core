@@ -29,7 +29,6 @@ import org.terracotta.configuration.ServerConfiguration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class GroupConfiguration {
 
@@ -65,6 +64,15 @@ public class GroupConfiguration {
   public Set<Node> getNodes() {
     return new HashSet<>(nodes.values());
   }
+/**
+ * nodes that are part of the configured stripe.  Excludes items added for replication
+ * @return
+ */
+  public Set<Node> getConfiguredNodes() {
+    Set<Node> copy = getNodes();
+    copy.removeIf(Node::hiddenFromElection);
+    return copy;
+  }
 
   public Node getCurrentNode() {
     return nodes.get(serverName);
@@ -77,21 +85,17 @@ public class GroupConfiguration {
       }
       return new Node(bindAddress,
                            sc.getTsaPort().getPort(),
-                           sc.getGroupPort().getPort());
+                           sc.getGroupPort().getPort(), false);
   }
 
   private static Node addressToNode(String host, int port, int grpPort) {
-    return new Node(host, port, grpPort);
+    return new Node(host, port, grpPort, true);
   }
 
   public int getElectionTimeInSecs() {
     //TODO fix the election time
     // If there is only one server, always going to win so no reason to wait
     return (nodes.size() == 1) ? SINGLE_SERVER_ELECTION_TIMEOUT : MULTI_SERVER_ELECTION_TIMEOUT;
-  }
-
-  public Set<String> getHostPorts() {
-    return getNodes().stream().map(Node::getServerNodeName).collect(Collectors.toSet());
   }
 
   public String[] getMembers() {

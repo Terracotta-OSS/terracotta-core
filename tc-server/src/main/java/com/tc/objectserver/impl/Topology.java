@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,18 +17,29 @@
  */
 package com.tc.objectserver.impl;
 
-import java.util.Collections;
+import com.tc.net.groups.Node;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class Topology {
-  private final Set<String> servers = new HashSet<>();
+  private final Set<Node> servers = new HashSet<>();
+  private final Node self;
 
-  public Topology(Set<String> servers) {
+  public Topology( Node self, Set<Node> servers) {
+    this.self = self;
     this.servers.addAll(servers);
   }
 
+  public String getLocal() {
+    return self.getServerNodeName();
+  }
+
   public Set<String> getServers() {
-    return Collections.unmodifiableSet(servers);
+    return servers.stream().map(Node::getServerNodeName).collect(Collectors.toSet());
+  }
+
+  public Set<String> getPeers() {
+    return servers.stream().filter(n->!n.equals(self)).map(Node::getServerNodeName).collect(Collectors.toSet());
   }
 }

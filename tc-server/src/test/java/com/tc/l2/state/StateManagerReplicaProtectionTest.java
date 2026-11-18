@@ -17,6 +17,7 @@
  */
 package com.tc.l2.state;
 
+import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.StageController;
 import com.tc.async.impl.StageManagerImpl;
@@ -30,6 +31,8 @@ import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.impl.TopologyManager;
 import com.tc.objectserver.persistence.ServerPersistentState;
 import com.tc.util.concurrent.QueueFactory;
+import java.util.Collections;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -81,10 +84,10 @@ public class StateManagerReplicaProtectionTest {
 
   @Test
   public void testReplicaDoesNotParticipateInElection() throws Exception {
-    // Set up state manager in REPLICA mode
+    // Set up state manager in REPLICA mode, config dictates election can start for replica mode
     when(statePersistor.getInitialMode()).thenReturn(ServerMode.REPLICA_START);
 
-    stateManager = new StateManagerImpl(logger, (n) -> true, groupManager, stageController,
+    stateManager = new StateManagerImpl(logger, (n) -> false, groupManager, stageController,
         mgmtController, stageManager, 5, weightGeneratorFactory, consistencyManager,
         statePersistor, topologyManager);
 
@@ -93,16 +96,14 @@ public class StateManagerReplicaProtectionTest {
     assertEquals(ServerMode.REPLICA_START, stateManager.getCurrentMode());
 
     // Verify REPLICA_START mode properties that prevent election participation
-    assertFalse("Replica should not be able to start elections",
-        stateManager.getCurrentMode().canStartElection());
-    assertFalse("Replica should not be able to become active",
-        stateManager.getCurrentMode().canBeActive());
+    assertFalse("Replica should be able to start elections",
+        stateManager.electionDidStart());
   }
 
   @Test
   public void testReplicaStartModeProperties() throws Exception {
-    // Set up state manager in REPLICA mode
-    stateManager = new StateManagerImpl(logger, (n) -> true, groupManager, stageController,
+    // Set up state manager in REPLICA mode, config dictates election can start for replica mode
+    stateManager = new StateManagerImpl(logger, (n) -> false, groupManager, stageController,
         mgmtController, stageManager, 5, weightGeneratorFactory, consistencyManager,
         statePersistor, topologyManager);
 
@@ -110,11 +111,11 @@ public class StateManagerReplicaProtectionTest {
 
     // Verify REPLICA_START mode has correct properties
     assertEquals(ServerMode.REPLICA_START, stateManager.getCurrentMode());
-    assertFalse("REPLICA_START should not be able to start elections",
-        stateManager.getCurrentMode().canStartElection());
-    assertFalse("REPLICA_START should not be able to become active",
+    assertFalse("REPLICA_START did not start election",
+        stateManager.electionDidStart());
+    assertTrue("REPLICA_START should be able to become active",
         stateManager.getCurrentMode().canBeActive());
-    assertFalse("REPLICA_START should not contain data",
+    assertTrue("REPLICA_START can contain persisted data",
         stateManager.getCurrentMode().containsData());
     assertTrue("REPLICA_START should be in startup mode",
         stateManager.getCurrentMode().isStartup());
@@ -123,40 +124,41 @@ public class StateManagerReplicaProtectionTest {
   }
 
   @Test
-  public void testReplicaModeComparison() throws Exception {
+  public void testReplicaModeMovesToActiveWhenAllowedByConfig() throws Exception {
     stateManager = new StateManagerImpl(logger, (n) -> true, groupManager, stageController,
         mgmtController, stageManager, 5, weightGeneratorFactory, consistencyManager,
         statePersistor, topologyManager);
 
-    stateManager.moveToReplicaMode();
+    when(consistencyManager.requestTransition(any(), any(), any(), any())).thenReturn(Boolean.TRUE);
 
-    // Verify REPLICA_START is different from other passive modes
-    assertEquals(ServerMode.REPLICA_START, stateManager.getCurrentMode());
-    assertNotEquals("REPLICA_START should be different from PASSIVE",
-        ServerMode.PASSIVE, stateManager.getCurrentMode());
-    assertNotEquals("REPLICA_START should be different from RELAY",
-        ServerMode.RELAY, stateManager.getCurrentMode());
-    assertNotEquals("REPLICA_START should be different from SYNCING",
-        ServerMode.SYNCING, stateManager.getCurrentMode());
+    stageManager.startAll(mock(ConfigurationContext.class), Collections.emptyList());
+
+    stateManager.moveToReplicaMode();
+    stateManager.initializeAndStartElection();
+    stateManager.waitForElectionToComplete();
+
+    assertEquals(ServerMode.ACTIVE, stateManager.getCurrentMode());
   }
 
   @Test
   public void testReplicaDoesNotStartElection() throws Exception {
     // Replicas should not participate in elections at all
-    stateManager = new StateManagerImpl(logger, (n) -> true, groupManager, stageController,
+    stateManager = new StateManagerImpl(logger, (n) -> false, groupManager, stageController,
         mgmtController, stageManager, 5, weightGeneratorFactory, consistencyManager,
         statePersistor, topologyManager);
 
     // Move to REPLICA_START mode
     stateManager.moveToReplicaMode();
     assertEquals(ServerMode.REPLICA_START, stateManager.getCurrentMode());
+    stateManager.initializeAndStartElection();
+    stateManager.waitForElectionToComplete();
 
-    // Verify replica mode doesn't allow election start
-    assertFalse(stateManager.getCurrentMode().canStartElection());
+    Assert.assertFalse(stateManager.electionDidStart());
+    assertEquals(ServerMode.REPLICA_START, stateManager.getCurrentMode());
   }
 
   @Test
-  public void testReplicaCannotBeActive() throws Exception {
+  public void testReplicaCanBeActive() throws Exception {
     // Test that REPLICA_START mode cannot become active
     stateManager = new StateManagerImpl(logger, (n) -> true, groupManager, stageController,
         mgmtController, stageManager, 5, weightGeneratorFactory, consistencyManager,
@@ -165,10 +167,10 @@ public class StateManagerReplicaProtectionTest {
     stateManager.moveToReplicaMode();
 
     // Verify REPLICA_START mode cannot be active
-    assertFalse(stateManager.getCurrentMode().canBeActive());
+    assertTrue(stateManager.getCurrentMode().canBeActive());
 
-    // Verify it doesn't contain data (fresh start)
-    assertFalse(stateManager.getCurrentMode().containsData());
+    // Verify it can contain data (fresh start)
+    assertTrue(stateManager.getCurrentMode().containsData());
 
     // Verify it's in startup mode
     assertTrue(stateManager.getCurrentMode().isStartup());
@@ -184,11 +186,5 @@ public class StateManagerReplicaProtectionTest {
     assertEquals(ServerMode.INITIAL, stateManager.getCurrentMode());
     stateManager.moveToReplicaMode();
     assertEquals(ServerMode.REPLICA_START, stateManager.getCurrentMode());
-
-    // Verify RELAY and REPLICA_START share similar properties
-    assertFalse("Both RELAY and REPLICA_START should not require elections",
-        ServerMode.RELAY.requiresElection());
-    assertFalse("Both RELAY and REPLICA_START should not require elections",
-        ServerMode.REPLICA_START.requiresElection());
   }
 }

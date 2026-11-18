@@ -47,6 +47,7 @@ import com.tc.async.api.StageManager;
 import com.tc.async.impl.OrderedSink;
 import com.tc.async.impl.StageController;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.config.GroupConfiguration;
 import com.tc.entity.DiagnosticMessageImpl;
 import com.tc.entity.DiagnosticResponseImpl;
 import com.tc.entity.LinearVoltronEntityMultiResponse;
@@ -316,14 +317,16 @@ public class DistributedObjectServer {
     this.server = server;
     this.serverBuilder = createServerBuilder(configSetupManager.getGroupConfiguration().getCurrentNode(), logger, server);
     this.serviceRegistry = new TerracottaServiceProviderRegistryImpl();
-    this.topologyManager = new TopologyManager(()->this.configSetupManager.getGroupConfiguration().getHostPorts(), ()-> {
-      FailoverBehavior consistent = this.configSetupManager.getFailoverPriority();
-      if (this.configSetupManager.isPartialConfiguration() || consistent == null || consistent.isAvailability()) {
-        return -1;
-      } else {
-        return consistent.getExternalVoters();
-      }
-    });
+    this.topologyManager = new TopologyManager(this.configSetupManager.getGroupConfiguration().getCurrentNode(), ()-> {
+        return this.configSetupManager.getGroupConfiguration().getConfiguredNodes();
+      }, ()-> {
+        FailoverBehavior consistent = this.configSetupManager.getFailoverPriority();
+        if (this.configSetupManager.isPartialConfiguration() || consistent == null || consistent.isAvailability()) {
+          return -1;
+        } else {
+          return consistent.getExternalVoters();
+        }
+      });
     DefaultSocketEndpointFactory.setSocketEndpointFactory(new ClearTextSocketEndpointFactory());
   }
 
@@ -1043,8 +1046,9 @@ public class DistributedObjectServer {
     StageController control = new StageController(this::getContext);
 //  PASSIVE-REPLICA-START
     control.addStageToState(ServerMode.REPLICA_START.getState(), ServerConfigurationContext.PASSIVE_REPLICA_STAGE);
-    control.addStageToState(ServerMode.REPLICA_START.getState(), ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
     control.addStageToState(ServerMode.REPLICA_START.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
+    control.addStageToState(ServerMode.REPLICA_START.getState(), ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
+    control.addStageToState(ServerMode.REPLICA_START.getState(), ServerConfigurationContext.REQUEST_PROCESSOR_STAGE);
 //  PASSIVE-RELAY
     control.addStageToState(ServerMode.RELAY.getState(), ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
     control.addStageToState(ServerMode.RELAY.getState(), ServerConfigurationContext.PASSIVE_RELAY_STAGE);

@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,17 +30,27 @@ public class Node {
   private final int    port;
   private final int    groupPort;
   private final int    hashCode;
+  private final boolean hiddenFromElection;
 
   public Node(String host, int port) {
-    this(host, port, 0);
+    this(host, port, 0, false);
   }
 
   public Node(String host, int port, int groupPort) {
+    this(host, port, groupPort, false);
+  }
+
+  public Node(String host, int port, boolean hiddenFromElection) {
+    this(host, port, 0, hiddenFromElection);
+  }
+
+  public Node(String host, int port, int groupPort, boolean hiddenFromElection) {
     checkArgs(host, port, groupPort);
     this.host = host.trim();
     this.port = port;
     this.groupPort = groupPort;
     this.hashCode = Objects.hash(host, port);
+    this.hiddenFromElection = hiddenFromElection;
   }
 
   public String getHost() {
@@ -88,17 +98,7 @@ public class Node {
     return host + DELIMITER + port;
   }
 
-  private static String getHost(String hostPort) {
-    requireNonNull(hostPort);
-    return hostPort.split(DELIMITER)[0];
-  }
-
-  private static int getPort(String hostPort) {
-    requireNonNull(hostPort);
-    String[] tokens = hostPort.split(DELIMITER);
-    if (tokens.length != 2) {
-      throw new IllegalArgumentException("Unexpected format: " + hostPort + " expected: host" + DELIMITER + "port");
-    }
-    return Integer.parseInt(tokens[1]);
+  public boolean hiddenFromElection() {
+    return this.hiddenFromElection;
   }
 }
