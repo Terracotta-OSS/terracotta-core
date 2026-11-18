@@ -32,7 +32,10 @@ import java.io.Closeable;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 
 import java.util.LinkedHashSet;
@@ -59,21 +62,34 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
   public void initialize(PlatformConfiguration platformConfiguration, ServerConfigurationManager configuration) {
     List<ServiceProviderConfiguration> serviceProviderConfigurationList = configuration.getServiceConfigurations();
     Assert.assertFalse(this.hasCreatedSubRegistries);
+    Map<ServiceProvider, ServiceProviderConfiguration> configs = new HashMap<>();
     if(serviceProviderConfigurationList != null) {
       for (ServiceProviderConfiguration config : serviceProviderConfigurationList) {
         Class<? extends ServiceProvider> serviceClazz = config.getServiceProviderType();
         try {
-          ServiceProvider provider = serviceClazz.newInstance();
-          if (provider.initialize(config, platformConfiguration)) {
-            registerNewServiceProvider(provider);
-          }
-        } catch (InstantiationException | IllegalAccessException ie) {
+          ServiceProvider provider = serviceClazz.getConstructor().newInstance();
+          registerNewServiceProvider(provider);
+          configs.put(provider, config);
+        } catch (InstantiationException | IllegalAccessException
+                | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ie) {
           logger.error("caught exception while initializing service " + serviceClazz, ie);
           throw new RuntimeException(ie);
         }
       }
     }
-    loadClasspathBuiltins(platformConfiguration);
+    loadClasspathBuiltins();
+    initializeAllInstances(platformConfiguration, configs);
+  }
+
+  private void initializeAllInstances(PlatformConfiguration platformConfiguration, Map<ServiceProvider, ServiceProviderConfiguration> configuration) {
+    Iterator<ServiceProvider> inits = serviceProviders.iterator();
+    while (inits.hasNext()) {
+      ServiceProvider init = inits.next();
+      if (!init.initialize(configuration.get(init), platformConfiguration)) {
+        logger.error("service provider not properly initialized " + init);
+        serviceProviders.remove(init);
+      }
+    }
   }
 
   public void shutdown() {
@@ -93,7 +109,7 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
     }
   }
 
-  private void loadClasspathBuiltins(PlatformConfiguration platformConfiguration) {
+  private void loadClasspathBuiltins() {
     List<Class<? extends ServiceProvider>> providers = ServerEnv.getServer().getImplementations(ServiceProvider.class);
     for (Class<? extends ServiceProvider> clazz : providers) {
       try {
@@ -102,11 +118,9 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
         } else {
           // only add a builtin if one has not already been configured into the system via xml
           if (serviceProviders.stream().noneMatch(sp->sp.getClass().getName().equals(clazz.getName()))) {
-            ServiceProvider service = clazz.newInstance();
+            ServiceProvider service = clazz.getConstructor().newInstance();
             //  there is no config for builtins
-            if (service.initialize(null, platformConfiguration)) {
-              registerNewServiceProvider(service);
-            }
+            registerNewServiceProvider(service);
           }
         }
       } catch (Throwable i) {
