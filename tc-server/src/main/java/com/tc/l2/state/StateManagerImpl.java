@@ -226,9 +226,14 @@ public class StateManagerImpl implements StateManager {
     // concluded)
     boolean isNew = isFreshServer();
     if (getActiveNodeID().isNull()) {
+      ServerMode currentMode = getCurrentMode();
       debugInfo("Running election - isNew: " + isNew);
-      // if a server is replica, it should not be communicating with any other servers even if they are configured
-      Set<String> peers = getCurrentMode() != ServerMode.REPLICA ? lockedTopology.getServers() : Collections.emptySet();
+
+      Set<String> peers = lockedTopology.getServers();
+      // replicas have no peers
+      if (currentMode == ServerMode.REPLICA_START || currentMode == ServerMode.REPLICA) {
+        peers = Collections.emptySet();
+      }
       electionSink.addToSink(new ElectionContext(myNodeID,  peers, isNew, weightsFactory, state.getState(), (nodeid)-> {
         boolean rerun = false;
         if (nodeid == myNodeID) {
@@ -463,7 +468,7 @@ public class StateManagerImpl implements StateManager {
   }
 
   private void moveToActiveState(Set<ServerID> passives, Topology topology) {
-    ServerMode oldState = switchToState(ServerMode.ACTIVE, EnumSet.of(ServerMode.INITIAL, ServerMode.START, ServerMode.PASSIVE, ServerMode.REPLICA));
+    ServerMode oldState = switchToState(ServerMode.ACTIVE, EnumSet.of(ServerMode.INITIAL, ServerMode.START, ServerMode.PASSIVE, ServerMode.REPLICA_START, ServerMode.REPLICA));
     // TODO :: If state == START_STATE publish cluster ID
     debugInfo("Moving to active state");
     for (NodeID peer : passives) {
