@@ -19,6 +19,7 @@ package com.tc.config;
 
 
 import com.tc.classloader.ServiceLocator;
+import com.tc.net.groups.Node;
 import com.tc.productinfo.ProductInfo;
 import com.tc.properties.TCPropertiesImpl;
 import org.terracotta.configuration.Configuration;
@@ -164,7 +165,7 @@ public class ServerConfigurationManager implements PrettyPrintable {
       return configuration.getServerConfigurations().size();
     } catch (Throwable t) {
       LOGGER.info("unable to read configuration, using cached version", t);
-      return cachedGroupConfig.getNodes().size();
+      return cachedGroupConfig.getConfiguredNodes().size();
     }
   }
 

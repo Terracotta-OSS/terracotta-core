@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -53,17 +53,17 @@ public class ServerConfigurationManagerTest {
   private static final int[] TEST_GROUP_PORTS = {9430, 9530};
 
   private volatile String currentServer;
-  
+
   private ConfigurationProvider mockServers(int length) throws ConfigurationException {
     ConfigurationProvider configurationProvider = mock(ConfigurationProvider.class);
     Configuration configuration = mock(Configuration.class);
     when(configurationProvider.getConfiguration()).thenReturn(configuration);
     List<ServerConfiguration> servers = new ArrayList<>();
-    
+
     for (int x=0;x<length;x++) {
       servers.add(createServer(x, 100));
     }
-    
+
     when(configuration.getServerConfigurations()).thenReturn(servers);
 
     when(configuration.getServerConfiguration()).then(a->{
@@ -100,7 +100,7 @@ public class ServerConfigurationManagerTest {
                )
     );
     assertThat(groupConfiguration.getMembers(), arrayContainingInAnyOrder(TEST_SERVER_NAMES[0]));
- 
+
     ServerConfiguration serverConfiguration = manager.getServerConfiguration();
     assertThat(serverConfiguration.getName(), is(TEST_SERVER_NAMES[0]));
 
@@ -111,7 +111,7 @@ public class ServerConfigurationManagerTest {
   @Test
   public void testSingleServerWithServerNameNull() throws Exception {
     ConfigurationProvider configurationProvider = mockServers(1);
-    
+
     boolean consistentStartup = true;
     String[] processArgs = new String[] {"arg1", "arg2"};
     currentServer = null;

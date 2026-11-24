@@ -152,4 +152,8 @@ public class TestStateManager implements StateManager {
     return Collections.emptyMap();
   }
 
+  @Override
+  public boolean waitForElectionToComplete() {
+    return true;
+  }
 }

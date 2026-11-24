@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.management.AbstractTerracottaMBean;
+import com.tc.net.groups.Node;
 import javax.management.NotCompliantMBeanException;
 
 import static java.lang.String.join;
@@ -30,11 +31,13 @@ import org.terracotta.server.ServerEnv;
 
 public class TopologyManager {
 
-  private final Supplier<Set<String>> config;
+  private final Node self;
+  private final Supplier<Set<Node>> config;
   private volatile TopologyMbean topologyMbean;
   private final Supplier<Integer> voters;
 
-  public TopologyManager(Supplier<Set<String>> config, Supplier<Integer> voters) {
+  public TopologyManager(Node self, Supplier<Set<Node>> config, Supplier<Integer> voters) {
+    this.self = self;
     this.config = config;
     this.voters = voters;
     initializeMbean();
@@ -49,7 +52,7 @@ public class TopologyManager {
   }
 
   public Topology getTopology() {
-    return new Topology(config.get());
+    return new Topology(self, config.get());
   }
 
   private void initializeMbean() {

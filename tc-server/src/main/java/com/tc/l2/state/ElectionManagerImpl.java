@@ -96,7 +96,7 @@ public class ElectionManagerImpl implements ElectionManager {
     return new AbstractEventHandler<ElectionContext> () {
       @Override
       public void handleEvent(ElectionContext context) throws EventHandlerException {
-          context.setWinner(runElection(context.getNode(), context.getServers(), context.isNew(), context.getFactory(),
+          context.setWinner(runElection(context.getNode(), context.getPeers(), context.isNew(), context.getFactory(),
                                         context.getCurrentState()));
       }
 
@@ -219,7 +219,7 @@ public class ElectionManagerImpl implements ElectionManager {
     notifyAll();
   }
 
-  private NodeID runElection(NodeID myNodeId, Set<String> servers, boolean isNew, WeightGeneratorFactory weightsFactory, State currentState) {
+  private NodeID runElection(NodeID myNodeId, Set<String> peers, boolean isNew, WeightGeneratorFactory weightsFactory, State currentState) {
     NodeID winnerID = ServerID.NULL_ID;
     int count = 0;
     while (winnerID.isNull() && !isShutdown()) {
@@ -227,7 +227,7 @@ public class ElectionManagerImpl implements ElectionManager {
         logger.info("Requesting Re-election !!! count = " + count);
       }
       try {
-        winnerID = doElection(myNodeId, servers, isNew, weightsFactory, currentState);
+        winnerID = doElection(myNodeId, peers, isNew, weightsFactory, currentState);
       } catch (InterruptedException e) {
         L2Utils.handleInterrupted(logger, e);
         reset(ServerID.NULL_ID, null);
@@ -267,16 +267,19 @@ public class ElectionManagerImpl implements ElectionManager {
     logger.info("Election Started : " + e);
   }
 
-  private NodeID doElection(NodeID myNodeId, Set<String> servers, boolean isNew, WeightGeneratorFactory weightsFactory, State currentState)
+  private NodeID doElection(NodeID myNodeId, Set<String> peers, boolean isNew, WeightGeneratorFactory weightsFactory, State currentState)
       throws GroupException, InterruptedException {
 
     // Step 1: publish to cluster NodeID, weight and election start
     Enrollment e = EnrollmentFactory.createEnrollment(myNodeId, isNew, weightsFactory);
-    electionStarted(e, currentState, servers.size());
+    electionStarted(e, currentState, peers.size() + 1); // peers plus self
 
     L2StateMessage msg = L2StateMessage.createElectionStartedMessage(e, currentState);
     debugInfo("Sending my election vote to all members");
-    groupManager.sendTo(servers, msg);
+
+    if (!peers.isEmpty()) {
+      groupManager.sendTo(peers, msg);
+    }
 
     // Step 2: Wait for election completion
     long waited = waitTillElectionComplete();
@@ -294,24 +297,26 @@ public class ElectionManagerImpl implements ElectionManager {
     // Step 4 : local host won the election, so notify world for acceptance
     msg = L2StateMessage.createElectionResultMessage(e, currentState);
     debugInfo("Won election, announcing to world and waiting for response...");
-    GroupResponse<L2StateMessage> responses = groupManager.sendToAndWaitForResponse(servers, msg);
     Set<ServerID> passives = new HashSet<>();
-    for (L2StateMessage response : responses.getResponses()) {
-      Assert.assertEquals(msg.getMessageID(), response.inResponseTo());
-      if (response.getType() == L2StateMessage.RESULT_AGREED) {
-        Assert.assertEquals(e, response.getEnrollment());
-        if (StateManager.convert(response.getState()) == ServerMode.RELAY_CONNECTED) {
-          passives.add(response.messageFrom());
-        } else if (StateManager.convert(response.getState()) == ServerMode.PASSIVE) {
-          passives.add(response.messageFrom());
+    if (!peers.isEmpty()) {  // only try and messages if there are peers
+      GroupResponse<L2StateMessage> responses = groupManager.sendToAndWaitForResponse(peers, msg);
+      for (L2StateMessage response : responses.getResponses()) {
+        Assert.assertEquals(msg.getMessageID(), response.inResponseTo());
+        if (response.getType() == L2StateMessage.RESULT_AGREED) {
+          Assert.assertEquals(e, response.getEnrollment());
+          if (StateManager.convert(response.getState()) == ServerMode.RELAY_CONNECTED) {
+            passives.add(response.messageFrom());
+          } else if (StateManager.convert(response.getState()) == ServerMode.PASSIVE) {
+            passives.add(response.messageFrom());
+          }
+        } else if (response.getType() == L2StateMessage.RESULT_CONFLICT) {
+          logger.info("Result Conflict: Local Result : " + e + " From : " + response.messageFrom() + " Result : "
+                      + response.getEnrollment());
+          return ServerID.NULL_ID;
+        } else {
+          throw new AssertionError("Node : " + response.messageFrom()
+                                   + " responded neither with RESULT_AGREED or RESULT_CONFLICT :" + response);
         }
-      } else if (response.getType() == L2StateMessage.RESULT_CONFLICT) {
-        logger.info("Result Conflict: Local Result : " + e + " From : " + response.messageFrom() + " Result : "
-                    + response.getEnrollment());
-        return ServerID.NULL_ID;
-      } else {
-        throw new AssertionError("Node : " + response.messageFrom()
-                                 + " responded neither with RESULT_AGREED or RESULT_CONFLICT :" + response);
       }
     }
     passiveStandbys = Collections.unmodifiableSet(passives);

@@ -40,6 +40,7 @@ import com.tc.net.groups.GroupManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.util.Assert;
 import com.tc.util.SimpleRingBuffer;
+import com.tc.util.concurrent.ThreadUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,7 +126,18 @@ public class RelayTransactionHandler {
 
   public boolean registerRelayConsumer(ServerID node) {
     NodeID active = stateMgr.getActiveNodeID();
-    TCLogging.getConsoleLogger().info("remote node connected for duplication {}", node);
+    int tries = 0;
+    //  wait a little to see if an active is elected and set
+    while (stateMgr.getCurrentMode() == ServerMode.RELAY && active.isNull()) {
+      if (!stateMgr.waitForElectionToComplete()) {
+        ThreadUtil.reallySleep(1_000);
+      }
+      active = stateMgr.getActiveNodeID();
+      if (tries++ > 5) break;
+    }
+
+    active = stateMgr.getActiveNodeID();
+    TCLogging.getConsoleLogger().info("remote node connected for duplication {} active is: {} current state is:", node, active, stateMgr.getCurrentMode());
     if (stateMgr.getCurrentMode() == ServerMode.RELAY && !active.isNull() && endTarget.isNull()) {
       boolean replayed = replayHistory(new GroupMessageBatchContext<>(RelayTransactionHandler::createRelayMessage, groupManager, node, Integer.MAX_VALUE, 1, n->sendToRelayTarget(getBatch())), 0L);
       Assert.assertFalse(replayed);

@@ -82,6 +82,8 @@ public interface StateManager extends PrettyPrintable {
 
   public void shutdown();
 
+  public boolean waitForElectionToComplete();
+
   public static ServerMode convert(State state) {
     if (state == null) {
       return ServerMode.START;

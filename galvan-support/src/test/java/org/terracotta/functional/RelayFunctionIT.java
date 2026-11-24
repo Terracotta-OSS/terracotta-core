@@ -24,7 +24,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -214,6 +213,57 @@ public class RelayFunctionIT {
         }
       } catch (Exception e) {
         e.printStackTrace();
+      }
+    }
+  }
+
+  @Test
+  public void testFailoverReplicaStart() throws Exception {
+// start both clusters to solidfy config and set the source and dest
+    CLUSTER2.getClusterControl().waitForRunningPassivesInStandby();
+    CLUSTER1.getClusterControl().waitForRunningPassivesInStandby();
+//  shutdown both clusters and restart with relays
+    CLUSTER2.getClusterControl().terminateAllServers();
+    CLUSTER1.getClusterControl().terminateAllServers();
+
+    RELAY_DST.set("localhost:6655");
+    RELAY_SRC.set("localhost:6656:6699");
+
+    CLUSTER2.getClusterControl().startAllServers();
+
+    List<ServerInfo> servers = CLUSTER2.getClusterInfo().getServersInfo();
+    ServerInfo replica = null;
+    while (replica == null) {
+      for (ServerInfo info : servers) {
+        try (Diagnostics d = DiagnosticsFactory.connect(info.getAddress(), null)) {
+          String state = d.getState();
+          if (!state.equals("PASSIVE-REPLICA-START")) {
+            d.forceTerminateServer();
+          }
+        } catch (Exception e) {
+          e.printStackTrace();
+          if (replica != null) {
+            break;
+          }
+        }
+      }
+      for (ServerInfo info : servers) {
+        try (Diagnostics d = DiagnosticsFactory.connect(info.getAddress(), null)) {
+          String state = d.getState();
+          replica = info;
+          if (state.equals("PASSIVE-REPLICA-START")) {
+             d.invoke("TerracottaServer", "replicaFailoverToActive");
+             while (!state.equals("ACTIVE-COORDINATOR")) {
+               Thread.sleep(5_000);
+               state = d.getState();
+            }
+          }
+        } catch (Exception e) {
+          e.printStackTrace();
+          if (replica != null) {
+            break;
+          }
+        }
       }
     }
   }

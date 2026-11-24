@@ -194,7 +194,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
       }
       throw new ZapServerNodeException(message);
     } else {
-      logger.warn("Not quiting since the other servers weight = " + toString(weights)
+      logger.warn("Not quitting since the other servers weight = " + toString(weights)
                   + " is not greater than my weight = " + toString(myWeights));
       consoleLogger.warn("Ignoring Quit request from " + nodeID
                          + " since remote servers weight is not greater than local weight");

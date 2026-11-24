@@ -98,7 +98,7 @@ public enum ServerMode {
 
     @Override
     public boolean canStartElection() {
-      return false;
+      return true;
     }
 
     @Override
@@ -150,17 +150,12 @@ public enum ServerMode {
 
     @Override
     public boolean canStartElection() {
-      return false;
-    }
-
-    @Override
-    public boolean containsData() {
-      return false;
+      return true;
     }
 
     @Override
     public boolean canBeActive() {
-      return false;
+      return true;
     }
 
     @Override
@@ -176,6 +171,11 @@ public enum ServerMode {
 
     @Override
     public boolean canStartElection() {
+      return true;
+    }
+
+    @Override
+    public boolean requiresElection() {
       return true;
     }
   },
