@@ -62,7 +62,7 @@ import java.util.function.LongSupplier;
  * that bucket may lose its event. This can affect the total as well as the windows.</li>
  * </ul>
  */
-public class RuntimeWindowStats {
+public class RuntimeWindowStats implements LatencyStatistics {
 
   /**
    * A level is a ring of fixed width time buckets.
@@ -283,6 +283,7 @@ public class RuntimeWindowStats {
    *
    * @param runtime the runtime of the event, in the caller's chosen unit
    */
+  @Override
   public void record(long runtime) {
     long idx = Math.floorDiv(nanoClock.getAsLong(), width[0]);
     Bucket b = bucket(0, idx);
@@ -295,6 +296,11 @@ public class RuntimeWindowStats {
         fold(1, parent(0, idx), 1, runtime, runtime, runtime);
       }
     }
+  }
+
+  @Override
+  public long count() {
+    return getTotal().getCount();
   }
 
   /**
@@ -429,17 +435,22 @@ public class RuntimeWindowStats {
     return merge.snapshot();
   }
 
-  public Map<String, ?> convert() {
+  @Override
+  public Map<String, Object> convert() {
     Map<String, Object> values = new LinkedHashMap<>();
     for (Duration d : getWindows()) {
+      values.put(d.toString(), convertSnapshot(get(d)));
+    }
+    values.put("TOTAL", convertSnapshot(getTotal()));
+    return values;
+  }
+
+  private static Map<String, Object> convertSnapshot(Snapshot ss) {
       Map<String, Object> seg = new HashMap<>();
-      Snapshot ss = get(d);
       seg.put("average", ss.getAverage());
       seg.put("count", ss.getCount());
       seg.put("max", ss.getMax());
       seg.put("min", ss.getMin());
-      values.put(d.toString(), seg);
-    }
-    return values;
+      return seg;
   }
 }

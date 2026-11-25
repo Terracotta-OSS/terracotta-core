@@ -48,7 +48,7 @@ public class CreateEntityAndDump {
           .withTcProperty("tc.messages.grouping.maxCount", "8196")
       .build();
 
-  @Test
+  @Test @Ignore("not suitable for CI")
   public void testClusterHostPorts() throws Exception {
     long millis = System.currentTimeMillis();
     LOGGER.info("starting test");

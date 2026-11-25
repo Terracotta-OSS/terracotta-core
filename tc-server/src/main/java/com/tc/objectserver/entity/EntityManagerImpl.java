@@ -53,7 +53,11 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 import com.tc.objectserver.api.ManagementKeyCallback;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
+import com.tc.statistics.util.LatencyStatistics;
+import com.tc.statistics.util.NestedRuntimeWindowStats;
+import com.tc.statistics.util.RuntimeWindowStats;
 import java.io.Closeable;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.function.Predicate;
@@ -78,6 +82,11 @@ public class EntityManagerImpl implements EntityManager {
 
   private final Semaphore snapshotLock = new Semaphore(1); // sync and create or destroy are mutually exclusive
 
+  private final RuntimeWindowStats  globalRuntime = new RuntimeWindowStats();
+  private final ConcurrentHashMap<String, LatencyStatistics> typeRuntime = new ConcurrentHashMap<>();
+
+  private final RuntimeWindowStats  globalSchedule = new RuntimeWindowStats();
+  private final ConcurrentHashMap<String, LatencyStatistics> typeSchedule = new ConcurrentHashMap<>();
   // The sort comparator.
   private final Comparator<ManagedEntity> consumerIdSorter = new Comparator<ManagedEntity>() {
     @Override
@@ -188,7 +197,10 @@ public class EntityManagerImpl implements EntityManager {
       FetchID current = entities.compute(id, (eid, fetch)-> shouldCreateActiveEntities ? Optional.ofNullable(fetch).orElse(new FetchID(consumerID)) : new FetchID(consumerID));
       ManagedEntity temp = entityIndex.computeIfAbsent(current, (fetch)->
         new ManagedEntityImpl(id, version, consumerID, flushLocalPipeline, serviceRegistry.subRegistry(consumerID),
-          clientEntityStateManager, eventCollector, this.messageSelf, processorPipeline, service, shouldCreateActiveEntities, canDelete(id)));
+          clientEntityStateManager, eventCollector, this.messageSelf, processorPipeline, service,
+          typeRuntime.computeIfAbsent(id.getClassName(), type->new NestedRuntimeWindowStats(globalRuntime)),
+          typeSchedule.computeIfAbsent(id.getClassName(), type->new NestedRuntimeWindowStats(globalSchedule)),
+          shouldCreateActiveEntities, canDelete(id)));
 
       return temp;
     } finally {
@@ -206,7 +218,10 @@ public class EntityManagerImpl implements EntityManager {
     Assert.assertNull(checkNull); //  must be null, nothing should be competing
     ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, consumerID, flushLocalPipeline,
           serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, this.messageSelf,
-          processorPipeline, service, this.shouldCreateActiveEntities, canDelete);
+          processorPipeline, service,
+          typeRuntime.computeIfAbsent(entityID.getClassName(), type->new NestedRuntimeWindowStats(globalRuntime)),
+          typeSchedule.computeIfAbsent(entityID.getClassName(), type->new NestedRuntimeWindowStats(globalSchedule)),
+          this.shouldCreateActiveEntities, canDelete);
 
     checkNull = entityIndex.put(set, temp);
     Assert.assertNull(checkNull); //  must be null, nothing should be competing
@@ -370,6 +385,27 @@ public class EntityManagerImpl implements EntityManager {
     Set<Map.Entry<EntityID, FetchID>> entries = entities.entrySet();
     entityMap.put("className", this.getClass().getName());
     entityMap.put("size", entries.size());
+
+    entityMap.put("invokeRuntimes", globalRuntime.convert());
+    entityMap.put("scheduleRuntimes", globalSchedule.convert());
+
+    Map<String, Map<String,Object>> invokes  = new HashMap<>();
+    for (String type : typeRuntime.keySet()) {
+      LatencyStatistics value = typeRuntime.get(type);
+      Map<String, Object> stats = value.convert();
+      stats.put("invokeCount", value.count());
+      invokes.put(type, stats);
+    }
+    entityMap.put("typeInvokeRuntimes", invokes);
+
+    Map<String, Map<String,Object>> schedule  = new HashMap<>();
+    for (String type : typeSchedule.keySet()) {
+      LatencyStatistics value = typeSchedule.get(type);
+      Map<String, Object> stats = value.convert();
+      schedule.put(type, stats);
+    }
+    entityMap.put("typeSchduleRuntimes", schedule);
+
     List<Map<String, Object>> copy  = new ArrayList<>(entityIndex.size());
     entityMap.put("entities", copy);
     entityIndex.values().forEach(entity->copy.add(entity.getState()));

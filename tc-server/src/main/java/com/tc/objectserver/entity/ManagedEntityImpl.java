@@ -54,6 +54,8 @@ import com.tc.services.EntityMessengerService;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.services.MappedStateCollector;
 import com.tc.spi.Guardian;
+import com.tc.statistics.util.LatencyStatistics;
+import com.tc.statistics.util.NestedRuntimeWindowStats;
 import com.tc.statistics.util.RuntimeWindowStats;
 import com.tc.tracing.Trace;
 import com.tc.util.Assert;
@@ -150,12 +152,14 @@ public class ManagedEntityImpl implements ManagedEntity {
   //  when we promote to an active.
   private byte[] constructorInfo;
 
-  private final RuntimeWindowStats invokeRuntime = new RuntimeWindowStats();
-  private final RuntimeWindowStats invokeScheduleTime = new RuntimeWindowStats();
+  private final LatencyStatistics invokeRuntime;
+  private final LatencyStatistics invokeScheduleTime;
 
   ManagedEntityImpl(EntityID id, long version, long consumerID, ManagementKeyCallback flushLocalPipeline, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ManagementTopologyEventCollector eventCollector,
                     Sink<VoltronEntityMessage> msg,
                     RequestProcessor process, EntityServerService<EntityMessage, EntityResponse> factory,
+                    LatencyStatistics runtimeParent,
+                    LatencyStatistics scheduleParent,
                     boolean isInActiveState, boolean canDelete) {
     this.id = id;
     this.isDestroyed = true;
@@ -180,6 +184,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     registry.setOwningEntity(this);
     this.codec = factory.getMessageCodec();
     this.syncCodec = factory.getSyncMessageCodec();
+    this.invokeRuntime = new NestedRuntimeWindowStats(runtimeParent);
+    this.invokeScheduleTime = new NestedRuntimeWindowStats(scheduleParent);
   }
 
   @Override
@@ -441,7 +447,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     props.put("destroyed", this.isDestroyed);
     props.put("active", this.isInActiveState);
     props.put("removeable", this.isRemoveable());
-    props.put("invokeCount", invokeRuntime.getTotal().getCount());
+    props.put("invokeCount", invokeRuntime.count());
     props.put("invokeRuntimes", invokeRuntime.convert());
     props.put("scheduleRuntimes", invokeScheduleTime.convert());
     MappedStateCollector mapped = new MappedStateCollector(this.id.getEntityName());

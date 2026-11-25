@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import org.terracotta.testing.rules.Cluster;
 public class MapAndCancel {
 
   Logger LOGGER = LoggerFactory.getLogger(MapAndCancel.class);
-  
+
   @ClassRule
   public static final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(1)
 //          .withSystemProperty("logback.debug", "true")
@@ -54,7 +54,7 @@ public class MapAndCancel {
     map.create(new MapConfig(8, "fire"));
     ConcurrentClusteredMap<String, String> cmap = map.fetchEntity(null);
     cmap.setTypes(String.class, String.class);
-   
+
     for (int x=0;x<1024 * 1024;x++) {
       cmap.insert(Integer.toString(x), "the quick brown fox jumped over the goat").cancel(false);
     }
@@ -68,7 +68,7 @@ public class MapAndCancel {
         cancelCount++;
       }
     }
-    System.out.println("test run in " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - millis) + "s " + cancelCount + " messages cancelled out of " + 
+    System.out.println("test run in " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - millis) + "s " + cancelCount + " messages cancelled out of " +
              (1024 * 1024) + " messages invoked");
   }
 
