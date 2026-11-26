@@ -238,6 +238,7 @@ import com.tc.net.utils.ConnectionLogger;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.impl.MonitoringProducerMultiplexor;
+import com.tc.objectserver.entity.EntityInvokeCountProvider;
 import com.tc.objectserver.handler.DuplicationTransactionHandler;
 import com.tc.objectserver.handler.PassiveAckSender;
 import static com.tc.objectserver.handler.PassiveAckSender.decodeReplicationType;
@@ -738,6 +739,8 @@ public class DistributedObjectServer {
     ClientEntityStateManager clientEntityStateManager = new ClientEntityStateManagerImpl();
 
     entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::flushLocalPipeline, this.configSetupManager.getServiceLocator());
+    this.serviceRegistry.registerImplementationProvided(new EntityInvokeCountProvider(entityManager));
+
     // We need to set up a stage to point at the ProcessTransactionHandler and we also need to register it for events, below.
     final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor, channelManager, entityManager);
     stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, fastStageSize, USE_DIRECT, true).setSpinningCount(1000);

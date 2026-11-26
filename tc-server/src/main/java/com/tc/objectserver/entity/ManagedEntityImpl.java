@@ -434,6 +434,11 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   @Override
+  public long getInvokeCount() {
+    return this.invokeRuntime.count();
+  }
+
+  @Override
   public synchronized Map<String, Object> getState() {
     Map<String, Object> props = new LinkedHashMap<>();
     props.put("type", id.getClassName());

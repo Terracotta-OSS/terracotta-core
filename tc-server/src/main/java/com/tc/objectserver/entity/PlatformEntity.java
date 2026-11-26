@@ -154,4 +154,9 @@ public class PlatformEntity implements ManagedEntity {
     // Not expected on this entity.
     Assert.assertFalse(true);
   }
+
+  @Override
+  public long getInvokeCount() {
+    return 0L;
+  }
 }

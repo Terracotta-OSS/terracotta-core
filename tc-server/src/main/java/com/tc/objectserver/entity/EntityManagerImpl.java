@@ -60,6 +60,7 @@ import java.io.Closeable;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.OptionalLong;
 import java.util.function.Predicate;
 
 
@@ -410,6 +411,27 @@ public class EntityManagerImpl implements EntityManager {
     entityMap.put("entities", copy);
     entityIndex.values().forEach(entity->copy.add(entity.getState()));
     return entityMap;
+  }
+
+  OptionalLong getInvokeCount(String type, String name) {
+    if (type == null) return OptionalLong.of(globalRuntime.count());
+    else {
+      if (name == null) {
+        LatencyStatistics stats = typeRuntime.get(type);
+        if (stats != null) {
+          return OptionalLong.of(stats.count());
+        }
+      } else {
+        FetchID fetch = entities.get(new EntityID(type, name));
+        if (fetch != null) {
+          ManagedEntity me = entityIndex.get(fetch);
+          if (me != null) {
+            return OptionalLong.of(me.getInvokeCount());
+          }
+        }
+      }
+    }
+    return OptionalLong.empty();
   }
 }
 

@@ -251,6 +251,26 @@ public class ManagedEntityImplTest {
   }
 
   @Test
+  public void testInvokeCountStartsAtZero() throws Exception {
+    org.junit.Assert.assertEquals(0L, managedEntity.getInvokeCount());
+  }
+
+  @Test
+  public void testInvokeCountReflectsRecordedInvokesAndNotifiesParent() throws Exception {
+    LatencyStatistics parent = mock(LatencyStatistics.class);
+    ManagedEntityImpl entity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, parent, mock(LatencyStatistics.class), false, true);
+    java.lang.reflect.Field f = ManagedEntityImpl.class.getDeclaredField("invokeRuntime");
+    f.setAccessible(true);
+    LatencyStatistics stats = (LatencyStatistics)f.get(entity);
+    stats.record(10L);
+    stats.record(20L);
+    org.junit.Assert.assertEquals(2L, entity.getInvokeCount());
+    verify(parent, times(2)).record(any(Long.class));
+    // another entity's count is independent
+    org.junit.Assert.assertEquals(0L, managedEntity.getInvokeCount());
+  }
+
+  @Test
   public void testReconfigureEntityWhenPassive() throws Exception {
     ServerEntityRequest createRequest = mockCreateEntityRequest();
     TestingResponse createResponse = mockResponse();

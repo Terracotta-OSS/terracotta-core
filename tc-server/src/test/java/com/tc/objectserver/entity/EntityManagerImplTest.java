@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,8 +36,11 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.util.Assert;
+import com.tc.statistics.util.LatencyStatistics;
+import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import static java.util.Optional.empty;
 import java.util.Set;
@@ -112,7 +115,7 @@ public class EntityManagerImplTest {
     ManagedEntity second = entityManager.createEntity(id, version, consumerID);
     Assert.assertEquals(entity, second);
   }
-  
+
   @Test
   public void testNullEntityChecks() throws Exception {
     Optional<ManagedEntity> check = entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(EntityID.NULL_ID, version));
@@ -175,6 +178,67 @@ public class EntityManagerImplTest {
     //  remove it from the manager
     entityManager.removeDestroyed(fetch);
     assertThat(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, version)), is(empty()));
+  }
+
+  @Test
+  public void testInvokeCountGlobalStartsAtZero() throws Exception {
+    assertThat(entityManager.getInvokeCount(null, null), is(OptionalLong.of(0L)));
+  }
+
+  @Test
+  public void testInvokeCountUnknownTypeIsEmpty() throws Exception {
+    assertThat(entityManager.getInvokeCount("no.such.Type", null), is(OptionalLong.empty()));
+  }
+
+  @Test
+  public void testInvokeCountUnknownEntityIsEmpty() throws Exception {
+    assertThat(entityManager.getInvokeCount(id.getClassName(), "missing"), is(OptionalLong.empty()));
+  }
+
+  @Test
+  public void testInvokeCountNewEntityIsZero() throws Exception {
+    entityManager.createEntity(id, version, consumerID);
+    assertThat(entityManager.getInvokeCount(id.getClassName(), id.getEntityName()), is(OptionalLong.of(0L)));
+    assertThat(entityManager.getInvokeCount(id.getClassName(), null), is(OptionalLong.of(0L)));
+    assertThat(entityManager.getInvokeCount(null, null), is(OptionalLong.of(0L)));
+  }
+
+  @Test
+  public void testInvokeCountPropagatesToTypeAndGlobal() throws Exception {
+    ManagedEntity entity = entityManager.createEntity(id, version, consumerID);
+    recordInvokes(entity, 3);
+    assertThat(entity.getInvokeCount(), is(3L));
+    assertThat(entityManager.getInvokeCount(id.getClassName(), id.getEntityName()), is(OptionalLong.of(3L)));
+    assertThat(entityManager.getInvokeCount(id.getClassName(), null), is(OptionalLong.of(3L)));
+    assertThat(entityManager.getInvokeCount(null, null), is(OptionalLong.of(3L)));
+  }
+
+  @Test
+  public void testInvokeCountAggregatesAcrossEntitiesOfSameType() throws Exception {
+    EntityID other = new EntityID(id.getClassName(), "bar");
+    ManagedEntity first = entityManager.createEntity(id, version, consumerID);
+    ManagedEntity second = entityManager.createEntity(other, version, consumerID + 1);
+    recordInvokes(first, 2);
+    recordInvokes(second, 5);
+    assertThat(entityManager.getInvokeCount(id.getClassName(), id.getEntityName()), is(OptionalLong.of(2L)));
+    assertThat(entityManager.getInvokeCount(other.getClassName(), other.getEntityName()), is(OptionalLong.of(5L)));
+    assertThat(entityManager.getInvokeCount(id.getClassName(), null), is(OptionalLong.of(7L)));
+    assertThat(entityManager.getInvokeCount(null, null), is(OptionalLong.of(7L)));
+  }
+
+  @Test
+  public void testInvokeCountForNameOfDifferentTypeIsEmpty() throws Exception {
+    entityManager.createEntity(id, version, consumerID);
+    assertThat(entityManager.getInvokeCount("no.such.Type", id.getEntityName()), is(OptionalLong.empty()));
+  }
+
+  private static void recordInvokes(ManagedEntity entity, int count) throws Exception {
+    Field f = ManagedEntityImpl.class.getDeclaredField("invokeRuntime");
+    f.setAccessible(true);
+    LatencyStatistics stats = (LatencyStatistics)f.get(entity);
+    for (int i = 0; i < count; i++) {
+      stats.record(1L);
+    }
   }
 
 }
