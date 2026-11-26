@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -53,9 +53,14 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 import com.tc.objectserver.api.ManagementKeyCallback;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
+import com.tc.statistics.util.LatencyStatistics;
+import com.tc.statistics.util.NestedRuntimeWindowStats;
+import com.tc.statistics.util.RuntimeWindowStats;
 import java.io.Closeable;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.OptionalLong;
 import java.util.function.Predicate;
 
 
@@ -69,15 +74,20 @@ public class EntityManagerImpl implements EntityManager {
   private final TerracottaServiceProviderRegistry serviceRegistry;
   private final ClientEntityStateManager clientEntityStateManager;
   private final ManagementTopologyEventCollector eventCollector;
-  
+
   private final ManagementKeyCallback flushLocalPipeline;
   private Sink<VoltronEntityMessage> messageSelf;
-  
+
   private final RequestProcessor processorPipeline;
   private boolean shouldCreateActiveEntities;
-  
+
   private final Semaphore snapshotLock = new Semaphore(1); // sync and create or destroy are mutually exclusive
-  
+
+  private final RuntimeWindowStats  globalRuntime = new RuntimeWindowStats();
+  private final ConcurrentHashMap<String, LatencyStatistics> typeRuntime = new ConcurrentHashMap<>();
+
+  private final RuntimeWindowStats  globalSchedule = new RuntimeWindowStats();
+  private final ConcurrentHashMap<String, LatencyStatistics> typeSchedule = new ConcurrentHashMap<>();
   // The sort comparator.
   private final Comparator<ManagedEntity> consumerIdSorter = new Comparator<ManagedEntity>() {
     @Override
@@ -92,8 +102,8 @@ public class EntityManagerImpl implements EntityManager {
     }};
 
 
-  public EntityManagerImpl(TerracottaServiceProviderRegistry serviceRegistry, 
-      ClientEntityStateManager clientEntityStateManager, ManagementTopologyEventCollector eventCollector, 
+  public EntityManagerImpl(TerracottaServiceProviderRegistry serviceRegistry,
+      ClientEntityStateManager clientEntityStateManager, ManagementTopologyEventCollector eventCollector,
       RequestProcessor processor, ManagementKeyCallback flushLocalPipeline, ServiceLocator locator) {
     this.serviceRegistry = serviceRegistry;
     this.clientEntityStateManager = clientEntityStateManager;
@@ -107,7 +117,7 @@ public class EntityManagerImpl implements EntityManager {
     entities.put(platform.getID(), PlatformEntity.PLATFORM_FETCH_ID);
     entityIndex.put(PlatformEntity.PLATFORM_FETCH_ID, platform);
   }
-  
+
   public void setMessageSink(Sink<VoltronEntityMessage> sink) {
     this.messageSelf = sink;
   }
@@ -145,7 +155,7 @@ public class EntityManagerImpl implements EntityManager {
   public List<VoltronEntityMessage> enterActiveState() {
     // We can't enter active twice.
     Assert.assertFalse(this.shouldCreateActiveEntities);
-    //  locking the snapshotting until full active is achieved 
+    //  locking the snapshotting until full active is achieved
     snapshotLock.acquireUninterruptibly();
     try {
       // Tell our implementation-provided services to become active (since they might have modes of operation).
@@ -153,7 +163,7 @@ public class EntityManagerImpl implements EntityManager {
 
       // Set the state of the manager.
       this.shouldCreateActiveEntities = true;
-      // We can promote directly because this method is only called from PTH initialize 
+      // We can promote directly because this method is only called from PTH initialize
       //  thus, this only happens once RTH is spun down and PTH is beginning to spin up.  We know the request queues are clear
       // issue-439: We need to sort these entities, ascending by consumerID.
       List<ManagedEntity> sortingList = new ArrayList<ManagedEntity>(this.entityIndex.values());
@@ -162,7 +172,7 @@ public class EntityManagerImpl implements EntityManager {
       for (ManagedEntity entity : sortingList) {
         try {
             reconnectDone.add(new LocalPipelineFlushMessage(
-              EntityDescriptor.createDescriptorForInvoke(new FetchID(entity.getConsumerID()), ClientInstanceID.NULL_ID), 
+              EntityDescriptor.createDescriptorForInvoke(new FetchID(entity.getConsumerID()), ClientInstanceID.NULL_ID),
               entity.promoteEntity()));
         } catch (ConfigurationException ce) {
           String errMsg = "failure to promote entity: " + entity.getID();
@@ -188,7 +198,10 @@ public class EntityManagerImpl implements EntityManager {
       FetchID current = entities.compute(id, (eid, fetch)-> shouldCreateActiveEntities ? Optional.ofNullable(fetch).orElse(new FetchID(consumerID)) : new FetchID(consumerID));
       ManagedEntity temp = entityIndex.computeIfAbsent(current, (fetch)->
         new ManagedEntityImpl(id, version, consumerID, flushLocalPipeline, serviceRegistry.subRegistry(consumerID),
-          clientEntityStateManager, eventCollector, this.messageSelf, processorPipeline, service, shouldCreateActiveEntities, canDelete(id)));
+          clientEntityStateManager, eventCollector, this.messageSelf, processorPipeline, service,
+          typeRuntime.computeIfAbsent(id.getClassName(), type->new NestedRuntimeWindowStats(globalRuntime)),
+          typeSchedule.computeIfAbsent(id.getClassName(), type->new NestedRuntimeWindowStats(globalSchedule)),
+          shouldCreateActiveEntities, canDelete(id)));
 
       return temp;
     } finally {
@@ -204,10 +217,13 @@ public class EntityManagerImpl implements EntityManager {
     FetchID set = new FetchID(consumerID);
     Object checkNull = entities.put(entityID, set);
     Assert.assertNull(checkNull); //  must be null, nothing should be competing
-    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, consumerID, flushLocalPipeline, 
+    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, consumerID, flushLocalPipeline,
           serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, this.messageSelf,
-          processorPipeline, service, this.shouldCreateActiveEntities, canDelete);
-    
+          processorPipeline, service,
+          typeRuntime.computeIfAbsent(entityID.getClassName(), type->new NestedRuntimeWindowStats(globalRuntime)),
+          typeSchedule.computeIfAbsent(entityID.getClassName(), type->new NestedRuntimeWindowStats(globalSchedule)),
+          this.shouldCreateActiveEntities, canDelete);
+
     checkNull = entityIndex.put(set, temp);
     Assert.assertNull(checkNull); //  must be null, nothing should be competing
     try {
@@ -231,7 +247,7 @@ public class EntityManagerImpl implements EntityManager {
           return entity;
         }
       });
-      
+
       if (e == null) {
         LOGGER.debug("removed " + id);
         return true;
@@ -251,12 +267,12 @@ public class EntityManagerImpl implements EntityManager {
       return getEntity(descriptor.getEntityID(), descriptor.getClientSideVersion());
     }
   }
-  
+
   private Optional<ManagedEntity> getEntity(FetchID idx) {
     Assert.assertFalse(idx.isNull());
     return Optional.ofNullable(this.entityIndex.get(idx));
   }
-  
+
   private Optional<ManagedEntity> getEntity(EntityID id, long version) throws ServerException {
     Assert.assertNotNull(id);
     if (EntityID.NULL_ID == id) {
@@ -267,7 +283,7 @@ public class EntityManagerImpl implements EntityManager {
     FetchID fetch = entities.get(id);
     if (fetch != null) {
       ManagedEntity entity = entityIndex.get(fetch);
-      //  if the version in the descriptor is not valid, don't check 
+      //  if the version in the descriptor is not valid, don't check
       //  check the provided version against the version of the entity
       if (version > 0 && entity.getVersion() != version) {
         throw ServerException.createEntityVersionMismatch(id, entity.getVersion() + " does not match " + version);
@@ -295,7 +311,7 @@ public class EntityManagerImpl implements EntityManager {
   public Collection<ManagedEntity> getAll() {
     return new ArrayList<>(entityIndex.values());
   }
-  
+
   @Override
   public List<ManagedEntity> snapshot(Predicate<ManagedEntity> runFirst) {
     snapshotLock.acquireUninterruptibly();
@@ -332,7 +348,7 @@ public class EntityManagerImpl implements EntityManager {
       // This needs to be null or else there was some kind of unexpected concurrent access which would have caused failure or a duplicate entry.
       Assert.assertNull(oldService);
     }
-    
+
     // We must have a service by now or we would have thrown.
     Assert.assertNotNull(service);
     long serviceVersion = service.getVersion();
@@ -341,7 +357,7 @@ public class EntityManagerImpl implements EntityManager {
     }
     return service;
   }
-  
+
   @Override
   public Set<ClientID> resetReferences() {
     for (ManagedEntity me : entityIndex.values()) {
@@ -370,10 +386,52 @@ public class EntityManagerImpl implements EntityManager {
     Set<Map.Entry<EntityID, FetchID>> entries = entities.entrySet();
     entityMap.put("className", this.getClass().getName());
     entityMap.put("size", entries.size());
-    List<Map<String, Object>> entities  = new ArrayList<>(entityIndex.size());
-    entityMap.put("entities", entities);
-    entityIndex.values().forEach(entity->entities.add(entity.getState()));
+
+    entityMap.put("invokeRuntimes", globalRuntime.convert());
+    entityMap.put("scheduleRuntimes", globalSchedule.convert());
+
+    Map<String, Map<String,Object>> invokes  = new HashMap<>();
+    for (String type : typeRuntime.keySet()) {
+      LatencyStatistics value = typeRuntime.get(type);
+      Map<String, Object> stats = value.convert();
+      stats.put("invokeCount", value.count());
+      invokes.put(type, stats);
+    }
+    entityMap.put("typeInvokeRuntimes", invokes);
+
+    Map<String, Map<String,Object>> schedule  = new HashMap<>();
+    for (String type : typeSchedule.keySet()) {
+      LatencyStatistics value = typeSchedule.get(type);
+      Map<String, Object> stats = value.convert();
+      schedule.put(type, stats);
+    }
+    entityMap.put("typeSchduleRuntimes", schedule);
+
+    List<Map<String, Object>> copy  = new ArrayList<>(entityIndex.size());
+    entityMap.put("entities", copy);
+    entityIndex.values().forEach(entity->copy.add(entity.getState()));
     return entityMap;
+  }
+
+  OptionalLong getInvokeCount(String type, String name) {
+    if (type == null) return OptionalLong.of(globalRuntime.count());
+    else {
+      if (name == null) {
+        LatencyStatistics stats = typeRuntime.get(type);
+        if (stats != null) {
+          return OptionalLong.of(stats.count());
+        }
+      } else {
+        FetchID fetch = entities.get(new EntityID(type, name));
+        if (fetch != null) {
+          ManagedEntity me = entityIndex.get(fetch);
+          if (me != null) {
+            return OptionalLong.of(me.getInvokeCount());
+          }
+        }
+      }
+    }
+    return OptionalLong.empty();
   }
 }
 

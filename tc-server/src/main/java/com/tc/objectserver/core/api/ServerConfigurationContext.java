@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,10 +36,10 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String RECEIVE_GROUP_MESSAGE_STAGE                        = "receive_group_message_stage";
   public static final String GROUP_HANDSHAKE_MESSAGE_STAGE                      = "group_handshake_message_stage";
   public static final String GROUP_DISCOVERY_STAGE                              = "group_discovery_stage";
-  
+
   public static final String REQUEST_PROCESSOR_STAGE                            = "request_processor_stage";
   public static final String REQUEST_PROCESSOR_DURING_SYNC_STAGE                            = "request_processor_during_sync_stage";
-  
+
   public static final String ACTIVE_TO_PASSIVE_DRIVER_STAGE                       = "active_to_passive_driver_stage";
   public static final String ACTIVE_TO_PASSIVE_DRIVER_FLUSH_STAGE                       = "active_to_passive_driver_flush_stage";
   public static final String PASSIVE_TO_ACTIVE_DRIVER_STAGE                       = "passive_to_active_driver_stage";
@@ -56,8 +56,6 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public ServerClientHandshakeManager getClientHandshakeManager();
 
   public ChannelStats getChannelStats();
-
-  public void addShutdownItem(Runnable c);
 
   void shutdown();
 }

@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Implementation for TCComm. Manages communication threads for new connection and listeners at a high level.
- * 
+ *
  * @author teck
  * @author mgovinda
  */
@@ -110,7 +110,7 @@ class TCCommImpl implements TCComm {
   public CoreNIOServices nioServiceThreadForNewListener() {
     return commThread;
   }
-  
+
   public Map<String, ?> getState() {
     Map<String, Object> map = new LinkedHashMap<>();
     map.put("name", this.commThreadName);
@@ -120,12 +120,12 @@ class TCCommImpl implements TCComm {
     }
     return map;
   }
-  
+
   @Override
   public void pause() {
     workerCommMgr.pause();
   }
-  
+
   @Override
   public void unpause() {
     workerCommMgr.unpause();

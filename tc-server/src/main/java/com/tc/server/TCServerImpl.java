@@ -73,6 +73,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import javax.management.MBeanServerFactory;
+import org.terracotta.monitoring.PlatformSystem;
 
 import org.terracotta.server.StopAction;
 
@@ -247,6 +248,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   @Override
   public synchronized void shutdown() {
     if (canShutdown()) {
+      dso.shutdown();
       stop();
     } else {
       logger.warn("Server in incorrect state (" + getStateManager().getCurrentMode().getName() + ") to be shutdown.");
@@ -437,6 +439,11 @@ public class TCServerImpl extends SEDA implements TCServer {
   public void dump() {
     audit("Dump invoked", new Properties());
     TCLogging.getDumpLogger().info(new String(this.dsoServer.getClusterState(Charset.defaultCharset(), null), Charset.defaultCharset()));
+  }
+
+  @Override
+  public Map<String, ?> queryServerState(PlatformSystem subsystem) {
+    return dsoServer.queryPlatformState(subsystem);
   }
 
   private synchronized void registerDSOServer() throws InstanceAlreadyExistsException, MBeanRegistrationException,

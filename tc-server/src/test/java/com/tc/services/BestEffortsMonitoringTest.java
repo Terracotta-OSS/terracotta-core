@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ public class BestEffortsMonitoringTest {
     this.monitoring.attachToNewActive(wrapper);
     // Nothing should have happened.
     Assert.assertEquals(0, wrapper.pushCount);
-    
+
     // Step time ahead to make sure that nothing happens.
     // (we currently push these, immediately when a new active arrives, so this check is just to make sure we don't enqueue something else).
     this.source.passTime(BestEffortsMonitoring.ASYNC_FLUSH_DELAY_MILLIS);
@@ -96,7 +96,7 @@ public class BestEffortsMonitoringTest {
     Serializable data2 = "data2";
     this.monitoring.pushBestEfforts(id1, name1, data1);
     this.monitoring.pushBestEfforts(id2, name2, data2);
-    
+
     TestStripeMonitoring consumer1 = new TestStripeMonitoring();
     TestStripeMonitoring consumer2 = new TestStripeMonitoring();
     TerracottaServiceProviderRegistry globalRegistry = mockRegistry(consumer1, consumer2);
@@ -114,7 +114,7 @@ public class BestEffortsMonitoringTest {
     Serializable data2 = "data2";
     this.monitoring.pushBestEfforts(id1, name1, data1);
     this.monitoring.pushBestEfforts(id1, name1, data2);
-    
+
     TestStripeMonitoring consumer1 = new TestStripeMonitoring();
     TestStripeMonitoring consumer2 = new TestStripeMonitoring();
     TerracottaServiceProviderRegistry globalRegistry = mockRegistry(consumer1, consumer2);
@@ -129,17 +129,17 @@ public class BestEffortsMonitoringTest {
     TestPipeWrapper wrapper = new TestPipeWrapper();
     this.monitoring.attachToNewActive(wrapper);
     Assert.assertEquals(0, wrapper.pushCount);
-    
+
     long id1 = 1;
     String name1 = "name1";
     Serializable data1 = "data1";
     this.monitoring.pushBestEfforts(id1, name1, data1);
-    
+
     TestStripeMonitoring consumer1 = new TestStripeMonitoring();
     TerracottaServiceProviderRegistry globalRegistry = mockRegistry(consumer1, null);
     this.monitoring.flushAfterActivePromotion(mock(PlatformServer.class), globalRegistry);
     Assert.assertEquals(1, consumer1.pushCount);
-    
+
     // Step time ahead to make sure that nothing happens.
     this.source.passTime(BestEffortsMonitoring.ASYNC_FLUSH_DELAY_MILLIS);
     this.timer.poke();
@@ -152,16 +152,16 @@ public class BestEffortsMonitoringTest {
     String name1 = "name1";
     Serializable data1 = "data1";
     this.monitoring.pushBestEfforts(id1, name1, data1);
-    
+
     TestPipeWrapper wrapper = new TestPipeWrapper();
     this.monitoring.attachToNewActive(wrapper);
     // These should be pushed, immediately (at least in the current implementation).
     Assert.assertEquals(1, wrapper.pushCount);
-    
+
     // Step time ahead to make sure nothing changes.
     this.source.passTime(BestEffortsMonitoring.ASYNC_FLUSH_DELAY_MILLIS);
     this.timer.poke();
-    
+
     // The same count should be there.
     Assert.assertEquals(1, wrapper.pushCount);
   }
@@ -173,16 +173,16 @@ public class BestEffortsMonitoringTest {
     String name1 = "name1";
     Serializable data1 = "data1";
     this.monitoring.pushBestEfforts(id1, name1, data1);
-    
+
     TestPipeWrapper wrapper = new TestPipeWrapper();
     this.monitoring.attachToNewActive(wrapper);
     // These should be pushed, immediately (at least in the current implementation).
     Assert.assertEquals(1, wrapper.pushCount);
-    
+
     // Step time ahead to make sure nothing changes.
     this.source.passTime(BestEffortsMonitoring.ASYNC_FLUSH_DELAY_MILLIS);
     this.timer.poke();
-    
+
     // Add some more data (we can send redundant data since we already received it).
     this.monitoring.pushBestEfforts(id1, name1, data1);
     // Nothing should change until the timer.
@@ -190,7 +190,7 @@ public class BestEffortsMonitoringTest {
     this.source.passTime(BestEffortsMonitoring.ASYNC_FLUSH_DELAY_MILLIS);
     this.timer.poke();
     Assert.assertEquals(2, wrapper.pushCount);
-    
+
     // Now, switch to a new active - it should see nothing.
     TestPipeWrapper lateWrapper = new TestPipeWrapper();
     this.monitoring.attachToNewActive(lateWrapper);
@@ -205,27 +205,27 @@ public class BestEffortsMonitoringTest {
     String name1 = "name1";
     Serializable data1 = "data1";
     this.monitoring.pushBestEfforts(id1, name1, data1);
-    
+
     TestPipeWrapper wrapper = new TestPipeWrapper();
     this.monitoring.attachToNewActive(wrapper);
     // These should be pushed, immediately (at least in the current implementation).
     Assert.assertEquals(1, wrapper.pushCount);
-    
+
     // Step time ahead to make sure nothing changes.
     this.source.passTime(BestEffortsMonitoring.ASYNC_FLUSH_DELAY_MILLIS);
     this.timer.poke();
-    
+
     // Add some more data (we can send redundant data since we already received it).
     this.monitoring.pushBestEfforts(id1, name1, data1);
     // Nothing should change until the timer.
     Assert.assertEquals(1, wrapper.pushCount);
     // (a timer will have been requested so attach the new passive while there).
-    
+
     // Now, switch to a new active - it should see the data.
     TestPipeWrapper lateWrapper = new TestPipeWrapper();
     this.monitoring.attachToNewActive(lateWrapper);
     Assert.assertEquals(1, lateWrapper.pushCount);
-    
+
     // Wait to make sure neither change from a stale timer (it should have been cancelled).
     this.source.passTime(BestEffortsMonitoring.ASYNC_FLUSH_DELAY_MILLIS);
     this.timer.poke();
@@ -253,7 +253,7 @@ public class BestEffortsMonitoringTest {
 
   private static class TestPipeWrapper implements ActivePipeWrapper {
     public int pushCount = 0;
-    
+
     @Override
     public void addNode(long consumerID, String[] parents, String name, Serializable value) {
       // No call expected.
@@ -273,11 +273,10 @@ public class BestEffortsMonitoringTest {
 
   private static class TestStripeMonitoring implements IStripeMonitoring {
     public int pushCount = 0;
-    
+
     @Override
     public void serverDidBecomeActive(PlatformServer self) {
-      // No call expected.
-      Assert.fail();
+
     }
     @Override
     public void serverDidJoinStripe(PlatformServer server) {

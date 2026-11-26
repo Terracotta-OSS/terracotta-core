@@ -109,6 +109,8 @@ public interface ManagedEntity {
 
   public Map<String, Object> getState();
 
+  public long getInvokeCount();
+
   /**
    * Sets the listener to be notified once this instance finishes being created from new or loaded from existing.
    * The implementation is allowed to assume that there will only be, at most, one of these listeners.  This is

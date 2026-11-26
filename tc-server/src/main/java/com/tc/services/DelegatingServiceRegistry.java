@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -40,9 +40,9 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
 
   public DelegatingServiceRegistry(long consumerID, ServiceProvider[] providers, ImplementationProvidedServiceProvider[] implementationProvidedProviders) {
     this.consumerID = consumerID;
-    
+
     serviceProviders = Collections.unmodifiableCollection(Arrays.asList(providers));
-    
+
     implementationProvidedServiceProviders = Collections.unmodifiableCollection(Arrays.asList(implementationProvidedProviders));
   }
 
@@ -59,12 +59,15 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
         ? builtInService
         : externalService;
   }
-  
+
   @Override
   public <T> Collection<T> getServices(ServiceConfiguration<T> configuration) {
-    return getExternalServices(configuration);
+    List<T> combined = new ArrayList<>();
+    combined.addAll(getExternalServices(configuration));
+    combined.addAll(getBuiltinServices(configuration));
+    return combined;
   }
-  
+
   @Override
   public void setOwningEntity(ManagedEntity entity) {
     Assert.assertNull(this.owningEntity);
@@ -109,7 +112,7 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
     }
     return theService;
   }
-  
+
   private <T> Collection<T> getExternalServices(ServiceConfiguration<T> configuration) {
     Class<T> serviceType = configuration.getServiceType();
     List<T> choices = new ArrayList<>();
@@ -123,5 +126,20 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
       }
     }
     return choices;
-  }  
+  }
+
+  private <T> Collection<T> getBuiltinServices(ServiceConfiguration<T> configuration) {
+    Class<T> serviceType = configuration.getServiceType();
+    List<T> choices = new ArrayList<>();
+
+    for (ImplementationProvidedServiceProvider provider : implementationProvidedServiceProviders) {
+      if (provider.getProvidedServiceTypes().contains(serviceType)) {
+        T oneService = provider.getService(this.consumerID, this.owningEntity, configuration);
+        if (oneService != null) {
+          choices.add(oneService);
+        }
+      }
+    }
+    return choices;
+  }
 }

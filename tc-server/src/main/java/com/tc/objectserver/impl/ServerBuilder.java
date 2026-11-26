@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
-import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.persistence.Persistor;
@@ -44,13 +43,12 @@ import java.io.IOException;
 
 public interface ServerBuilder extends PostInit {
   GroupManager<AbstractGroupMessage> createGroupCommManager(ServerConfigurationManager configManager,
-                                                            StageManager stageManager, 
+                                                            StageManager stageManager,
                                                             TCConnectionManager connectionManager,
                                                             ServerID serverNodeID,
-                                                            StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
-                                                            SocketEndpointFactory bufferManagerFactory);
+                                                            StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory);
 
-  ServerConfigurationContext createServerConfigurationContext(String id, StageManager stageManager, DSOChannelManager channelManager,
+  ServerConfigurationContext createServerConfigurationContext(String id, StageManager stageManager,
                                                               ChannelStatsImpl channelStats,
                                                               L2Coordinator l2HACoordinator,
                                                               ServerClientHandshakeManager clientHandshakeManager,

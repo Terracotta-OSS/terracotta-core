@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,11 +25,13 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.EnumSet;
+import java.util.Map;
 
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.monitoring.PlatformService;
 import org.terracotta.monitoring.PlatformStopException;
+import org.terracotta.monitoring.PlatformSystem;
 import org.terracotta.server.ServerEnv;
 import org.terracotta.server.StopAction;
 import static org.terracotta.server.StopAction.RESTART;
@@ -109,5 +111,10 @@ public class PlatformServiceImpl implements PlatformService, StateDumpable {
   public void addStateTo(StateDumpCollector stateDumpCollector) {
     stateDumpCollector.addState("tcServerState", tcServer.getState());
     stateDumpCollector.addState("tcServerConfig", tcServer.getConfig());
+  }
+
+  @Override
+  public Map<String, ?> queryPlatformState(PlatformSystem subsystem) {
+    return tcServer.queryServerState(subsystem);
   }
 }

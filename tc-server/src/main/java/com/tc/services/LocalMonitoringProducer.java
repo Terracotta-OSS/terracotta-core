@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     this.bestEfforts = new BestEffortsMonitoring(timer);
     this.classLoader = new ServiceClassLoader(loader);
   }
-  
+
   public void start() {
     this.timer.start();
   }
@@ -97,7 +97,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
       Thread.currentThread().interrupt();
     }
   }
-  
+
   @Override
   public synchronized void entityCreated(ManagedEntity sender) {
 
@@ -174,14 +174,13 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     if (null != platformCollector) {
       platformCollector.serverDidBecomeActive(this.thisServer);
 
-      // Pass our cached state into the underlying services and then drop our cache and pipe to the active
       for (Map.Entry<Long, CacheNode> entry : this.cachedTreeRoot.entrySet()) {
         long consumerID = entry.getKey();
         IStripeMonitoring underlyingCollector = getIStripeMonitoringService(consumerID);
         walkCacheChildren(new String[0], entry.getValue().children, new CacheWalker() {
           @Override
           public void didEnterNode(String[] parents, String name, Serializable value) {
-            underlyingCollector.addNode(LocalMonitoringProducer.this.thisServer, parents, name, value);
+            underlyingCollector.replayNode(LocalMonitoringProducer.this.thisServer, parents, name, value);
           }});
       }
 
@@ -340,14 +339,12 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
         // This could be cached so we can also send it to any waiting active and return success.
         if (null != LocalMonitoringProducer.this.activeWrapper) {
           LocalMonitoringProducer.this.activeWrapper.addNode(consumerID, parents, name, value);
+          didStore = true;
         }
-        didStore = true;
       }
-    } else {
-      // This means we are active so just pass it through.
-      didStore = underlyingCollector.addNode(LocalMonitoringProducer.this.thisServer, parents, name, value);
     }
-    return didStore;
+
+    return didStore || underlyingCollector.addNode(LocalMonitoringProducer.this.thisServer, parents, name, value);
   }
 
   private synchronized boolean removeNodeFromShim(long consumerID, IStripeMonitoring underlyingCollector, String[] parents, String name) {
@@ -366,21 +363,19 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
           didRemove = true;
         }
       }
-    } else {
-      // This means we are active so just pass it through.
-      didRemove = underlyingCollector.removeNode(this.thisServer, parents, name);
     }
-    return didRemove;
+
+
+    return didRemove || underlyingCollector.removeNode(this.thisServer, parents, name);
   }
 
   private synchronized void pushBestEffortsFromShim(long consumerID, IStripeMonitoring underlyingCollector, String name, Serializable data) {
     if (null != this.bestEfforts) {
       // Pass this to the BestEffortsMonitoring object so it can handle this.
       this.bestEfforts.pushBestEfforts(consumerID, name, data);
-    } else {
-      // We are the active so just push this through.
-      underlyingCollector.pushBestEffortsData(this.thisServer, name, data);
     }
+// always push to underlying
+    underlyingCollector.pushBestEffortsData(this.thisServer, name, data);
   }
 
   private CacheNode findParent(long consumerID, String[] parents) {

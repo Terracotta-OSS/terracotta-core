@@ -75,6 +75,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import org.terracotta.entity.ActiveServerEntity.ReconnectHandler;
+import org.terracotta.monitoring.PlatformSystem;
 import org.terracotta.server.Server;
 import org.terracotta.server.ServerEnv;
 import org.terracotta.server.ServerJMX;
@@ -637,6 +638,11 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
 
       @Override
       public String getClusterState() {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public Map<String, ?> queryClusterState(PlatformSystem part) {
         throw new UnsupportedOperationException("Not supported yet.");
       }
 

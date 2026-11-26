@@ -472,7 +472,7 @@ public class ReplicaElectionScenariosTest {
     when(topology.getServers()).thenReturn(new HashSet<>(Arrays.asList("peer1")));
     when(realTopology.getTopology()).thenReturn(topology);
 
-    ConsistencyManagerImpl cm = new ConsistencyManagerImpl(
+    ConsistencyManagerImpl cm = new ConsistencyManagerImpl(mock(ManagementTopologyEventCollector.class),
         () -> ServerMode.ACTIVE, realTopology);
 
     ServerID peer1 = new ServerID("peer1", "peer1".getBytes());

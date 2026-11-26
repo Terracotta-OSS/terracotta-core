@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@
 package org.terracotta.server;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import org.terracotta.monitoring.PlatformSystem;
 
 /**
  *
@@ -123,8 +125,8 @@ public interface Server {
   int getServerPort();
   /**
    * hostname used to configure the server
-   * 
-   * @return 
+   *
+   * @return
    */
   String getServerHostName();
   /**
@@ -151,6 +153,13 @@ public interface Server {
    * @return
    */
   String getClusterState();
+    /**
+   * Query a part of the server's state
+   *
+   * @param part which subsystem of the server to query
+   * @return
+   */
+  Map<String, ?> queryClusterState(PlatformSystem part);
   /**
    * The current configuration in string form.
    *

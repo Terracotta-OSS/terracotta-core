@@ -54,6 +54,9 @@ import com.tc.services.EntityMessengerService;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.services.MappedStateCollector;
 import com.tc.spi.Guardian;
+import com.tc.statistics.util.LatencyStatistics;
+import com.tc.statistics.util.NestedRuntimeWindowStats;
+import com.tc.statistics.util.RuntimeWindowStats;
 import com.tc.tracing.Trace;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -149,9 +152,14 @@ public class ManagedEntityImpl implements ManagedEntity {
   //  when we promote to an active.
   private byte[] constructorInfo;
 
+  private final LatencyStatistics invokeRuntime;
+  private final LatencyStatistics invokeScheduleTime;
+
   ManagedEntityImpl(EntityID id, long version, long consumerID, ManagementKeyCallback flushLocalPipeline, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ManagementTopologyEventCollector eventCollector,
                     Sink<VoltronEntityMessage> msg,
                     RequestProcessor process, EntityServerService<EntityMessage, EntityResponse> factory,
+                    LatencyStatistics runtimeParent,
+                    LatencyStatistics scheduleParent,
                     boolean isInActiveState, boolean canDelete) {
     this.id = id;
     this.isDestroyed = true;
@@ -176,6 +184,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     registry.setOwningEntity(this);
     this.codec = factory.getMessageCodec();
     this.syncCodec = factory.getSyncMessageCodec();
+    this.invokeRuntime = new NestedRuntimeWindowStats(runtimeParent);
+    this.invokeScheduleTime = new NestedRuntimeWindowStats(scheduleParent);
   }
 
   @Override
@@ -424,8 +434,15 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   @Override
-  public Map<String, Object> getState() {
+  public long getInvokeCount() {
+    return this.invokeRuntime.count();
+  }
+
+  @Override
+  public synchronized Map<String, Object> getState() {
     Map<String, Object> props = new LinkedHashMap<>();
+    props.put("type", id.getClassName());
+    props.put("name", id.getEntityName());
     props.put("fetchID", this.fetchID.toString());
     props.put("entityID", this.id.toString());
     props.put("consumerID", this.consumerID);
@@ -435,6 +452,9 @@ public class ManagedEntityImpl implements ManagedEntity {
     props.put("destroyed", this.isDestroyed);
     props.put("active", this.isInActiveState);
     props.put("removeable", this.isRemoveable());
+    props.put("invokeCount", invokeRuntime.count());
+    props.put("invokeRuntimes", invokeRuntime.convert());
+    props.put("scheduleRuntimes", invokeScheduleTime.convert());
     MappedStateCollector mapped = new MappedStateCollector(this.id.getEntityName());
     try {
       if(activeServerEntity != null) {
@@ -573,8 +593,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     response.received(); // call received locally
 
     GuardianContext.setCurrentChannelID(request.getNodeID().getChannelID());
-    MessageChannel channel = GuardianContext.getCurrentMessageChannel();
-//    setRequestContext(channel, request);
+
     Lock read = reconnectAccessLock.readLock();
     try {
       read.lock();
@@ -584,7 +603,14 @@ public class ManagedEntityImpl implements ManagedEntity {
       switch (request.getAction()) {
         case INVOKE_ACTION:
           Optional.ofNullable(decodeMessage(message, response))
-              .ifPresent(em->performAction(request, em, response, concurrencyKey));
+              .ifPresent(em->{
+                long time = System.nanoTime();
+                try {
+                  performAction(request, em, response, concurrencyKey);
+                } finally {
+                  invokeRuntime.record(System.nanoTime() - time);
+                }
+              });
           break;
         case REQUEST_SYNC_ENTITY:
           performSync(response, request.replicateTo(Collections.emptySet()), concurrencyKey);
@@ -614,7 +640,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     } finally {
       read.unlock();
       GuardianContext.clearCurrentChannelID(request.getNodeID().getChannelID());
-//      clearRequestContext(channel);
     }
     trace.end();
   }
@@ -1310,6 +1335,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     private final Runnable original;
     private final int concurrency;
     private final Event event;
+    private final long startTime = System.nanoTime();
 
     private ActivePassiveAckWaiter  waitFor;
 
@@ -1394,6 +1420,9 @@ public class ManagedEntityImpl implements ManagedEntity {
         event.setDescription(payload.getDebugId());
       }
       event.commit();
+      if (request.getAction() == ServerEntityAction.INVOKE_ACTION) {
+        invokeScheduleTime.record(System.nanoTime() - startTime);
+      }
     }
 
     private synchronized ActivePassiveAckWaiter waitForPassives() {

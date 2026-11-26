@@ -38,6 +38,7 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.entity.RequestProcessor.EntityRequest;
 import com.tc.services.InternalServiceRegistry;
+import com.tc.statistics.util.LatencyStatistics;
 import com.tc.util.Assert;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -175,7 +176,7 @@ public class ManagedEntityImplTest {
     eventCollector = new ManagementTopologyEventCollector(mock(IMonitoringProducer.class));
     // We will start this in a passive state, as the general test case.
     boolean isInActiveState = false;
-    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, isInActiveState, true);
+    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, mock(LatencyStatistics.class), mock(LatencyStatistics.class), isInActiveState, true);
     clientDescriptor = new ClientDescriptorImpl(nodeID, clientInstanceID);
     EntityMessage request = mock(EntityMessage.class);
 
@@ -250,6 +251,26 @@ public class ManagedEntityImplTest {
   }
 
   @Test
+  public void testInvokeCountStartsAtZero() throws Exception {
+    org.junit.Assert.assertEquals(0L, managedEntity.getInvokeCount());
+  }
+
+  @Test
+  public void testInvokeCountReflectsRecordedInvokesAndNotifiesParent() throws Exception {
+    LatencyStatistics parent = mock(LatencyStatistics.class);
+    ManagedEntityImpl entity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, parent, mock(LatencyStatistics.class), false, true);
+    java.lang.reflect.Field f = ManagedEntityImpl.class.getDeclaredField("invokeRuntime");
+    f.setAccessible(true);
+    LatencyStatistics stats = (LatencyStatistics)f.get(entity);
+    stats.record(10L);
+    stats.record(20L);
+    org.junit.Assert.assertEquals(2L, entity.getInvokeCount());
+    verify(parent, times(2)).record(any(Long.class));
+    // another entity's count is independent
+    org.junit.Assert.assertEquals(0L, managedEntity.getInvokeCount());
+  }
+
+  @Test
   public void testReconfigureEntityWhenPassive() throws Exception {
     ServerEntityRequest createRequest = mockCreateEntityRequest();
     TestingResponse createResponse = mockResponse();
@@ -318,7 +339,7 @@ public class ManagedEntityImplTest {
   @Test
   public void testPromotePermanentEntity() throws Exception {
     // first create a passive entity and then promote
-    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, false, false);
+    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, mock(LatencyStatistics.class), mock(LatencyStatistics.class), false, false);
     ServerEntityRequest request = mockCreateEntityRequest();
     TestingResponse response = mockResponse();
     String config = "foo";
@@ -528,7 +549,7 @@ public class ManagedEntityImplTest {
         return Collections.singleton(1);
       }
     });
-    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, false, true);
+    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, mock(LatencyStatistics.class), mock(LatencyStatistics.class), false, true);
     TestingResponse resp = mockResponse();
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.emptyPayload(), resp));
     resp.waitFor();
@@ -593,7 +614,7 @@ public class ManagedEntityImplTest {
         return Collections.singleton(1);
       }
     });
-    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, false, true);
+    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, mock(LatencyStatistics.class), mock(LatencyStatistics.class), false, true);
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.emptyPayload(), response));
     response.waitFor();
 
@@ -679,7 +700,7 @@ public class ManagedEntityImplTest {
     when(this.serverEntityService.getConcurrencyStrategy(any(byte[].class))).thenReturn(basic);
     when(this.serverEntityService.getMessageCodec()).thenReturn(codec);
     TestingResponse response = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, false, true));
+    invokeOnTransactionHandler(()->managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, mock(LatencyStatistics.class), mock(LatencyStatistics.class), false, true));
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.emptyPayload(), response));
     response.waitFor();
 

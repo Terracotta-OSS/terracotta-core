@@ -1,6 +1,6 @@
 /*
  *  Copyright Terracotta, Inc.
- *  Copyright IBM Corp. 2024, 2025
+ *  Copyright IBM Corp. 2024, 2026
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.tc.net.core.event.TCConnectionErrorEvent;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.objectserver.core.impl.GuardianContext;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.spi.Guardian;
 
 /**
@@ -31,20 +32,22 @@ import com.tc.spi.Guardian;
  */
 public class ConnectionLogger implements TCConnectionEventListener {
 
-  private final String name;
+  private final ManagementTopologyEventCollector collector;
 
-  public ConnectionLogger(String name) {
-    this.name = name;
+  public ConnectionLogger(ManagementTopologyEventCollector collector) {
+    this.collector = collector;
   }
 
   @Override
   public void connectEvent(TCConnectionEvent event) {
-    GuardianContext.validate(Guardian.Op.SECURITY_OP, name + " connection open event", connectionProperties(event));
+    GuardianContext.validate(Guardian.Op.SECURITY_OP, "connection open event", connectionProperties(event));
+    this.collector.connectionOpened(event.getSource(), connectionProperties(event));
   }
 
   @Override
   public void closeEvent(TCConnectionEvent event) {
-    GuardianContext.validate(Guardian.Op.SECURITY_OP, name + " connection close event", connectionProperties(event));
+    GuardianContext.validate(Guardian.Op.SECURITY_OP, "connection close event", connectionProperties(event));
+    this.collector.connectionClosed(event.getSource(), connectionProperties(event));
   }
 
   @Override
@@ -52,14 +55,16 @@ public class ConnectionLogger implements TCConnectionEventListener {
     Properties props = connectionProperties(errorEvent);
     props.setProperty("error", String.valueOf(errorEvent.getException().getMessage()));
     props.setProperty("messageContext", String.valueOf(errorEvent.getMessageContext()));
-    GuardianContext.validate(Guardian.Op.SECURITY_OP, name + " connection error event", props);
+    GuardianContext.validate(Guardian.Op.SECURITY_OP, "connection error event", props);
+    this.collector.connectionClosed(errorEvent.getSource(), props);
   }
 
   @Override
   public void endOfFileEvent(TCConnectionEvent event) {
-    GuardianContext.validate(Guardian.Op.SECURITY_OP, name + " connection eof event", connectionProperties(event));
+    GuardianContext.validate(Guardian.Op.SECURITY_OP, "connection eof event", connectionProperties(event));
+    this.collector.connectionClosed(event.getSource(), connectionProperties(event));
   }
-  
+
   private Properties connectionProperties(TCConnectionEvent event) {
     Map<String, ?> state = event.getSource().getState();
     Properties props = new Properties();

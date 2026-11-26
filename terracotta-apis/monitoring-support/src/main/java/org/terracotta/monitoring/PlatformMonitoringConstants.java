@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,14 @@ public class PlatformMonitoringConstants {
    */
   public static final String FETCHED_ROOT_NAME = "fetched";
   /**
+   * The name of the node in the tree which is the parent to all raw connections.
+   */
+  public static final String CONNECTIONS_ROOT_NAME = "connections";
+  /**
+   * The name of the node in the tree which is the parent to all consistency voters.
+   */
+  public static final String VOTERS_ROOT_NAME = "voters";
+  /**
    * The name of the node in the tree which stores the ServerState instance.
    * This is a direct child of PLATFORM_ROOT_NAME.
    */
@@ -61,7 +69,14 @@ public class PlatformMonitoringConstants {
    * The path of the platform's fetched node, for manipulating its children.
    */
   public static final String[] FETCHED_PATH = {PLATFORM_ROOT_NAME, FETCHED_ROOT_NAME};
-
+  /**
+   * The path of the platform's raw connections, for manipulating its children.
+   */
+  public static final String[] CONNECTIONS_PATH = {PLATFORM_ROOT_NAME, CONNECTIONS_ROOT_NAME};
+  /**
+   * The path of the platform's voters node, for manipulating its children.
+   */
+  public static final String[] VOTERS_PATH = {PLATFORM_ROOT_NAME, VOTERS_ROOT_NAME};
   /**
    * Set in STATE_NODE_NAME when the server enters a stopped state (typically only during startup).
    */
